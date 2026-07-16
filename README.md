@@ -21,12 +21,13 @@ src/adaptive_orchestrator/
   logging.py      # append-only execution telemetry
   kernel.py       # single-agent-first coordinator
   history.py      # reads JSONL telemetry into per-agent metrics
+  memory.py       # append-only engineering memory store
   routing.py      # task analysis (capabilities/difficulty/risk/uncertainty) + adaptive agent scoring
   planning.py      # deterministic single-step capability-only selector
   verification.py # runs one or more shell-free verification commands, worst-of aggregation
   escalation.py   # decides whether a second agent's attempt is warranted
   workflow.py     # wires selection + execution + verification + escalation; run() and run_plan()
-  cli.py          # `run` and `run-plan` subcommands
+  cli.py          # `run`, `run-plan`, and `memory` subcommands
   tools.py        # workspace-bounded file/shell/git tool runtime
   example.py      # minimal end-to-end usage without a real CLI agent
 tests/            # unit and end-to-end prototype tests
@@ -82,6 +83,28 @@ PYTHONPATH=src python3 -m adaptive_orchestrator.cli run-plan plan.json \
 
 Each step runs through the exact same routing/execution/verification/escalation pipeline as `run`. By default the plan stops at the first step that doesn't succeed; pass `--continue-on-failure` to run every step regardless and inspect all of them.
 
+## Record engineering memory
+
+Engineering memory is separate from execution telemetry. It is caller-authored, append-only, and queryable by type, tag, or keyword.
+
+```bash
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli memory record \
+  --workspace . \
+  --type architecture_decision \
+  --title "Use JSONL for memory" \
+  --summary "Store explicit engineering memory entries in a queryable log." \
+  --rationale "Append-only and easy to inspect locally." \
+  --tag memory \
+  --tag architecture
+```
+
+```bash
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli memory search \
+  --workspace . \
+  --tag memory \
+  --keyword architecture
+```
+
 ## Escalation
 
 Single-agent-first stays the default. If the first agent's execution fails, its verification command fails or times out, or the router's own analysis flags high risk, uncertainty, or difficulty, the Kernel escalates once to the next-best-scored capable agent and records both attempts (`execution.escalation` in the JSON output). It never escalates past an explicitly requested `--agent`. Tune or disable it with:
@@ -112,9 +135,9 @@ The current implementation was locally validated against Claude Code `2.1.211` a
 - Routing is rule-based and its initial preference values are not learned from enough production evidence yet.
 - Both adapters parse structured CLI output into normalized `ExecutionMetadata`: Claude Code's `--print --output-format json` (verified against `2.1.211`) and Codex CLI's `exec --json` (verified against `0.144.5`). Codex CLI does not expose a cost field the way Claude Code does, so `ExecutionMetadata.cost_usd` stays `None` for Codex executions — this reflects what the CLI actually reports, not a parsing gap.
 - Cost limits cannot be reliably enforced for subscription-backed CLIs.
-- The JSONL log records telemetry but is not a durable queryable memory system.
+- The execution JSONL log records telemetry; engineering memory lives in a separate JSONL store and is only populated by explicit `memory record` calls.
 - Log redaction is best-effort; it cannot guarantee removal of every secret embedded in free text or diffs.
 
 ## Next development increment
 
-Store architecture decisions and evaluation outcomes as engineering memory (project-constitution.md Phase 3) — the JSONL log is telemetry, not a queryable knowledge base. Separately, tune escalation thresholds from observed telemetry instead of fixed defaults once there's enough of it.
+Tune escalation thresholds from observed telemetry instead of fixed defaults once there's enough of it.

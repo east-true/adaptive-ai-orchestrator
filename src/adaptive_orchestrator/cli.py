@@ -7,9 +7,10 @@ from dataclasses import asdict
 from pathlib import Path
 
 from .agents import ClaudeCodeAgent, CodexAgent
-from .domain import Capability, Priority, Task
+from .domain import Capability, MemoryEntry, MemoryEntryType, Priority, Task
 from .escalation import EscalationPolicy
 from .kernel import OrchestratorKernel
+from .memory import EngineeringMemoryStore
 from .logging import JsonlExecutionLogger
 from .history import ExecutionHistory
 from .routing import AdaptiveRouter, TaskAnalyzer
@@ -43,6 +44,25 @@ def build_parser() -> argparse.ArgumentParser:
     run_plan.add_argument("--agent", choices=("auto", "claude-code", "codex"), default="auto")
     run_plan.add_argument("--continue-on-failure", action="store_true", help="Run every step even if an earlier one failed (default: stop at the first failure).")
     _add_workflow_arguments(run_plan)
+
+    memory = subparsers.add_parser("memory", help="record or query engineering memory")
+    memory_subparsers = memory.add_subparsers(dest="memory_command", required=True)
+
+    memory_record = memory_subparsers.add_parser("record", help="append one engineering memory entry")
+    memory_record.add_argument("--workspace", type=Path, default=Path.cwd())
+    memory_record.add_argument("--type", required=True, choices=[item.value.lower() for item in MemoryEntryType])
+    memory_record.add_argument("--title", required=True)
+    memory_record.add_argument("--summary", required=True)
+    memory_record.add_argument("--rationale", default="")
+    memory_record.add_argument("--alternative", action="append", default=[])
+    memory_record.add_argument("--tag", action="append", default=[])
+    memory_record.add_argument("--related-task", dest="related_task", default=None)
+
+    memory_search = memory_subparsers.add_parser("search", help="query engineering memory entries")
+    memory_search.add_argument("--workspace", type=Path, default=Path.cwd())
+    memory_search.add_argument("--type", choices=[item.value.lower() for item in MemoryEntryType])
+    memory_search.add_argument("--tag")
+    memory_search.add_argument("--keyword")
 
     return parser
 
@@ -82,6 +102,26 @@ def _load_plan(path: Path) -> list[Task]:
     return [_task_from_spec(spec) for spec in specs]
 
 
+def _memory_entry_from_args(args: argparse.Namespace) -> MemoryEntry:
+    return MemoryEntry(
+        entry_type=MemoryEntryType(args.type.upper()),
+        title=args.title,
+        summary=args.summary,
+        rationale=args.rationale,
+        alternatives_considered=tuple(args.alternative),
+        tags=tuple(args.tag),
+        related_task_description=args.related_task,
+    )
+
+
+def _memory_search_filters_from_args(args: argparse.Namespace) -> tuple[MemoryEntryType | None, str | None, str | None]:
+    return (
+        MemoryEntryType(args.type.upper()) if getattr(args, "type", None) else None,
+        getattr(args, "tag", None),
+        getattr(args, "keyword", None),
+    )
+
+
 def _build_workflow(args: argparse.Namespace, workspace: Path) -> EngineeringWorkflow:
     agents = (ClaudeCodeAgent(), CodexAgent())
     logger = JsonlExecutionLogger(workspace / ".orchestrator" / "executions.jsonl")
@@ -98,6 +138,19 @@ def _build_workflow(args: argparse.Namespace, workspace: Path) -> EngineeringWor
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     workspace = args.workspace.resolve()
+
+    if args.command == "memory":
+        store = EngineeringMemoryStore(workspace / ".orchestrator" / "memory.jsonl")
+        if args.memory_command == "record":
+            entry = _memory_entry_from_args(args)
+            store.record(entry)
+            print(json.dumps(asdict(entry), default=str, indent=2))
+            return 0
+        entry_type, tag, keyword = _memory_search_filters_from_args(args)
+        entries = store.search(entry_type=entry_type, tag=tag, keyword=keyword)
+        print(json.dumps([asdict(entry) for entry in entries], default=str, indent=2))
+        return 0
+
     workflow = _build_workflow(args, workspace)
 
     if args.command == "run-plan":

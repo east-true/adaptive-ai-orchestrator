@@ -38,6 +38,15 @@ class VerificationStatus(str, Enum):
     SKIPPED = "skipped"
 
 
+class MemoryEntryType(str, Enum):
+    ARCHITECTURE_DECISION = "ARCHITECTURE_DECISION"
+    DESIGN_REASONING = "DESIGN_REASONING"
+    TRADE_OFF = "TRADE_OFF"
+    FAILURE_HISTORY = "FAILURE_HISTORY"
+    PROJECT_CONTEXT = "PROJECT_CONTEXT"
+    CODE_EVOLUTION = "CODE_EVOLUTION"
+
+
 @dataclass(frozen=True, slots=True)
 class Task:
     description: str
@@ -56,6 +65,21 @@ class Task:
             raise ValueError("cost_limit_usd cannot be negative.")
         if self.time_limit_seconds is not None and self.time_limit_seconds <= 0:
             raise ValueError("time_limit_seconds must be positive.")
+
+
+@dataclass(frozen=True, slots=True)
+class MemoryEntry:
+    entry_type: MemoryEntryType
+    title: str
+    summary: str
+    rationale: str = ""
+    alternatives_considered: Sequence[str] = field(default_factory=tuple)
+    tags: Sequence[str] = field(default_factory=tuple)
+    related_task_description: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.title.strip() or not self.summary.strip():
+            raise ValueError("MemoryEntry title and summary are required.")
 
 
 @dataclass(frozen=True, slots=True)
