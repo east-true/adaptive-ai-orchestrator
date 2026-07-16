@@ -3,7 +3,7 @@
 ## Core flow
 
 ```text
-Task -> Agent selection -> CLI Agent (capabilities + command builder) -> Process Runner -> CLI process
+Task -> Task analysis -> Adaptive Router -> CLI Agent (capabilities + command builder) -> Process Runner -> CLI process
   \-> Git workspace snapshot (changed files + optional diff)                   \-> ExecutionRecord -> JSONL telemetry
 ```
 
@@ -13,6 +13,7 @@ Task -> Agent selection -> CLI Agent (capabilities + command builder) -> Process
 
 - **Domain:** no SDK, filesystem, or subprocess dependency.
 - **Agent:** owns prompt construction, CLI syntax, and required-capability validation.
+- **Adaptive Router:** infers task signals, scores capable agents using configurable policy and local history, and emits an explainable decision.
 - **Process runner:** runs argument vectors without a shell, handles timeouts, and normalizes output/state.
 - **Git snapshot:** best-effort collection of workspace state after execution. It does not attribute changes to an agent.
 - **Telemetry:** records task, selected agent, command, timing, result, errors, workspace files, and an opt-in diff for later evaluation and routing.
@@ -24,7 +25,7 @@ The Process Runner uses argument vectors (`shell=False`). Claude defaults to `ac
 ## Evolution path
 
 1. Add structured CLI event adapters and normalize execution/cost metadata where available.
-2. Add a planner/executor/verifier loop.
-3. Add a rule-based selector using task capabilities, budget, risk, and observed telemetry.
+2. Expand the current deterministic planner/executor/verifier loop with structured task plans and richer verification.
+3. Expand the current task-analysis router with measured cost, richer risk signals, and sufficient observed telemetry.
 4. Store architecture decisions and evaluation outcomes as engineering memory.
 5. Introduce multi-agent escalation policies only with a measured benefit.

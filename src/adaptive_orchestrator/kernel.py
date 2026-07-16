@@ -24,7 +24,7 @@ class OrchestratorKernel:
         self._git_snapshot = git_snapshot or GitSnapshot()
         self._include_git_diff = include_git_diff
 
-    def execute(self, task: Task, agent_id: str) -> ExecutionRecord:
+    def execute(self, task: Task, agent_id: str, log_execution: bool = True) -> ExecutionRecord:
         if agent_id not in self._agents:
             raise KeyError(f"Unknown agent: {agent_id}")
         agent = self._agents[agent_id]
@@ -34,8 +34,25 @@ class OrchestratorKernel:
             run = agent.execute(task, self._workspace, self._runner)
             prompt, process, command = run.prompt, run.process, tuple(run.process.command)
             changes = self._git_snapshot.collect(self._workspace)
-            record = ExecutionRecord(task, agent.agent_id, prompt, command, process.status, process.stdout or None, process.stderr or None, process.exit_code, process.duration_ms, changes.modified_files, changes.git_diff if self._include_git_diff else None)
+            error = process.stderr or None if process.status is not ExecutionStatus.COMPLETED else None
+            record = ExecutionRecord(task, agent.agent_id, prompt, command, process.status, process.stdout or None, error, process.exit_code, process.duration_ms, changes.modified_files, changes.git_diff if self._include_git_diff else None)
         except Exception as exc:
             record = ExecutionRecord(task, agent.agent_id, prompt, command, ExecutionStatus.FAILED, None, str(exc), None, 0, (), None)
-        self._logger.write(record)
+        if log_execution:
+            self._logger.write(record)
         return record
+
+    def log(self, record: ExecutionRecord) -> None:
+        self._logger.write(record)
+
+    @property
+    def agents(self) -> tuple[Agent, ...]:
+        return tuple(self._agents.values())
+
+    @property
+    def workspace(self) -> Path:
+        return self._workspace
+
+    @property
+    def runner(self) -> ProcessRunner:
+        return self._runner

@@ -27,7 +27,7 @@ class KernelTests(unittest.TestCase):
     def test_codex_execution_is_logged(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory)
-            runner = FakeRunner(ProcessResult(("codex", "exec"), ExecutionStatus.COMPLETED, "done", "", 0, 12.5))
+            runner = FakeRunner(ProcessResult(("codex", "exec"), ExecutionStatus.COMPLETED, "done", "non-error diagnostic", 0, 12.5))
             log_path = workspace / "executions.jsonl"
             agent = CodexAgent(capabilities=frozenset({Capability.PLANNING}))
             record = OrchestratorKernel({"codex": agent}, JsonlExecutionLogger(log_path), workspace, runner).execute(
@@ -35,6 +35,7 @@ class KernelTests(unittest.TestCase):
             )
             self.assertEqual(record.status, ExecutionStatus.COMPLETED)
             self.assertEqual(record.result, "done")
+            self.assertIsNone(record.error)
             self.assertEqual(runner.calls[0][2], 30)
             payload = json.loads(log_path.read_text())
             self.assertEqual(payload["agent_id"], "codex")

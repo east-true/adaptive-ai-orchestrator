@@ -31,6 +31,13 @@ class ExecutionStatus(str, Enum):
     SPAWN_ERROR = "spawn_error"
 
 
+class VerificationStatus(str, Enum):
+    PASSED = "passed"
+    FAILED = "failed"
+    TIMED_OUT = "timed_out"
+    SKIPPED = "skipped"
+
+
 @dataclass(frozen=True, slots=True)
 class Task:
     description: str
@@ -52,6 +59,16 @@ class Task:
 
 
 @dataclass(frozen=True, slots=True)
+class VerificationResult:
+    status: VerificationStatus
+    command: Sequence[str] = field(default_factory=tuple)
+    stdout: str | None = None
+    stderr: str | None = None
+    exit_code: int | None = None
+    duration_ms: float = 0.0
+
+
+@dataclass(frozen=True, slots=True)
 class ExecutionRecord:
     task: Task
     agent_id: str
@@ -64,3 +81,6 @@ class ExecutionRecord:
     duration_ms: float
     workspace_modified_files: Sequence[str] = field(default_factory=tuple)
     workspace_git_diff: str | None = None
+    verification: VerificationResult | None = None
+    task_analysis: Mapping[str, Any] | None = None
+    routing_decision: Mapping[str, Any] | None = None
