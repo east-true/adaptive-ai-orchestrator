@@ -41,6 +41,20 @@ class KernelTests(unittest.TestCase):
             self.assertEqual(payload["agent_id"], "codex")
             self.assertIsNone(payload["workspace_git_diff"])
 
+    def test_claude_json_output_is_parsed_into_normalized_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            stdout = json.dumps({"result": "PONG", "num_turns": 1, "session_id": "abc", "total_cost_usd": 0.01, "usage": {"input_tokens": 2, "output_tokens": 5}})
+            runner = FakeRunner(ProcessResult(("claude",), ExecutionStatus.COMPLETED, stdout, "", 0, 5.0))
+            agent = ClaudeCodeAgent(capabilities=frozenset({Capability.PLANNING}))
+            record = OrchestratorKernel({"claude-code": agent}, JsonlExecutionLogger(workspace / "log.jsonl"), workspace, runner).execute(
+                Task("Make a plan", "Plan", required_capabilities=(Capability.PLANNING,)), "claude-code"
+            )
+            self.assertEqual(record.result, "PONG")
+            self.assertEqual(record.metadata.cost_usd, 0.01)
+            self.assertEqual(record.metadata.input_tokens, 2)
+            self.assertEqual(record.metadata.session_id, "abc")
+
     def test_missing_capability_is_logged_failure(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory)

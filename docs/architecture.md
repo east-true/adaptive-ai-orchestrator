@@ -29,7 +29,7 @@ The Process Runner uses argument vectors (`shell=False`). Claude defaults to `ac
 
 ## Evolution path
 
-1. Add structured CLI event adapters and normalize execution/cost metadata where available.
+1. Add structured CLI event adapters and normalize execution/cost metadata where available. **Done for Claude Code** (`ClaudeCodeAgent.parse_result`, verified against `2.1.211`'s `--output-format json`). **Pending for Codex**: `exec --json`'s successful-turn schema is unverified — the local Codex CLI account hit its usage cap mid-verification (30-day rolling window, resets ~2026-08-16), so only the error-turn shape (`thread.started`/`turn.started`/`error`/`turn.failed`) is confirmed. Revisit once the cap resets and a real successful run can be inspected.
 2. Expand the current deterministic planner/executor/verifier loop with structured task plans and richer verification.
 3. Expand the current task-analysis router with measured cost, richer risk signals, and sufficient observed telemetry.
 4. Store architecture decisions and evaluation outcomes as engineering memory.

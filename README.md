@@ -74,11 +74,11 @@ The current implementation was locally validated against Claude Code `2.1.211` a
 ## Current limits
 
 - Routing is rule-based and its initial preference values are not learned from enough production evidence yet.
-- CLI output is collected as text; no structured event protocol exists yet.
+- Claude Code's `--print --output-format json` output is parsed into normalized `ExecutionMetadata` (cost, tokens, turns, session id); Codex CLI still returns plain text. Codex CLI 0.144.5 supports `exec --json`, but its successful-turn event shape has not been verified live — the local Codex CLI account hit its usage cap while validating this (30-day rolling window, reset ~2026-08-16). Only the error-turn events (`thread.started`/`turn.started`/`error`/`turn.failed`) were confirmed. Guessing at the unverified success schema risked silently wrong metadata or dumping the raw JSONL stream as the result text, so `CodexAgent` intentionally stays on plain-text output (see the comment on `CodexAgent.build_command` in `agents.py`) until the schema can be confirmed against a real successful run.
 - Cost limits cannot be reliably enforced for subscription-backed CLIs.
 - The JSONL log records telemetry but is not a durable queryable memory system.
 - Log redaction is best-effort; it cannot guarantee removal of every secret embedded in free text or diffs.
 
 ## Next development increment
 
-Add a richer planner and verifier, then an escalation policy that can select a second agent only when uncertainty, risk, or verification failure warrants it.
+Verify Codex CLI's `exec --json` successful-turn schema once its usage cap resets, then extend `CodexAgent.parse_result` to match `ClaudeCodeAgent`'s normalized metadata. Separately, expand the planner/verifier loop with structured task plans and richer verification.

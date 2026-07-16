@@ -69,6 +69,22 @@ class VerificationResult:
 
 
 @dataclass(frozen=True, slots=True)
+class ExecutionMetadata:
+    """Provider-neutral execution metadata parsed from a CLI's structured output.
+
+    Every field is optional: adapters fill in only what their CLI's verified
+    output schema actually exposes, rather than guessing at an unverified one.
+    """
+
+    cost_usd: float | None = None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    cached_input_tokens: int | None = None
+    num_turns: int | None = None
+    session_id: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class ExecutionRecord:
     task: Task
     agent_id: str
@@ -85,6 +101,7 @@ class ExecutionRecord:
     task_analysis: Mapping[str, Any] | None = None
     routing_decision: Mapping[str, Any] | None = None
     escalation: "EscalationRecord | None" = None
+    metadata: ExecutionMetadata | None = None
 
 
 @dataclass(frozen=True, slots=True)

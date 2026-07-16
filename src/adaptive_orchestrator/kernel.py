@@ -35,7 +35,8 @@ class OrchestratorKernel:
             prompt, process, command = run.prompt, run.process, tuple(run.process.command)
             changes = self._git_snapshot.collect(self._workspace)
             error = process.stderr or None if process.status is not ExecutionStatus.COMPLETED else None
-            record = ExecutionRecord(task, agent.agent_id, prompt, command, process.status, process.stdout or None, error, process.exit_code, process.duration_ms, changes.modified_files, changes.git_diff if self._include_git_diff else None)
+            result, metadata = agent.parse_result(process.stdout or "")
+            record = ExecutionRecord(task, agent.agent_id, prompt, command, process.status, result, error, process.exit_code, process.duration_ms, changes.modified_files, changes.git_diff if self._include_git_diff else None, metadata=metadata)
         except Exception as exc:
             record = ExecutionRecord(task, agent.agent_id, prompt, command, ExecutionStatus.FAILED, None, str(exc), None, 0, (), None)
         if log_execution:
