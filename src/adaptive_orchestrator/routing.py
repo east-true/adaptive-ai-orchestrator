@@ -47,7 +47,11 @@ class TaskAnalyzer:
         capabilities = tuple(sorted(set(task.required_capabilities) | inferred, key=lambda item: item.value))
         signals = [f"inferred:{item.value}" for item in inferred]
         difficulty = min(5, 1 + len(capabilities) // 2 + int(len(text) > 240) + int(task.priority.value in {"high", "critical"}))
-        risk_words = ("security", "credential", "permission", "production", "deploy", "migration", "delete", "보안", "권한", "운영", "배포", "마이그레이션", "삭제")
+        risk_words = (
+            "security", "credential", "permission", "production", "deploy", "migration", "delete",
+            "force push", "force-push", "rm -rf", "drop table", "overwrite", "irreversible", "no backup",
+            "보안", "권한", "운영", "배포", "마이그레이션", "삭제", "강제 푸시", "되돌릴 수 없", "백업 없이",
+        )
         risk = min(5, int(any(word in text for word in risk_words)) * 2 + int(Capability.SECURITY_REVIEW in capabilities) * 2 + int(task.priority.value == "critical"))
         uncertainty = min(5, int(not task.required_capabilities) + int(not inferred) + int("?" in text or "unknown" in text or "모름" in text))
         return TaskAnalysis(capabilities, difficulty, risk, uncertainty, tuple(sorted(signals)))
@@ -68,6 +72,15 @@ def default_profiles() -> Mapping[str, AgentRoutingProfile]:
         "claude-code": AgentRoutingProfile({**neutral, Capability.ARCHITECTURE_REASONING: 1.15, Capability.REPOSITORY_UNDERSTANDING: 1.1, Capability.PLANNING: 1.1}, 1.0, 1.0),
         "codex": AgentRoutingProfile({**neutral, Capability.CODE_GENERATION: 1.15, Capability.DEBUGGING: 1.15, Capability.TESTING: 1.15}, 0.75, 0.85),
     }
+
+
+_MIN_SAMPLES_FOR_FULL_CONFIDENCE = 5
+"""Below this many logged executions, historical evidence is blended toward a
+neutral prior rather than trusted outright — a single lucky (or unlucky) run
+should not fully determine routing (see docs/architecture.md, evolution #3)."""
+
+_NEUTRAL_EVIDENCE = 0.5 * 0.4 + 0.5 * 0.3  # what a candidate with no history has always scored; the floor confidence blends toward
+_COST_LIMIT_PENALTY = 20.0
 
 
 class AdaptiveRouter:
@@ -94,9 +107,36 @@ class AdaptiveRouter:
             complexity_fit = 1 - abs(profile.complexity_preference - analysis.difficulty / 5)
             risk_fit = 1 - abs(profile.risk_preference - analysis.risk / 5)
             metrics = self._history.metrics_for(agent.agent_id)
-            evidence = (metrics.success_rate or 0.5) * 0.4 + (metrics.verification_pass_rate or 0.5) * 0.3
-            score = affinity * 50 + complexity_fit * 15 + risk_fit * 10 + evidence * 25
-            scored.append((score, agent, {"score": round(score, 2), "affinity": round(affinity, 2), "complexity_fit": round(complexity_fit, 2), "risk_fit": round(risk_fit, 2), "history": {"executions": metrics.executions, "success_rate": metrics.success_rate, "verification_pass_rate": metrics.verification_pass_rate}}))
+
+            # Blend observed success/verification rates toward the neutral prior when there isn't
+            # yet enough history to trust them outright (a single run should not decide routing).
+            confidence = min(1.0, metrics.executions / _MIN_SAMPLES_FOR_FULL_CONFIDENCE)
+            success_rate = metrics.success_rate if metrics.success_rate is not None else 0.5
+            verification_pass_rate = metrics.verification_pass_rate if metrics.verification_pass_rate is not None else 0.5
+            raw_evidence = success_rate * 0.4 + verification_pass_rate * 0.3
+            evidence = confidence * raw_evidence + (1 - confidence) * _NEUTRAL_EVIDENCE
+
+            cost_penalty = 0.0
+            cost_penalty_reason = None
+            if task.cost_limit_usd is not None and metrics.average_cost_usd is not None and metrics.average_cost_usd > task.cost_limit_usd:
+                cost_penalty = _COST_LIMIT_PENALTY
+                cost_penalty_reason = f"historical average cost ${metrics.average_cost_usd:.4f} exceeds task cost_limit_usd ${task.cost_limit_usd:.4f}"
+
+            score = affinity * 50 + complexity_fit * 15 + risk_fit * 10 + evidence * 25 - cost_penalty
+            scored.append((score, agent, {
+                "score": round(score, 2),
+                "affinity": round(affinity, 2),
+                "complexity_fit": round(complexity_fit, 2),
+                "risk_fit": round(risk_fit, 2),
+                "cost_penalty_reason": cost_penalty_reason,
+                "history": {
+                    "executions": metrics.executions,
+                    "confidence": round(confidence, 2),
+                    "success_rate": metrics.success_rate,
+                    "verification_pass_rate": metrics.verification_pass_rate,
+                    "average_cost_usd": metrics.average_cost_usd,
+                },
+            }))
         scored.sort(key=lambda item: (-item[0], item[1].agent_id))
         _, selected, selected_details = scored[0]
         decision = {"requested_agent": requested_agent_id, "selected_agent": selected.agent_id, "candidate_scores": {agent.agent_id: details for _, agent, details in scored}, "rationale": "Highest explainable policy score among agents supporting the analyzed capabilities."}
