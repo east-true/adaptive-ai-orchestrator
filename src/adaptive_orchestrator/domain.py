@@ -84,3 +84,13 @@ class ExecutionRecord:
     verification: VerificationResult | None = None
     task_analysis: Mapping[str, Any] | None = None
     routing_decision: Mapping[str, Any] | None = None
+    escalation: "EscalationRecord | None" = None
+
+
+@dataclass(frozen=True, slots=True)
+class EscalationRecord:
+    """A second agent's attempt, run only because the first attempt gave a concrete reason to distrust it."""
+
+    reasons: Sequence[str]
+    agent_id: str
+    record: ExecutionRecord

@@ -46,6 +46,17 @@ The command analyzes task text to infer capabilities, difficulty, risk, and unce
 
 The default policy is only a starting hypothesis: it mildly favors Codex for code/test/debug signals and Claude Code for repository/architecture/planning signals. Both remain eligible whenever they support the analyzed capabilities; selection is not a fixed role assignment. The policy and historical evidence are visible in every routing decision.
 
+## Escalation
+
+Single-agent-first stays the default. If the first agent's execution fails, its verification command fails or times out, or the router's own analysis flags high risk, uncertainty, or difficulty, the Kernel escalates once to the next-best-scored capable agent and records both attempts (`execution.escalation` in the JSON output). It never escalates past an explicitly requested `--agent`. Tune or disable it with:
+
+```bash
+--no-escalation
+--escalation-risk-threshold 3          # 0-5, default 3
+--escalation-uncertainty-threshold 3   # 0-5, default 3
+--escalation-difficulty-threshold 4    # 1-5, default 4 (floors at 1, so this stays higher than the others)
+```
+
 ## Safety and privacy
 
 This kernel launches coding agents that can modify the configured workspace. Run it only in repositories you trust and with a permission/sandbox mode appropriate to that repository. The default adapters do **not** enable CLI permission-bypass flags.

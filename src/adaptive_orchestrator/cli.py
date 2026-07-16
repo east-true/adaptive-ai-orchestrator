@@ -8,6 +8,7 @@ from pathlib import Path
 
 from .agents import ClaudeCodeAgent, CodexAgent
 from .domain import Capability, Priority, Task
+from .escalation import EscalationPolicy
 from .kernel import OrchestratorKernel
 from .logging import JsonlExecutionLogger
 from .history import ExecutionHistory
@@ -31,6 +32,10 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--verify-command", help="Command text parsed into argument tokens; never run through a shell.")
     run.add_argument("--verify-time-limit", type=float)
     run.add_argument("--include-git-diff", action="store_true", help="Log the full workspace diff; use only when it contains no sensitive data.")
+    run.add_argument("--no-escalation", action="store_true", help="Disable escalating to a second agent on failure, high risk, or high uncertainty.")
+    run.add_argument("--escalation-risk-threshold", type=int, default=3, help="Minimum analyzed risk (0-5) that triggers escalation.")
+    run.add_argument("--escalation-uncertainty-threshold", type=int, default=3, help="Minimum analyzed uncertainty (0-5) that triggers escalation.")
+    run.add_argument("--escalation-difficulty-threshold", type=int, default=4, help="Minimum analyzed difficulty (1-5) that triggers escalation.")
     return parser
 
 
@@ -50,9 +55,16 @@ def main(argv: list[str] | None = None) -> int:
     kernel = OrchestratorKernel({agent.agent_id: agent for agent in agents}, logger, workspace, include_git_diff=args.include_git_diff)
     verifier = CommandVerifier(tuple(shlex.split(args.verify_command)) if args.verify_command else (), args.verify_time_limit)
     router = AdaptiveRouter(TaskAnalyzer(), ExecutionHistory(workspace / ".orchestrator" / "executions.jsonl"))
-    plan, record = EngineeringWorkflow(kernel, router, verifier).run(task, args.agent)
+    escalation_policy = None if args.no_escalation else EscalationPolicy(
+        args.escalation_risk_threshold, args.escalation_uncertainty_threshold, args.escalation_difficulty_threshold
+    )
+    plan, record = EngineeringWorkflow(kernel, router, verifier, escalation_policy).run(task, args.agent)
     print(json.dumps({"plan": asdict(plan), "execution": asdict(record)}, default=str, indent=2))
-    return 0 if record.status.value == "completed" and record.verification and record.verification.status.value in {"passed", "skipped"} else 1
+    return 0 if _succeeded(record) or (record.escalation and _succeeded(record.escalation.record)) else 1
+
+
+def _succeeded(record) -> bool:
+    return record.status.value == "completed" and record.verification is not None and record.verification.status.value in {"passed", "skipped"}
 
 
 if __name__ == "__main__":
