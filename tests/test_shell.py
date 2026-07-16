@@ -1,5 +1,6 @@
 import contextlib
 import io
+import json
 import sys
 import tempfile
 import unittest
@@ -9,6 +10,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
 from adaptive_orchestrator.shell import OrchestratorShell
+from adaptive_orchestrator.usage import CodexUsage
 
 
 class ShellStateTests(unittest.TestCase):
@@ -185,6 +187,61 @@ class ShellHistoryTests(unittest.TestCase):
             self.assertIn("codex:", output[0])
             self.assertIn("claude-code:", output[1])
             self.assertTrue(all("no data yet" in line for line in output))
+
+
+class ShellUsageTests(unittest.TestCase):
+    def _run_usage(
+        self,
+        codex_usage: CodexUsage | None,
+        subscription: str | None,
+        execution_lines: list[dict[str, object]] | None = None,
+    ) -> list[str]:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell()
+            shell.workspace = Path(directory)
+            if execution_lines is not None:
+                log = shell.workspace / ".orchestrator" / "executions.jsonl"
+                log.parent.mkdir()
+                log.write_text("\n".join(json.dumps(line) for line in execution_lines), encoding="utf-8")
+            stdout = io.StringIO()
+            with (
+                patch("adaptive_orchestrator.shell.read_codex_usage", return_value=codex_usage),
+                patch("adaptive_orchestrator.shell.read_claude_subscription", return_value=subscription),
+                patch("adaptive_orchestrator.shell.time.time", return_value=1_700_000_000),
+                contextlib.redirect_stdout(stdout),
+            ):
+                shell.onecmd("usage")
+            return stdout.getvalue().strip().splitlines()
+
+    def test_both_available(self) -> None:
+        usage = CodexUsage("plus", 12.5, 10080, 1_700_432_000)
+        executions = [
+            {"agent_id": "claude-code", "status": "completed", "metadata": {"cost_usd": 1.2}},
+            {"agent_id": "claude-code", "status": "completed", "metadata": {"cost_usd": 0.25}},
+        ]
+        self.assertEqual(self._run_usage(usage, "pro", executions), [
+            "Codex: plus plan, 12.5% used (resets in 5d)",
+            "Claude Code: pro subscription; logged in this project: $1.45 across 2 executions with cost data (no live quota % available locally)",
+        ])
+
+    def test_codex_unavailable_but_claude_available(self) -> None:
+        executions = [{"agent_id": "claude-code", "metadata": {"cost_usd": 0.5}}]
+        self.assertEqual(self._run_usage(None, "max", executions), [
+            "Codex: usage data not available",
+            "Claude Code: max subscription; logged in this project: $0.50 across 1 execution with cost data (no live quota % available locally)",
+        ])
+
+    def test_both_unavailable(self) -> None:
+        self.assertEqual(self._run_usage(None, None), [
+            "Codex: usage data not available",
+            "Claude Code: logged in this project: no cost data logged yet (no live quota % available locally)",
+        ])
+
+    def test_claude_available_with_zero_cost_samples(self) -> None:
+        self.assertEqual(self._run_usage(None, "pro"), [
+            "Codex: usage data not available",
+            "Claude Code: pro subscription; logged in this project: no cost data logged yet (no live quota % available locally)",
+        ])
 
 
 if __name__ == "__main__":
