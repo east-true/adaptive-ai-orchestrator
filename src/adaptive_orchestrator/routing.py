@@ -46,13 +46,30 @@ class TaskAnalyzer:
         inferred = {capability for capability, keywords in _KEYWORDS.items() if any(keyword in text for keyword in keywords)}
         capabilities = tuple(sorted(set(task.required_capabilities) | inferred, key=lambda item: item.value))
         signals = [f"inferred:{item.value}" for item in inferred]
-        difficulty = min(5, 1 + len(capabilities) // 2 + int(len(text) > 240) + int(task.priority.value in {"high", "critical"}))
+
+        # Difficulty tracks deliberately-declared scope (task.required_capabilities), not raw
+        # text length or how many keyword categories a long description happens to touch: a
+        # thorough, well-specified multi-requirement task description should not look "harder"
+        # than a vague one-liner just for being long. Text-inferred-only capabilities still count,
+        # but at a third the weight of explicitly required ones (see docs/architecture.md, evolution #3).
+        explicit_count = len(task.required_capabilities)
+        inferred_only_count = len(inferred - set(task.required_capabilities))
+        difficulty = min(5, 1 + explicit_count // 2 + inferred_only_count // 3 + int(task.priority.value in {"high", "critical"}))
+
+        # Risk keyword matching is inherently approximate (one incidental mention, e.g. "credential"
+        # used as a test-writing example, isn't the same evidence as a task that's actually
+        # security-/production-sensitive). Require multiple distinct hits for the full contribution,
+        # and only trust SECURITY_REVIEW as a risk signal when the caller explicitly required it,
+        # not merely when the word "security" appears somewhere in a long description.
         risk_words = (
             "security", "credential", "permission", "production", "deploy", "migration", "delete",
             "force push", "force-push", "rm -rf", "drop table", "overwrite", "irreversible", "no backup",
             "보안", "권한", "운영", "배포", "마이그레이션", "삭제", "강제 푸시", "되돌릴 수 없", "백업 없이",
         )
-        risk = min(5, int(any(word in text for word in risk_words)) * 2 + int(Capability.SECURITY_REVIEW in capabilities) * 2 + int(task.priority.value == "critical"))
+        risk_word_hits = sum(1 for word in risk_words if word in text)
+        explicit_security_review = Capability.SECURITY_REVIEW in task.required_capabilities
+        risk = min(5, min(2, risk_word_hits) + int(explicit_security_review) * 2 + int(task.priority.value == "critical"))
+
         uncertainty = min(5, int(not task.required_capabilities) + int(not inferred) + int("?" in text or "unknown" in text or "모름" in text))
         return TaskAnalysis(capabilities, difficulty, risk, uncertainty, tuple(sorted(signals)))
 

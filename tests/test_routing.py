@@ -115,6 +115,57 @@ class AdaptiveRouterTests(unittest.TestCase):
             )
             self.assertGreater(plan.analysis["risk"], 0)
 
+    def test_long_well_specified_description_does_not_hit_max_difficulty(self) -> None:
+        # Regression test: a real dogfooding run gave a thorough, successful, multi-requirement
+        # task description max difficulty (5) purely because it was long and mentioned many
+        # keyword categories, not because it was genuinely ambiguous or broad in scope. Length
+        # and incidentally-inferred capabilities should carry much less weight than what the
+        # caller actually declared as required.
+        with tempfile.TemporaryDirectory() as directory:
+            long_description = " ".join([
+                "Add a minimal, structured, append-only engineering memory store to this orchestrator kernel.",
+                "In domain.py, add a MemoryEntryType enum and a MemoryEntry dataclass with validation.",
+                "Add a new module memory.py with an EngineeringMemoryStore class supporting record and search.",
+                "Add two CLI subcommands: memory record and memory search, following the existing argparse style.",
+                "Write unit tests covering recording, filtering by type, tag, and keyword, redaction of a summary",
+                "that happens to mention the word credential as a test example, and malformed-line tolerance.",
+                "Update README.md and docs/architecture.md to document this feature in the existing style.",
+            ])
+            task = Task(
+                long_description,
+                "Implement a queryable engineering-memory store, separate from execution telemetry.",
+                required_capabilities=(Capability.CODE_GENERATION, Capability.ARCHITECTURE_REASONING),
+            )
+            plan = AdaptiveRouter(TaskAnalyzer(), ExecutionHistory(Path(directory) / "history.jsonl")).select(task, self.agents)
+            self.assertLess(plan.analysis["difficulty"], 5)
+            self.assertLess(plan.analysis["risk"], 4)
+
+    def test_difficulty_scales_with_explicitly_required_capabilities_not_text_length(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            short_broad_task = Task(
+                "Do it.",
+                "Ship it.",
+                required_capabilities=(Capability.CODE_GENERATION, Capability.DEBUGGING, Capability.ARCHITECTURE_REASONING, Capability.TESTING),
+            )
+            plan = AdaptiveRouter(TaskAnalyzer(), ExecutionHistory(Path(directory) / "history.jsonl")).select(short_broad_task, self.agents)
+            self.assertGreaterEqual(plan.analysis["difficulty"], 3)
+
+    def test_incidental_keyword_mention_does_not_reach_max_risk(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            task = Task(
+                "Write a test asserting that a summary containing the word credential gets redacted.",
+                "Verify redaction works.",
+            )
+            plan = AdaptiveRouter(TaskAnalyzer(), ExecutionHistory(Path(directory) / "history.jsonl")).select(task, self.agents)
+            self.assertLess(plan.analysis["risk"], 4)
+
+    def test_explicit_security_review_capability_raises_risk_more_than_incidental_mention(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            explicit_task = Task("Review this change", "Ship it safely", required_capabilities=(Capability.SECURITY_REVIEW,))
+            incidental_task = Task("This mentions security in passing", "Ship it")
+            router = AdaptiveRouter(TaskAnalyzer(), ExecutionHistory(Path(directory) / "history.jsonl"))
+            self.assertGreater(router.select(explicit_task, self.agents).analysis["risk"], router.select(incidental_task, self.agents).analysis["risk"])
+
 
 if __name__ == "__main__":
     unittest.main()
