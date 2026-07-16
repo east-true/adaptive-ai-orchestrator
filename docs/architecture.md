@@ -48,6 +48,8 @@ Found via dogfooding (using the orchestrator to delegate its own feature work to
 
 `--verbose` (shared by `run` and `run-plan`) streams the running agent's stdout to stderr line-by-line as it arrives, prefixed with the command and requested agent, while stdout still only carries the final JSON result. This is purely additive: `SubprocessRunner` now takes an optional `on_output_line` callback and reads stdout/stderr concurrently via two threads instead of blocking on `subprocess.run`, but when no callback is given (the default), behavior is unchanged. It only echoes raw lines — it does not attempt to parse or pretty-print an agent's structured output, since that already happens after the process exits via `Agent.parse_result`.
 
+The interactive shell in `adaptive_orchestrator.shell` is deliberately thinner than the CLI itself: it only stores a session workspace/agent, turns each shell command back into an argv list, and calls `cli.main` directly. That keeps the shell aligned with the same argparse rules, JSON output, and error handling as the normal CLI, with no duplicated business logic. The only new behavior it adds is a small `history` convenience view built on `ExecutionHistory`.
+
 ## Deliberate boundaries
 
 - **Domain:** no SDK, filesystem, or subprocess dependency.

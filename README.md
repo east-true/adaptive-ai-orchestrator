@@ -137,6 +137,27 @@ PYTHONPATH=src python3 -m adaptive_orchestrator.cli memory search \
   --keyword architecture
 ```
 
+## Interactive shell
+
+If you want to set the workspace and agent once, then issue short commands repeatedly, use the stdlib shell on top of the existing CLI dispatch:
+
+```bash
+PYTHONPATH=src python3 -m adaptive_orchestrator.shell
+Adaptive Orchestrator shell. Type help or ? for commands.
+adaptive-orchestrator> workspace .
+Workspace set to /home/leo/adaptive-ai-orchestrator
+adaptive-orchestrator> agent codex
+Agent set to codex
+adaptive-orchestrator> run --description "Run the unit tests" --objective "Confirm the suite passes."
+{ ... existing cli.main JSON output ... }
+adaptive-orchestrator> history
+codex: 6 executions, 83% success, 100% verification pass
+claude-code: 0 executions, no data yet
+adaptive-orchestrator> exit
+```
+
+The shell keeps session state only for the lifetime of the process. Each command builds an argv list and calls the existing `adaptive_orchestrator.cli.main` dispatch, so it stays aligned with the normal CLI flags and output conventions. The only new behavior it adds is the small `history` convenience command.
+
 ## Watching a long run
 
 `run` and `run-plan` both accept `--verbose`, which streams the running agent's stdout to stderr as it arrives instead of staying silent until the process exits:
