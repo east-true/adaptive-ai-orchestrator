@@ -153,10 +153,13 @@ adaptive-orchestrator> run --description "Run the unit tests" --objective "Confi
 adaptive-orchestrator> history
 codex: 6 executions, 83% success, 100% verification pass
 claude-code: 0 executions, no data yet
+adaptive-orchestrator> usage
+Codex: plus plan, 12% used (resets in 4d)
+Claude Code: pro subscription; logged in this project: $1.42 across 3 executions with cost data (no live quota % available locally)
 adaptive-orchestrator> exit
 ```
 
-The shell keeps session state only for the lifetime of the process. Each command builds an argv list and calls the existing `adaptive_orchestrator.cli.main` dispatch, so it stays aligned with the normal CLI flags and output conventions. The only new behavior it adds is the small `history` convenience command.
+The shell keeps session state only for the lifetime of the process. Most commands build an argv list and call the existing `adaptive_orchestrator.cli.main` dispatch, so they stay aligned with the normal CLI flags and output conventions. The shell also provides the small, read-only `history` and `usage` convenience commands.
 
 ## Watching a long run
 

@@ -3,10 +3,12 @@ from __future__ import annotations
 import cmd
 import shlex
 import sys
+import time
 from pathlib import Path
 
 from . import cli
 from .history import ExecutionHistory
+from .usage import CodexUsage, read_claude_subscription, read_codex_usage
 
 
 class OrchestratorShell(cmd.Cmd):
@@ -103,6 +105,25 @@ class OrchestratorShell(cmd.Cmd):
             metrics = history.metrics_for(agent_id)
             print(self._format_history_line(agent_id, metrics.executions, metrics.success_rate, metrics.verification_pass_rate))
 
+    def do_usage(self, arg: str) -> None:
+        """Show locally available account usage information."""
+        del arg
+        codex_usage = read_codex_usage()
+        print(self._format_codex_usage(codex_usage))
+
+        subscription = read_claude_subscription()
+        metrics = ExecutionHistory(self.workspace / ".orchestrator" / "executions.jsonl").metrics_for("claude-code")
+        clauses = [f"{subscription} subscription"] if subscription is not None else []
+        if metrics.cost_samples:
+            noun = "execution" if metrics.cost_samples == 1 else "executions"
+            clauses.append(
+                f"logged in this project: ${metrics.total_cost_usd:.2f} across "
+                f"{metrics.cost_samples} {noun} with cost data"
+            )
+        else:
+            clauses.append("logged in this project: no cost data logged yet")
+        print(f"Claude Code: {'; '.join(clauses)} (no live quota % available locally)")
+
     def do_exit(self, arg: str) -> bool:
         """Exit the shell."""
         del arg
@@ -150,6 +171,21 @@ class OrchestratorShell(cmd.Cmd):
 
     def _format_percentage(self, value: float) -> str:
         return f"{round(value * 100)}%"
+
+    def _format_codex_usage(self, usage: CodexUsage | None) -> str:
+        if usage is None:
+            return "Codex: usage data not available"
+        clauses = []
+        if usage.plan_type is not None:
+            clauses.append(f"{usage.plan_type} plan")
+        if usage.used_percent is not None:
+            clauses.append(f"{usage.used_percent:g}% used")
+        reset_text = ""
+        if usage.resets_at is not None:
+            seconds = usage.resets_at - time.time()
+            if seconds >= 0:
+                reset_text = f" (resets in {int(seconds // 86400)}d)"
+        return f"Codex: {', '.join(clauses)}{reset_text}" if clauses else "Codex: usage data not available"
 
 
 if __name__ == "__main__":
