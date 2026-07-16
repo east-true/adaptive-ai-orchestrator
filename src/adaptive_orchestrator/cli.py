@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import shlex
+import sys
 from dataclasses import asdict
 from pathlib import Path
 
@@ -14,6 +15,7 @@ from .memory import EngineeringMemoryStore
 from .logging import JsonlExecutionLogger
 from .history import ExecutionHistory
 from .routing import AdaptiveRouter, TaskAnalyzer
+from .process_runner import SubprocessRunner
 from .verification import CommandVerifier
 from .workflow import EngineeringWorkflow, execution_succeeded
 
@@ -25,13 +27,16 @@ def build_parser() -> argparse.ArgumentParser:
     run = subparsers.add_parser("run", help="plan, execute, and optionally verify one task")
     run.add_argument("--workspace", type=Path, default=Path.cwd())
     run.add_argument("--agent", choices=("auto", "claude-code", "codex"), default="auto")
-    run.add_argument("--description", required=True)
-    run.add_argument("--objective", required=True)
+    run.add_argument("--description")
+    run.add_argument("--description-file", type=Path)
+    run.add_argument("--objective")
+    run.add_argument("--objective-file", type=Path)
     run.add_argument("--capability", choices=[item.value for item in Capability], action="append", default=[])
     run.add_argument("--constraint", action="append", default=[])
     run.add_argument("--priority", choices=[item.value for item in Priority], default=Priority.NORMAL.value)
     run.add_argument("--time-limit", type=float)
     _add_workflow_arguments(run)
+    run.set_defaults(_parser=run)
 
     run_plan = subparsers.add_parser("run-plan", help="run an explicit, ordered sequence of tasks from a JSON plan file")
     run_plan.add_argument(
@@ -81,6 +86,7 @@ def _add_workflow_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--escalation-risk-threshold", type=int, default=3, help="Minimum analyzed risk (0-5) that triggers escalation.")
     parser.add_argument("--escalation-uncertainty-threshold", type=int, default=3, help="Minimum analyzed uncertainty (0-5) that triggers escalation.")
     parser.add_argument("--escalation-difficulty-threshold", type=int, default=4, help="Minimum analyzed difficulty (1-5) that triggers escalation.")
+    parser.add_argument("--verbose", action="store_true", help="Stream subprocess stdout to stderr while the CLI waits for completion.")
 
 
 def _task_from_spec(spec: dict) -> Task:
@@ -122,10 +128,40 @@ def _memory_search_filters_from_args(args: argparse.Namespace) -> tuple[MemoryEn
     )
 
 
+def _resolve_text_argument(
+    args: argparse.Namespace,
+    value_name: str,
+    file_name: str,
+    label: str,
+    parser: argparse.ArgumentParser | None = None,
+) -> str:
+    value = getattr(args, value_name, None)
+    path = getattr(args, file_name, None)
+    provided = sum(item is not None for item in (value, path))
+    if provided != 1:
+        message = f"exactly one of --{value_name.replace('_', '-')} or --{file_name.replace('_', '-')} must be provided for {label}"
+        if parser is not None:
+            parser.error(message)
+        raise ValueError(message)
+    if path is not None:
+        text = path.read_text(encoding="utf-8")
+        return text[:-1] if text.endswith("\n") else text
+    return value
+
+
+def _resolve_description(args: argparse.Namespace, parser: argparse.ArgumentParser | None = None) -> str:
+    return _resolve_text_argument(args, "description", "description_file", "description", parser)
+
+
+def _resolve_objective(args: argparse.Namespace, parser: argparse.ArgumentParser | None = None) -> str:
+    return _resolve_text_argument(args, "objective", "objective_file", "objective", parser)
+
+
 def _build_workflow(args: argparse.Namespace, workspace: Path) -> EngineeringWorkflow:
     agents = (ClaudeCodeAgent(), CodexAgent())
     logger = JsonlExecutionLogger(workspace / ".orchestrator" / "executions.jsonl")
-    kernel = OrchestratorKernel({agent.agent_id: agent for agent in agents}, logger, workspace, include_git_diff=args.include_git_diff)
+    runner = SubprocessRunner(_verbose_output_callback(f"[{args.command}:{args.agent}]")) if args.verbose else SubprocessRunner()
+    kernel = OrchestratorKernel({agent.agent_id: agent for agent in agents}, logger, workspace, runner=runner, include_git_diff=args.include_git_diff)
     commands = [tuple(shlex.split(item)) for item in args.verify_command]
     verifier = CommandVerifier(commands[0] if commands else (), args.verify_time_limit, tuple(commands[1:]))
     router = AdaptiveRouter(TaskAnalyzer(), ExecutionHistory(workspace / ".orchestrator" / "executions.jsonl"))
@@ -135,8 +171,17 @@ def _build_workflow(args: argparse.Namespace, workspace: Path) -> EngineeringWor
     return EngineeringWorkflow(kernel, router, verifier, escalation_policy)
 
 
+def _verbose_output_callback(prefix: str):
+    def write_line(line: str) -> None:
+        sys.stderr.write(f"{prefix} {line}")
+        sys.stderr.flush()
+
+    return write_line
+
+
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
     workspace = args.workspace.resolve()
 
     if args.command == "memory":
@@ -159,9 +204,12 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({"steps": [{"plan": asdict(step.plan), "execution": asdict(step.record)} for step in result.steps], "stopped_early": result.stopped_early}, default=str, indent=2))
         return 0 if result.succeeded else 1
 
+    run_parser = getattr(args, "_parser", None)
+    description = _resolve_description(args, run_parser)
+    objective = _resolve_objective(args, run_parser)
     task = Task(
-        description=args.description,
-        objective=args.objective,
+        description=description,
+        objective=objective,
         constraints=tuple(args.constraint),
         required_capabilities=tuple(Capability(item) for item in args.capability),
         priority=Priority(args.priority),

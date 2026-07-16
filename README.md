@@ -54,6 +54,17 @@ PYTHONPATH=src python3 -m adaptive_orchestrator.cli run \
 
 The command analyzes task text to infer capabilities, difficulty, risk, and uncertainty. It then scores every capable agent using a configurable policy and local execution history, runs one selected agent, then runs the optional verification command(s). It returns the analysis and candidate scores as JSON and writes them to `.orchestrator/executions.jsonl`.
 
+If the task text is easier to keep in a file, use `--description-file` and `--objective-file` instead. The CLI reads UTF-8 text and strips a single trailing newline if present:
+
+```bash
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli run \
+  --workspace . --agent codex \
+  --description-file description.txt \
+  --objective-file objective.txt \
+  --capability testing --time-limit 300 \
+  --verify-command "python3 -m unittest discover -s tests -v"
+```
+
 The default policy is only a starting hypothesis: it mildly favors Codex for code/test/debug signals and Claude Code for repository/architecture/planning signals. Both remain eligible whenever they support the analyzed capabilities; selection is not a fixed role assignment. The policy and historical evidence are visible in every routing decision.
 
 Historical success/verification rates are confidence-weighted by sample count — a handful of logged runs pulls a candidate's score toward the same neutral baseline a brand-new agent gets, rather than being fully trusted. Set `Task.cost_limit_usd` and a candidate whose logged average cost (currently tracked for Claude Code only) exceeds it is penalized; leave it unset and cost has no effect on routing.
@@ -104,6 +115,17 @@ PYTHONPATH=src python3 -m adaptive_orchestrator.cli memory search \
   --tag memory \
   --keyword architecture
 ```
+
+## Watching a long run
+
+`run` and `run-plan` both accept `--verbose`, which streams the running agent's stdout to stderr as it arrives instead of staying silent until the process exits:
+
+```bash
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli run --agent codex --verbose \
+  --description "..." --objective "..."
+```
+
+stdout still only ever carries the final JSON result — `--verbose` output goes to stderr so scripts parsing stdout are unaffected.
 
 ## Escalation
 

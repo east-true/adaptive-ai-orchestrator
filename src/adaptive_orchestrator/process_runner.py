@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import subprocess
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 from time import perf_counter
-from typing import Protocol, Sequence
+from typing import Callable, Protocol, Sequence
 
 from .domain import ExecutionStatus
 
@@ -26,16 +27,51 @@ class ProcessRunner(Protocol):
 class SubprocessRunner:
     """Runs a CLI process without a shell and collects its complete result."""
 
+    def __init__(self, on_output_line: Callable[[str], None] | None = None) -> None:
+        self._on_output_line = on_output_line
+
+    @staticmethod
+    def _read_stream(stream, sink: list[str], on_line: Callable[[str], None] | None = None) -> None:
+        try:
+            for line in iter(stream.readline, ""):
+                sink.append(line)
+                if on_line is not None:
+                    on_line(line)
+        finally:
+            stream.close()
+
     def run(self, command: Sequence[str], cwd: Path, timeout_seconds: float | None) -> ProcessResult:
         started = perf_counter()
         command = tuple(command)
         try:
-            completed = subprocess.run(command, cwd=cwd, text=True, capture_output=True, check=False, timeout=timeout_seconds)
-            status = ExecutionStatus.COMPLETED if completed.returncode == 0 else ExecutionStatus.FAILED
-            return ProcessResult(command, status, completed.stdout, completed.stderr, completed.returncode, (perf_counter() - started) * 1000)
-        except subprocess.TimeoutExpired as exc:
-            stdout = exc.stdout if isinstance(exc.stdout, str) else ""
-            stderr = exc.stderr if isinstance(exc.stderr, str) else ""
-            return ProcessResult(command, ExecutionStatus.TIMED_OUT, stdout, stderr, None, (perf_counter() - started) * 1000)
+            process = subprocess.Popen(command, cwd=cwd, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1)
+            assert process.stdout is not None
+            assert process.stderr is not None
+
+            stdout_chunks: list[str] = []
+            stderr_chunks: list[str] = []
+            # Two reader threads keep stdout and stderr draining concurrently so neither pipe can block the child.
+            stdout_reader = threading.Thread(
+                target=self._read_stream,
+                args=(process.stdout, stdout_chunks, self._on_output_line),
+                daemon=True,
+            )
+            stderr_reader = threading.Thread(target=self._read_stream, args=(process.stderr, stderr_chunks), daemon=True)
+            stdout_reader.start()
+            stderr_reader.start()
+
+            try:
+                return_code = process.wait(timeout=timeout_seconds)
+                status = ExecutionStatus.COMPLETED if return_code == 0 else ExecutionStatus.FAILED
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
+                status = ExecutionStatus.TIMED_OUT
+                return_code = None
+            finally:
+                stdout_reader.join()
+                stderr_reader.join()
+
+            return ProcessResult(command, status, "".join(stdout_chunks), "".join(stderr_chunks), return_code, (perf_counter() - started) * 1000)
         except OSError as exc:
             return ProcessResult(command, ExecutionStatus.SPAWN_ERROR, "", str(exc), None, (perf_counter() - started) * 1000)

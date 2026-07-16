@@ -34,12 +34,20 @@ Historical evidence (success rate, verification pass rate) is now confidence-wei
 
 **Difficulty/risk no longer conflate thoroughness with complexity.** A real dogfooding run (using the orchestrator to delegate its own engineering-memory feature to Codex — see `memory.py`) surfaced this live: a long, well-specified, six-requirement task description hit the maximum difficulty (5) purely from text length and the number of keyword categories it happened to touch, and risk hit 4 because the test-writing instructions used the word "credential" as an example — not because the task was actually broad or security-sensitive. `difficulty` now weights `task.required_capabilities` (a deliberate, caller-declared signal) far more than merely-inferred-from-text capabilities (full weight vs. a third); the risk-keyword match now needs multiple distinct hits to reach its full contribution instead of any single incidental mention; and the SECURITY_REVIEW risk contribution only fires when that capability was explicitly required, not merely inferred from a stray word. Re-running the exact scenario that surfaced this: difficulty dropped from 5 to 3 and risk from 4 to 2 — below the default escalation thresholds, where before this would have triggered a wasteful second full agent run in `--agent auto` mode.
 
+## CLI ergonomics and progress visibility
+
+Found via dogfooding (using the orchestrator to delegate its own feature work to Codex — see "Engineering memory" above): a ~500-word task description was painful to pass through `--description "..."` on an actual shell command line, and a multi-minute run gave no sign of life until it exited, forcing external polling of `ps aux`/`git status` just to tell it was still working.
+
+`run`'s `--description`/`--objective` each now accept an alternative `--description-file`/`--objective-file` (mutually exclusive with the inline form, enforced via `parser.error`), reading UTF-8 text from a file instead of surviving shell quoting.
+
+`--verbose` (shared by `run` and `run-plan`) streams the running agent's stdout to stderr line-by-line as it arrives, prefixed with the command and requested agent, while stdout still only carries the final JSON result. This is purely additive: `SubprocessRunner` now takes an optional `on_output_line` callback and reads stdout/stderr concurrently via two threads instead of blocking on `subprocess.run`, but when no callback is given (the default), behavior is unchanged. It only echoes raw lines — it does not attempt to parse or pretty-print an agent's structured output, since that already happens after the process exits via `Agent.parse_result`.
+
 ## Deliberate boundaries
 
 - **Domain:** no SDK, filesystem, or subprocess dependency.
 - **Agent:** owns prompt construction, CLI syntax, and required-capability validation.
 - **Adaptive Router:** infers task signals, scores capable agents using configurable policy and local history, and emits an explainable decision.
-- **Process runner:** runs argument vectors without a shell, handles timeouts, and normalizes output/state.
+- **Process runner:** runs argument vectors without a shell, handles timeouts, normalizes output/state, and can optionally stream stdout as it arrives without changing what it returns.
 - **Git snapshot:** best-effort collection of workspace state after execution. It does not attribute changes to an agent.
 - **Telemetry:** records task, selected agent, command, timing, result, errors, workspace files, and an opt-in diff for later evaluation and routing.
 
