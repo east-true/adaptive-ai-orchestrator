@@ -6,6 +6,7 @@ import shlex
 import sys
 from dataclasses import asdict
 from pathlib import Path
+from typing import Sequence
 
 from .agents import ClaudeCodeAgent, CodexAgent
 from .domain import Capability, MemoryEntry, MemoryEntryType, Priority, Task
@@ -49,6 +50,19 @@ def build_parser() -> argparse.ArgumentParser:
     run_plan.add_argument("--agent", choices=("auto", "claude-code", "codex"), default="auto")
     run_plan.add_argument("--continue-on-failure", action="store_true", help="Run every step even if an earlier one failed (default: stop at the first failure).")
     _add_workflow_arguments(run_plan)
+
+    plan = subparsers.add_parser("plan", help="generate or validate a JSON plan file")
+    plan_subparsers = plan.add_subparsers(dest="plan_command", required=True)
+
+    plan_validate = plan_subparsers.add_parser("validate", help="validate a JSON plan file against the CLI plan schema")
+    plan_validate.add_argument("plan_file", type=Path, help="JSON file containing a non-empty array of task specs.")
+
+    plan_generate = plan_subparsers.add_parser("generate", help="generate a JSON plan file from a human request")
+    plan_generate.add_argument("request", help="The vague human request to turn into an ordered plan.")
+    plan_generate.add_argument("--workspace", type=Path, default=Path.cwd())
+    plan_generate.add_argument("--output", type=Path, default=None, help="Plan file to write; defaults to plan.json in the workspace.")
+    plan_generate.add_argument("--agent", choices=("auto", "claude-code", "codex"), default="auto")
+    _add_workflow_arguments(plan_generate)
 
     memory = subparsers.add_parser("memory", help="record or query engineering memory")
     memory_subparsers = memory.add_subparsers(dest="memory_command", required=True)
@@ -106,6 +120,51 @@ def _load_plan(path: Path) -> list[Task]:
     if not isinstance(specs, list) or not specs:
         raise ValueError(f"Plan file must contain a non-empty JSON list of task specs: {path}")
     return [_task_from_spec(spec) for spec in specs]
+
+
+def _validate_plan_file(path: Path) -> tuple[bool, str | None]:
+    try:
+        _load_plan(path)
+    except Exception as exc:  # noqa: BLE001 - deliberate CLI boundary: convert any parse failure into a one-line error.
+        return False, f"Invalid plan file {path}: {exc}"
+    return True, None
+
+
+def _unexpected_modified_files(modified_files: Sequence[str], expected_relative_path: str) -> list[str]:
+    return [item for item in modified_files if item != expected_relative_path]
+
+
+def _build_plan_generation_task(request: str, workspace: Path, output_path: Path) -> Task:
+    valid_capabilities = ", ".join(item.value for item in Capability)
+    valid_priorities = ", ".join(item.value for item in Priority)
+    description = (
+        "Inspect the repository as needed to understand it.\n"
+        f"Human request: {request}\n"
+        f"Workspace: {workspace}\n"
+        f"Resolved output path: {output_path}\n\n"
+        f"Write only a JSON array to {output_path}. Never modify any other file.\n"
+        "Break the request into as many ordered steps as are genuinely warranted; one step is acceptable if that is sufficient.\n"
+        "Each array element must be an object with exactly this schema:\n"
+        '- description: string, required\n'
+        '- objective: string, required\n'
+        '- constraints: array of strings, optional\n'
+        f"- capabilities: array of strings, optional; valid values: {valid_capabilities}\n"
+        f"- priority: string, optional; valid values: {valid_priorities}\n"
+        "- time_limit_seconds: number or null, optional\n"
+    )
+    objective = f"Write a valid JSON plan array to {output_path} for this request: {request}"
+    constraints = (
+        f"Write only the JSON array to {output_path}.",
+        "Do not modify any file other than the resolved output path.",
+        "Create parent directories for the output path if needed.",
+    )
+    return Task(
+        description=description,
+        objective=objective,
+        constraints=constraints,
+        required_capabilities=(Capability.REPOSITORY_UNDERSTANDING, Capability.PLANNING),
+        context={"request": request, "workspace": str(workspace), "output_path": str(output_path)},
+    )
 
 
 def _memory_entry_from_args(args: argparse.Namespace) -> MemoryEntry:
@@ -182,6 +241,18 @@ def _verbose_output_callback(prefix: str):
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+
+    # `plan validate` takes an explicit file path and has no --workspace of its own; it must be
+    # handled before resolving args.workspace, which does not exist on its subparser's namespace.
+    if args.command == "plan" and args.plan_command == "validate":
+        valid, error = _validate_plan_file(args.plan_file)
+        if not valid:
+            print(error, file=sys.stderr)
+            return 1
+        tasks = _load_plan(args.plan_file)
+        print(f"Valid plan file: {args.plan_file} ({len(tasks)} task(s))")
+        return 0
+
     workspace = args.workspace.resolve()
 
     if args.command == "memory":
@@ -196,15 +267,43 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps([asdict(entry) for entry in entries], default=str, indent=2))
         return 0
 
-    workflow = _build_workflow(args, workspace)
-
     if args.command == "run-plan":
+        workflow = _build_workflow(args, workspace)
         tasks = _load_plan(args.plan_file)
         result = workflow.run_plan(tasks, args.agent, stop_on_failure=not args.continue_on_failure)
         print(json.dumps({"steps": [{"plan": asdict(step.plan), "execution": asdict(step.record)} for step in result.steps], "stopped_early": result.stopped_early}, default=str, indent=2))
         return 0 if result.succeeded else 1
 
+    if args.command == "plan":
+        output = args.output or Path("plan.json")
+        resolved_output = (workspace / output).resolve()
+        validate_command = [sys.executable, "-m", "adaptive_orchestrator.cli", "plan", "validate", str(resolved_output)]
+        args.verify_command = [shlex.join(validate_command), *args.verify_command]
+        task = _build_plan_generation_task(args.request, workspace, resolved_output)
+        workflow = _build_workflow(args, workspace)
+        plan, record = workflow.run(task, args.agent)
+        if not execution_succeeded(record):
+            print(json.dumps({"plan": asdict(plan), "execution": asdict(record)}, default=str, indent=2))
+            return 1
+        try:
+            tasks = _load_plan(resolved_output)
+        except Exception as exc:  # noqa: BLE001 - the file should already have been validated; surface the failure cleanly if it changed.
+            print(f"Generated plan could not be read back from {resolved_output}: {exc}", file=sys.stderr)
+            return 1
+        try:
+            expected_relative_path = str(resolved_output.relative_to(workspace))
+        except ValueError:
+            expected_relative_path = str(resolved_output)
+        unexpected = _unexpected_modified_files(record.workspace_modified_files, expected_relative_path)
+        if unexpected:
+            print(f"Warning: workspace modified files other than the generated plan: {', '.join(unexpected)}", file=sys.stderr)
+        print(f"Plan written to {resolved_output}")
+        print(f"Steps: {len(tasks)}")
+        print(f"Next: PYTHONPATH=src python3 -m adaptive_orchestrator.cli run-plan {resolved_output} --workspace {workspace} ...")
+        return 0
+
     run_parser = getattr(args, "_parser", None)
+    workflow = _build_workflow(args, workspace)
     description = _resolve_description(args, run_parser)
     objective = _resolve_objective(args, run_parser)
     task = Task(

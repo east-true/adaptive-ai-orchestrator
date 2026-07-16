@@ -89,6 +89,93 @@ class LoadPlanTests(unittest.TestCase):
                 cli._load_plan(path)
 
 
+class MainPlanValidateDispatchTests(unittest.TestCase):
+    # Regression test: `plan validate`'s subparser has no --workspace, but main() used to
+    # unconditionally resolve args.workspace before dispatching on args.command, so every real
+    # `plan validate` invocation crashed with AttributeError - invisible to tests that only
+    # called the pure _validate_plan_file helper directly instead of going through main().
+    def test_plan_validate_runs_through_main_without_a_workspace_argument(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "plan.json"
+            path.write_text(json.dumps([{"description": "Step one", "objective": "First"}]))
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                exit_code = cli.main(["plan", "validate", str(path)])
+            self.assertEqual(exit_code, 0)
+            self.assertIn("1 task(s)", stdout.getvalue())
+
+    def test_plan_validate_reports_failure_through_main(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "plan.json"
+            path.write_text("{not-json")
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                exit_code = cli.main(["plan", "validate", str(path)])
+            self.assertEqual(exit_code, 1)
+            self.assertIn("Invalid plan file", stderr.getvalue())
+
+
+class ValidatePlanFileTests(unittest.TestCase):
+    def test_returns_success_for_valid_plan_file(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "plan.json"
+            path.write_text(json.dumps([
+                {"description": "Step one", "objective": "First"},
+            ]))
+            self.assertEqual(cli._validate_plan_file(path), (True, None))
+
+    def test_returns_error_for_invalid_json(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "plan.json"
+            path.write_text("{not-json")
+            ok, message = cli._validate_plan_file(path)
+            self.assertFalse(ok)
+            self.assertIn("Invalid plan file", message or "")
+
+    def test_returns_error_for_wrong_shape_json(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "plan.json"
+            path.write_text(json.dumps({"description": "not a list"}))
+            ok, message = cli._validate_plan_file(path)
+            self.assertFalse(ok)
+            self.assertIn("non-empty JSON list", message or "")
+
+    def test_returns_error_for_empty_list(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "plan.json"
+            path.write_text(json.dumps([]))
+            ok, message = cli._validate_plan_file(path)
+            self.assertFalse(ok)
+            self.assertIn("non-empty JSON list", message or "")
+
+
+class PlanGenerationTaskTests(unittest.TestCase):
+    def test_builds_planning_task_with_schema_and_required_capabilities(self) -> None:
+        workspace = Path("/workspace")
+        output_path = Path("/workspace/plan.json")
+        task = cli._build_plan_generation_task("Add a regression test", workspace, output_path)
+        self.assertIn("Add a regression test", task.description)
+        self.assertIn("description: string, required", task.description)
+        self.assertIn("objective: string, required", task.description)
+        self.assertIn("constraints: array of strings, optional", task.description)
+        self.assertIn("repository_understanding", task.description)
+        self.assertIn("planning", task.description)
+        self.assertIn("low, normal, high, critical", task.description)
+        self.assertEqual(task.required_capabilities, (Capability.REPOSITORY_UNDERSTANDING, Capability.PLANNING))
+        self.assertIn(str(output_path), task.objective)
+
+
+class UnexpectedModifiedFilesTests(unittest.TestCase):
+    def test_returns_empty_list_for_matching_path(self) -> None:
+        self.assertEqual(cli._unexpected_modified_files(["plan.json"], "plan.json"), [])
+
+    def test_returns_unexpected_paths_for_non_matching_path(self) -> None:
+        self.assertEqual(cli._unexpected_modified_files(["plan.json", "README.md"], "plan.json"), ["README.md"])
+
+    def test_returns_empty_list_when_no_files_were_modified(self) -> None:
+        self.assertEqual(cli._unexpected_modified_files([], "plan.json"), [])
+
+
 class MemoryEntryFromArgsTests(unittest.TestCase):
     def test_builds_entry_from_record_arguments(self) -> None:
         args = type("Args", (), {

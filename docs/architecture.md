@@ -16,6 +16,12 @@ Task -> Task analysis -> Adaptive Router -> CLI Agent (capabilities + command bu
 
 `CommandVerifier` similarly gained `additional_commands: Sequence[Sequence[str]]` alongside its original single `command` field (fully backward compatible — existing single-command callers are unaffected). Every configured command runs regardless of the others' outcome, since they are typically independent checks (lint, typecheck, test); the aggregate `VerificationResult.status` is the worst of the individual outcomes, with per-command output concatenated under a `$ <command>` header.
 
+## Planner
+
+Phase 2 of `project-constitution.md` names the control loop as `Planner -> Executor -> Verifier`. The `plan generate` CLI subcommand is that planner: it asks an existing CLI agent (Claude Code or Codex, through the same adapter layer used for `run`) to write a plan file, then validates it by running the unchanged `EngineeringWorkflow.run` pipeline with a `CommandVerifier` self-check that calls `plan validate`.
+
+That choice keeps the system inside the existing CLI-agent boundary. It does not add a new LLM SDK/API dependency, and it does not touch Phase 6 (`API/SDK Integration`) at all. The planner simply reuses the same routing, execution, verification, and escalation machinery that already exists for normal tasks, but points it at a planning task instead of an implementation task.
+
 ## Engineering memory
 
 `EngineeringMemoryStore` keeps an append-only JSONL memory log separate from execution telemetry. It stores caller-authored `MemoryEntry`s for architecture decisions, design reasoning, trade-offs, failure history, project context, and code evolution, and it can query them by type, tag, or keyword. That separation matters: execution telemetry answers "what happened," while engineering memory answers "what should we remember," and both stay explicit rather than inferred from free text or agent output.

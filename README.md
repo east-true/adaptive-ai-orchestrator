@@ -27,7 +27,7 @@ src/adaptive_orchestrator/
   verification.py # runs one or more shell-free verification commands, worst-of aggregation
   escalation.py   # decides whether a second agent's attempt is warranted
   workflow.py     # wires selection + execution + verification + escalation; run() and run_plan()
-  cli.py          # `run`, `run-plan`, and `memory` subcommands
+  cli.py          # `run`, `run-plan`, `plan`, and `memory` subcommands
   tools.py        # workspace-bounded file/shell/git tool runtime
   example.py      # minimal end-to-end usage without a real CLI agent
 tests/            # unit and end-to-end prototype tests
@@ -93,6 +93,26 @@ PYTHONPATH=src python3 -m adaptive_orchestrator.cli run-plan plan.json \
 ```
 
 Each step runs through the exact same routing/execution/verification/escalation pipeline as `run`. By default the plan stops at the first step that doesn't succeed; pass `--continue-on-failure` to run every step regardless and inspect all of them.
+
+## Generate a plan
+
+`plan validate` checks that a JSON file matches the plan schema expected by `run-plan`. `plan generate` asks an existing CLI agent to turn a one-line request into that same JSON shape, then validates the result with the same workflow/verifier stack. If you do not pass `--output`, it writes `plan.json` in the workspace.
+
+```bash
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli plan generate \
+  "Add a regression test for the login bug" \
+  --workspace . \
+  --output plans/login-plan.json \
+  --agent auto
+
+sed -n '1,200p' plans/login-plan.json
+
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli plan validate plans/login-plan.json
+
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli run-plan plans/login-plan.json \
+  --workspace . --agent auto \
+  --verify-command "python3 -m unittest discover -s tests -v"
+```
 
 ## Record engineering memory
 
