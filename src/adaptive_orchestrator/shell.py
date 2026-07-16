@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 
 from . import cli
+from .agents import default_agent_ids
 from .history import ExecutionHistory
 from .usage import CodexUsage, read_claude_subscription, read_codex_usage
 
@@ -35,8 +36,9 @@ class OrchestratorShell(cmd.Cmd):
         if not text:
             print(self.agent)
             return
-        if text not in {"auto", "claude-code", "codex"}:
-            print("Error: agent must be one of auto, claude-code, codex")
+        allowed = ("auto", *default_agent_ids())
+        if text not in allowed:
+            print(f"Error: agent must be one of {', '.join(allowed)}")
             return
         self.agent = text
         print(f"Agent set to {self.agent}")
@@ -101,9 +103,16 @@ class OrchestratorShell(cmd.Cmd):
         """Show per-agent execution history for the current workspace."""
         del arg
         history = ExecutionHistory(self.workspace / ".orchestrator" / "executions.jsonl")
-        for agent_id in ("codex", "claude-code"):
+        for agent_id in self._history_agent_ids(history):
             metrics = history.metrics_for(agent_id)
             print(self._format_history_line(agent_id, metrics.executions, metrics.success_rate, metrics.verification_pass_rate))
+
+    @staticmethod
+    def _history_agent_ids(history: ExecutionHistory) -> list[str]:
+        # Registered agents always show, so a freshly added one reports "no data yet" instead of
+        # vanishing; ids that exist only in the log still show, so past runs survive a rename.
+        registered = list(default_agent_ids())
+        return registered + [item for item in history.agent_ids() if item not in registered]
 
     def do_usage(self, arg: str) -> None:
         """Show locally available account usage information."""

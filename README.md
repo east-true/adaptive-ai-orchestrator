@@ -151,8 +151,8 @@ Agent set to codex
 adaptive-orchestrator> run --description "Run the unit tests" --objective "Confirm the suite passes."
 { ... existing cli.main JSON output ... }
 adaptive-orchestrator> history
-codex: 6 executions, 83% success, 100% verification pass
-claude-code: 0 executions, no data yet
+claude-code: 4 executions, 100% success, 100% verification pass
+codex: 8 executions, 88% success, 100% verification pass
 adaptive-orchestrator> usage
 Codex: plus plan, 12% used (resets in 4d)
 Claude Code: pro subscription; logged in this project: $1.42 across 3 executions with cost data (no live quota % available locally)

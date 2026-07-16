@@ -39,6 +39,21 @@ class ExecutionHistory:
     def __init__(self, path: Path) -> None:
         self.path = path
 
+    def agent_ids(self) -> tuple[str, ...]:
+        """Distinct agent ids observed in the log, in first-seen order."""
+        if not self.path.exists():
+            return ()
+        seen: dict[str, None] = {}
+        for line in self.path.read_text(encoding="utf-8").splitlines():
+            try:
+                item = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            agent_id = item.get("agent_id")
+            if isinstance(agent_id, str):
+                seen.setdefault(agent_id, None)
+        return tuple(seen)
+
     def metrics_for(self, agent_id: str) -> AgentMetrics:
         metrics = AgentMetrics()
         if not self.path.exists():
