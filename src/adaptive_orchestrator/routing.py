@@ -110,8 +110,14 @@ class AdaptiveRouter:
 
     def select(self, task: Task, agents: Iterable[Agent], requested_agent_id: str = "auto") -> ExecutionPlan:
         analysis = self._analyzer.analyze(task)
-        candidates = [agent for agent in agents if agent.supports(analysis.capabilities)]
+        available = tuple(agents)  # the parameter is an Iterable; it is scanned more than once below
+        candidates = [agent for agent in available if agent.supports(analysis.capabilities)]
         if requested_agent_id != "auto":
+            known = {agent.agent_id for agent in available}
+            # An unknown id and a known-but-incapable id are different failures; saying "cannot
+            # satisfy capabilities" for a typo sends the reader looking at the wrong thing.
+            if requested_agent_id not in known:
+                raise ValueError(f"Unknown agent: {requested_agent_id}. Available: {', '.join(sorted(known))}")
             candidates = [agent for agent in candidates if agent.agent_id == requested_agent_id]
             if not candidates:
                 raise ValueError(f"Requested agent cannot satisfy capabilities: {requested_agent_id}")

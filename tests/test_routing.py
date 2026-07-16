@@ -61,6 +61,37 @@ class AdaptiveRouterTests(unittest.TestCase):
             metrics = ExecutionHistory(Path(directory) / "missing.jsonl").metrics_for("codex")
             self.assertIsNone(metrics.average_cost_usd)
 
+    def test_history_reports_distinct_agent_ids_in_first_seen_order(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "history.jsonl"
+            lines = [
+                {"agent_id": "codex", "status": "completed"},
+                {"agent_id": "claude-code", "status": "completed"},
+                {"agent_id": "codex", "status": "failed"},
+                {"not_a_record": True},
+            ]
+            path.write_text("\n".join(json.dumps(line) for line in lines) + "\nnot json\n")
+            self.assertEqual(ExecutionHistory(path).agent_ids(), ("codex", "claude-code"))
+
+    def test_history_agent_ids_is_empty_without_a_log(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            self.assertEqual(ExecutionHistory(Path(directory) / "missing.jsonl").agent_ids(), ())
+
+    def test_unknown_requested_agent_is_distinguished_from_lacking_capability(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            router = AdaptiveRouter(TaskAnalyzer(), ExecutionHistory(Path(directory) / "history.jsonl"))
+            task = Task("Run tests", "Verify.")
+
+            with self.assertRaises(ValueError) as unknown:
+                router.select(task, self.agents, "codx")
+            self.assertIn("Unknown agent: codx", str(unknown.exception))
+            self.assertIn("codex", str(unknown.exception))  # lists what is available
+
+            incapable = (CodexAgent(capabilities=frozenset()),)
+            with self.assertRaises(ValueError) as lacking:
+                router.select(task, incapable, "codex")
+            self.assertIn("cannot satisfy capabilities", str(lacking.exception))
+
     def test_all_failures_is_not_conflated_with_no_history(self) -> None:
         # Regression test: `metrics.success_rate or 0.5` treated a real 0.0 success rate
         # (an agent that has always failed) the same as "no history yet" (also falsy-ish

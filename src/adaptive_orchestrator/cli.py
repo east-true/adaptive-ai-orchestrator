@@ -8,7 +8,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Sequence
 
-from .agents import ClaudeCodeAgent, CodexAgent
+from .agents import default_agent_ids, default_agents
 from .domain import Capability, MemoryEntry, MemoryEntryType, Priority, Task
 from .escalation import EscalationPolicy
 from .kernel import OrchestratorKernel
@@ -27,7 +27,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     run = subparsers.add_parser("run", help="plan, execute, and optionally verify one task")
     run.add_argument("--workspace", type=Path, default=Path.cwd())
-    run.add_argument("--agent", choices=("auto", "claude-code", "codex"), default="auto")
+    _add_agent_argument(run)
     run.add_argument("--description")
     run.add_argument("--description-file", type=Path)
     run.add_argument("--objective")
@@ -47,7 +47,7 @@ def build_parser() -> argparse.ArgumentParser:
         '"capabilities": [...], "priority", "time_limit_seconds"}. Only description/objective are required.',
     )
     run_plan.add_argument("--workspace", type=Path, default=Path.cwd())
-    run_plan.add_argument("--agent", choices=("auto", "claude-code", "codex"), default="auto")
+    _add_agent_argument(run_plan)
     run_plan.add_argument("--continue-on-failure", action="store_true", help="Run every step even if an earlier one failed (default: stop at the first failure).")
     _add_workflow_arguments(run_plan)
 
@@ -61,7 +61,7 @@ def build_parser() -> argparse.ArgumentParser:
     plan_generate.add_argument("request", help="The vague human request to turn into an ordered plan.")
     plan_generate.add_argument("--workspace", type=Path, default=Path.cwd())
     plan_generate.add_argument("--output", type=Path, default=None, help="Plan file to write; defaults to plan.json in the workspace.")
-    plan_generate.add_argument("--agent", choices=("auto", "claude-code", "codex"), default="auto")
+    _add_agent_argument(plan_generate)
     _add_workflow_arguments(plan_generate)
 
     memory = subparsers.add_parser("memory", help="record or query engineering memory")
@@ -84,6 +84,11 @@ def build_parser() -> argparse.ArgumentParser:
     memory_search.add_argument("--keyword")
 
     return parser
+
+
+def _add_agent_argument(parser: argparse.ArgumentParser) -> None:
+    """The --agent flag, shared by every subcommand that routes a task."""
+    parser.add_argument("--agent", choices=("auto", *default_agent_ids()), default="auto")
 
 
 def _add_workflow_arguments(parser: argparse.ArgumentParser) -> None:
@@ -217,7 +222,7 @@ def _resolve_objective(args: argparse.Namespace, parser: argparse.ArgumentParser
 
 
 def _build_workflow(args: argparse.Namespace, workspace: Path) -> EngineeringWorkflow:
-    agents = (ClaudeCodeAgent(), CodexAgent())
+    agents = default_agents()
     logger = JsonlExecutionLogger(workspace / ".orchestrator" / "executions.jsonl")
     runner = SubprocessRunner(_verbose_output_callback(f"[{args.command}:{args.agent}]")) if args.verbose else SubprocessRunner()
     kernel = OrchestratorKernel({agent.agent_id: agent for agent in agents}, logger, workspace, runner=runner, include_git_diff=args.include_git_diff)

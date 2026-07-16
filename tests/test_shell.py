@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
+from adaptive_orchestrator.agents import default_agent_ids
 from adaptive_orchestrator.shell import OrchestratorShell
 from adaptive_orchestrator.usage import CodexUsage
 
@@ -183,10 +184,22 @@ class ShellHistoryTests(unittest.TestCase):
             with contextlib.redirect_stdout(stdout):
                 shell.onecmd("history")
             output = stdout.getvalue().strip().splitlines()
-            self.assertEqual(len(output), 2)
-            self.assertIn("codex:", output[0])
-            self.assertIn("claude-code:", output[1])
+            self.assertEqual([line.split(":")[0] for line in output], list(default_agent_ids()))
             self.assertTrue(all("no data yet" in line for line in output))
+
+    def test_history_includes_agent_ids_found_only_in_the_log(self) -> None:
+        # A rename or unregistration must not hide past runs, so the log is a source too.
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell()
+            shell.workspace = Path(directory)
+            log = shell.workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir()
+            log.write_text(json.dumps({"agent_id": "retired-agent", "status": "completed", "duration_ms": 1}) + "\n")
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("history")
+            output = stdout.getvalue().strip().splitlines()
+            self.assertEqual([line.split(":")[0] for line in output], [*default_agent_ids(), "retired-agent"])
 
 
 class ShellUsageTests(unittest.TestCase):

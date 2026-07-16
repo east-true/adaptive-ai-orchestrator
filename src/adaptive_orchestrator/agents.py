@@ -136,3 +136,12 @@ class CodexAgent(Agent):
             session_id=thread_id,
         )
         return result_text or stdout, metadata
+
+
+def default_agents() -> tuple[Agent, ...]:
+    """The agents registered when a caller does not supply its own set."""
+    return (ClaudeCodeAgent(), CodexAgent())
+
+
+def default_agent_ids() -> tuple[str, ...]:
+    return tuple(agent.agent_id for agent in default_agents())
