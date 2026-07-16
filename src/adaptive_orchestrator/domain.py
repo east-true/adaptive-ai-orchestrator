@@ -61,7 +61,7 @@ class Task:
 @dataclass(frozen=True, slots=True)
 class VerificationResult:
     status: VerificationStatus
-    command: Sequence[str] = field(default_factory=tuple)
+    commands: Sequence[Sequence[str]] = field(default_factory=tuple)
     stdout: str | None = None
     stderr: str | None = None
     exit_code: int | None = None

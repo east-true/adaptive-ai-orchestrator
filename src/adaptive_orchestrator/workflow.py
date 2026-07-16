@@ -1,16 +1,50 @@
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import dataclass, replace
+from typing import Sequence
 
-from .domain import EscalationRecord, ExecutionRecord, Task
+from .domain import EscalationRecord, ExecutionRecord, ExecutionStatus, Task, VerificationStatus
 from .escalation import EscalationPolicy
 from .kernel import OrchestratorKernel
 from .planning import CapabilitySelector, ExecutionPlan
 from .verification import CommandVerifier
 
 
+def execution_succeeded(record: ExecutionRecord) -> bool:
+    """True if the record itself, or its escalated attempt, completed and passed/skipped verification."""
+
+    def _ok(candidate: ExecutionRecord) -> bool:
+        return candidate.status is ExecutionStatus.COMPLETED and candidate.verification is not None and candidate.verification.status in {
+            VerificationStatus.PASSED,
+            VerificationStatus.SKIPPED,
+        }
+
+    return _ok(record) or bool(record.escalation and _ok(record.escalation.record))
+
+
+@dataclass(frozen=True, slots=True)
+class StepResult:
+    plan: ExecutionPlan
+    record: ExecutionRecord
+
+
+@dataclass(frozen=True, slots=True)
+class WorkflowResult:
+    """The outcome of an explicit, caller-structured sequence of tasks (see `run_plan`)."""
+
+    steps: tuple[StepResult, ...]
+    stopped_early: bool
+
+    @property
+    def succeeded(self) -> bool:
+        return not self.stopped_early and all(execution_succeeded(step.record) for step in self.steps)
+
+
 class EngineeringWorkflow:
-    """Planning, single-agent-first execution, optional verification, and measured escalation."""
+    """Planning, single-agent-first execution, optional verification, and measured escalation.
+
+    `run` handles one task; `run_plan` sequences an explicit, caller-supplied list of tasks through it.
+    """
 
     def __init__(
         self,
@@ -43,6 +77,22 @@ class EngineeringWorkflow:
         record = replace(record, escalation=escalation)
         self._kernel.log(record)
         return plan, record
+
+    def run_plan(self, tasks: Sequence[Task], requested_agent_id: str = "auto", stop_on_failure: bool = True) -> WorkflowResult:
+        """Runs an explicit, caller-structured sequence of tasks through `run`, one step at a time.
+
+        There is no inference of structure from a single task's free-text
+        description; the plan's structure is exactly the list the caller
+        supplied. Each step reuses the full single-task pipeline (routing,
+        execution, verification, escalation) unchanged.
+        """
+        steps: list[StepResult] = []
+        for task in tasks:
+            plan, record = self.run(task, requested_agent_id)
+            steps.append(StepResult(plan, record))
+            if stop_on_failure and not execution_succeeded(record):
+                return WorkflowResult(tuple(steps), stopped_early=True)
+        return WorkflowResult(tuple(steps), stopped_early=False)
 
     def _run_agent(self, task: Task, plan: ExecutionPlan) -> ExecutionRecord:
         record = self._kernel.execute(task, plan.agent_id, log_execution=False)

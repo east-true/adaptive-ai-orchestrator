@@ -1,6 +1,6 @@
 # Adaptive AI Software Engineering Orchestrator — Kernel v0.1
 
-This repository contains the first, intentionally small control-plane kernel. It controls logged-in coding-agent CLIs, not LLM SDKs or APIs, and does not yet implement multi-agent collaboration.
+This repository contains the first, intentionally small control-plane kernel. It controls logged-in coding-agent CLIs, not LLM SDKs or APIs. Single-agent-first is still the default: a task runs on exactly one selected agent, and the Kernel escalates to exactly one more only when execution failure, verification failure, or high analyzed risk/uncertainty/difficulty warrants it (see "Escalation" below). It does not implement full multi-agent orchestration (parallel or collaborating agents) — that remains project-constitution.md's Phase 5.
 
 ## Architecture decision
 
@@ -14,12 +14,21 @@ Starting with a web framework and provider SDKs would make an early API wrapper,
 
 ```
 src/adaptive_orchestrator/
-  domain.py       # vendor-neutral task and execution contracts
+  domain.py       # vendor-neutral task, execution, and verification contracts
   agents.py       # CLI adapters: Claude Code and Codex + declared capabilities
   process_runner.py # timeout, output, and process-status collection
   git_snapshot.py # best-effort changed-file and diff collection
   logging.py      # append-only execution telemetry
   kernel.py       # single-agent-first coordinator
+  history.py      # reads JSONL telemetry into per-agent metrics
+  routing.py      # task analysis (capabilities/difficulty/risk/uncertainty) + adaptive agent scoring
+  planning.py      # deterministic single-step capability-only selector
+  verification.py # runs one or more shell-free verification commands, worst-of aggregation
+  escalation.py   # decides whether a second agent's attempt is warranted
+  workflow.py     # wires selection + execution + verification + escalation; run() and run_plan()
+  cli.py          # `run` and `run-plan` subcommands
+  tools.py        # workspace-bounded file/shell/git tool runtime
+  example.py      # minimal end-to-end usage without a real CLI agent
 tests/            # unit and end-to-end prototype tests
 docs/             # architecture and roadmap decisions
 ```
@@ -42,9 +51,34 @@ PYTHONPATH=src python3 -m adaptive_orchestrator.cli run \
   --verify-command "python3 -m unittest discover -s tests -v"
 ```
 
-The command analyzes task text to infer capabilities, difficulty, risk, and uncertainty. It then scores every capable agent using a configurable policy and local execution history, runs one selected agent, then runs the optional verification command. It returns the analysis and candidate scores as JSON and writes them to `.orchestrator/executions.jsonl`.
+The command analyzes task text to infer capabilities, difficulty, risk, and uncertainty. It then scores every capable agent using a configurable policy and local execution history, runs one selected agent, then runs the optional verification command(s). It returns the analysis and candidate scores as JSON and writes them to `.orchestrator/executions.jsonl`.
 
 The default policy is only a starting hypothesis: it mildly favors Codex for code/test/debug signals and Claude Code for repository/architecture/planning signals. Both remain eligible whenever they support the analyzed capabilities; selection is not a fixed role assignment. The policy and historical evidence are visible in every routing decision.
+
+`--verify-command` is repeatable — every configured check runs (they're treated as independent, e.g. lint + typecheck + test) and the worst outcome wins:
+
+```bash
+--verify-command "ruff check ." --verify-command "python3 -m unittest discover -s tests -v"
+```
+
+## Run a structured plan
+
+A plan is an explicit, caller-authored ordered list of tasks — there is no inference of steps from free-text prose, since guessing at structure that isn't really there (e.g. treating "the bug in section 2.1" as step "2.1") is a correctness risk, not a convenience. A JSON plan file looks like:
+
+```json
+[
+  {"description": "Fix the failing login test", "objective": "Login flow works again", "capabilities": ["debugging"]},
+  {"description": "Add a regression test for the login fix", "objective": "Prevent recurrence", "capabilities": ["testing"]}
+]
+```
+
+```bash
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli run-plan plan.json \
+  --workspace . --agent auto \
+  --verify-command "python3 -m unittest discover -s tests -v"
+```
+
+Each step runs through the exact same routing/execution/verification/escalation pipeline as `run`. By default the plan stops at the first step that doesn't succeed; pass `--continue-on-failure` to run every step regardless and inspect all of them.
 
 ## Escalation
 
@@ -81,4 +115,4 @@ The current implementation was locally validated against Claude Code `2.1.211` a
 
 ## Next development increment
 
-Verify Codex CLI's `exec --json` successful-turn schema once its usage cap resets, then extend `CodexAgent.parse_result` to match `ClaudeCodeAgent`'s normalized metadata. Separately, expand the planner/verifier loop with structured task plans and richer verification.
+Verify Codex CLI's `exec --json` successful-turn schema once its usage cap resets, then extend `CodexAgent.parse_result` to match `ClaudeCodeAgent`'s normalized metadata. Separately, expand the current task-analysis router with measured cost, richer risk signals, and sufficient observed telemetry.
