@@ -14,6 +14,7 @@ Starting with a web framework and provider SDKs would make an early API wrapper,
 
 ```
 src/adaptive_orchestrator/
+  __init__.py     # public re-exports (Agent, Task, OrchestratorKernel, EngineeringMemoryStore, ...)
   domain.py       # vendor-neutral task, execution, and verification contracts
   agents.py       # CLI adapters: Claude Code and Codex + declared capabilities
   process_runner.py # timeout, output, and process-status collection
