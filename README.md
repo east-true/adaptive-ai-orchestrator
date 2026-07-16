@@ -110,11 +110,11 @@ The current implementation was locally validated against Claude Code `2.1.211` a
 ## Current limits
 
 - Routing is rule-based and its initial preference values are not learned from enough production evidence yet.
-- Claude Code's `--print --output-format json` output is parsed into normalized `ExecutionMetadata` (cost, tokens, turns, session id); Codex CLI still returns plain text. Codex CLI 0.144.5 supports `exec --json`, but its successful-turn event shape has not been verified live — the local Codex CLI account hit its usage cap while validating this (30-day rolling window, reset ~2026-08-16). Only the error-turn events (`thread.started`/`turn.started`/`error`/`turn.failed`) were confirmed. Guessing at the unverified success schema risked silently wrong metadata or dumping the raw JSONL stream as the result text, so `CodexAgent` intentionally stays on plain-text output (see the comment on `CodexAgent.build_command` in `agents.py`) until the schema can be confirmed against a real successful run.
+- Both adapters parse structured CLI output into normalized `ExecutionMetadata`: Claude Code's `--print --output-format json` (verified against `2.1.211`) and Codex CLI's `exec --json` (verified against `0.144.5`). Codex CLI does not expose a cost field the way Claude Code does, so `ExecutionMetadata.cost_usd` stays `None` for Codex executions — this reflects what the CLI actually reports, not a parsing gap.
 - Cost limits cannot be reliably enforced for subscription-backed CLIs.
 - The JSONL log records telemetry but is not a durable queryable memory system.
 - Log redaction is best-effort; it cannot guarantee removal of every secret embedded in free text or diffs.
 
 ## Next development increment
 
-Verify Codex CLI's `exec --json` successful-turn schema once its usage cap resets, then extend `CodexAgent.parse_result` to match `ClaudeCodeAgent`'s normalized metadata. Separately, expand the current task-analysis router with measured cost, richer risk signals, and sufficient observed telemetry.
+Store architecture decisions and evaluation outcomes as engineering memory (project-constitution.md Phase 3) — the JSONL log is telemetry, not a queryable knowledge base. Separately, tune escalation thresholds from observed telemetry instead of fixed defaults once there's enough of it.

@@ -90,10 +90,49 @@ class CodexAgent(Agent):
     sandbox_mode: str = "workspace-write"
     capabilities: frozenset[Capability] = frozenset(Capability)
 
-    # Codex CLI 0.144.5 supports `exec --json`, but its successful-turn event
-    # shape has not been verified live yet (only the error-turn events have:
-    # thread.started/turn.started/error/turn.failed). Guessing at the success
-    # schema risks silently surfacing wrong metadata or the raw JSONL stream
-    # as the result text, so this stays on plain-text output until verified.
     def build_command(self, prompt: str, workspace: Path) -> Sequence[str]:
-        return (self.executable, "exec", "--sandbox", self.sandbox_mode, "--cd", str(workspace), prompt)
+        return (self.executable, "exec", "--sandbox", self.sandbox_mode, "--cd", str(workspace), "--json", prompt)
+
+    def parse_result(self, stdout: str) -> tuple[str | None, ExecutionMetadata | None]:
+        # Verified live against Codex CLI 0.144.5's `exec --json`: thread.started{thread_id},
+        # item.completed{item:{type, text}} (only type "agent_message" carries the final answer;
+        # other item types like command_execution are intentionally ignored here),
+        # turn.completed{usage:{input_tokens, cached_input_tokens, output_tokens,
+        # reasoning_output_tokens}}, and on failure error{message}/turn.failed{error}. No cost
+        # field is exposed, unlike Claude Code's --output-format json.
+        events: list[dict] = []
+        for line in stdout.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                events.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue  # a truncated/partial line (e.g. after a timeout); skip, don't discard the rest
+        if not events:
+            return stdout or None, None
+
+        result_text: str | None = None
+        thread_id: str | None = None
+        usage: dict | None = None
+        for event in events:
+            event_type = event.get("type")
+            item = event.get("item") or {}
+            if event_type == "thread.started":
+                thread_id = event.get("thread_id")
+            elif event_type == "item.completed" and item.get("type") == "agent_message":
+                result_text = item.get("text")
+            elif event_type == "turn.completed":
+                usage = event.get("usage")
+            elif event_type in {"error", "turn.failed"}:
+                message = event.get("message") or (event.get("error") or {}).get("message")
+                if message:
+                    result_text = result_text or message
+
+        metadata = ExecutionMetadata(
+            input_tokens=(usage or {}).get("input_tokens"),
+            output_tokens=(usage or {}).get("output_tokens"),
+            cached_input_tokens=(usage or {}).get("cached_input_tokens"),
+            session_id=thread_id,
+        )
+        return result_text or stdout, metadata
