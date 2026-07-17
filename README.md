@@ -1,6 +1,6 @@
 # Adaptive AI Software Engineering Orchestrator — Kernel v0.1
 
-This repository contains the first, intentionally small control-plane kernel. It controls logged-in coding-agent CLIs, not LLM SDKs or APIs. Single-agent-first is still the default: a task runs on exactly one selected agent, and the Kernel escalates to exactly one more only when execution failure, verification failure, or high analyzed risk/uncertainty/difficulty warrants it (see "Escalation" below). It does not implement full multi-agent orchestration (parallel or collaborating agents) — that remains project-constitution.md's Phase 5.
+This repository contains the first, intentionally small control-plane kernel. It controls logged-in coding-agent CLIs, not LLM SDKs or APIs. Single-agent-first is still the default: the workflow runs one selected agent first and escalates to exactly one more only when execution failure, verification failure, or high analyzed risk/uncertainty/difficulty warrants it (see "Escalation" below). It does not implement full multi-agent orchestration (parallel or collaborating agents) — that remains project-constitution.md's Phase 5.
 
 ## Architecture decision
 
@@ -29,6 +29,8 @@ src/adaptive_orchestrator/
   escalation.py   # decides whether a second agent's attempt is warranted
   workflow.py     # wires selection + execution + verification + escalation; run() and run_plan()
   cli.py          # `run`, `run-plan`, `plan`, and `memory` subcommands
+  shell.py        # interactive session UX over the existing CLI dispatch
+  usage.py        # reads locally available Codex/Claude account information
   tools.py        # workspace-bounded file/shell/git tool runtime
   example.py      # minimal end-to-end usage without a real CLI agent
 tests/            # unit and end-to-end prototype tests
@@ -167,38 +169,67 @@ If you want to set the workspace and agent once, then issue short commands repea
 
 ```bash
 PYTHONPATH=src python3 -m adaptive_orchestrator.shell
-Adaptive Orchestrator shell. Type help or ? for commands.
-adaptive-orchestrator> workspace .
+Adaptive Orchestrator shell. Type help or ? for commands; task <request> for a quick run.
+adaptive[auto:adaptive-ai-orchestrator]> workspace .
 Workspace set to /home/leo/adaptive-ai-orchestrator
-adaptive-orchestrator> agent codex
+adaptive[auto:adaptive-ai-orchestrator]> agent codex
 Agent set to codex
-adaptive-orchestrator> run --description "Run the unit tests" --objective "Confirm the suite passes."
+adaptive[codex:adaptive-ai-orchestrator]> set verbose on
+verbose set to on
+adaptive[codex:adaptive-ai-orchestrator]> set verify python3 -m unittest
+verify set to python3 -m unittest
+adaptive[codex:adaptive-ai-orchestrator]> compose
+Enter request. Finish with a line containing only '.'
+> Run the unit tests.
+> Fix any failures and explain their cause.
+> .
 { ... existing cli.main JSON output ... }
-adaptive-orchestrator> history
-claude-code: 4 executions, 100% success, 100% verification pass
-codex: 8 executions, 88% success, 100% verification pass
-adaptive-orchestrator> usage
-Codex: plus plan, 12% used (resets in 4d)
-Claude Code: pro subscription; logged in this project: $1.42 across 3 executions with cost data (no live quota % available locally)
-adaptive-orchestrator> exit
+adaptive[codex:adaptive-ai-orchestrator]> recent 2
+#10 codex completed verify=passed duration=14.2s — Run the unit tests. Fix any failures and explain their cause.
+#9 claude-code completed verify=skipped duration=8.1s — Review the implementation
+adaptive[codex:adaptive-ai-orchestrator]> history
+claude-code: ... legacy execution/verification metrics ...
+codex: ... legacy execution/verification metrics ...
+adaptive[codex:adaptive-ai-orchestrator]> usage
+Codex: ... current local plan usage when available ...
+Claude Code: ... subscription and logged project-cost summary ...
+adaptive[codex:adaptive-ai-orchestrator]> exit
 ```
 
-The shell keeps session state only for the lifetime of the process. Most commands build an argv list and call the existing `adaptive_orchestrator.cli.main` dispatch, so they stay aligned with the normal CLI flags and output conventions. The shell also provides the small, read-only `history` and `usage` convenience commands.
+The shell keeps session state only for the lifetime of the process. The prompt and `status` command show the active workspace and agent; `cd` aliases `workspace`, and `q` aliases `quit`. `task <request>` is the shortest execution path: it sends the rest of the line as both `--description` and `--objective`. `compose` does the same for a multiline request, ending input with a line containing only `.`. Use `run` when description and objective or other CLI flags need to differ.
+
+`set` stores frequently repeated options for the current session. `verbose` and `no_escalation` accept `on` or `off`, `time_limit` accepts positive seconds or `off`, and `verify` accepts command text or `off`. `settings` shows the active values:
+
+```text
+set verbose on
+set no_escalation off
+set time_limit 600
+set verify python3 -m unittest
+settings
+```
+
+The defaults are translated back into normal CLI argv. A time limit applies only to `task`/`run`, because `run-plan` and `plan generate` do not expose that task-level flag; the other workflow defaults apply to all routed shell commands. Options then follow their existing argparse behavior: a later single-value option such as `--time-limit` wins, repeatable `--verify-command` values accumulate with the session default, and a session-level `no_escalation` must be turned off with `set no_escalation off` before a command because the CLI has no inverse flag.
+
+`recent [count]` reads the existing workspace JSONL log and shows the last appended records first with agent, execution status, verification status, agent-process duration, and a compact task description. Append order is not a timestamp or durable lifecycle order; the current schema has neither. The command only reads and formats the legacy telemetry, mapping a missing verification object to `not-run`. `help run`, `help run_plan`, `help plan_generate`, and the corresponding plan/memory topics delegate to the existing argparse help, keeping shell help aligned with CLI flags.
+
+Command names, `agent` values, workspace directories, and plan-file paths support tab completion. Invalid workspace paths are rejected without losing the current session state, command typos suggest a close match, and a blank line is a no-op rather than `cmd.Cmd`'s default behavior of repeating the previous command.
+
+Most commands still only build an argv list and call the existing `adaptive_orchestrator.cli.main` dispatch, so they stay aligned with normal CLI flags and output conventions. Shell-native convenience commands include session views (`status`, `settings`) and read-only local-data views (`history`, `recent`, `usage`). `history` currently exposes legacy operational metrics, not objective task-quality or unbiased policy estimates; do not use its percentages to rank agents.
 
 ## Watching a long run
 
-`run` and `run-plan` both accept `--verbose`, which streams the running agent's stdout to stderr as it arrives instead of staying silent until the process exits:
+`run`, `run-plan`, and `plan generate` accept `--verbose`, which streams the running agent's stdout to stderr as it arrives instead of staying silent until the process exits:
 
 ```bash
 PYTHONPATH=src python3 -m adaptive_orchestrator.cli run --agent codex --verbose \
   --description "..." --objective "..."
 ```
 
-stdout still only ever carries the final JSON result — `--verbose` output goes to stderr so scripts parsing stdout are unaffected.
+`run`/`run-plan` stdout still only carries the final JSON result, while successful `plan generate` keeps its existing plan summary. In every case `--verbose` output goes to stderr, so the command's normal stdout contract is unaffected.
 
 ## Escalation
 
-Single-agent-first stays the default. If the first agent's execution fails, its verification command fails or times out, or the router's own analysis flags high risk, uncertainty, or difficulty, the Kernel escalates once to the next-best-scored capable agent and records both attempts (`execution.escalation` in the JSON output). It never escalates past an explicitly requested `--agent`. Tune or disable it with:
+Single-agent-first stays the default. If the first agent's execution fails, its verification command fails or times out, or the router's own analysis flags high risk, uncertainty, or difficulty, `EngineeringWorkflow` escalates once to the next-best-scored capable agent and records both attempts (`execution.escalation` in the JSON output). It never escalates past an explicitly requested `--agent`. Tune or disable it with:
 
 ```bash
 --no-escalation
@@ -211,7 +242,7 @@ Single-agent-first stays the default. If the first agent's execution fails, its 
 
 This kernel launches coding agents that can modify the configured workspace. Run it only in repositories you trust and with a permission/sandbox mode appropriate to that repository. The default adapters do **not** enable CLI permission-bypass flags.
 
-Execution records may contain task prompts, context, CLI output, and workspace paths. The JSONL logger applies best-effort masking for sensitive key names and common token formats; it is not a secret-scanning or data-loss-prevention system. Do not place credentials or private data in task content. Git diff capture is disabled by default and must be explicitly enabled with `include_git_diff=True`.
+Execution records may contain task prompts, context, CLI output, and workspace paths. The JSONL logger applies best-effort masking for sensitive key names and common token formats; it is not a secret-scanning or data-loss-prevention system. Do not place credentials or private data in task content. Git diff capture is disabled by default and must be explicitly enabled with `--include-git-diff` in the CLI or `include_git_diff=True` in the Python API.
 
 `workspace_modified_files` and `workspace_git_diff` describe the workspace after execution. They can include changes that existed before the agent ran; they are not an attribution mechanism.
 

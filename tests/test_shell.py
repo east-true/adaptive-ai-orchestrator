@@ -24,6 +24,7 @@ class ShellStateTests(unittest.TestCase):
                 shell.onecmd(f"workspace {workspace}")
             self.assertEqual(shell.workspace, workspace.resolve())
             self.assertIn("Workspace set to", stdout.getvalue())
+            self.assertIn(workspace.name, shell.prompt)
 
             stdout = io.StringIO()
             with contextlib.redirect_stdout(stdout):
@@ -37,6 +38,7 @@ class ShellStateTests(unittest.TestCase):
             shell.onecmd("agent codex")
         self.assertEqual(shell.agent, "codex")
         self.assertIn("Agent set to codex", stdout.getvalue())
+        self.assertIn("codex", shell.prompt)
 
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
@@ -51,6 +53,77 @@ class ShellStateTests(unittest.TestCase):
             shell.onecmd("agent llama")
         self.assertEqual(shell.agent, "claude-code")
         self.assertIn("Error: agent must be one of auto, claude-code, codex", stdout.getvalue())
+
+    def test_workspace_expands_quoted_directory_and_cd_is_an_alias(self) -> None:
+        shell = OrchestratorShell()
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "workspace with spaces"
+            workspace.mkdir()
+            with contextlib.redirect_stdout(io.StringIO()):
+                shell.onecmd(f'workspace "{workspace}"')
+            self.assertEqual(shell.workspace, workspace.resolve())
+
+            with contextlib.redirect_stdout(io.StringIO()):
+                shell.onecmd(f"cd {directory}")
+            self.assertEqual(shell.workspace, Path(directory).resolve())
+
+    def test_workspace_rejects_missing_path_and_regular_file(self) -> None:
+        shell = OrchestratorShell()
+        original = shell.workspace
+        with tempfile.TemporaryDirectory() as directory:
+            regular_file = Path(directory) / "file.txt"
+            regular_file.write_text("not a directory", encoding="utf-8")
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd(f"workspace {Path(directory) / 'missing'}")
+                shell.onecmd(f"workspace {regular_file}")
+        self.assertEqual(shell.workspace, original)
+        self.assertIn("workspace does not exist", stdout.getvalue())
+        self.assertIn("workspace is not a directory", stdout.getvalue())
+
+    def test_status_shows_current_session_state(self) -> None:
+        shell = OrchestratorShell()
+        shell.workspace = Path("/tmp/session-workspace")
+        shell.agent = "codex"
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            shell.onecmd("status")
+        self.assertEqual(stdout.getvalue().splitlines(), [
+            "Workspace: /tmp/session-workspace",
+            "Agent: codex",
+        ])
+
+    def test_empty_line_does_not_repeat_last_command(self) -> None:
+        shell = OrchestratorShell()
+        with patch("adaptive_orchestrator.shell.cli.main") as main:
+            shell.onecmd("task Run tests")
+            shell.onecmd("")
+        self.assertEqual(main.call_count, 1)
+
+    def test_unknown_command_suggests_a_close_match(self) -> None:
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            OrchestratorShell().onecmd("stats")
+        self.assertIn("Did you mean 'status'?", stdout.getvalue())
+
+    def test_agent_and_path_completion(self) -> None:
+        shell = OrchestratorShell()
+        self.assertEqual(shell.complete_agent("c", "agent c", 6, 7), ["claude-code", "codex"])
+        self.assertEqual(shell.complete_set("v", "set v", 4, 5), ["verbose", "verify"])
+        self.assertEqual(shell.complete_set("o", "set verbose o", 12, 13), ["on", "off"])
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "worktree"
+            workspace.mkdir()
+            (Path(directory) / "plan.json").write_text("[]", encoding="utf-8")
+            path_prefix = f"{directory}/"
+            self.assertEqual(
+                shell.complete_workspace(path_prefix, f"workspace {path_prefix}", 10, 10 + len(path_prefix)),
+                [f"{workspace}/"],
+            )
+            self.assertIn(
+                f"{directory}/plan.json",
+                shell.complete_run_plan(path_prefix, f"run_plan {path_prefix}", 9, 9 + len(path_prefix)),
+            )
 
 
 class ShellCliDispatchTests(unittest.TestCase):
@@ -77,6 +150,128 @@ class ShellCliDispatchTests(unittest.TestCase):
             "--objective",
             "Ship it",
         ])
+
+    def test_task_uses_request_as_description_and_objective(self) -> None:
+        with patch("adaptive_orchestrator.shell.cli.main") as main:
+            self.shell.onecmd("task Run the unit tests and fix failures")
+        main.assert_called_once_with([
+            "run",
+            "--workspace",
+            "/tmp/session-workspace",
+            "--agent",
+            "claude-code",
+            "--description",
+            "Run the unit tests and fix failures",
+            "--objective",
+            "Run the unit tests and fix failures",
+        ])
+
+    def test_task_without_request_prints_usage_error(self) -> None:
+        stdout = io.StringIO()
+        with patch("adaptive_orchestrator.shell.cli.main") as main:
+            with contextlib.redirect_stdout(stdout):
+                self.shell.onecmd("task")
+        main.assert_not_called()
+        self.assertIn("Usage: task <request>", stdout.getvalue())
+
+    def test_compose_runs_a_multiline_request(self) -> None:
+        with (
+            patch("builtins.input", side_effect=["Run all tests.", "Fix any failures.", "."]),
+            patch("adaptive_orchestrator.shell.cli.main") as main,
+            contextlib.redirect_stdout(io.StringIO()),
+        ):
+            self.shell.onecmd("compose")
+        request = "Run all tests.\nFix any failures."
+        main.assert_called_once_with([
+            "run",
+            "--workspace",
+            "/tmp/session-workspace",
+            "--agent",
+            "claude-code",
+            "--description",
+            request,
+            "--objective",
+            request,
+        ])
+
+    def test_compose_empty_request_is_cancelled(self) -> None:
+        stdout = io.StringIO()
+        with (
+            patch("builtins.input", side_effect=["."]),
+            patch("adaptive_orchestrator.shell.cli.main") as main,
+            contextlib.redirect_stdout(stdout),
+        ):
+            self.shell.onecmd("compose")
+        main.assert_not_called()
+        self.assertIn("Compose cancelled", stdout.getvalue())
+
+    def test_session_defaults_are_added_to_task_argv(self) -> None:
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.shell.onecmd("set verbose on")
+            self.shell.onecmd("set no_escalation on")
+            self.shell.onecmd("set time_limit 30")
+            self.shell.onecmd("set verify python3 -m unittest")
+        with patch("adaptive_orchestrator.shell.cli.main") as main:
+            self.shell.onecmd("task Run tests")
+        main.assert_called_once_with([
+            "run",
+            "--workspace",
+            "/tmp/session-workspace",
+            "--agent",
+            "claude-code",
+            "--verify-command",
+            "python3 -m unittest",
+            "--no-escalation",
+            "--verbose",
+            "--time-limit",
+            "30",
+            "--description",
+            "Run tests",
+            "--objective",
+            "Run tests",
+        ])
+
+    def test_run_plan_uses_workflow_defaults_but_not_task_time_limit(self) -> None:
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.shell.onecmd("set verbose on")
+            self.shell.onecmd("set time_limit 30")
+        with patch("adaptive_orchestrator.shell.cli.main") as main:
+            self.shell.onecmd("run_plan plan.json")
+        main.assert_called_once_with([
+            "run-plan",
+            "plan.json",
+            "--workspace",
+            "/tmp/session-workspace",
+            "--agent",
+            "claude-code",
+            "--verbose",
+        ])
+
+    def test_settings_show_and_clear_defaults(self) -> None:
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            self.shell.onecmd('set verify "python3 -m unittest"')
+            self.shell.onecmd("set time_limit 12.5")
+            self.shell.onecmd("settings")
+            self.shell.onecmd("set verify off")
+            self.shell.onecmd("set time_limit off")
+        output = stdout.getvalue()
+        self.assertIn("Time limit: 12.5s", output)
+        self.assertIn("Verify command: python3 -m unittest", output)
+        self.assertIsNone(self.shell.default_verify_command)
+        self.assertIsNone(self.shell.default_time_limit)
+
+    def test_invalid_setting_does_not_change_defaults(self) -> None:
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            self.shell.onecmd("set verbose maybe")
+            self.shell.onecmd("set time_limit -1")
+            self.shell.onecmd("set time_limit nan")
+            self.shell.onecmd("set unknown value")
+        self.assertFalse(self.shell.default_verbose)
+        self.assertIsNone(self.shell.default_time_limit)
+        self.assertIn("verbose must be on or off", stdout.getvalue())
+        self.assertIn("unknown setting", stdout.getvalue())
 
     def test_run_plan_builds_expected_argv(self) -> None:
         with patch("adaptive_orchestrator.shell.cli.main") as main:
@@ -158,6 +353,20 @@ class ShellCliDispatchTests(unittest.TestCase):
         self.assertEqual(main.call_count, 2)
         self.assertIn("Error: run failed with exit code 2", stderr.getvalue())
 
+    def test_successful_system_exit_from_cli_help_is_not_reported_as_an_error(self) -> None:
+        stderr = io.StringIO()
+        with patch("adaptive_orchestrator.shell.cli.main", side_effect=SystemExit(0)):
+            with contextlib.redirect_stderr(stderr):
+                self.shell.onecmd("run --help")
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_help_run_delegates_to_existing_cli_help(self) -> None:
+        original_program = sys.argv[0]
+        with patch("adaptive_orchestrator.shell.cli.main", side_effect=SystemExit(0)) as main:
+            self.shell.onecmd("help run")
+        main.assert_called_once_with(["run", "--help"])
+        self.assertEqual(sys.argv[0], original_program)
+
     def test_run_plan_without_plan_file_prints_usage_error(self) -> None:
         stdout = io.StringIO()
         with patch("adaptive_orchestrator.shell.cli.main") as main:
@@ -200,6 +409,52 @@ class ShellHistoryTests(unittest.TestCase):
                 shell.onecmd("history")
             output = stdout.getvalue().strip().splitlines()
             self.assertEqual([line.split(":")[0] for line in output], [*default_agent_ids(), "retired-agent"])
+
+    def test_recent_shows_newest_executions_first_and_skips_malformed_lines(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell()
+            shell.workspace = Path(directory)
+            log = shell.workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir()
+            records = [
+                {
+                    "agent_id": "claude-code",
+                    "status": "failed",
+                    "duration_ms": 250,
+                    "task": {"description": "First task"},
+                },
+                {
+                    "agent_id": "codex",
+                    "status": "completed",
+                    "duration_ms": 1250,
+                    "verification": {"status": "passed"},
+                    "task": {"description": "Second task"},
+                },
+            ]
+            log.write_text(
+                json.dumps(records[0]) + "\nnot-json\n" + json.dumps(records[1]) + "\n",
+                encoding="utf-8",
+            )
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("recent 2")
+            output = stdout.getvalue().strip().splitlines()
+            self.assertIn("#2 codex completed verify=passed duration=1.2s — Second task", output[0])
+            self.assertIn("#1 claude-code failed verify=not-run duration=0.2s — First task", output[1])
+
+    def test_recent_validates_count_and_handles_missing_log(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell()
+            shell.workspace = Path(directory)
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("recent many")
+                shell.onecmd("recent 0")
+                shell.onecmd("recent")
+            output = stdout.getvalue()
+            self.assertIn("Usage: recent [count]", output)
+            self.assertIn("between 1 and 100", output)
+            self.assertIn("No executions logged yet", output)
 
 
 class ShellUsageTests(unittest.TestCase):
