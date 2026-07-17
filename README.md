@@ -35,6 +35,18 @@ tests/            # unit and end-to-end prototype tests
 docs/             # architecture and roadmap decisions
 ```
 
+Adaptive routing 개선 작업은 다음 문서에서 추적한다.
+
+- [설계: Evidence-First Stratified Temporal Routing](docs/adaptive-routing-v2.md)
+- [연구 교차검토](docs/routing-research-review.md)
+- [평가 프로토콜](docs/routing-evaluation-protocol.md)
+- [Claude 독립 검토와 반영 판단](docs/routing-claude-review.md)
+- [진행상황과 이어하기](docs/adaptive-routing-progress.md)
+
+설계는 아직 runtime 구현이 아니다. 현재의 적은 legacy telemetry로 복잡한
+bandit을 바로 활성화하지 않고, typed evaluator와 durable event부터 구현하는
+순서를 택했다.
+
 ## Run the prototype
 
 ```bash
@@ -78,7 +90,7 @@ PYTHONPATH=src python3 -m adaptive_orchestrator.cli run \
   --description "Run the unit tests" --objective "Confirm the suite passes"
 ```
 
-Configured variants receive derived registry IDs (`claude-code:<model>` and `codex:<model>:<reasoning-effort>`; omitted parts are left out). Use that derived ID with `--agent` to request a specific variant, or leave `--agent auto` to route between the configured variants. Execution logs retain both the exact variant ID and its stable vendor base ID so historical vendor metrics continue across model changes.
+Configured variants receive derived registry IDs (`claude-code:<model>` and `codex:<model>:<reasoning-effort>`; omitted parts are left out). Use that derived ID with `--agent` to request a specific variant, or leave `--agent auto` to route between the configured variants. Execution logs retain both the exact variant ID and its stable vendor base ID. The current router nevertheless reads exact-ID metrics only, so routing history does **not** yet back off across model changes; that is an explicit next-step gap.
 
 Historical success/verification rates are confidence-weighted by sample count — a handful of logged runs pulls a candidate's score toward the same neutral baseline a brand-new agent gets, rather than being fully trusted. Set `Task.cost_limit_usd` and a candidate whose logged average cost (currently tracked for Claude Code only) exceeds it is penalized; leave it unset and cost has no effect on routing.
 
@@ -212,6 +224,7 @@ The current implementation was locally validated against Claude Code `2.1.211` a
 ## Current limits
 
 - Routing is rule-based and its initial preference values are not learned from enough production evidence yet.
+- Current `--agent auto` combines unvalidated capability/complexity/risk priors with selection-count shrinkage and deterministic argmax. Until the corrected L0 policy is implemented, do not treat new auto runs as unbiased skill evidence; use an explicit agent for ordinary work.
 - Both adapters parse structured CLI output into normalized `ExecutionMetadata`: Claude Code's `--print --output-format json` (verified against `2.1.211`) and Codex CLI's `exec --json` (verified against `0.144.5`). Codex CLI does not expose a cost field the way Claude Code does, so `ExecutionMetadata.cost_usd` stays `None` for Codex executions — this reflects what the CLI actually reports, not a parsing gap.
 - Cost limits cannot be reliably enforced for subscription-backed CLIs.
 - The execution JSONL log records telemetry; engineering memory lives in a separate JSONL store and is only populated by explicit `memory record` calls.
@@ -219,4 +232,10 @@ The current implementation was locally validated against Claude Code `2.1.211` a
 
 ## Next development increment
 
-Tune escalation thresholds from observed telemetry instead of fixed defaults once there's enough of it.
+Implement Phase -1 of the adaptive-routing design: add stable execution/policy
+identity, repair usage redaction and duration semantics, and label escalation
+cohorts without changing the selection policy to an arbitrary new neutral. Then
+distinguish task-quality evidence from constraint/process checks and record
+interruption-safe lifecycle events. Only after those observations are
+trustworthy should routing thresholds or learned policies be tuned. See the
+[progress handoff](docs/adaptive-routing-progress.md) for the ordered checklist.

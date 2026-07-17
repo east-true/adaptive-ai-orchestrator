@@ -1,0 +1,375 @@
+# Adaptive Routing 개선 작업 진행상황
+
+> 마지막 갱신: 2026-07-17
+> 상태: 설계·연구·Claude 2회 독립 검토·문서 검증 완료, 구현 시작 전
+> 목적: 다른 세션이 결정 근거와 다음 순서를 잃지 않고 작업을 이어간다.
+
+## 1. 목표
+
+`--agent auto`가 과거의 편향된 선택 기록을 실력 차이로 오인하지 않게 하고,
+Claude/Codex 중 목표 작업에 더 적합한 agent를 정확하고 효율적으로 선택한다.
+
+여기서 성공은 agent 사용 비율을 맞추는 것이 아니다. 다음 네 편향을 통제하면서
+목표 작업분포의 **objective verified quality**를 높이는 것이다.
+
+1. workload composition: 애초에 한 agent에 어울리는 task만 들어옴;
+2. selection/exposure: 선택된 agent 결과만 관측됨;
+3. evaluator: verifier/judge가 특정 출력·언어를 선호함;
+4. environment: model, CLI, permission, cache 변화가 agent 실력처럼 보임.
+
+## 2. 현재까지 완료한 것
+
+### 코드와 telemetry 감사
+
+- `verification.py`, `domain.py`, `history.py`, `routing.py`, `workflow.py`,
+  `kernel.py`, `process_runner.py`, CLI 경계를 확인했다.
+- 로컬 `.orchestrator/executions.jsonl` 12건을 진단했다.
+  - Claude 4, Codex 8;
+  - auto 4, manual Claude 3, manual Codex 3, legacy 2;
+  - passed verification 9, skipped 3;
+  - candidate propensity 0건;
+  - 비용 sample은 Claude 쪽 일부만 존재.
+- 현재 표본은 policy 순위가 아니라 schema/실패 진단에만 쓸 수 있다고 결론냈다.
+
+이 12건은 연구 감사 당시 snapshot이다. 이후 설계 검토용 Claude 호출 3건(네트워크
+차단 실패 1, 1차 성공 1, 상세 근거를 준 2차 성공 1)이 수동 실행으로 추가되어
+현재 로그는 15건이다. 정책 표본으로 합치지 않는다.
+
+### 확인한 구현 결함
+
+- verifier 없는 완료도 execution success로 집계됨;
+- test/lint/typecheck/diff 등 verifier 역할이 구분되지 않음;
+- 최종 실행 뒤에만 log를 써서 인터럽트 시 evidence가 사라질 수 있음;
+- policy/version/candidate probability/cohort/language/environment epoch가 없음;
+- escalation 표본이 ordinary execution과 통계적으로 분리되지 않음;
+- 비용 결측이 agent 간 비교 가능한 형태가 아님.
+
+### 연구 교차검토
+
+- 고전 contextual bandit, IPS/DR/CRM, conservative exploration을 검토했다.
+- 2024~2026 routing, agentic/temporal routing, unseen-model transfer, conformal
+  calibration을 검토했다.
+- 중국·홍콩·한국·싱가포르·인도·동남아 관련 연구와 native-language benchmark를
+  추가했다.
+- complex router가 simple baseline을 압도하지 못하는 결과, rare-case recall,
+  router attack/threshold fragility, multilingual judge bias를 포함했다.
+- 연구기관의 지리적 다양성만으로 관점 독립성을 주장하지 않기로 했다.
+
+자세한 근거는 [연구 검토](routing-research-review.md)에 있다.
+
+### 설계 결정
+
+- 기존 VCR-UCB 즉시 도입 결정을 철회했다.
+- typed evaluator와 durable event를 먼저 만드는 evidence-first 순서를 택했다.
+- 최종 정책을 ESTR evidence ladder로 정의하되 가장 단순한 검증 승자만 승격한다.
+- 강제 50:50 대신 paired benchmark를 사용하고, prospective overlap은 충분한
+  traffic/support가 생긴 미래에만 최대 0.05에서 검토한다.
+- Korean/English/mixed와 task category/worst-stratum을 승격 기준에 넣었다.
+
+### Claude 오케스트레이션 검토
+
+- 이 프로젝트 CLI에서 `--agent claude-code`를 명시해 읽기 전용 검토를 실행했다.
+- 첫 호출은 격리 환경 네트워크 차단으로 실패했고, 연결 허용 후 Claude Opus 4.8이
+  source/telemetry/doc을 검토했다.
+- 구조적 score 편향, usage-token redaction, escalation 생성과정 혼합, pilot 정밀도,
+  현재 traffic의 OPE 부적합, legacy objective-quality 0건 문제를 수용했다.
+- “모든 history에서 Claude가 절대 이길 수 없음”, “CI와 유의성이 반드시 상호
+  배타”, “OPE 영구 삭제”는 범위가 과해 한정 수용했다.
+- 수정 문서를 다시 상세 검토시킨 결과, affinity와 confidence blend를 누락한 첫
+  원인 분석, agent-writeable evaluator, projector 순서, target workload estimand
+  간극을 추가로 확인했다.
+- 2차 검토에 따라 Phase -1의 임의 policy 중립화를 철회하고 additive identity와
+  오염 라벨링을 먼저 하며 corrected L0는 Phase 1에서 한 번에 정의하기로 했다.
+
+실행 환경과 항목별 판단은 [Claude 독립 검토](routing-claude-review.md)에 있다.
+
+자세한 설계는 [Adaptive Routing v2](adaptive-routing-v2.md), 실험 절차는
+[평가 프로토콜](routing-evaluation-protocol.md)에 있다.
+
+## 3. 왜 이 순서인가
+
+```text
+additive identity + policy/cohort labels
+  -> typed/protected evaluator
+  -> durable lifecycle log
+  -> deterministic replay + simple baselines
+  -> paired benchmark
+  -> estimator promotion
+  -> optional temporal/budget sophistication
+  -> optional prospective overlap/OPE when traffic supports it
+```
+
+- label 의미가 틀리면 더 정교한 학습기가 오류를 더 빠르게 학습한다.
+- started/terminal evidence가 없으면 timeout·중단 비용이 사라진다.
+- propensity가 없으면 unselected agent의 policy effect를 평가할 수 없다.
+- simple baseline 없이 complex model gain을 구분할 수 없다.
+- native-language strata 없이 평균 정확도는 언어별 회귀를 숨긴다.
+- paired data 없이 workload composition과 agent 능력을 분리하기 어렵다.
+- production 탐색은 안전한 비교 기반을 만든 뒤에만 허용해야 한다.
+
+## 4. 지금 작업 중
+
+- [x] 기존 코드·로그 감사
+- [x] 연구 범위 확대와 반례 검토
+- [x] 개선 설계 초안 재작성
+- [x] paired/언어층화 평가 프로토콜 초안
+- [x] 오케스트레이터를 통한 Claude 비판 검토
+- [x] Claude 지적을 코드/연구 근거와 대조해 채택·기각 기록
+- [x] 수정 문서에 상세 의도·근거를 제공한 Claude 2차 검토와 재반영
+- [x] 문서 내부 링크·용어·현재 코드 사실 검증
+- [x] 전체 unit test 실행(136 tests)과 최종 handoff
+
+이 문서 작성 시점에는 routing runtime 코드를 바꾸지 않았다.
+
+## 5. 다음 구현 작업
+
+### Phase -1 — 추가 오염 차단
+
+예상 수정 위치:
+
+```text
+src/adaptive_orchestrator/domain.py
+src/adaptive_orchestrator/logging.py
+src/adaptive_orchestrator/history.py
+src/adaptive_orchestrator/workflow.py
+src/adaptive_orchestrator/routing.py
+```
+
+할 일:
+
+- usage count(`input_tokens` 등)는 보존하고 credential token은 가리는 redaction;
+- stable execution/attempt ID, timestamp, policy version/config hash 추가;
+- escalation 전체 reasons를 보존하고 outcome/task-analysis trigger class를 집합으로
+  파생하며 legacy cohort를 가능한 범위에서 소급 라벨링;
+- duration sample count와 missing semantics 수정;
+- Korean/English 번역쌍의 `TaskAnalyzer` 대칭성 zero-cost test.
+
+corrected L0를 정의하기 전까지 새 실력 evidence를 모을 목적으로 `--agent auto`를
+사용하지 않는다. Phase -1에서 근거 없는 중립값으로 선택 정책을 바꾸지 않는다.
+명시적 agent 선택은 manual cohort로 기록한다.
+
+### Phase 0A — evaluator 의미 분리
+
+예상 수정 위치:
+
+```text
+src/adaptive_orchestrator/domain.py
+src/adaptive_orchestrator/verification.py 또는 새 evaluation.py
+src/adaptive_orchestrator/workflow.py
+src/adaptive_orchestrator/history.py
+src/adaptive_orchestrator/cli.py
+tests/test_verification.py
+tests/test_workflow.py
+tests/test_history.py
+```
+
+할 일:
+
+- `EvaluatorSpec`, `EvaluatorResult`, role, version, observed를 추가;
+- legacy verification row reader 유지;
+- skipped/untyped verifier를 quality success로 쓰지 않음;
+- reliability/quality/constraint/safety/resource projection 분리;
+- repeatable CLI evaluator 입력과 backward-compatible `--verify-command` migration.
+- evaluator/golden fixture를 agent-writeable workspace 밖에 두고 전후 hash 검증;
+- `testing` task용 hidden/mutation/held-out evaluator 정의.
+
+먼저 정해야 할 작은 API 결정:
+
+- `--verify-command`의 기본 role을 `constraint`로 할지 legacy-only로 둘지;
+- task-specific quality evaluator를 별도 `--evaluate-command`로 받을지;
+- 여러 quality score aggregation을 CLI config/manifest 어디에 둘지.
+
+권장: 기존 flag는 `constraint`로 보수적으로 해석하고, 새
+`--quality-evaluator-command`를 명시적으로 추가한다.
+
+### Phase 0B — evaluator migration smoke
+
+예상 수정 위치:
+
+```text
+src/adaptive_orchestrator/workflow.py
+tests/test_verification.py
+tests/test_workflow.py
+```
+
+할 일:
+
+- legacy command/commands migration fixture;
+- agent-writeable evaluator 오염 탐지;
+- evaluator별 observed/role/version/score projection;
+- 전체 regression suite 통과만으로 quality를 만들지 않는지 확인.
+
+### Phase 1 — replay와 baseline
+
+예상 새 모듈:
+
+```text
+routing_context.py
+routing_policy.py  # 초기에는 context/model 책임도 함께 둘 수 있음
+routing_state.py
+replay.py
+events.py
+```
+
+할 일:
+
+- context/eligibility/scoring/random pure boundary;
+- policy/config/context/environment version;
+- candidate propensity와 selected propensity를 선택 전에 기록;
+- lifecycle event, idempotency, interrupt reconciliation 후 projector 구현;
+- affinity, complexity/risk, confidence blend를 함께 재검토한 corrected L0;
+- exact tier/base/environment history backoff;
+- static, best-single, stratified Beta/greedy shadow baseline;
+- 같은 seed/state/config의 byte-for-byte 재현;
+- log에서 derived state 재구축.
+
+### Phase 2 이후
+
+- 4-task/8-execution smoke pair 후 60-task/120-execution paired pilot;
+- Korean/English/mixed native task와 agent-blind objective evaluator;
+- pilot discordance의 보수적 한계로 신규 확증 round의 표본수와 strata를 계산;
+- 충분한 paired evidence가 생긴 뒤 L2/L3/temporal 단계 비교;
+- prospective overlap은 월별 traffic/support/예상 ESS threshold를 넘을 때만 재검토.
+
+## 6. 구현별 필수 테스트
+
+### Evaluator
+
+- unverified completion은 quality update를 만들지 않음;
+- constraint pass가 quality pass가 되지 않음;
+- evaluator error/timeout/skipped의 observed semantics;
+- 여러 evaluator aggregate가 사전 rule을 따름;
+- legacy `command`와 `commands` row가 읽힘.
+- evaluator/golden hash 변경과 agent-written test 오염을 탐지함.
+
+### Event durability
+
+- 시작 event가 subprocess 전에 기록됨;
+- success/failure/timeout/interrupt 모두 terminal 또는 reconciled;
+- duplicate event가 state를 두 번 갱신하지 않음;
+- sequence gap/invalid transition 탐지;
+- event만으로 state 재구축.
+
+### Routing
+
+- explicit agent는 확률 1;
+- ineligible agent는 확률 0, 합은 1;
+- high-risk/unverified는 explore하지 않음;
+- unknown cost를 0으로 쓰지 않음;
+- cohort를 섞지 않음;
+- global time이 흐르면 unselected arm evidence도 낡음;
+- language/task strata fallback이 deterministic;
+- static prior가 measured sample로 노출되지 않음.
+- ko/en 번역쌍의 analyzer 차이를 측정하고 의도하지 않은 escalation을 탐지;
+- 저표본의 더 좋은 arm이 confidence shrinkage만으로 순위 역전되지 않음;
+- affinity/complexity/risk 각 component의 reachable score range가 기록됨.
+
+### Experiment tooling
+
+- 두 workspace base hash 일치;
+- evaluator는 agent-writeable workspace 밖에 있고 전후 hash가 일치;
+- order randomization 재현;
+- one-sided failure를 편의상 제외하지 않음;
+- propensity/ESS/CI 누락 시 promotion 거부;
+- 희소 stratum에서 “동률” 대신 “불확실” 보고.
+
+## 7. 완료 정의
+
+이번 **문서 검토 작업**의 완료 조건:
+
+- 연구·설계·프로토콜·진행상황 문서가 서로 링크됨;
+- Claude 비판 검토와 반영 판단이 이 문서에 남음;
+- 문서가 현재 코드를 구현 완료라고 잘못 표현하지 않음;
+- Markdown/링크 기본 검증과 기존 test suite가 통과함;
+- 변경사항과 아직 구현하지 않은 범위가 최종 보고됨.
+
+전체 **routing 개선**의 완료 조건은 설계 문서의 promotion criterion을 만족한
+정책이 기본값으로 승격되고 rollback과 실제 cohort monitoring이 동작하는 것이다.
+prospective/OPE는 future gate가 열릴 때만 완료 범위에 추가한다.
+
+## 8. 재개 절차
+
+다음 세션은 먼저 아래를 실행한다.
+
+```bash
+git status --short --branch
+sed -n '1,260p' docs/adaptive-routing-progress.md
+sed -n '1,260p' docs/adaptive-routing-v2.md
+sed -n '1,240p' docs/routing-evaluation-protocol.md
+PYTHONPATH=src python3 -m unittest discover -s tests -v
+```
+
+그 다음 이 문서의 “지금 작업 중”에서 첫 미완료 항목을 선택한다. 문서 단계가
+끝났다면 Phase -1의 오염 차단 항목을 작은 독립 commit으로 나눠 구현한 뒤
+Phase 0A/0B로 진행한다. 사용자 요청 없이
+production traffic 탐색, 실제 120회 agent 실행, 외부 push를 시작하지 않는다.
+
+## 9. 작업상 주의사항
+
+- 현재 `docs/adaptive-routing-v2.md`는 이 작업 전부터 untracked 상태였으며 이번에
+  전면 재작성했다. 다른 사용자 변경을 덮어쓰지 않았는지 commit 전에 확인한다.
+- 현재 branch는 `main`; 이 문서 작성 시작 시 `origin/main`과 같은 위치였다.
+- 작업 도중 `src/adaptive_orchestrator/shell.py`와 `tests/test_shell.py`에 이 문서
+  작업과 무관한 변경이 나타났다. 사용자 변경으로 보고 수정하지 않았으며, 최종
+  136-test run에는 포함돼 통과했다. README의 동시 shell 설명도 보존했다.
+- 연구 링크는 외부 자료이며 최신 preprint 상태가 바뀔 수 있다.
+- KB/Wiki prior는 설계 힌트이지 ground truth가 아니다. 현재 코드로 확인한 사실만
+  구현 진단으로 기록했다.
+- commit/push는 별도 사용자 요청이 있을 때 한다.
+
+## 10. 결정 로그
+
+| 날짜 | 결정 | 이유 |
+|---|---|---|
+| 2026-07-17 | Claude 사용률 강제 대신 비교 가능성 확보 | 목표분포가 한 agent에 유리할 수 있음 |
+| 2026-07-17 | VCR-UCB 즉시 구현 철회 | label/propensity/durability와 표본이 부족 |
+| 2026-07-17 | ESTR evidence ladder 채택 | 데이터 규모에 맞는 가장 단순한 승자를 사용 |
+| 2026-07-17 | verifier role typed schema 우선 | command success와 task quality가 다름 |
+| 2026-07-17 | paired + native-language strata | workload/evaluator/언어 편향을 분리 |
+| 2026-07-17 | prospective를 재개한다면 ≤ 0.05에서 시작 | coding agent는 비싸고 workspace를 변경함 |
+| 2026-07-17 | temporal probe는 후속 단계 | trajectory contamination/cache/safety evidence 부족 |
+| 2026-07-17 | Phase -1 오염 차단 추가 | current score/redaction/cohort 문제가 새 evidence를 훼손 |
+| 2026-07-17 | 60-task를 variance pilot으로 한정 | language×category 확증에는 지나치게 작음 |
+| 2026-07-17 | prospective/OPE를 future gate로 이동 | 현재 auto traffic과 support로 ESS 확보 불가 |
+| 2026-07-17 | Phase -1에서 policy 중립화 철회 | 정확한 L0 없이 새 편향 epoch를 만들 수 있음 |
+| 2026-07-17 | affinity와 confidence blend를 L0 재설계에 포함 | static gap과 저노출 자기강화의 핵심 누락 |
+| 2026-07-17 | evaluator를 agent-write 영역 밖에 둠 | agent가 acceptance test를 약화할 수 있음 |
+| 2026-07-17 | identity/event 뒤에 projector 구현 | 1:N evaluator와 idempotency를 먼저 정의해야 함 |
+| 2026-07-17 | pilot primary를 stratum별 effect로 한정 | target workload 빈도가 아직 관측되지 않음 |
+
+## 11. 외부 검토 기록
+
+```text
+review execution id: current schema에 없음
+failed session: 6f768368-c7b6-450e-9059-106524b11475
+successful session: 776d7976-ff8b-47a2-9fb8-bbfcc198afe2
+model: claude-opus-4-8
+reviewed files: routing 문서 4개, architecture.md, 관련 source와 telemetry 일부
+accepted findings: score range, token redaction, escalation cohorts, pilot size,
+                   OPE feasibility, zero legacy objective-quality, duration/tier gaps
+qualified findings: global impossibility claim, CI/significance incompatibility,
+                    permanent OPE deletion, newest preprint dependence
+resulting changes: Phase -1, paired smoke, pilot repurposing, OPE future gate,
+                   별도 review record 추가
+unresolved: corrected static policy의 정확한 중립값, confirmatory sample size,
+            future traffic/ESS threshold
+```
+
+전체 판단은 [Claude 독립 검토](routing-claude-review.md)를 본다.
+
+2차 상세 재검토:
+
+```text
+session: 1649564f-19d3-4bba-88f4-16e915823304
+model: claude-opus-4-8
+duration: 851.4s
+turns: 36
+cost: $3.716420
+accepted: affinity/confidence exposure loop, additive Phase -1, evaluator isolation,
+          sample-size timing, event-before-projector, language analyzer confounder,
+          stratum estimand, target-policy-dependent ESS
+qualified: confidence blend는 현재 review 호출로 Claude 표본이 5를 넘었지만
+           초기 snapshot과 신규 tier/arm에서 구조적 위험은 유지
+external research: Claude의 web 권한은 거부됨; 1차 자료는 별도 검토에서 확인
+file changes by Claude: none
+```
