@@ -301,6 +301,13 @@ orchestrator/
 
 ## 10. 이후 Roadmap
 
+> 구현 상태(2026-07-17): Phase 1의 최소 Kernel, Phase 2의 structured plan/verification,
+> Phase 3의 explicit engineering memory는 구현됐다. Phase 4의 heuristic adaptive
+> router는 일부 구현됐지만 신뢰 가능한 objective-quality evidence와 학습 정책은
+> 아직 없으며, Phase 5와 Phase 6은 미래 범위다. 현재 구현의 정확한 상태는
+> [README](../README.md), [architecture](architecture.md),
+> [adaptive-routing progress](adaptive-routing-progress.md)를 기준으로 한다.
+
 ### Phase 2: Task Planning Engine
 
 ```text
