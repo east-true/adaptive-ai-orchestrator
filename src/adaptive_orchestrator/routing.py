@@ -91,6 +91,15 @@ def default_profiles() -> Mapping[str, AgentRoutingProfile]:
     }
 
 
+def _profile_for(agent: Agent, profiles: Mapping[str, AgentRoutingProfile]) -> AgentRoutingProfile:
+    profile = profiles.get(agent.agent_id)
+    if profile is None:
+        profile = profiles.get(agent.base_id)
+    if profile is None:
+        profile = AgentRoutingProfile({}, 0.5, 0.5)
+    return profile
+
+
 _MIN_SAMPLES_FOR_FULL_CONFIDENCE = 5
 """Below this many logged executions, historical evidence is blended toward a
 neutral prior rather than trusted outright — a single lucky (or unlucky) run
@@ -125,7 +134,7 @@ class AdaptiveRouter:
             raise ValueError("No available agent supports the analyzed capability requirements.")
         scored: list[tuple[float, Agent, dict[str, object]]] = []
         for agent in candidates:
-            profile = self._profiles.get(agent.agent_id, AgentRoutingProfile({}, 0.5, 0.5))
+            profile = _profile_for(agent, self._profiles)
             affinity = sum(profile.capability_affinity.get(capability, 1.0) for capability in analysis.capabilities) / max(len(analysis.capabilities), 1)
             complexity_fit = 1 - abs(profile.complexity_preference - analysis.difficulty / 5)
             risk_fit = 1 - abs(profile.risk_preference - analysis.risk / 5)

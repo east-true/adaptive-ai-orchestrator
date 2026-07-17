@@ -68,6 +68,18 @@ PYTHONPATH=src python3 -m adaptive_orchestrator.cli run \
 
 The default policy is only a starting hypothesis: it mildly favors Codex for code/test/debug signals and Claude Code for repository/architecture/planning signals. Both remain eligible whenever they support the analyzed capabilities; selection is not a fixed role assignment. The policy and historical evidence are visible in every routing decision.
 
+To pin a model or Codex reasoning effort for a routed command, pass the corresponding adapter options. They are accepted by `run`, `run-plan`, and `plan generate`:
+
+```bash
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli run \
+  --workspace . --agent codex:gpt-5.5:high \
+  --codex-model gpt-5.5 --codex-reasoning-effort high \
+  --claude-model opus \
+  --description "Run the unit tests" --objective "Confirm the suite passes"
+```
+
+Configured variants receive derived registry IDs (`claude-code:<model>` and `codex:<model>:<reasoning-effort>`; omitted parts are left out). Use that derived ID with `--agent` to request a specific variant, or leave `--agent auto` to route between the configured variants. Execution logs retain both the exact variant ID and its stable vendor base ID so historical vendor metrics continue across model changes.
+
 Historical success/verification rates are confidence-weighted by sample count — a handful of logged runs pulls a candidate's score toward the same neutral baseline a brand-new agent gets, rather than being fully trusted. Set `Task.cost_limit_usd` and a candidate whose logged average cost (currently tracked for Claude Code only) exceeds it is penalized; leave it unset and cost has no effect on routing.
 
 `--verify-command` is repeatable — every configured check runs (they're treated as independent, e.g. lint + typecheck + test) and the worst outcome wins:

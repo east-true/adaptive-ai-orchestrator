@@ -9,6 +9,20 @@ from adaptive_orchestrator.agents import ClaudeCodeAgent, CodexAgent
 
 
 class ClaudeCodeAgentTests(unittest.TestCase):
+    def test_agent_id_derivation_and_explicit_name(self) -> None:
+        self.assertEqual(ClaudeCodeAgent().agent_id, "claude-code")
+        self.assertEqual(ClaudeCodeAgent(model="opus").agent_id, "claude-code:opus")
+        self.assertEqual(ClaudeCodeAgent(agent_id="CO", model="opus").agent_id, "CO")
+
+    def test_base_id_is_shared_and_unaffected_by_custom_agent_id(self) -> None:
+        self.assertEqual(ClaudeCodeAgent.base_id, ClaudeCodeAgent(agent_id="CO").base_id)
+        self.assertEqual(ClaudeCodeAgent(agent_id="CO").base_id, "claude-code")
+
+    def test_build_command_model_flag_is_additive(self) -> None:
+        default = ClaudeCodeAgent().build_command("hello", Path("/tmp/workspace"))
+        self.assertEqual(default, ("claude", "--print", "--output-format", "json", "--permission-mode", "acceptEdits", "hello"))
+        self.assertEqual(ClaudeCodeAgent(model="opus").build_command("hello", Path("/tmp/workspace"))[-3:], ("--model", "opus", "hello"))
+
     def test_build_command_requests_structured_json_output(self) -> None:
         command = ClaudeCodeAgent().build_command("hello", Path("/tmp/workspace"))
         self.assertIn("--output-format", command)
@@ -45,8 +59,26 @@ class ClaudeCodeAgentTests(unittest.TestCase):
         self.assertIsNone(result)
         self.assertIsNone(metadata)
 
+    def test_parse_result_records_only_one_actual_model(self) -> None:
+        _, metadata = ClaudeCodeAgent(model="opus").parse_result(json.dumps({"result": "ok", "modelUsage": {"claude-sonnet-5": {}}}))
+        self.assertEqual(metadata.model, "claude-sonnet-5")
+        for model_usage in ({}, {"one": {}, "two": {}}):
+            _, metadata = ClaudeCodeAgent().parse_result(json.dumps({"result": "ok", "modelUsage": model_usage}))
+            self.assertIsNone(metadata.model)
+
 
 class CodexAgentTests(unittest.TestCase):
+    def test_agent_id_derivation(self) -> None:
+        self.assertEqual(CodexAgent(reasoning_effort="high").agent_id, "codex:high")
+        self.assertEqual(CodexAgent(model="gpt-5.5", reasoning_effort="high").agent_id, "codex:gpt-5.5:high")
+
+    def test_build_command_configuration_flags_are_additive(self) -> None:
+        default = CodexAgent().build_command("hello", Path("/tmp/workspace"))
+        self.assertEqual(default, ("codex", "exec", "--sandbox", "workspace-write", "--cd", "/tmp/workspace", "--json", "hello"))
+        configured = CodexAgent(model="gpt-5.5", reasoning_effort="high").build_command("hello", Path("/tmp/workspace"))
+        self.assertIn(("-m", "gpt-5.5"), tuple(zip(configured, configured[1:])))
+        self.assertIn(("-c", "model_reasoning_effort=high"), tuple(zip(configured, configured[1:])))
+
     def test_build_command_requests_structured_json_output(self) -> None:
         command = CodexAgent().build_command("hello", Path("/tmp/workspace"))
         self.assertEqual(command[:4], ("codex", "exec", "--sandbox", "workspace-write"))
@@ -107,6 +139,10 @@ class CodexAgentTests(unittest.TestCase):
         ]
         result, metadata = CodexAgent().parse_result("\n".join(lines))
         self.assertEqual(metadata.session_id, "abc")
+
+    def test_parse_result_records_requested_model(self) -> None:
+        _, metadata = CodexAgent(model="gpt-5.5").parse_result(json.dumps({"type": "thread.started", "thread_id": "abc"}))
+        self.assertEqual(metadata.model, "gpt-5.5")
 
 
 if __name__ == "__main__":

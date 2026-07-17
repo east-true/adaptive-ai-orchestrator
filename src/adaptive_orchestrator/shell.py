@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 
 from . import cli
-from .agents import default_agent_ids
+from .agents import ClaudeCodeAgent, default_agent_ids
 from .history import ExecutionHistory
 from .usage import CodexUsage, read_claude_subscription, read_codex_usage
 
@@ -121,7 +121,7 @@ class OrchestratorShell(cmd.Cmd):
         print(self._format_codex_usage(codex_usage))
 
         subscription = read_claude_subscription()
-        metrics = ExecutionHistory(self.workspace / ".orchestrator" / "executions.jsonl").metrics_for("claude-code")
+        metrics = ExecutionHistory(self.workspace / ".orchestrator" / "executions.jsonl").metrics_for_base(ClaudeCodeAgent.base_id)
         clauses = [f"{subscription} subscription"] if subscription is not None else []
         if metrics.cost_samples:
             noun = "execution" if metrics.cost_samples == 1 else "executions"

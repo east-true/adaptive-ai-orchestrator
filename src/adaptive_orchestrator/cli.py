@@ -8,7 +8,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Sequence
 
-from .agents import default_agent_ids, default_agents
+from .agents import Agent, ClaudeCodeAgent, CodexAgent, default_agents
 from .domain import Capability, MemoryEntry, MemoryEntryType, Priority, Task
 from .escalation import EscalationPolicy
 from .kernel import OrchestratorKernel
@@ -88,7 +88,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 def _add_agent_argument(parser: argparse.ArgumentParser) -> None:
     """The --agent flag, shared by every subcommand that routes a task."""
-    parser.add_argument("--agent", choices=("auto", *default_agent_ids()), default="auto")
+    parser.add_argument("--agent", default="auto", help="Agent id from the configured registry, or auto.")
+    parser.add_argument("--claude-model")
+    parser.add_argument("--codex-model")
+    parser.add_argument("--codex-reasoning-effort")
 
 
 def _add_workflow_arguments(parser: argparse.ArgumentParser) -> None:
@@ -192,6 +195,18 @@ def _memory_search_filters_from_args(args: argparse.Namespace) -> tuple[MemoryEn
     )
 
 
+def _configured_agents(args: argparse.Namespace) -> tuple[Agent, ...]:
+    claude_model = getattr(args, "claude_model", None)
+    codex_model = getattr(args, "codex_model", None)
+    codex_reasoning_effort = getattr(args, "codex_reasoning_effort", None)
+    if claude_model is None and codex_model is None and codex_reasoning_effort is None:
+        return default_agents()
+    return (
+        ClaudeCodeAgent(model=claude_model),
+        CodexAgent(model=codex_model, reasoning_effort=codex_reasoning_effort),
+    )
+
+
 def _resolve_text_argument(
     args: argparse.Namespace,
     value_name: str,
@@ -222,7 +237,7 @@ def _resolve_objective(args: argparse.Namespace, parser: argparse.ArgumentParser
 
 
 def _build_workflow(args: argparse.Namespace, workspace: Path) -> EngineeringWorkflow:
-    agents = default_agents()
+    agents = _configured_agents(args)
     logger = JsonlExecutionLogger(workspace / ".orchestrator" / "executions.jsonl")
     runner = SubprocessRunner(_verbose_output_callback(f"[{args.command}:{args.agent}]")) if args.verbose else SubprocessRunner()
     kernel = OrchestratorKernel({agent.agent_id: agent for agent in agents}, logger, workspace, runner=runner, include_git_diff=args.include_git_diff)

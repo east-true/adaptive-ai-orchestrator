@@ -106,6 +106,7 @@ class ExecutionMetadata:
     cached_input_tokens: int | None = None
     num_turns: int | None = None
     session_id: str | None = None
+    model: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -126,6 +127,8 @@ class ExecutionRecord:
     routing_decision: Mapping[str, Any] | None = None
     escalation: "EscalationRecord | None" = None
     metadata: ExecutionMetadata | None = None
+    # Permanent logs must identify the vendor without joining against today's mutable registry.
+    agent_base_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
