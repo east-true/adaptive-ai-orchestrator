@@ -4,7 +4,7 @@ import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import ClassVar, Iterable, Sequence
 
 from .domain import Capability, ExecutionMetadata, Task
 from .process_runner import ProcessResult, ProcessRunner
@@ -19,6 +19,7 @@ class AgentRun:
 class Agent(ABC):
     """A capability-declared coding-agent adapter, independent of a CLI vendor."""
 
+    base_id: ClassVar[str]
     agent_id: str
     capabilities: frozenset[Capability]
 
@@ -52,13 +53,22 @@ class Agent(ABC):
 
 @dataclass(frozen=True, slots=True)
 class ClaudeCodeAgent(Agent):
+    base_id: ClassVar[str] = "claude-code"
     agent_id: str = "claude-code"
     executable: str = "claude"
     permission_mode: str = "acceptEdits"
     capabilities: frozenset[Capability] = frozenset(Capability)
+    model: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.agent_id == self.base_id and self.model is not None:
+            object.__setattr__(self, "agent_id", f"{self.base_id}:{self.model}")
 
     def build_command(self, prompt: str, workspace: Path) -> Sequence[str]:
-        return (self.executable, "--print", "--output-format", "json", "--permission-mode", self.permission_mode, prompt)
+        command = (self.executable, "--print", "--output-format", "json", "--permission-mode", self.permission_mode)
+        if self.model is not None:
+            command += ("--model", self.model)
+        return (*command, prompt)
 
     def parse_result(self, stdout: str) -> tuple[str | None, ExecutionMetadata | None]:
         # Verified against Claude Code 2.1.211's `--output-format json` (see README "CLI compatibility").
@@ -72,6 +82,9 @@ class ClaudeCodeAgent(Agent):
         if not isinstance(payload, dict):
             return stdout, None
         usage = payload.get("usage") or {}
+        model_usage = payload.get("modelUsage") or {}
+        # A mixed-model turn cannot be honestly attributed to one model.
+        model = next(iter(model_usage)) if isinstance(model_usage, dict) and len(model_usage) == 1 else None
         metadata = ExecutionMetadata(
             cost_usd=payload.get("total_cost_usd"),
             input_tokens=usage.get("input_tokens"),
@@ -79,19 +92,33 @@ class ClaudeCodeAgent(Agent):
             cached_input_tokens=usage.get("cache_read_input_tokens"),
             num_turns=payload.get("num_turns"),
             session_id=payload.get("session_id"),
+            model=model,
         )
         return payload.get("result") or stdout, metadata
 
 
 @dataclass(frozen=True, slots=True)
 class CodexAgent(Agent):
+    base_id: ClassVar[str] = "codex"
     agent_id: str = "codex"
     executable: str = "codex"
     sandbox_mode: str = "workspace-write"
     capabilities: frozenset[Capability] = frozenset(Capability)
+    model: str | None = None
+    reasoning_effort: str | None = None
+
+    def __post_init__(self) -> None:
+        axes = tuple(item for item in (self.model, self.reasoning_effort) if item is not None)
+        if self.agent_id == self.base_id and axes:
+            object.__setattr__(self, "agent_id", ":".join((self.base_id, *axes)))
 
     def build_command(self, prompt: str, workspace: Path) -> Sequence[str]:
-        return (self.executable, "exec", "--sandbox", self.sandbox_mode, "--cd", str(workspace), "--json", prompt)
+        command = (self.executable, "exec", "--sandbox", self.sandbox_mode, "--cd", str(workspace), "--json")
+        if self.model is not None:
+            command += ("-m", self.model)
+        if self.reasoning_effort is not None:
+            command += ("-c", f"model_reasoning_effort={self.reasoning_effort}")
+        return (*command, prompt)
 
     def parse_result(self, stdout: str) -> tuple[str | None, ExecutionMetadata | None]:
         # Verified live against Codex CLI 0.144.5's `exec --json`: thread.started{thread_id},
@@ -134,6 +161,7 @@ class CodexAgent(Agent):
             output_tokens=(usage or {}).get("output_tokens"),
             cached_input_tokens=(usage or {}).get("cached_input_tokens"),
             session_id=thread_id,
+            model=self.model,  # Codex reports no model, so this is the requested value, not a measurement.
         )
         return result_text or stdout, metadata
 

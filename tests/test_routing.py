@@ -10,7 +10,7 @@ from adaptive_orchestrator.agents import ClaudeCodeAgent, CodexAgent
 from adaptive_orchestrator.domain import Capability, Task
 from adaptive_orchestrator.history import ExecutionHistory
 from adaptive_orchestrator.routing import _MIN_SAMPLES_FOR_FULL_CONFIDENCE as _MIN_SAMPLES
-from adaptive_orchestrator.routing import AdaptiveRouter, TaskAnalyzer
+from adaptive_orchestrator.routing import AdaptiveRouter, AgentRoutingProfile, TaskAnalyzer
 
 
 class AdaptiveRouterTests(unittest.TestCase):
@@ -34,6 +34,26 @@ class AdaptiveRouterTests(unittest.TestCase):
             self.assertEqual(plan.agent_id, "claude-code")
             self.assertIn("architecture_reasoning", plan.analysis["capabilities"])
 
+    def test_derived_agent_inherits_base_routing_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            history = ExecutionHistory(Path(directory) / "history.jsonl")
+            task = Task("Analyze architecture", "Recommend a design.")
+            base = AdaptiveRouter(TaskAnalyzer(), history).select(task, (ClaudeCodeAgent(),))
+            tier = AdaptiveRouter(TaskAnalyzer(), history).select(task, (ClaudeCodeAgent(model="opus"),))
+            self.assertEqual(base.decision["candidate_scores"]["claude-code"]["score"], tier.decision["candidate_scores"]["claude-code:opus"]["score"])
+
+    def test_unknown_base_uses_neutral_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            class UnknownBaseAgent(ClaudeCodeAgent):
+                base_id = "unknown-vendor"
+
+            agent = UnknownBaseAgent(agent_id="custom")
+            neutral = AgentRoutingProfile({}, 0.5, 0.5)
+            task = Task("Analyze architecture", "Recommend a design.")
+            fallback = AdaptiveRouter(TaskAnalyzer(), ExecutionHistory(Path(directory) / "missing")).select(task, (agent,))
+            explicit = AdaptiveRouter(TaskAnalyzer(), ExecutionHistory(Path(directory) / "missing"), {"custom": neutral}).select(task, (agent,))
+            self.assertEqual(fallback.decision["candidate_scores"], explicit.decision["candidate_scores"])
+
     def test_history_aggregates_execution_and_verification_outcomes(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "history.jsonl"
@@ -42,6 +62,21 @@ class AdaptiveRouterTests(unittest.TestCase):
             self.assertEqual(metrics.executions, 1)
             self.assertEqual(metrics.success_rate, 1.0)
             self.assertEqual(metrics.verification_pass_rate, 1.0)
+
+    def test_history_aggregates_vendor_tiers_and_legacy_records(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "history.jsonl"
+            rows = [
+                {"agent_id": "claude-code:opus", "agent_base_id": "claude-code", "status": "completed", "duration_ms": 10},
+                {"agent_id": "claude-code:sonnet", "agent_base_id": "claude-code", "status": "failed", "duration_ms": 20},
+                {"agent_id": "claude-code", "status": "completed", "duration_ms": 30},
+                {"agent_id": "codex:high", "agent_base_id": "codex", "status": "completed", "duration_ms": 40},
+            ]
+            path.write_text("\n".join(json.dumps(row) for row in rows) + "\n")
+            metrics = ExecutionHistory(path).metrics_for_base("claude-code")
+            self.assertEqual(metrics.executions, 3)
+            self.assertEqual(metrics.successful_executions, 2)
+            self.assertEqual(metrics.total_duration_ms, 60)
 
     def test_history_aggregates_cost_only_from_samples_that_have_it(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

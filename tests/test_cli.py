@@ -15,6 +15,35 @@ from adaptive_orchestrator.domain import Capability, MemoryEntryType, Priority
 
 
 class BuildWorkflowTests(unittest.TestCase):
+    def test_configured_agents_apply_model_options_and_derive_registry_ids(self) -> None:
+        args = argparse.Namespace(
+            claude_model="opus",
+            codex_model="gpt-5.5",
+            codex_reasoning_effort="high",
+        )
+
+        claude, codex = cli._configured_agents(args)
+
+        self.assertEqual(claude.agent_id, "claude-code:opus")
+        self.assertEqual(codex.agent_id, "codex:gpt-5.5:high")
+        self.assertIn(("--model", "opus"), tuple(zip(claude.build_command("task", Path(".")), claude.build_command("task", Path("."))[1:])))
+        self.assertIn(("-m", "gpt-5.5"), tuple(zip(codex.build_command("task", Path(".")), codex.build_command("task", Path("."))[1:])))
+        self.assertIn(("-c", "model_reasoning_effort=high"), tuple(zip(codex.build_command("task", Path(".")), codex.build_command("task", Path("."))[1:])))
+
+    def test_model_options_are_available_on_routed_commands(self) -> None:
+        parser = cli.build_parser()
+        cases = (
+            ["run", "--description", "Do it", "--objective", "Done"],
+            ["run-plan", "plan.json"],
+            ["plan", "generate", "Make a plan"],
+        )
+        for argv in cases:
+            with self.subTest(command=argv):
+                args = parser.parse_args([*argv, "--claude-model", "opus", "--codex-model", "gpt-5.5", "--codex-reasoning-effort", "high"])
+                self.assertEqual(args.claude_model, "opus")
+                self.assertEqual(args.codex_model, "gpt-5.5")
+                self.assertEqual(args.codex_reasoning_effort, "high")
+
     def test_verbose_flag_installs_streaming_runner(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             args = type(

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,6 +56,12 @@ class ExecutionHistory:
         return tuple(seen)
 
     def metrics_for(self, agent_id: str) -> AgentMetrics:
+        return self._metrics_matching(lambda item: item.get("agent_id") == agent_id)
+
+    def metrics_for_base(self, base_id: str) -> AgentMetrics:
+        return self._metrics_matching(lambda item: item.get("agent_base_id", item.get("agent_id")) == base_id)
+
+    def _metrics_matching(self, predicate: Callable[[dict], bool]) -> AgentMetrics:
         metrics = AgentMetrics()
         if not self.path.exists():
             return metrics
@@ -63,7 +70,7 @@ class ExecutionHistory:
                 item = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            if item.get("agent_id") != agent_id:
+            if not predicate(item):
                 continue
             completed = item.get("status") == "completed"
             verification = item.get("verification") or {}
