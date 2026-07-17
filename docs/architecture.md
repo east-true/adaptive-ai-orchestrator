@@ -16,6 +16,14 @@ Task -> Task analysis -> Adaptive Router -> CLI Agent (capabilities + command bu
 
 `CommandVerifier` similarly gained `additional_commands: Sequence[Sequence[str]]` alongside its original single `command` field (fully backward compatible — existing single-command callers are unaffected). Every configured command runs regardless of the others' outcome, since they are typically independent checks (lint, typecheck, test); the aggregate `VerificationResult.status` is the worst of the individual outcomes, with per-command output concatenated under a `$ <command>` header.
 
+This is richer command execution, but it is **not yet typed outcome evidence**.
+The current contract cannot distinguish a task-specific acceptance test from
+lint, typecheck, process health, or a diff-scope constraint. Consequently, a
+passing command must not automatically be interpreted as task-quality reward.
+The next routing increment adds evaluator roles and per-evaluator results before
+historical outcomes are used for learning; see
+[Adaptive Routing v2](adaptive-routing-v2.md).
+
 ## Planner
 
 Phase 2 of `project-constitution.md` names the control loop as `Planner -> Executor -> Verifier`. The `plan generate` CLI subcommand is that planner: it asks an existing CLI agent (Claude Code or Codex, through the same adapter layer used for `run`) to write a plan file, then validates it by running the unchanged `EngineeringWorkflow.run` pipeline with a `CommandVerifier` self-check that calls `plan validate`.
@@ -28,17 +36,32 @@ That choice keeps the system inside the existing CLI-agent boundary. It does not
 
 ## Escalation policy
 
-This implements the flow already named in project-constitution.md 5: Single Agent First -> Task Difficulty Analysis -> Need Additional Intelligence? -> Multi-Agent Collaboration. After the first agent runs and is (optionally) verified, `EscalationPolicy.decide` inspects the execution status, verification status, and the router's own risk/uncertainty/difficulty analysis. It escalates to exactly one more agent only when there is a concrete reason: the execution failed, verification failed or timed out, or analyzed risk, uncertainty, or difficulty crossed a configured threshold. The difficulty threshold defaults higher (4 of 5) than risk/uncertainty (3 of 5) because the difficulty score floors at 1 (never 0); a low threshold would escalate on nearly every multi-capability task, which would violate the "minimum sufficient intelligence" goal. It never overrides an explicitly requested agent (`--agent claude-code` / `--agent codex`) — escalation only applies when the router was free to choose. The second agent is the router's next-best-scored candidate (or, for the deterministic capability-only selector, any other capable agent). Both attempts are logged as independent JSONL records so `ExecutionHistory` keeps accurate per-agent metrics; the primary record additionally nests the escalated attempt so a single execution tells the whole story.
+This implements the flow already named in project-constitution.md 5: Single Agent First -> Task Difficulty Analysis -> Need Additional Intelligence? -> Multi-Agent Collaboration. After the first agent runs and is (optionally) verified, `EscalationPolicy.decide` inspects the execution status, verification status, and the router's own risk/uncertainty/difficulty analysis. It escalates to exactly one more agent when the execution failed, verification failed or timed out, **or** analyzed risk, uncertainty, or difficulty crossed a configured threshold; the latter path can therefore escalate after a successful first attempt. The difficulty threshold defaults higher (4 of 5) than risk/uncertainty (3 of 5) because the difficulty score floors at 1 (never 0); a low threshold would escalate on nearly every multi-capability task, which would violate the "minimum sufficient intelligence" goal. It never overrides an explicitly requested agent (`--agent claude-code` / `--agent codex`) — escalation only applies when the router was free to choose. The second agent is the router's next-best-scored candidate (or, for the deterministic capability-only selector, any other capable agent).
+
+Both attempts are currently logged as separate JSONL records and the primary
+record also nests the escalated attempt. That makes them inspectable, but not
+statistically independent: outcome-triggered, analysis-triggered, and ordinary
+attempts are different cohorts, and the second attempt may see the first
+attempt's workspace changes. The current schema does not label those cohorts
+before `ExecutionHistory` aggregates them. This is an observed limitation, not
+evidence that the resulting per-agent metrics are accurate.
 
 ## Router: measured cost, richer risk, and telemetry confidence
 
 `ExecutionHistory.metrics_for` now aggregates `average_cost_usd` from each logged execution's `metadata.cost_usd` when present (today, only Claude Code populates it — see `ClaudeCodeAgent.parse_result`). `AdaptiveRouter.select` applies a fixed penalty to a candidate only when the task sets `cost_limit_usd` *and* that candidate's historical average exceeds it; with no stated budget or no cost samples, cost has no effect on scoring — there's nothing to compare against, so it stays neutral rather than guessed at. This activates `Task.cost_limit_usd`, which previously existed in `domain.py` but was read nowhere.
 
-The interactive shell's `usage` command deliberately reports two structurally different sources. Codex supplies rate-limit percentages through its own undocumented local session-log format, which may change on a Codex CLI upgrade; Claude Code supplies only its subscription tier locally, so the command pairs that account-wide label with cost samples from this project's `ExecutionHistory` and explicitly says that no live quota percentage is available. This asymmetry is intentional, matching the existing `ExecutionMetadata.cost_usd` behavior where Codex exposes no cost field.
+The interactive shell's `usage` command deliberately reports two structurally different sources. Codex supplies rate-limit percentages through its own undocumented local session-log format, which may change on a Codex CLI upgrade; Claude Code supplies only its subscription tier locally, so the command pairs that account-wide label with cost samples from this project's `ExecutionHistory` and explicitly says that no live quota percentage is available. This asymmetry matches the existing `ExecutionMetadata.cost_usd` behavior where Codex exposes no cost field. The current CLI also has no `cost_limit_usd` input, so the router's historical cost penalty is reachable only through the Python `Task` API and would be asymmetric while Codex cost remains unknown.
 
 `TaskAnalyzer`'s risk keyword list grew to include explicitly irreversible operations (force push, `rm -rf`, drop table, overwrite, no backup, and Korean equivalents) — an extension of the existing text-matching heuristic, not a new inference technique.
 
 Historical evidence (success rate, verification pass rate) is now confidence-weighted by sample count (`_MIN_SAMPLES_FOR_FULL_CONFIDENCE = 5` in `routing.py`): below that many logged executions, evidence blends toward the same neutral prior a candidate with zero history gets, rather than fully trusting a single run. This fixed a real bug in the process — the old `metrics.success_rate or 0.5` treated a genuine 0.0 success rate (an agent that has always failed) as indistinguishable from "no history yet," since `0.0` is falsy in Python.
+
+That fix did not make the resulting router unbiased. With deterministic argmax,
+selection-count confidence can pull a good but less-exposed candidate down to
+the neutral value and then keep it unselected. Capability affinity also weights
+text-inferred and caller-required capabilities equally even though difficulty
+does not. These are current limitations to address together in the corrected L0
+policy; the legacy metrics are operational diagnostics, not objective quality.
 
 **Difficulty/risk no longer conflate thoroughness with complexity.** A real dogfooding run (using the orchestrator to delegate its own engineering-memory feature to Codex — see `memory.py`) surfaced this live: a long, well-specified, six-requirement task description hit the maximum difficulty (5) purely from text length and the number of keyword categories it happened to touch, and risk hit 4 because the test-writing instructions used the word "credential" as an example — not because the task was actually broad or security-sensitive. `difficulty` now weights `task.required_capabilities` (a deliberate, caller-declared signal) far more than merely-inferred-from-text capabilities (full weight vs. a third); the risk-keyword match now needs multiple distinct hits to reach its full contribution instead of any single incidental mention; and the SECURITY_REVIEW risk contribution only fires when that capability was explicitly required, not merely inferred from a stray word. Re-running the exact scenario that surfaced this: difficulty dropped from 5 to 3 and risk from 4 to 2 — below the default escalation thresholds, where before this would have triggered a wasteful second full agent run in `--agent auto` mode.
 
@@ -50,7 +73,7 @@ Found via dogfooding (using the orchestrator to delegate its own feature work to
 
 `--verbose` (shared by `run` and `run-plan`) streams the running agent's stdout to stderr line-by-line as it arrives, prefixed with the command and requested agent, while stdout still only carries the final JSON result. This is purely additive: `SubprocessRunner` now takes an optional `on_output_line` callback and reads stdout/stderr concurrently via two threads instead of blocking on `subprocess.run`, but when no callback is given (the default), behavior is unchanged. It only echoes raw lines — it does not attempt to parse or pretty-print an agent's structured output, since that already happens after the process exits via `Agent.parse_result`.
 
-The interactive shell in `adaptive_orchestrator.shell` is deliberately thinner than the CLI itself: it only stores a session workspace/agent, turns each shell command back into an argv list, and calls `cli.main` directly. That keeps the shell aligned with the same argparse rules, JSON output, and error handling as the normal CLI, with no duplicated business logic. The only new behavior it adds is a small `history` convenience view built on `ExecutionHistory`.
+The interactive shell in `adaptive_orchestrator.shell` remains deliberately thinner than the CLI itself. It stores session-only workspace, agent, and repeated workflow defaults; `task`/`compose` and the routed commands translate those values back into argv and call `cli.main` directly. Detailed help delegates to the same argparse definitions. Shell-native behavior is limited to input/session ergonomics and read-only local views (`history`, `recent`, `usage`); execution, planning, verification, escalation, JSON output, and parser validation remain owned by the existing CLI and core layers.
 
 ## Deliberate boundaries
 
@@ -59,16 +82,16 @@ The interactive shell in `adaptive_orchestrator.shell` is deliberately thinner t
 - **Adaptive Router:** infers task signals, scores capable agents using configurable policy and local history, and emits an explainable decision.
 - **Process runner:** runs argument vectors without a shell, handles timeouts, normalizes output/state, and can optionally stream stdout as it arrives without changing what it returns.
 - **Git snapshot:** best-effort collection of workspace state after execution. It does not attribute changes to an agent.
-- **Telemetry:** records task, selected agent, command, timing, result, errors, workspace files, and an opt-in diff for later evaluation and routing.
+- **Telemetry:** records task, selected agent, command, duration, result, errors, workspace files, and an opt-in diff. It does not yet have a stable execution/attempt ID or timestamp, so durable lifecycle reconstruction and historical time-ordered analysis are not available.
 
 ## Security posture of local tools
 
-The Process Runner uses argument vectors (`shell=False`). Claude defaults to `acceptEdits`; Codex defaults to `workspace-write`. Neither adapter adds a dangerous permission-bypass option. The JSONL logger masks common sensitive keys and token patterns, but is not a DLP boundary; Git diff collection is opt-in. v0.1 is a local-development runtime, not a sandbox or multi-tenant security boundary.
+The Process Runner uses argument vectors (`shell=False`). Claude defaults to `acceptEdits`; Codex defaults to `workspace-write`. Neither adapter adds a dangerous permission-bypass option. The JSONL logger masks common sensitive keys and token patterns, but is not a DLP boundary; Git diff collection is opt-in. Its current sensitive-key regex also over-redacts usage-count fields such as `input_tokens`, so resource telemetry must be repaired without weakening literal credential redaction. v0.1 is a local-development runtime, not a sandbox or multi-tenant security boundary.
 
 ## Evolution path
 
 1. Add structured CLI event adapters and normalize execution/cost metadata where available. **Done**: `ClaudeCodeAgent.parse_result` (verified against `2.1.211`'s `--output-format json`) and `CodexAgent.parse_result` (verified against `0.144.5`'s `exec --json`: `thread.started`/`item.completed` with `item.type == "agent_message"`/`turn.completed` with token `usage`/`error`+`turn.failed` on failure). Codex exposes no cost field, so `ExecutionMetadata.cost_usd` is `None` for Codex — an honest gap in what the CLI reports, not a parsing shortfall.
 2. Expand the current deterministic planner/executor/verifier loop with structured task plans and richer verification. **Done**: `EngineeringWorkflow.run_plan` (explicit ordered `Task` list, see "Structured plans and richer verification" above) and `CommandVerifier.additional_commands` (multi-command, worst-of aggregation).
-3. Expand the current task-analysis router with measured cost, richer risk signals, and sufficient observed telemetry. **Done**: see "Router: measured cost, richer risk, and telemetry confidence" above.
+3. Expand the current task-analysis router with measured cost and richer risk signals. **Partially done**: the fields and heuristics exist, but objective-quality evidence, comparable cost, unbiased exposure, and sufficient telemetry do not. See "Router: measured cost, richer risk, and telemetry confidence" above and [Adaptive Routing v2](adaptive-routing-v2.md).
 4. Store architecture decisions and evaluation outcomes as engineering memory. **Done**: `EngineeringMemoryStore` (explicit `MemoryEntry` records in `.orchestrator/memory.jsonl`, queryable by type/tag/keyword, and populated only by the `memory` CLI subcommands).
 5. Tune escalation thresholds from observed telemetry instead of fixed defaults, and consider richer escalation strategies (e.g. majority vote across agents) once there is measured benefit.
