@@ -23,6 +23,14 @@ from .escalation import EscalationPolicy
 from .events import EventLogError, JsonlEventStore
 from .kernel import OrchestratorKernel
 from .memory import EngineeringMemoryStore
+from .notifications import notify_execution
+from .reporting import (
+    ExecutionLookupError,
+    ExecutionReportStore,
+    render_markdown_report,
+    render_text_summary,
+    task_spec_for_retry,
+)
 from .logging import JsonlExecutionLogger
 from .history import ExecutionHistory
 from .paired_experiment import (
@@ -55,6 +63,24 @@ def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser
 
     doctor = subparsers.add_parser("doctor", help="check project config, agent login, and runtime prerequisites")
     doctor.add_argument("--workspace", type=Path, default=Path.cwd())
+
+    show = subparsers.add_parser("show", help="show a human-readable execution summary")
+    show.add_argument("identifier", help="Execution ID, attempt ID, or legacy #number.")
+    show.add_argument("--workspace", type=Path, default=Path.cwd())
+
+    report = subparsers.add_parser("report", help="render a Markdown execution report")
+    report.add_argument("identifier", help="Execution ID, attempt ID, or legacy #number.")
+    report.add_argument("--workspace", type=Path, default=Path.cwd())
+    report.add_argument("--output", type=Path, help="Write Markdown to this path instead of stdout.")
+    report.add_argument("--include-diff", action="store_true", help="Include the recorded workspace diff when available.")
+    report.add_argument("--force", action="store_true", help="Replace an existing output file.")
+
+    retry = subparsers.add_parser("retry", help="run the task from a recorded execution again")
+    retry.add_argument("identifier", help="Execution ID, attempt ID, or legacy #number.")
+    retry.add_argument("--workspace", type=Path, default=Path.cwd())
+    _add_agent_argument(retry, config)
+    retry.set_defaults(agent="same")
+    _add_workflow_arguments(retry, config)
 
     run = subparsers.add_parser("run", help="plan, execute, and optionally verify one task")
     run.add_argument("--workspace", type=Path, default=Path.cwd())
@@ -466,11 +492,36 @@ def _workspace_from_argv(argv: Sequence[str]) -> Path:
 
 
 def _config_for_argv(argv: Sequence[str]) -> ProjectConfig:
-    if not argv or argv[0] not in {"run", "run-plan", "plan"}:
+    if not argv or argv[0] not in {"run", "run-plan", "plan", "retry"}:
         return ProjectConfig()
     if len(argv) > 1 and argv[0] == "plan" and argv[1] == "validate":
         return ProjectConfig()
     return load_project_config(_workspace_from_argv(argv))
+
+
+def _execution_store(workspace: Path) -> ExecutionReportStore:
+    return ExecutionReportStore(workspace.resolve() / ".orchestrator" / "executions.jsonl")
+
+
+def _write_report(path: Path, content: str, force: bool) -> None:
+    path = path.expanduser().resolve()
+    if path.exists() and not force:
+        raise FileExistsError(f"Report already exists: {path} (use --force to replace it)")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+
+
+def _deliver_notifications(record: object, config: ProjectConfig) -> None:
+    if not config.notify_terminal_bell and not config.notify_desktop:
+        return
+    payload = asdict(record) if not isinstance(record, dict) else record
+    for result in notify_execution(
+        payload,
+        terminal_bell=config.notify_terminal_bell,
+        desktop=config.notify_desktop,
+    ):
+        if not result.delivered:
+            print(f"Notification warning ({result.channel}): {result.detail}", file=sys.stderr)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -502,6 +553,23 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[{check.status}] {check.name}: {check.detail}")
         return 0 if diagnostics_succeeded(checks) else 1
 
+    if args.command in {"show", "report"}:
+        try:
+            bundle = _execution_store(args.workspace).find(args.identifier)
+            if args.command == "show":
+                print(render_text_summary(bundle))
+                return 0
+            content = render_markdown_report(bundle, include_diff=args.include_diff)
+            if args.output is None:
+                print(content, end="")
+            else:
+                _write_report(args.output, content, args.force)
+                print(f"Report written to {args.output.expanduser().resolve()}")
+            return 0
+        except (ExecutionLookupError, OSError, FileExistsError) as exc:
+            print(f"{args.command.capitalize()} failed: {exc}", file=sys.stderr)
+            return 1
+
     # `plan validate` takes an explicit file path and has no --workspace of its own; it must be
     # handled before resolving args.workspace, which does not exist on its subparser's namespace.
     if args.command == "plan" and args.plan_command == "validate":
@@ -517,6 +585,27 @@ def main(argv: list[str] | None = None) -> int:
         return _run_paired_command(args)
 
     workspace = args.workspace.resolve()
+
+    if args.command == "retry":
+        try:
+            bundle = _execution_store(workspace).find(args.identifier)
+            task = _task_from_spec(task_spec_for_retry(bundle))
+        except (ExecutionLookupError, KeyError, TypeError, ValueError) as exc:
+            print(f"Retry failed: {exc}", file=sys.stderr)
+            return 1
+        requested_agent = bundle.primary.get("agent_id") if args.agent == "same" else args.agent
+        if not isinstance(requested_agent, str):
+            print("Retry failed: the original agent is not recorded; use --agent auto", file=sys.stderr)
+            return 1
+        workflow = _build_workflow(args, workspace)
+        try:
+            plan, record = workflow.run(task, requested_agent)
+        except (KeyError, ValueError) as exc:
+            print(f"Retry failed: {exc}; use --agent auto or configure the original model variant", file=sys.stderr)
+            return 1
+        print(json.dumps({"plan": asdict(plan), "execution": asdict(record)}, default=str, indent=2))
+        _deliver_notifications(record, config)
+        return 0 if execution_succeeded(record) else 1
 
     if args.command == "memory":
         store = EngineeringMemoryStore(workspace / ".orchestrator" / "memory.jsonl")
@@ -571,6 +660,8 @@ def main(argv: list[str] | None = None) -> int:
         tasks = _load_plan(args.plan_file)
         result = workflow.run_plan(tasks, args.agent, stop_on_failure=not args.continue_on_failure)
         print(json.dumps({"steps": [{"plan": asdict(step.plan), "execution": asdict(step.record)} for step in result.steps], "stopped_early": result.stopped_early}, default=str, indent=2))
+        if result.steps:
+            _deliver_notifications(result.steps[-1].record, config)
         return 0 if result.succeeded else 1
 
     if args.command == "plan":
@@ -601,6 +692,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Plan written to {resolved_output}")
         print(f"Steps: {len(tasks)}")
         print(f"Next: PYTHONPATH=src python3 -m adaptive_orchestrator.cli run-plan {resolved_output} --workspace {workspace} ...")
+        _deliver_notifications(record, config)
         return 0
 
     run_parser = getattr(args, "_parser", None)
@@ -619,6 +711,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     plan, record = workflow.run(task, args.agent)
     print(json.dumps({"plan": asdict(plan), "execution": asdict(record)}, default=str, indent=2))
+    _deliver_notifications(record, config)
     return 0 if execution_succeeded(record) else 1
 
 
