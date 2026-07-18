@@ -35,6 +35,7 @@ class ProjectConfigTests(unittest.TestCase):
             "execution": {"time_limit_seconds": 120, "verbose": True, "include_git_diff": True},
             "verification": {"commands": ["python3 -m unittest"], "time_limit_seconds": 30},
             "escalation": {"enabled": False, "risk_threshold": 2, "uncertainty_threshold": 4, "difficulty_threshold": 5},
+            "notifications": {"terminal_bell": True, "desktop": True},
         }
         config = project_config_from_mapping(payload)
         self.assertEqual(config.agent, "codex:gpt-5.5:high")
@@ -42,6 +43,8 @@ class ProjectConfigTests(unittest.TestCase):
         self.assertEqual(config.time_limit_seconds, 120)
         self.assertEqual(config.verify_commands, ("python3 -m unittest",))
         self.assertFalse(config.escalation_enabled)
+        self.assertTrue(config.notify_terminal_bell)
+        self.assertTrue(config.notify_desktop)
 
     def test_rejects_unknown_fields_and_invalid_values(self) -> None:
         with self.assertRaisesRegex(ProjectConfigError, "unknown field"):

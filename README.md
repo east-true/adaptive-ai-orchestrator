@@ -31,6 +31,8 @@ src/adaptive_orchestrator/
   cli.py          # `run`, `run-plan`, `plan`, and `memory` subcommands
   configuration.py # local project config loading, validation, initialization, and command detection
   diagnostics.py  # `doctor` checks for config, agent login, and runtime prerequisites
+  notifications.py # opt-in terminal and desktop completion notifications
+  reporting.py    # execution lookup, summaries, Markdown reports, and retry task extraction
   shell.py        # interactive session UX over the existing CLI dispatch
   usage.py        # reads locally available Codex/Claude account information
   tools.py        # workspace-bounded file/shell/git tool runtime
@@ -101,6 +103,10 @@ The generated shape is:
     "risk_threshold": 3,
     "uncertainty_threshold": 3,
     "difficulty_threshold": 4
+  },
+  "notifications": {
+    "terminal_bell": false,
+    "desktop": false
   }
 }
 ```
