@@ -1,6 +1,6 @@
 # Adaptive Routing v2: Evidence-First Stratified Temporal Routing
 
-> 상태: 설계 검토, Phase -1 및 Phase 0 evaluator truth 구현 완료
+> 상태: 설계 검토와 Phase -1/0/1 구현 완료, Phase 2a paired smoke 대기
 > 기준일: 2026-07-18
 > 관련 문서: [연구 검토](routing-research-review.md),
 > [평가 프로토콜](routing-evaluation-protocol.md),
@@ -293,11 +293,14 @@ blend를 **함께** 재검토해야 한다. 일부만 중립화하면 나머지 
 mean-reversion feedback이 zero exposure를 유지한다.
 
 paired evidence 전의 multi-candidate `auto` fallback은 “중립”이라는 이름으로
-임의 tie-break를 숨기지 않는다. 구현 전에 다음 중 하나를 명시적으로 선택한다.
+임의 tie-break를 숨기지 않는다. Phase 1에서는 첫 선택지를 구현했다.
 
 - 사용자가 configured baseline agent를 지정하고 policy 선택임을 표시;
 - evidence 부족을 보고하고 explicit agent 선택을 요구;
 - 오직 paired-evaluation cohort에서만 무작위 배정.
+
+즉 `--routing-policy static`은 `--routing-baseline-agent`가 없으면 실패한다. 호환용
+`legacy`는 별도 policy epoch로 남고, random-safe는 shadow에서만 계산한다.
 
 현재 history는 objective quality가 아니므로 corrected L0의 quality evidence로
 재사용하지 않는다.
@@ -450,8 +453,8 @@ replay.py             실행 없는 deterministic replay/OPE
 ### Phase -1 — 추가 오염 차단
 
 구현 상태(2026-07-18): 아래 additive identity/policy/cohort와 redaction/duration
-수정, legacy evidence freeze, 번역쌍 진단까지 완료했다. corrected L0와 durable
-lifecycle event는 각각 Phase 1 범위로 남아 있다.
+수정, legacy evidence freeze, 번역쌍 진단까지 완료했다. 이후 Phase 1에서 corrected
+L0와 durable lifecycle event도 구현했다.
 
 - secret redaction이 usage-count token key를 파괴하지 않게 수정한다.
 - stable `execution_id`, `attempt_id`, `occurred_at`, `policy_version`, `config_hash`를
@@ -488,6 +491,13 @@ evaluator를 구현했다. 여러 quality evaluator의 정책용 단일 점수 a
 승격되지 않는다.
 
 ### Phase 1 — durable event, replayable boundary와 baseline
+
+구현 상태(2026-07-18): selection/start/terminal-or-reconciled/evaluation/finalized
+event, idempotent projector, PID-aware interrupted reconciliation, protected control-state
+경계와 replay CLI를 구현했다. `routing-context-v1`, `corrected-static-l0-v1`,
+exact/base/environment/task/language backoff와 simple shadow baseline도 추가했다.
+호환 기본값은 여전히 `legacy`이며 corrected static은 명시적 baseline이 필요하다.
+prospective exploration과 정책 승격은 활성화하지 않았다.
 
 - lifecycle event와 interrupted execution reconciliation을 추가한다.
 - context, eligibility, scoring, random draw를 pure component로 분리한다.
@@ -601,24 +611,27 @@ exploration eligibility 위반이 0이다.
 - 환경 변경 전 evidence를 현재 evidence와 무조건 합치지 않는다.
 - subjective judge 하나가 최종 quality ground truth가 되지 않는다.
 
-필요한 운영 flag 예시는 다음과 같다.
+현재 구현된 운영 flag는 다음과 같다.
 
 ```text
---routing-policy static|legacy|estr
+--routing-policy static|legacy
+--routing-baseline-agent AGENT_ID
 --routing-shadow
 --routing-seed
 --environment-epoch
+--control-state-dir
 ```
 
-exploration flag는 future gate가 실제로 열릴 때 추가한다.
+`estr`와 exploration flag는 future gate가 실제로 열릴 때 추가한다.
 
-새 event/state를 읽지 못하면 사전에 지정한 configured baseline으로 명시적으로
-fallback하고 그 이유를 기록한다. 현재의 검증되지 않은 profile이나 등록 순서상 첫
-agent로 조용히 fallback하지 않는다.
+파생 state만 읽지 못하면 event source에서 먼저 재구축한 뒤 사전에 지정한 configured
+baseline을 사용한다. source event 자체가 손상돼 selection을 기록할 수 없으면
+unlogged 실행으로 fallback하지 않고 fail closed한다. 현재의 검증되지 않은 profile이나
+등록 순서상 첫 agent로 조용히 fallback하지 않는다.
 
 ## 13. 당장 구현할 범위
 
-**Phase -1의 추가 오염 차단은 완료됐다. 다음은 Phase 0/1의 최소 관측 기반 뒤
+**Phase -1/0/1의 최소 관측 기반은 완료됐다. 다음은 tooling dry run 뒤
 4-task paired smoke를 실행한다.** 현재 표본으로 VCR-UCB, neural router, prompt
 embedding, correlated surrogate, full contextual model을 바로 켜면 모델은
 복잡해져도 정확도를 검증할 수 없다. 기존 전체 test verification은 objective

@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
 from adaptive_orchestrator import cli
 from adaptive_orchestrator.domain import Capability, EvaluatorRole, MemoryEntryType, Priority
+from adaptive_orchestrator.events import JsonlEventStore, LifecycleEventType
 
 
 class BuildWorkflowTests(unittest.TestCase):
@@ -58,8 +59,27 @@ class BuildWorkflowTests(unittest.TestCase):
                 self.assertEqual(args.quality_evaluator_command, ["python3 /protected/acceptance.py"])
                 self.assertEqual(args.quality_evaluator_artifact, [Path("/protected/acceptance.py")])
 
+    def test_phase_one_routing_flags_are_available_on_routed_commands(self) -> None:
+        parser = cli.build_parser()
+        args = parser.parse_args([
+            "run", "--description", "Do it", "--objective", "Done",
+            "--routing-policy", "static",
+            "--routing-baseline-agent", "codex",
+            "--routing-shadow",
+            "--routing-seed", "17",
+            "--environment-epoch", "codex-0.145",
+        ])
+        self.assertEqual(args.routing_policy, "static")
+        self.assertEqual(args.routing_baseline_agent, "codex")
+        self.assertTrue(args.routing_shadow)
+        self.assertEqual(args.routing_seed, 17)
+        self.assertEqual(args.environment_epoch, "codex-0.145")
+
     def test_verbose_flag_installs_streaming_runner(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workspace = root / "workspace"
+            workspace.mkdir()
             args = type(
                 "Args",
                 (),
@@ -74,12 +94,13 @@ class BuildWorkflowTests(unittest.TestCase):
                     "escalation_uncertainty_threshold": 3,
                     "escalation_difficulty_threshold": 4,
                     "verbose": True,
+                    "control_state_dir": root / "control",
                 },
             )()
 
             with patch.object(cli, "SubprocessRunner") as runner_ctor:
                 runner_instance = runner_ctor.return_value
-                workflow = cli._build_workflow(args, Path(directory))
+                workflow = cli._build_workflow(args, workspace)
 
         runner_ctor.assert_called_once()
         self.assertIs(workflow._kernel.runner, runner_instance)
@@ -143,11 +164,13 @@ class TaskFromSpecTests(unittest.TestCase):
             "capabilities": ["debugging"],
             "priority": "high",
             "time_limit_seconds": 120,
+            "task_id": "task-login-fix",
         })
         self.assertEqual(task.constraints, ("Read-only",))
         self.assertEqual(task.required_capabilities, (Capability.DEBUGGING,))
         self.assertEqual(task.priority, Priority.HIGH)
         self.assertEqual(task.time_limit_seconds, 120)
+        self.assertEqual(task.task_id, "task-login-fix")
 
 
 class LoadPlanTests(unittest.TestCase):
@@ -197,6 +220,99 @@ class MainPlanValidateDispatchTests(unittest.TestCase):
                 exit_code = cli.main(["plan", "validate", str(path)])
             self.assertEqual(exit_code, 1)
             self.assertIn("Invalid plan file", stderr.getvalue())
+
+
+class ReplayDispatchTests(unittest.TestCase):
+    def test_replay_validates_and_rebuilds_state(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            control = root / "control"
+            store = JsonlEventStore(control / "events.jsonl")
+            common = {"execution_id": "execution", "task_id": "task", "attempt_id": "attempt"}
+            store.append(
+                LifecycleEventType.SELECTION_MADE,
+                payload={
+                    "selected_agent": "codex",
+                    "eligible_candidates": ["codex"],
+                    "ineligible_reasons": {},
+                    "candidate_probabilities": {"codex": 1.0},
+                    "selected_probability": 1.0,
+                },
+                **common,
+            )
+            store.append(LifecycleEventType.EXECUTION_STARTED, **common)
+            store.append(LifecycleEventType.EXECUTION_TERMINAL, payload={"status": "completed"}, **common)
+            store.append(LifecycleEventType.OUTCOME_FINALIZED, payload={"status": "completed"}, **common)
+            stdout = io.StringIO()
+
+            with contextlib.redirect_stdout(stdout):
+                exit_code = cli.main([
+                    "replay", "--workspace", str(workspace),
+                    "--control-state-dir", str(control), "--rebuild-state",
+                ])
+
+            payload = json.loads(stdout.getvalue())
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(payload["event_count"], 4)
+            self.assertEqual(payload["incomplete_attempt_count"], 0)
+            self.assertTrue(payload["state_rebuilt"])
+            self.assertFalse(payload["legacy_execution_log"]["counterfactual_supported"])
+            self.assertTrue((control / "routing-state.json").exists())
+
+    def test_replay_reports_invalid_event_log_without_traceback(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            control = root / "control"
+            event_path = control / "events.jsonl"
+            event_path.parent.mkdir()
+            event_path.write_text("not-json\n")
+            stderr = io.StringIO()
+
+            with contextlib.redirect_stderr(stderr):
+                exit_code = cli.main(["replay", "--workspace", str(workspace), "--control-state-dir", str(control)])
+
+            self.assertEqual(exit_code, 1)
+            self.assertIn("Replay failed", stderr.getvalue())
+
+    def test_replay_rejects_control_directory_inside_workspace_without_traceback(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            stderr = io.StringIO()
+
+            with contextlib.redirect_stderr(stderr):
+                exit_code = cli.main([
+                    "replay",
+                    "--workspace", str(workspace),
+                    "--control-state-dir", str(workspace / ".orchestrator"),
+                ])
+
+            self.assertEqual(exit_code, 1)
+            self.assertIn("Replay failed", stderr.getvalue())
+
+
+class WorkflowConfigurationDispatchTests(unittest.TestCase):
+    def test_static_policy_without_baseline_fails_cleanly_before_agent_execution(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                exit_code = cli.main([
+                    "run",
+                    "--workspace", str(workspace),
+                    "--control-state-dir", str(root / "control"),
+                    "--description", "Do work",
+                    "--objective", "Done",
+                    "--routing-policy", "static",
+                ])
+
+            self.assertEqual(exit_code, 2)
+            self.assertIn("requires --routing-baseline-agent", stderr.getvalue())
 
 
 class ValidatePlanFileTests(unittest.TestCase):

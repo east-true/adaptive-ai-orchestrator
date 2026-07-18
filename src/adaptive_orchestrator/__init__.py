@@ -18,6 +18,8 @@ from .domain import (
 )
 from .kernel import OrchestratorKernel
 from .memory import EngineeringMemoryStore
+from .events import LifecycleEvent, LifecycleEventType
+from .routing_policy import CorrectedStaticRouter, RoutingPolicyRouter
 
 __all__ = [
     "Agent",
@@ -33,9 +35,13 @@ __all__ = [
     "ExecutionStatus",
     "MemoryEntry",
     "MemoryEntryType",
+    "LifecycleEvent",
+    "LifecycleEventType",
     "OrchestratorKernel",
     "Priority",
     "Task",
+    "CorrectedStaticRouter",
+    "RoutingPolicyRouter",
     "VerificationResult",
     "VerificationStatus",
 ]

@@ -6,6 +6,7 @@
 Task -> Task analysis -> Adaptive Router -> CLI Agent (capabilities + command builder) -> Process Runner -> CLI process
   \-> Git workspace snapshot (changed files + optional diff)                   \-> ExecutionRecord -> JSONL telemetry
                                                                                        \-> Escalation Policy -> second CLI Agent (only if warranted)
+  \-> versioned routing context/policy -> protected lifecycle events -> replayable routing state
 ```
 
 `Task` describes required capabilities rather than a model or job title. `Agent` is a CLI adapter plus capabilities and an execution policy. The Kernel coordinates one selected agent per execution. This preserves the **single-agent-first** policy and makes escalation a measurable, deliberate decision rather than a default.
@@ -34,6 +35,29 @@ but their untyped verification is projected only to `constraint`, never quality.
 Phase 2 of `project-constitution.md` names the control loop as `Planner -> Executor -> Verifier`. The `plan generate` CLI subcommand is that planner: it asks an existing CLI agent (Claude Code or Codex, through the same adapter layer used for `run`) to write a plan file, then validates it by running the unchanged `EngineeringWorkflow.run` pipeline with a `CommandVerifier` self-check that calls `plan validate`.
 
 That choice keeps the system inside the existing CLI-agent boundary. It does not add a new LLM SDK/API dependency, and it does not touch Phase 6 (`API/SDK Integration`) at all. The planner simply reuses the same routing, execution, verification, and escalation machinery that already exists for normal tasks, but points it at a planning task instead of an implementation task.
+
+## Durable lifecycle and routing policy boundary
+
+`JsonlEventStore` allocates a per-execution sequence under a file lock and fsyncs
+each append. `EventProjector` treats identical duplicate IDs idempotently but
+rejects ID collisions, sequence gaps, and invalid attempt transitions. The
+materialized routing state is atomically replaceable and disposable: replaying
+the event source produces it byte-for-byte. A local started attempt is
+reconciled only when its recorded PID is no longer alive; concurrent live
+owners are not marked abandoned.
+
+CLI workflows keep this source in a private XDG/control-state directory outside
+the agent workspace. The project-local execution JSONL remains a compatibility
+and human-diagnostic projection, not the protected evidence source.
+
+`RoutingPolicyRouter` separates the compatibility `legacy` policy from
+`corrected-static-l0-v1`. Corrected static routing requires a configured baseline,
+uses required capabilities only for eligibility, retains inferred capabilities
+as context, and assigns deterministic 0/1 propensities without claiming a
+vendor skill difference. Optional shadow decisions compare simple baselines but
+never alter the action. Best-single and stratified Beta/greedy consume only
+typed binary quality from allowed cohorts and use explicit exact/base,
+environment, task, and language backoff.
 
 ## Engineering memory
 
@@ -96,11 +120,11 @@ The interactive shell in `adaptive_orchestrator.shell` remains deliberately thin
 - **Adaptive Router:** infers task signals, scores capable agents using configurable policy and local history, and emits an explainable decision.
 - **Process runner:** runs argument vectors without a shell, handles timeouts, normalizes output/state, and can optionally stream stdout as it arrives without changing what it returns.
 - **Git snapshot:** best-effort collection of workspace state after execution. It does not attribute changes to an agent.
-- **Telemetry:** records task, selected agent, command, agent-process duration, result, errors, workspace files, and an opt-in diff. Final records now have stable execution/attempt identity, UTC occurrence time, policy/config identity, cohort, evidence eligibility, evaluator-level typed results, and role-separated observation projections. It still lacks started/terminal lifecycle events and end-to-end workflow duration, so interrupted execution reconciliation is not yet durable.
+- **Telemetry:** the protected event source records selection, started, terminal/reconciled, evaluator, and finalized lifecycle stages with task/execution/attempt IDs. Final compatibility records retain policy/config/context/environment identity, cohort, evidence eligibility, evaluator-level typed results, and role-separated projections. End-to-end workflow duration remains absent.
 
 ## Security posture of local tools
 
-The Process Runner uses argument vectors (`shell=False`). Claude defaults to `acceptEdits`; Codex defaults to `workspace-write`. Neither adapter adds a dangerous permission-bypass option. The JSONL logger masks common sensitive keys and token patterns, but is not a DLP boundary; Git diff collection is opt-in. Numeric usage-count fields such as `input_tokens` now use a narrow allowlist so resource telemetry survives while string values under token-named keys and literal credentials remain redacted. v0.1 is a local-development runtime, not a sandbox or multi-tenant security boundary.
+The Process Runner uses argument vectors (`shell=False`). Claude defaults to `acceptEdits`; Codex defaults to `workspace-write`. Neither adapter adds a dangerous permission-bypass option. On interrupt the runner kills and reaps the child before preserving the exception. CLI lifecycle state lives outside the agent workspace with private local modes, though this relies on the CLI sandbox boundary and is not a signed remote ledger. The JSONL logger masks common sensitive keys and token patterns, but is not a DLP boundary; Git diff collection is opt-in. Numeric usage-count fields such as `input_tokens` now use a narrow allowlist so resource telemetry survives while string values under token-named keys and literal credentials remain redacted. v0.1 is a local-development runtime, not a sandbox or multi-tenant security boundary.
 
 ## Evolution path
 
