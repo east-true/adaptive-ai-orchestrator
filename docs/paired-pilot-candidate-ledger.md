@@ -114,51 +114,6 @@ macOS 전용이라 Linux에서 provisioning으로도 재현할 수 없어 resour
 여러 작업 결합, live external API, manual-only UI verification, subjective-only
 evaluation, resource, exact base 부재, 명세 부족, 그리고 license 부재다.
 
-### 4.3 License screening 결과
-
-reviewed Korean-bearing 후보 12개는 pinned base revision을 직접 조회해 판정했다.
-default branch가 아니라 **후보 revision의 tree**를 근거로 삼았고, 결과는 12/12 동일했다.
-
-| 확인 항목 | 결과 |
-|---|---|
-| `LICENSE`/`LICENCE`/`COPYING`/`NOTICE`/`UNLICENSE` | 12개 저장소 전부 부재 |
-| build manifest license 필드(`package.json`, `build.gradle`(`.kts`), `pyproject.toml`) | 12개 전부 선언 없음 |
-
-각 행에는 조회한 revision, manifest path, blob SHA와 content SHA-256을 근거로 남겼다.
-base와 solution revision 사이의 license 차이는 양쪽 모두 부재라 존재하지 않는다.
-따라서 12개는 `license_or_use_basis`가 `fail`이며
-`license-or-use-basis-unavailable`로 제외했다.
-
-### 4.4 Repository 단위 license 조기 필터
-
-두 GitHub pool의 screening 행 뒤에 있는 **363개 저장소 전수**를 repository 단위로 dedup해
-license 신호를 조회했다. 결과는
-[`phase2b-license-probe-2026-07-19.json`](../experiments/phase2b-license-probe-2026-07-19.json)에
-있으며 `terminal_status`는 `false`다 — **default branch(HEAD) 기준 신호이므로 후보의 pinned
-revision 사실이 아니고, 어떤 행의 판정도 바꾸지 않았다.**
-
-| pool | 저장소 | 신호 있음 | screening 행 | 신호 뒤의 행 |
-|---|---:|---:|---:|---:|
-| Korean-bearing | 186 | 23 (12%) | 384 | **52** |
-| explicit multilingual | 199 | 54 (27%) | 351 | **92** |
-
-explicit pool의 보유율이 Korean pool의 두 배가 넘는다. 반대로, 앞서 exact revision까지
-검사한 12개가 전부 license 부재였던 것은 pool 전체의 성질이 아니라 **이전 screening을 통과한
-비무작위 부분집합**의 성질이었다. 두 신호(분류기 SPDX 식별 / 파일 존재)는 답하는 질문이
-다르므로 하나의 비율로 합치지 않고 방법별로 분리해 기록했다.
-
-조회 경로도 기록해 둔다. 저장소 metadata API는 core 한도(시간당 60)를 쓰고 raw 파일
-endpoint는 그 밖이라, 같은 질문을 raw로 물으면 훨씬 빠르다. 겹치는 24개에서 두 방법의
-일치율은 23/24였다. 이 신호는 종결 판정이 아니므로 값싼 경로로 수집하는 것이 맞다.
-
-### 4.5 Quota 해석
-
-language 20/20/20과 category 각 12는 **marginal quota**다. Korean pool 안에
-`repository-analysis-planning` 12개가 따로 필요하지 않으며, 특정 pool의 category 분포가
-치우쳤다는 사실을 3×5 cell 부족이나 전체 category quota 실패로 해석하지 않는다. 현재
-reviewed Korean pool의 planning 후보가 2개라는 것은 사실로만 기록한다. 부족분은 번역이나
-임의 분류로 채우지 않고 그대로 보고한다.
-
 ### 4.1 Provisioning 원칙
 
 eligibility는 **screening host에 우연히 설치돼 있는 runtime 상태로 판정하지 않는다.**
@@ -227,6 +182,51 @@ evaluator로 판정할 수 없는 task, 여러 기능을 결합했거나 live ex
 이름이나 기존 test 존재만으로 통과시키지 않고 각 instance의 upstream license, exact
 base/tree, task 원문, fixture 재현성, assertion coverage를 같은 규칙으로 검사한다.
 English task pool이므로 Korean/mixed quota의 대체물도 아니다.
+
+### 4.3 License screening 결과
+
+reviewed Korean-bearing 후보 12개는 pinned base revision을 직접 조회해 판정했다.
+default branch가 아니라 **후보 revision의 tree**를 근거로 삼았고, 결과는 12/12 동일했다.
+
+| 확인 항목 | 결과 |
+|---|---|
+| `LICENSE`/`LICENCE`/`COPYING`/`NOTICE`/`UNLICENSE` | 12개 저장소 전부 부재 |
+| build manifest license 필드(`package.json`, `build.gradle`(`.kts`), `pyproject.toml`) | 12개 전부 선언 없음 |
+
+각 행에는 조회한 revision, manifest path, blob SHA와 content SHA-256을 근거로 남겼다.
+base와 solution revision 사이의 license 차이는 양쪽 모두 부재라 존재하지 않는다.
+따라서 12개는 `license_or_use_basis`가 `fail`이며
+`license-or-use-basis-unavailable`로 제외했다.
+
+### 4.4 Repository 단위 license 조기 필터
+
+두 GitHub pool의 screening 행 뒤에 있는 **363개 저장소 전수**를 repository 단위로 dedup해
+license 신호를 조회했다. 결과는
+[`phase2b-license-probe-2026-07-19.json`](../experiments/phase2b-license-probe-2026-07-19.json)에
+있으며 `terminal_status`는 `false`다 — **default branch(HEAD) 기준 신호이므로 후보의 pinned
+revision 사실이 아니고, 어떤 행의 판정도 바꾸지 않았다.**
+
+| pool | 저장소 | 신호 있음 | screening 행 | 신호 뒤의 행 |
+|---|---:|---:|---:|---:|
+| Korean-bearing | 186 | 23 (12%) | 384 | **52** |
+| explicit multilingual | 199 | 54 (27%) | 351 | **92** |
+
+explicit pool의 보유율이 Korean pool의 두 배가 넘는다. 반대로, 앞서 exact revision까지
+검사한 12개가 전부 license 부재였던 것은 pool 전체의 성질이 아니라 **이전 screening을 통과한
+비무작위 부분집합**의 성질이었다. 두 신호(분류기 SPDX 식별 / 파일 존재)는 답하는 질문이
+다르므로 하나의 비율로 합치지 않고 방법별로 분리해 기록했다.
+
+조회 경로도 기록해 둔다. 저장소 metadata API는 core 한도(시간당 60)를 쓰고 raw 파일
+endpoint는 그 밖이라, 같은 질문을 raw로 물으면 훨씬 빠르다. 겹치는 24개에서 두 방법의
+일치율은 23/24였다. 이 신호는 종결 판정이 아니므로 값싼 경로로 수집하는 것이 맞다.
+
+### 4.5 Quota 해석
+
+language 20/20/20과 category 각 12는 **marginal quota**다. Korean pool 안에
+`repository-analysis-planning` 12개가 따로 필요하지 않으며, 특정 pool의 category 분포가
+치우쳤다는 사실을 3×5 cell 부족이나 전체 category quota 실패로 해석하지 않는다. 현재
+reviewed Korean pool의 planning 후보가 2개라는 것은 사실로만 기록한다. 부족분은 번역이나
+임의 분류로 채우지 않고 그대로 보고한다.
 
 ## 5. 보호와 검증
 
