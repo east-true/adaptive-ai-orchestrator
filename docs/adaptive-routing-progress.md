@@ -165,7 +165,10 @@ additive identity + policy/cohort labels
 - [x] 7/8 objective observation, one-sided infrastructure failure와 unexpected-file 1건 공개
 - [x] Phase 2b용 일반 manifest schema와 독립 task/evaluator construction gate 문서화
 - [x] JSON/link/diff 검증과 전체 258 unit test 통과
-- [ ] native Korean 20/English 20/mixed 20 task 후보와 provenance ledger 작성
+- [x] source candidate ledger schema와 result-blind inclusion/exclusion rule 작성
+- [x] local history 36개와 공식 English dataset 300개 전체 candidate inventory 및 hash/Git identity 검증
+- [x] candidate ledger 회귀 테스트 4개 추가 및 전체 262 unit test 통과
+- [ ] native Korean 20/English 20/mixed 20 task 후보 screening과 provenance ledger 동결
 - [ ] 독립 evaluator 제작·validity review, assertion inventory와 negative control 완료
 - [ ] 완성된 60-task manifest 검증·동결 및 별도 실행 승인 요청
 

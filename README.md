@@ -51,6 +51,7 @@ Adaptive routing 개선 작업은 다음 문서에서 추적한다.
 - [평가 프로토콜](docs/routing-evaluation-protocol.md)
 - [Phase 2a paired-smoke tooling](docs/paired-smoke-tooling.md)
 - [Phase 2b pilot 사전등록 계약](docs/paired-pilot-preregistration.md)
+- [Phase 2b source candidate ledger 규칙](docs/paired-pilot-candidate-ledger.md)
 - [Claude 독립 검토와 반영 판단](docs/routing-claude-review.md)
 - [진행상황과 이어하기](docs/adaptive-routing-progress.md)
 
@@ -544,7 +545,9 @@ The current implementation was locally validated against Claude Code `2.1.211` a
 
 ## Next development increment
 
-Use the frozen generalized Phase 2b contract to build the source-candidate ledger,
+Use the frozen generalized Phase 2b contract and the
+[source-candidate ledger rules](docs/paired-pilot-candidate-ledger.md) to finish
+and freeze result-blind source screening,
 then construct the 60 native Korean/English/mixed tasks and their protected
 task-specific evaluators through independent author/reviewer roles. Validate the
 completed manifest, evaluator controls, and agent-free dry run before requesting

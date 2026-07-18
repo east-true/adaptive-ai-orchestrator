@@ -204,7 +204,8 @@ protected workspace/control path, 중단 규칙을 제시하고 120 execution을
 construction 단계 완료 조건은 다음과 같다.
 
 - [x] construction/validity workflow와 machine-readable schema 동결;
-- [ ] source candidate ledger 및 inclusion/exclusion rule 동결;
+- [x] source candidate ledger schema와 inclusion/exclusion rule 작성;
+- [ ] source pool screening 완료 및 candidate ledger 동결;
 - [ ] 역할을 분리해 native task 60개 작성;
 - [ ] 보호 evaluator 60개, assertion inventory, negative/positive control 작성;
 - [ ] 독립 validity review 완료;
@@ -212,5 +213,6 @@ construction 단계 완료 조건은 다음과 같다.
 - [ ] agent-free validation/dry run 결과 검토;
 - [ ] 별도 120-execution 승인.
 
-따라서 이 문서 다음의 실제 작업은 runner 실행이 아니라 **source candidate ledger와
-역할 분리된 task construction package**를 만드는 것이다.
+따라서 이 문서 다음의 실제 작업은 runner 실행이 아니라
+[source candidate ledger](paired-pilot-candidate-ledger.md)의 pool을 완성·동결하고
+**역할 분리된 task construction package**를 만드는 것이다.

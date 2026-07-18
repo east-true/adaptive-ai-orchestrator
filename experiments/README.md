@@ -54,3 +54,9 @@ construction and validity gates are defined in
 `../docs/paired-pilot-preregistration.md`, and its machine-readable contract is
 `schemas/paired-pilot-manifest-v1.schema.json`. No Phase 2b task set or 120-agent
 execution is preregistered or authorized yet.
+
+Phase 2b source screening is tracked separately in
+`phase2b-candidate-ledger-v1.json`, validated structurally by
+`schemas/paired-pilot-candidate-ledger-v1.schema.json`, and governed by
+`../docs/paired-pilot-candidate-ledger.md`. A `screening` row is not an authored
+task and does not count toward the 60-task quota.
