@@ -10,7 +10,7 @@ The manifest does not execute these tracked copies. Before validation they are
 materialized at the sibling path below with file mode `0444`:
 
 ```text
-/home/leo/adaptive-ai-orchestrator-evaluators/phase2a-smoke-v1/
+<repository-parent>/adaptive-ai-orchestrator-evaluators/phase2a-smoke-v1/
 ```
 
 Manifest artifact hashes cover the protected copies, including their mode. The
@@ -25,8 +25,8 @@ The smoke tasks are:
 3. add a non-mutating `paired plan` command;
 4. report objective evaluator coverage without imputing missing quality.
 
-No Claude Code or Codex execution is started by committing these control files.
-The manifest has passed `paired validate` and an agent-free eight-checkout
-`paired dry-run`. The remaining gate is an explicit `paired run` invocation
-with fresh workspace and control roots plus `--confirm-agent-execution`; the
-actual eight executions have not run.
+No Claude Code or Codex execution is started merely by committing these control
+files. The manifest passed `paired validate`, an agent-free eight-checkout
+`paired dry-run`, and the explicitly approved eight-execution smoke on
+2026-07-18. The observed result and evaluator-validity finding are recorded in
+`results/phase2a-smoke-v1.md`; they are pipeline evidence, not an agent ranking.

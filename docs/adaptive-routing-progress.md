@@ -1,7 +1,7 @@
 # Adaptive Routing 개선 작업 진행상황
 
 > 마지막 갱신: 2026-07-18
-> 상태: Phase -1/0/1과 Phase 2a manifest/tooling/runner 완료, 실제 8-run smoke 미실행
+> 상태: Phase -1/0/1과 Phase 2a 8-run smoke 완료, post-run reporting 보강 구현
 > 목적: 다른 세션이 결정 근거와 다음 순서를 잃지 않고 작업을 이어간다.
 
 ## 1. 목표
@@ -146,6 +146,14 @@ additive identity + policy/cohort labels
 - [x] 실제 manifest validation과 agent-free 8-checkout dry run
 - [x] fake-process 8-attempt/8-evaluator/48-event end-to-end 회귀 테스트
 - [x] Phase 2a runner 완료 후 전체 unit test 실행(206 tests)
+- [x] 실제 4-task/8-execution smoke와 48-event replay 완료
+- [x] 8/8 reliability, 8/8 objective observation, evaluator artifact 무결성 확인
+- [x] 결과 audit에서 `paired-plan-command` evaluator-contract 불일치 식별
+- [x] smoke task 4개 결과를 현재 코드에 독립 검토 후 통합
+- [x] non-mutating `paired plan`의 공개 `workspaces` contract와 dry-run path 일치 검증
+- [x] replay exact status count와 plan JSON `cost_limit_usd` 입력 경로 추가
+- [x] evaluator coverage의 사전 등록 pair 분모 및 secondary metric 결측 보고 추가
+- [x] future paired lifecycle에 resource observation과 수정 파일 목록 기록
 
 Phase -1은 routing score의 corrected L0를 임의로 만들지 않고 기존 legacy evidence는
 그대로 유지했다. 대신 모든 새 workflow row를 `routing_evidence_eligible=false`로
@@ -267,9 +275,9 @@ events.py
 - legacy execution replay는 schema/record reproduction 전용이며 counterfactual support를
   항상 false로 보고.
 
-### Phase 2a — paired smoke tooling/runner (실제 run 대기)
+### Phase 2a — paired smoke tooling/runner (실제 smoke 완료)
 
-실제 agent 8회를 호출하지 않고 다음 control path를 구현·검증했다.
+agent-free 검증 뒤 실제 agent 8회를 실행해 다음 control path를 검증했다.
 
 - versioned paired manifest와 task/evaluator/base revision schema validation;
 - 동일 clean base에서 격리 workspace A/B 생성과 base hash 비교;
@@ -285,9 +293,11 @@ events.py
 
 4개 low-risk task, 보호 objective evaluator와 resource budget은 결과를 보기 전에
 manifest로 사전 등록했고, evaluator negative control, `paired validate`, agent-free
-`paired dry-run`을 통과했다. 다음 게이트는 이 변경을 커밋·push한 뒤 fresh 경로에서
-`--confirm-agent-execution`을 명시하는 실제 4-task/8-execution smoke다. 세부 계약은
-`docs/paired-smoke-tooling.md`에 있다.
+`paired dry-run` 뒤 실제 smoke를 완료했다. 결과는 pass/pass 3쌍과 Claude fail/Codex
+pass 1쌍이지만, 후자는 task에 명시되지 않은 JSON key를 evaluator가 요구한 contract
+불일치가 있어 agent 비교 근거로 쓰지 않는다. smoke가 찾은 4개 유지보수 변경과
+secondary metric reporting은 통합했다. 다음 gate는 evaluator assertion/task wording의
+사전 coverage review와 modified-file allowlist가 있는 다음 manifest schema다.
 
 ### Phase 2b 이후
 

@@ -271,12 +271,19 @@ agent environments, one protected task-specific evaluator per task, the Git
 base/fixtures, metrics, budget, and stop/exclusion rules before outcomes exist.
 
 ```bash
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli paired plan \
+  experiments/phase2a-smoke-v1.json \
+  --workspace-root /protected/paired-workspaces
 PYTHONPATH=src python3 -m adaptive_orchestrator.cli paired validate \
   experiments/phase2a-smoke-v1.json --source-repository .
 PYTHONPATH=src python3 -m adaptive_orchestrator.cli paired dry-run \
   experiments/phase2a-smoke-v1.json --source-repository . \
   --workspace-root /protected/paired-workspaces
 ```
+
+The plan command only reads the manifest. It returns deterministic assignments
+and eight paths under the explicit `workspaces` JSON field without reading or
+creating the workspace root. The later dry run must produce the same paths.
 
 The dry run invokes neither Claude Code nor Codex. It creates eight persistent,
 independent shallow checkouts containing only the exact detached base commit,
@@ -299,8 +306,9 @@ PYTHONPATH=src python3 -m adaptive_orchestrator.cli paired run \
   --confirm-agent-execution
 ```
 
-Omitting `--confirm-agent-execution` starts no agent and fails closed. The
-preregistered Phase 2a smoke has not been executed yet.
+Omitting `--confirm-agent-execution` starts no agent and fails closed. The first
+preregistered Phase 2a smoke completed on 2026-07-18; see the
+[pipeline result and validity audit](experiments/results/phase2a-smoke-v1.md).
 
 ## Run a structured plan
 
@@ -308,7 +316,7 @@ A plan is an explicit, caller-authored ordered list of tasks — there is no inf
 
 ```json
 [
-  {"description": "Fix the failing login test", "objective": "Login flow works again", "capabilities": ["debugging"]},
+  {"description": "Fix the failing login test", "objective": "Login flow works again", "capabilities": ["debugging"], "cost_limit_usd": 2.5},
   {"description": "Add a regression test for the login fix", "objective": "Prevent recurrence", "capabilities": ["testing"]}
 ]
 ```
@@ -371,7 +379,7 @@ If you want to set the workspace and agent once, then issue short commands repea
 PYTHONPATH=src python3 -m adaptive_orchestrator.shell
 Adaptive Orchestrator shell. Type help or ? for commands; task <request> for a quick run.
 adaptive[auto:adaptive-ai-orchestrator]> workspace .
-Workspace set to /home/leo/adaptive-ai-orchestrator
+Workspace set to /path/to/adaptive-ai-orchestrator
 adaptive[auto:adaptive-ai-orchestrator]> agent codex
 Agent set to codex
 adaptive[codex:adaptive-ai-orchestrator]> set verbose on

@@ -116,7 +116,8 @@ class PairedSmokeRunner:
             json.dumps(self.manifest.as_dict(), sort_keys=True, default=str, separators=(",", ":")).encode("utf-8")
         ).hexdigest()
 
-        deadline = self.clock() + float(wall_limit)
+        run_started = self.clock()
+        deadline = run_started + float(wall_limit)
         assignments = assign_pairs(self.manifest)
         completed_attempts = 0
         for assignment in assignments:
@@ -136,6 +137,7 @@ class PairedSmokeRunner:
                     assignment,
                     workspace,
                     config_hash,
+                    run_started,
                     deadline,
                 )
                 completed_attempts += 1
@@ -162,6 +164,7 @@ class PairedSmokeRunner:
         assignment: PairAssignment,
         workspace: Path,
         config_hash: str,
+        run_started: float,
         deadline: float,
     ) -> None:
         remaining_agent_seconds = max(0.001, deadline - self.clock())
@@ -309,6 +312,13 @@ class PairedSmokeRunner:
                 "verification": asdict(verification),
                 "evaluation_projection": finalized.evaluation_projection,
                 "routing_evidence_eligible": False,
+                "resource_observation": {
+                    "agent_duration_ms": finalized.duration_ms,
+                    "evaluator_duration_ms": sum(result.duration_ms for result in evaluations),
+                    "experiment_elapsed_ms": (self.clock() - run_started) * 1000,
+                    "metadata": asdict(finalized.metadata) if finalized.metadata is not None else {},
+                },
+                "workspace_modified_files": list(finalized.workspace_modified_files),
             },
         )
         kernel.log(finalized)

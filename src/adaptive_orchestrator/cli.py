@@ -37,6 +37,7 @@ from .paired_experiment import (
     assign_pairs,
     load_paired_manifest,
     observations_from_routing_state,
+    plan_paired_workspaces,
     prepare_paired_workspaces,
     validate_paired_environment,
 )
@@ -45,7 +46,7 @@ from .routing import TaskAnalyzer
 from .routing_policy import RoutingPolicyRouter
 from .routing_state import LifecycleRecorder, ReplayError, RoutingStateStore
 from .state_paths import resolve_control_state_directory
-from .replay import replay_digest, replay_event_log, validate_legacy_execution_log
+from .replay import replay_digest, replay_event_log, summarize_attempts, validate_legacy_execution_log
 from .process_runner import SubprocessRunner
 from .verification import CommandVerifier, evaluator_content_version, validate_evaluator_artifacts
 from .workflow import EngineeringWorkflow, execution_succeeded
@@ -100,7 +101,8 @@ def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser
         "plan_file",
         type=Path,
         help='JSON file: a list of task specs, each {"description", "objective", "constraints": [...], '
-        '"capabilities": [...], "priority", "time_limit_seconds"}. Only description/objective are required.',
+        '"capabilities": [...], "priority", "time_limit_seconds", "cost_limit_usd"}. '
+        'Only description/objective are required.',
     )
     run_plan.add_argument("--workspace", type=Path, default=Path.cwd())
     _add_agent_argument(run_plan, config)
@@ -149,12 +151,19 @@ def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser
         help="Append abandoned reconciliation events for non-live started attempts, then rebuild state.",
     )
 
-    paired = subparsers.add_parser("paired", help="validate and dry-run the Phase 2a paired-smoke pipeline")
+    paired = subparsers.add_parser("paired", help="plan, validate, dry-run, or execute the Phase 2a paired smoke")
     paired_subparsers = paired.add_subparsers(dest="paired_command", required=True)
 
     paired_validate = paired_subparsers.add_parser("validate", help="validate a paired manifest and its pinned environment")
     paired_validate.add_argument("manifest", type=Path)
     paired_validate.add_argument("--source-repository", type=Path, default=Path.cwd())
+
+    paired_plan = paired_subparsers.add_parser(
+        "plan",
+        help="project deterministic workspace identities without reading or creating them",
+    )
+    paired_plan.add_argument("manifest", type=Path)
+    paired_plan.add_argument("--workspace-root", type=Path, required=True)
 
     paired_dry_run = paired_subparsers.add_parser(
         "dry-run",
@@ -257,6 +266,7 @@ def _task_from_spec(spec: dict) -> Task:
         required_capabilities=tuple(Capability(item) for item in spec.get("capabilities", ())),
         priority=Priority(spec.get("priority", Priority.NORMAL.value)),
         time_limit_seconds=spec.get("time_limit_seconds"),
+        cost_limit_usd=spec.get("cost_limit_usd"),
         task_id=spec.get("task_id"),
     )
 
@@ -297,6 +307,7 @@ def _build_plan_generation_task(request: str, workspace: Path, output_path: Path
         f"- capabilities: array of strings, optional; valid values: {valid_capabilities}\n"
         f"- priority: string, optional; valid values: {valid_priorities}\n"
         "- time_limit_seconds: number or null, optional\n"
+        "- cost_limit_usd: non-negative number or null, optional\n"
     )
     objective = f"Write a valid JSON plan array to {output_path} for this request: {request}"
     constraints = (
@@ -625,13 +636,15 @@ def main(argv: list[str] | None = None) -> int:
         except (EventLogError, ReplayError, OSError, ValueError) as exc:
             print(f"Replay failed: {exc}", file=sys.stderr)
             return 1
-        attempts = [attempt for execution in state.executions.values() for attempt in execution.attempts.values()]
+        summary = summarize_attempts(state)
         legacy_report = validate_legacy_execution_log(workspace / ".orchestrator" / "executions.jsonl")
         print(json.dumps({
             "event_count": len(state.applied_event_ids),
             "execution_count": len(state.executions),
-            "attempt_count": len(attempts),
-            "incomplete_attempt_count": sum(attempt.status != "finalized" for attempt in attempts),
+            "attempt_count": summary.attempt_count,
+            "finalized_attempt_count": summary.finalized_attempt_count,
+            "incomplete_attempt_count": summary.incomplete_attempt_count,
+            "attempt_status_counts": summary.attempt_status_counts,
             "reconciled_count": reconciled_count,
             "replay_digest": replay_digest(state),
             "state_rebuilt": bool(args.rebuild_state or args.reconcile_incomplete),
@@ -705,6 +718,10 @@ def _run_paired_command(args: argparse.Namespace) -> int:
     try:
         manifest_path = args.manifest.expanduser().resolve(strict=True)
         manifest = load_paired_manifest(manifest_path)
+        if args.paired_command == "plan":
+            report = plan_paired_workspaces(manifest, args.workspace_root)
+            print(json.dumps(report, sort_keys=True, separators=(",", ":")))
+            return 0
         if args.paired_command == "validate":
             environment = validate_paired_environment(manifest, manifest_path, args.source_repository)
             print(json.dumps({

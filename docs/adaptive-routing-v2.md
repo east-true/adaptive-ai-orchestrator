@@ -1,6 +1,6 @@
 # Adaptive Routing v2: Evidence-First Stratified Temporal Routing
 
-> 상태: Phase -1/0/1과 Phase 2a manifest/tooling/runner 완료, 실제 paired smoke 대기
+> 상태: Phase -1/0/1과 Phase 2a 실제 paired smoke 및 post-run reporting 반영
 > 기준일: 2026-07-18
 > 관련 문서: [연구 검토](routing-research-review.md),
 > [평가 프로토콜](routing-evaluation-protocol.md),
@@ -55,8 +55,8 @@ ESTR은 하나의 고정 학습기라기보다 다음을 결합하는 단계적 
   없다.
 - Claude 비용만 관측되고 Codex 비용은 관측되지 않는다. 결측을 0으로 두면
   비용 최적화가 왜곡된다. 현재 cost penalty도 관측값이 있는 Claude에만 적용될
-  수 있고, `Task.cost_limit_usd`는 일반 CLI와 plan 입력 경로가 없어 실제로는
-  도달할 수 없는 비대칭 경로다.
+  수 있다. `Task.cost_limit_usd`는 이제 structured plan JSON에서 도달 가능하지만
+  일반 one-task CLI의 직접 입력은 없고 비용 관측 비대칭도 남아 있다.
 - usage count key도 secret redaction의 `token` 부분 문자열에 걸려 현재 로그의
   `input_tokens`, `output_tokens`, `cached_input_tokens`가 파괴된다. 양쪽 agent에
   공통인 자원 단위가 duration밖에 남지 않는다.
@@ -533,8 +533,14 @@ prospective exploration과 정책 승격은 활성화하지 않았다.
 balanced seeded order와 stable pair/execution/attempt ID, pinned evaluator integrity,
 lifecycle-derived complete/one-sided/incomplete projection과 synthetic 2×2 aggregation,
 explicit execution gate와 CLI version/resource/control-state guard가 있는 runner까지
-구현했다. 실제 agent execution/results는 아직 없으며 tooling report는 정책 순위와
-promotion을 명시적으로 거부한다.
+구현했다. 실제 4-task/8-execution smoke는 2026-07-18 완료됐고 8개 reliability와
+objective evaluation이 모두 관측됐다. 2×2는 pass/pass 3, Claude fail/Codex pass 1이지만
+불일치 row의 evaluator가 task에 없는 JSON key를 요구한 validity 문제가 있으므로 agent
+비교로 해석하지 않는다. tooling report는 정책 순위와 promotion을 계속 거부한다.
+smoke task의 네 변경은 현재 코드에 독립 통합했고, 분석기는 overall/stratum evaluator
+coverage와 reliability·wall-time·resource missingness·수정 파일 관측을 보고한다. 새 paired
+run은 이 자원/수정 파일 정보를 protected finalized event에 기록하지만, 첫 smoke의 기존
+log에 없던 값은 사후 추정하지 않는다.
 
 - 독립 task-specific evaluator가 있는 4개 low-risk task를 같은 base revision의
   격리 workspace에서 양쪽 agent로 실행한다.

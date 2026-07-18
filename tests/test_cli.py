@@ -255,6 +255,7 @@ class TaskFromSpecTests(unittest.TestCase):
         self.assertEqual(task.objective, "Get it done")
         self.assertEqual(task.required_capabilities, ())
         self.assertEqual(task.priority, Priority.NORMAL)
+        self.assertIsNone(task.cost_limit_usd)
 
     def test_optional_fields_are_applied(self) -> None:
         task = cli._task_from_spec({
@@ -264,13 +265,21 @@ class TaskFromSpecTests(unittest.TestCase):
             "capabilities": ["debugging"],
             "priority": "high",
             "time_limit_seconds": 120,
+            "cost_limit_usd": 2.5,
             "task_id": "task-login-fix",
         })
         self.assertEqual(task.constraints, ("Read-only",))
         self.assertEqual(task.required_capabilities, (Capability.DEBUGGING,))
         self.assertEqual(task.priority, Priority.HIGH)
         self.assertEqual(task.time_limit_seconds, 120)
+        self.assertEqual(task.cost_limit_usd, 2.5)
         self.assertEqual(task.task_id, "task-login-fix")
+
+    def test_cost_limit_preserves_zero_and_rejects_negative_values(self) -> None:
+        zero = cli._task_from_spec({"description": "Fix it", "objective": "Done", "cost_limit_usd": 0})
+        self.assertEqual(zero.cost_limit_usd, 0)
+        with self.assertRaisesRegex(ValueError, "cost_limit_usd cannot be negative"):
+            cli._task_from_spec({"description": "Fix it", "objective": "Done", "cost_limit_usd": -0.01})
 
 
 class LoadPlanTests(unittest.TestCase):
@@ -279,10 +288,21 @@ class LoadPlanTests(unittest.TestCase):
             path = Path(directory) / "plan.json"
             path.write_text(json.dumps([
                 {"description": "Step one", "objective": "First"},
-                {"description": "Step two", "objective": "Second"},
+                {"description": "Step two", "objective": "Second", "cost_limit_usd": 1.25},
             ]))
             tasks = cli._load_plan(path)
             self.assertEqual([t.description for t in tasks], ["Step one", "Step two"])
+            self.assertEqual([task.cost_limit_usd for task in tasks], [None, 1.25])
+
+    def test_negative_cost_limit_fails_plan_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "plan.json"
+            path.write_text(json.dumps([
+                {"description": "Step one", "objective": "First", "cost_limit_usd": -0.5},
+            ]))
+            valid, error = cli._validate_plan_file(path)
+            self.assertFalse(valid)
+            self.assertIn("cost_limit_usd cannot be negative", error or "")
 
     def test_rejects_empty_or_non_list_plan(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -356,7 +376,10 @@ class ReplayDispatchTests(unittest.TestCase):
             payload = json.loads(stdout.getvalue())
             self.assertEqual(exit_code, 0)
             self.assertEqual(payload["event_count"], 4)
+            self.assertEqual(payload["attempt_count"], 1)
+            self.assertEqual(payload["finalized_attempt_count"], 1)
             self.assertEqual(payload["incomplete_attempt_count"], 0)
+            self.assertEqual(payload["attempt_status_counts"], {"finalized": 1})
             self.assertTrue(payload["state_rebuilt"])
             self.assertFalse(payload["legacy_execution_log"]["counterfactual_supported"])
             self.assertTrue((control / "routing-state.json").exists())
@@ -395,6 +418,13 @@ class ReplayDispatchTests(unittest.TestCase):
 
 
 class PairedDispatchTests(unittest.TestCase):
+    def test_paired_plan_arguments_are_explicit(self) -> None:
+        args = cli.build_parser().parse_args([
+            "paired", "plan", "manifest.json", "--workspace-root", "/isolated/workspaces",
+        ])
+        self.assertEqual(args.paired_command, "plan")
+        self.assertEqual(args.workspace_root, Path("/isolated/workspaces"))
+
     def test_paired_dry_run_arguments_are_explicit(self) -> None:
         parser = cli.build_parser()
         args = parser.parse_args([
@@ -495,6 +525,7 @@ class PlanGenerationTaskTests(unittest.TestCase):
         self.assertIn("description: string, required", task.description)
         self.assertIn("objective: string, required", task.description)
         self.assertIn("constraints: array of strings, optional", task.description)
+        self.assertIn("cost_limit_usd: non-negative number or null, optional", task.description)
         self.assertIn("repository_understanding", task.description)
         self.assertIn("planning", task.description)
         self.assertIn("low, normal, high, critical", task.description)

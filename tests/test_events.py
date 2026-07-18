@@ -14,7 +14,13 @@ from adaptive_orchestrator.events import JsonlEventStore, LifecycleEvent, Lifecy
 from adaptive_orchestrator.kernel import OrchestratorKernel
 from adaptive_orchestrator.logging import JsonlExecutionLogger
 from adaptive_orchestrator.process_runner import ProcessResult
-from adaptive_orchestrator.replay import replay_digest, replay_event_log, replay_events, validate_legacy_execution_log
+from adaptive_orchestrator.replay import (
+    replay_digest,
+    replay_event_log,
+    replay_events,
+    summarize_attempts,
+    validate_legacy_execution_log,
+)
 from adaptive_orchestrator.routing_state import EventProjector, LifecycleRecorder, ReplayError
 
 
@@ -226,6 +232,48 @@ class EventStoreTests(unittest.TestCase):
             self.assertEqual(report.typed_quality_record_count, 1)
             self.assertEqual(report.malformed_row_count, 1)
             self.assertFalse(report.counterfactual_supported)
+
+
+class AttemptSummaryTests(unittest.TestCase):
+    def test_counts_exact_projector_statuses_from_one_state(self) -> None:
+        selected = LifecycleEvent(
+            LifecycleEventType.SELECTION_MADE,
+            "selected-execution",
+            1,
+            "task",
+            "selected-attempt",
+            payload=selection_payload(),
+        )
+        finalized_common = {
+            "execution_id": "finalized-execution",
+            "task_id": "task",
+            "attempt_id": "finalized-attempt",
+        }
+        finalized = (
+            LifecycleEvent(LifecycleEventType.SELECTION_MADE, sequence=1, payload=selection_payload(), **finalized_common),
+            LifecycleEvent(LifecycleEventType.EXECUTION_STARTED, sequence=2, **finalized_common),
+            LifecycleEvent(
+                LifecycleEventType.EXECUTION_TERMINAL,
+                sequence=3,
+                payload={"status": "completed"},
+                **finalized_common,
+            ),
+            LifecycleEvent(LifecycleEventType.OUTCOME_FINALIZED, sequence=4, **finalized_common),
+        )
+
+        summary = summarize_attempts(replay_events((selected, *finalized)))
+
+        self.assertEqual(summary.attempt_count, 2)
+        self.assertEqual(summary.finalized_attempt_count, 1)
+        self.assertEqual(summary.incomplete_attempt_count, 1)
+        self.assertEqual(summary.attempt_status_counts, {"finalized": 1, "selected": 1})
+
+    def test_empty_state_does_not_invent_statuses(self) -> None:
+        summary = summarize_attempts(replay_events(()))
+        self.assertEqual(summary.attempt_count, 0)
+        self.assertEqual(summary.finalized_attempt_count, 0)
+        self.assertEqual(summary.incomplete_attempt_count, 0)
+        self.assertEqual(summary.attempt_status_counts, {})
 
 
 class KernelLifecycleTests(unittest.TestCase):
