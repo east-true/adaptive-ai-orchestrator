@@ -231,6 +231,31 @@ Frame C(native task authoring)는 B pool의 실제 license·native·exact-base·
 수율을 확인할 때까지 보류한다. Korean만 authored task로 채우고 English는 upstream
 issue로 채우는 방식은 source-construction confounding이므로 허용하지 않는다.
 
+#### Resource bucket 정의
+
+`paired-pilot-manifest-v1`은 task마다 `estimated_resource_bucket`을 `small` 또는 `medium`으로
+요구하지만 두 값의 의미를 정의하지 않았다. Phase 2a는 4개 task가 모두 `small`이라 구분이
+필요 없었다. 여기서 **evaluator wall time을 기준으로** 정의한다.
+
+```text
+small    보호 evaluator 1회 실행이 30초 이내
+medium   보호 evaluator 1회 실행이 30초 초과 120초 이내
+```
+
+기준을 시간으로 잡는 이유는 이 schema가 **용량을 제약하지 않기 때문**이다. 디스크·메모리
+관련 필드가 manifest schema에 존재하지 않으며, 실제로 강제되는 예산은
+`evaluator.timeout_seconds`, `agents.time_limit_seconds`,
+`maximum_active_wall_time_seconds`뿐이다. 환경 크기가 큰 toolchain이라도 evaluator가 제한
+시간 안에 끝나면 이 실험의 예산을 위협하지 않는다. Phase 2a가 사전 등록해 실제로 사용한
+`evaluator.timeout_seconds = 120`을 `medium`의 상한으로 그대로 잇는다.
+
+측정은 **cold 상태**에서 한다. paired runner는 attempt마다 새 checkout을 쓰므로 빌드
+캐시나 scratch 디렉터리 재사용을 가정하지 않는다.
+
+`reproducible_within_budget`이 `pass`가 되려면 bucket 배정만으로는 부족하고 §4.4의 조건이
+모두 실측돼야 한다. 특히 **base·negative·positive control을 agent 없이 재현**해야 하며,
+빌드나 기존 suite가 통과했다는 사실만으로는 negative control을 대신하지 않는다.
+
 #### Quota
 
 60 task와 ko/en/mixed 각 20, category 각 12는 고정 marginal quota다. 수율이 낮다는
