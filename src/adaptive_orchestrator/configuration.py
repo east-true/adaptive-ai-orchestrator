@@ -30,6 +30,8 @@ class ProjectConfig:
     escalation_risk_threshold: int = 3
     escalation_uncertainty_threshold: int = 3
     escalation_difficulty_threshold: int = 4
+    notify_terminal_bell: bool = False
+    notify_desktop: bool = False
 
 
 def config_path(workspace: Path) -> Path:
@@ -50,7 +52,7 @@ def load_project_config(workspace: Path) -> ProjectConfig:
 def project_config_from_mapping(payload: object, path: Path | None = None) -> ProjectConfig:
     label = str(path) if path is not None else "project config"
     root = _mapping(payload, label)
-    _reject_unknown(root, {"version", "agent", "models", "execution", "verification", "escalation"}, label)
+    _reject_unknown(root, {"version", "agent", "models", "execution", "verification", "escalation", "notifications"}, label)
     version = root.get("version")
     if version != CONFIG_VERSION:
         raise ProjectConfigError(f"{label}: version must be {CONFIG_VERSION}")
@@ -59,10 +61,12 @@ def project_config_from_mapping(payload: object, path: Path | None = None) -> Pr
     execution = _section(root, "execution", label)
     verification = _section(root, "verification", label)
     escalation = _section(root, "escalation", label)
+    notifications = _section(root, "notifications", label)
     _reject_unknown(models, {"claude", "codex", "codex_reasoning_effort"}, f"{label}.models")
     _reject_unknown(execution, {"time_limit_seconds", "verbose", "include_git_diff"}, f"{label}.execution")
     _reject_unknown(verification, {"commands", "time_limit_seconds"}, f"{label}.verification")
     _reject_unknown(escalation, {"enabled", "risk_threshold", "uncertainty_threshold", "difficulty_threshold"}, f"{label}.escalation")
+    _reject_unknown(notifications, {"terminal_bell", "desktop"}, f"{label}.notifications")
 
     agent = _string(root.get("agent", "auto"), f"{label}.agent")
     if agent != "auto" and agent.split(":", 1)[0] not in {"claude-code", "codex"}:
@@ -96,6 +100,10 @@ def project_config_from_mapping(payload: object, path: Path | None = None) -> Pr
         escalation_difficulty_threshold=_integer_in_range(
             escalation.get("difficulty_threshold", 4), 1, 5, f"{label}.escalation.difficulty_threshold"
         ),
+        notify_terminal_bell=_boolean(
+            notifications.get("terminal_bell", False), f"{label}.notifications.terminal_bell"
+        ),
+        notify_desktop=_boolean(notifications.get("desktop", False), f"{label}.notifications.desktop"),
     )
     available_ids = {
         "auto",
@@ -151,6 +159,10 @@ def default_config_payload(verify_commands: Sequence[str] = ()) -> dict[str, Any
             "risk_threshold": 3,
             "uncertainty_threshold": 3,
             "difficulty_threshold": 4,
+        },
+        "notifications": {
+            "terminal_bell": False,
+            "desktop": False,
         },
     }
 
