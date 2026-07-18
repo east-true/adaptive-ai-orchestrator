@@ -484,6 +484,75 @@ class PairedRunnerTests(unittest.TestCase):
             self.assertEqual(len(events), 6)
             self.assertEqual(events[-1].event_type, LifecycleEventType.OUTCOME_FINALIZED)
 
+    def test_resume_validates_and_runs_only_the_unmaterialized_suffix(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, manifest_path, _ = build_manifest_fixture(root)
+            manifest = load_paired_manifest(manifest_path)
+            workspace_root = root / "workspaces"
+            control = root / "control"
+            failing_process = FailingProcessRunner()
+
+            with self.assertRaisesRegex(PairedExecutionError, "paused after infrastructure"):
+                PairedSmokeRunner(
+                    manifest,
+                    manifest_path,
+                    source,
+                    workspace_root,
+                    control,
+                    process_runner_factory=lambda: failing_process,
+                    version_resolver=lambda spec: spec.cli_version,
+                ).run(confirm_agent_execution=True)
+
+            planned = plan_paired_workspaces(manifest, workspace_root)
+            unstarted_workspace = Path(planned["workspaces"][1]["path"])
+            tampered = unstarted_workspace / "unregistered-before-resume.txt"
+            tampered.write_text("must be rejected\n")
+            rejected_process = RecordingProcessRunner()
+            with self.assertRaisesRegex(PairedExperimentError, "Unstarted paired resume workspace is not clean"):
+                PairedSmokeRunner(
+                    manifest,
+                    manifest_path,
+                    source,
+                    workspace_root,
+                    control,
+                    process_runner_factory=lambda: rejected_process,
+                    version_resolver=lambda spec: spec.cli_version,
+                ).resume(confirm_agent_execution=True)
+            self.assertEqual(rejected_process.calls, [])
+            tampered.unlink()
+
+            resumed_process = RecordingProcessRunner()
+            report = PairedSmokeRunner(
+                manifest,
+                manifest_path,
+                source,
+                workspace_root,
+                control,
+                process_runner_factory=lambda: resumed_process,
+                version_resolver=lambda spec: spec.cli_version,
+            ).resume(confirm_agent_execution=True)
+
+            self.assertTrue(report["resumed"])
+            self.assertEqual(report["attempts_started_this_invocation"], 7)
+            self.assertEqual(report["materialized_attempts"], 8)
+            self.assertEqual(report["completed_attempts"], 7)
+            self.assertEqual(report["prepared"]["materialized_attempt_count"], 1)
+            self.assertEqual(report["prepared"]["remaining_attempt_count"], 7)
+            self.assertEqual(len(resumed_process.calls), 14)
+            self.assertEqual(
+                report["analysis"]["secondary_metrics"]["reliability"]["terminal_status_counts"],
+                {"completed": 7, "spawn_error": 1, "incomplete": 0},
+            )
+            events = JsonlEventStore(control / "events.jsonl").read()
+            selections = [
+                event.attempt_id
+                for event in events
+                if event.event_type is LifecycleEventType.SELECTION_MADE
+            ]
+            self.assertEqual(len(selections), 8)
+            self.assertEqual(len(set(selections)), 8)
+
     def test_runs_eight_attempts_with_protected_evaluators_and_paired_lifecycle(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

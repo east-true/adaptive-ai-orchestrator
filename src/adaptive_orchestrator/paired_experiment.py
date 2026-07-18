@@ -525,6 +525,118 @@ def prepare_paired_workspaces(
     }
 
 
+def validate_paired_resume_workspaces(
+    manifest: PairedManifest,
+    manifest_path: Path,
+    source_repository: Path,
+    workspace_root: Path,
+    materialized_attempt_ids: Iterable[str],
+) -> dict[str, Any]:
+    """Validate an interrupted run without changing or recreating its workspaces."""
+
+    source = source_repository.resolve(strict=True)
+    root = workspace_root.expanduser().resolve(strict=True)
+    if root == source or root.is_relative_to(source):
+        raise PairedExperimentError("Paired workspace root must be outside the source repository.")
+    if not root.is_dir():
+        raise PairedExperimentError("Paired resume workspace root must be an existing directory.")
+
+    environment = validate_paired_environment(manifest, manifest_path, source)
+    planned = plan_paired_workspaces(manifest, root)
+    planned_workspaces = planned["workspaces"]
+    expected_attempt_ids = {item["attempt_id"] for item in planned_workspaces}
+    materialized = set(materialized_attempt_ids)
+    if not materialized:
+        raise PairedExperimentError("Paired resume requires at least one materialized attempt.")
+    unexpected_attempt_ids = materialized - expected_attempt_ids
+    if unexpected_attempt_ids:
+        raise PairedExperimentError(
+            f"Paired resume contains unexpected attempts: {sorted(unexpected_attempt_ids)}"
+        )
+
+    experiment_root = root / _path_component(manifest.experiment_id)
+    expected_task_directories = {
+        experiment_root / _path_component(task.task_id)
+        for task in manifest.tasks
+    }
+    if root.is_symlink() or not experiment_root.is_dir() or experiment_root.is_symlink():
+        raise PairedExperimentError("Paired resume workspace topology is missing or symlinked.")
+    if set(root.iterdir()) != {experiment_root}:
+        raise PairedExperimentError("Paired resume workspace root contains unexpected entries.")
+    if set(experiment_root.iterdir()) != expected_task_directories:
+        raise PairedExperimentError("Paired resume experiment directory contains unexpected entries.")
+
+    task_by_id = {task.task_id: task for task in manifest.tasks}
+    for task_directory in expected_task_directories:
+        if task_directory.is_symlink() or not task_directory.is_dir():
+            raise PairedExperimentError(f"Paired resume task directory is missing or symlinked: {task_directory}")
+        expected_agent_directories = {
+            Path(item["path"])
+            for item in planned_workspaces
+            if Path(item["path"]).parent == task_directory
+        }
+        if set(task_directory.iterdir()) != expected_agent_directories:
+            raise PairedExperimentError(f"Paired resume task directory contains unexpected entries: {task_directory}")
+
+    inspected: list[dict[str, Any]] = []
+    for item in planned_workspaces:
+        target = Path(item["path"])
+        if target.is_symlink() or not target.is_dir() or target.resolve() != target:
+            raise PairedExperimentError(f"Paired resume workspace is missing or symlinked: {target}")
+        commit_hash = _git(target, "rev-parse", "HEAD")
+        tree_hash = _git(target, "rev-parse", "HEAD^{tree}")
+        clean = not bool(_git(target, "status", "--porcelain", "--untracked-files=all"))
+        git_common_dir = _resolve_git_path(target, _git(target, "rev-parse", "--git-common-dir"))
+        isolated_git_dir = git_common_dir == (target / ".git").resolve()
+        visible_refs = tuple(
+            line
+            for line in _git(target, "for-each-ref", "--format=%(refname)").splitlines()
+            if line
+        )
+        attempt_materialized = item["attempt_id"] in materialized
+        if (
+            commit_hash != environment["commit_hash"]
+            or tree_hash != environment["tree_hash"]
+            or not isolated_git_dir
+            or visible_refs
+        ):
+            raise PairedExperimentError(f"Paired resume workspace failed base identity validation: {target}")
+        if not attempt_materialized:
+            if not clean:
+                raise PairedExperimentError(f"Unstarted paired resume workspace is not clean: {target}")
+            task = task_by_id[item["task_id"]]
+            fixture_hash = hash_evaluator_artifacts(tuple(
+                str(path) for path in _resolve_fixture_paths(target, task.fixture_paths)
+            ))
+            if fixture_hash != task.fixture_hash:
+                raise PairedExperimentError(f"Unstarted paired resume fixture hash mismatch: {target}")
+        inspected.append({
+            **item,
+            "commit_hash": commit_hash,
+            "tree_hash": tree_hash,
+            "clean": clean,
+            "isolated_git_dir": isolated_git_dir,
+            "visible_ref_count": len(visible_refs),
+            "attempt_materialized": attempt_materialized,
+        })
+
+    return {
+        "schema_version": manifest.schema_version,
+        "experiment_id": manifest.experiment_id,
+        "agent_execution_started": True,
+        "resume_validation": True,
+        "source_commit_hash": environment["commit_hash"],
+        "source_tree_hash": environment["tree_hash"],
+        "base_hashes_identical": len({item["tree_hash"] for item in inspected}) == 1,
+        "assignment_rule": manifest.order_assignment_rule,
+        "contract_coverage": environment["contract_coverage"],
+        "assignments": planned["assignments"],
+        "materialized_attempt_count": len(materialized),
+        "remaining_attempt_count": len(expected_attempt_ids - materialized),
+        "workspaces": inspected,
+    }
+
+
 def observations_from_routing_state(
     manifest: PairedManifest,
     state: RoutingState,

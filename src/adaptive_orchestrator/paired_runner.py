@@ -24,9 +24,10 @@ from .paired_experiment import (
     assign_pairs,
     observations_from_routing_state,
     prepare_paired_workspaces,
+    validate_paired_resume_workspaces,
 )
 from .process_runner import ProcessRunner, SubprocessRunner
-from .routing_state import LifecycleRecorder
+from .routing_state import EventProjector, LifecycleRecorder, RoutingState
 from .verification import CommandVerifier, evaluation_projection
 
 
@@ -62,6 +63,17 @@ class PairedSmokeRunner:
         self.clock = clock
 
     def run(self, *, confirm_agent_execution: bool = False) -> dict[str, object]:
+        return self._execute(confirm_agent_execution=confirm_agent_execution, resume=False)
+
+    def resume(self, *, confirm_agent_execution: bool = False) -> dict[str, object]:
+        return self._execute(confirm_agent_execution=confirm_agent_execution, resume=True)
+
+    def _execute(
+        self,
+        *,
+        confirm_agent_execution: bool,
+        resume: bool,
+    ) -> dict[str, object]:
         if not confirm_agent_execution:
             raise PairedExecutionError(
                 "Paired agent execution requires --confirm-agent-execution; dry-run remains agent-free."
@@ -75,10 +87,16 @@ class PairedSmokeRunner:
             raise PairedExecutionError("Paired control state must be outside the workspace root.")
         if workspace_root.is_relative_to(control):
             raise PairedExecutionError("Paired workspace root must be outside the control state directory.")
-        if workspace_root.exists() and (not workspace_root.is_dir() or any(workspace_root.iterdir())):
-            raise PairedExecutionError("Paired workspace root must be a new or empty dedicated directory.")
-        if control.exists() and (not control.is_dir() or any(control.iterdir())):
-            raise PairedExecutionError("Paired control state must be a new or empty dedicated directory.")
+        if resume:
+            if not workspace_root.is_dir() or not control.is_dir():
+                raise PairedExecutionError(
+                    "Paired resume requires the existing dedicated workspace and control directories."
+                )
+        else:
+            if workspace_root.exists() and (not workspace_root.is_dir() or any(workspace_root.iterdir())):
+                raise PairedExecutionError("Paired workspace root must be a new or empty dedicated directory.")
+            if control.exists() and (not control.is_dir() or any(control.iterdir())):
+                raise PairedExecutionError("Paired control state must be a new or empty dedicated directory.")
 
         wall_limit = self.manifest.maximum_resource_budget.get("wall_time_seconds")
         if wall_limit is None:
@@ -103,7 +121,32 @@ class PairedSmokeRunner:
                     f"expected {agent_spec.cli_version}, observed {observed_version or '<empty>'}"
                 )
 
-        prepared = prepare_paired_workspaces(self.manifest, self.manifest_path, source, workspace_root)
+        assignments = assign_pairs(self.manifest)
+        materialized_attempt_ids: set[str] = set()
+        previous_elapsed_ms = 0.0
+        if resume:
+            state, materialized_attempt_ids = self._validate_resume_state(
+                JsonlEventStore(control / "events.jsonl"),
+                assignments,
+            )
+            existing_observations = observations_from_routing_state(self.manifest, state)
+            elapsed = [
+                item.experiment_elapsed_ms
+                for item in existing_observations
+                if item.experiment_elapsed_ms is not None
+            ]
+            previous_elapsed_ms = max(elapsed, default=0.0)
+            prepared = validate_paired_resume_workspaces(
+                self.manifest,
+                self.manifest_path,
+                source,
+                workspace_root,
+                materialized_attempt_ids,
+            )
+            if len(materialized_attempt_ids) >= self.manifest.maximum_executions:
+                raise PairedExecutionError("Paired run already materialized every preregistered attempt.")
+        else:
+            prepared = prepare_paired_workspaces(self.manifest, self.manifest_path, source, workspace_root)
         workspace_by_key = {
             (item["task_id"], item["agent_id"]): Path(item["path"])
             for item in prepared["workspaces"]
@@ -116,15 +159,21 @@ class PairedSmokeRunner:
         ).hexdigest()
 
         run_started = self.clock()
-        deadline = run_started + float(wall_limit)
-        assignments = assign_pairs(self.manifest)
-        completed_attempts = 0
+        remaining_wall_seconds = float(wall_limit) - previous_elapsed_ms / 1000
+        if remaining_wall_seconds <= 0:
+            raise PairedExecutionError("Paired wall-time budget was exhausted before resume.")
+        deadline = run_started + remaining_wall_seconds
+        attempts_started_this_invocation = 0
         for assignment in assignments:
             task_spec = next(task for task in self.manifest.tasks if task.task_id == assignment.task_id)
             for agent_id in assignment.agent_order:
+                attempt_id = assignment.attempt_ids[agent_id]
+                if attempt_id in materialized_attempt_ids:
+                    continue
                 if self.clock() >= deadline:
                     raise PairedExecutionError(
-                        f"Paired wall-time budget exhausted after {completed_attempts} of "
+                        f"Paired wall-time budget exhausted after "
+                        f"{len(materialized_attempt_ids) + attempts_started_this_invocation} of "
                         f"{self.manifest.maximum_executions} attempts."
                     )
                 workspace = workspace_by_key[(assignment.task_id, agent_id)]
@@ -138,21 +187,76 @@ class PairedSmokeRunner:
                     config_hash,
                     run_started,
                     deadline,
+                    previous_elapsed_ms,
                 )
-                completed_attempts += 1
+                attempts_started_this_invocation += 1
 
         state = recorder.rebuild_state()
         observations = observations_from_routing_state(self.manifest, state)
+        materialized_observations = [item for item in observations if item.attempt_materialized]
         return {
             "schema_version": PAIRED_RUN_SCHEMA,
             "manifest_schema_version": self.manifest.schema_version,
             "experiment_id": self.manifest.experiment_id,
             "agent_execution_started": True,
             "control_state_dir": str(control),
-            "completed_attempts": completed_attempts,
+            "resumed": resume,
+            "attempts_started_this_invocation": attempts_started_this_invocation,
+            "materialized_attempts": len(materialized_observations),
+            "completed_attempts": sum(
+                item.terminal_status == "completed" for item in materialized_observations
+            ),
             "prepared": prepared,
             "analysis": analyze_paired_observations(self.manifest, observations),
         }
+
+    def _validate_resume_state(
+        self,
+        event_store: JsonlEventStore,
+        assignments: tuple[PairAssignment, ...],
+    ) -> tuple[RoutingState, set[str]]:
+        events = event_store.read()
+        if not events:
+            raise PairedExecutionError("Paired resume requires a non-empty lifecycle event log.")
+        state = EventProjector().replay(events)
+        expected_order = tuple(
+            assignment.attempt_ids[agent_id]
+            for assignment in assignments
+            for agent_id in assignment.agent_order
+        )
+        selected_order = tuple(
+            event.attempt_id
+            for event in events
+            if event.event_type is LifecycleEventType.SELECTION_MADE
+        )
+        if selected_order != expected_order[:len(selected_order)]:
+            raise PairedExecutionError(
+                "Paired resume lifecycle selections are not the deterministic assignment prefix."
+            )
+
+        expected_by_execution = {assignment.execution_id: assignment for assignment in assignments}
+        materialized_attempt_ids: set[str] = set()
+        for execution_id, execution in state.executions.items():
+            assignment = expected_by_execution.get(execution_id)
+            if assignment is None or execution.task_id != assignment.task_id:
+                raise PairedExecutionError(f"Paired resume contains an unexpected execution: {execution_id}")
+            expected_attempt_ids = set(assignment.attempt_ids.values())
+            unexpected_attempt_ids = set(execution.attempts) - expected_attempt_ids
+            if unexpected_attempt_ids:
+                raise PairedExecutionError(
+                    f"Paired resume contains unexpected attempts: {sorted(unexpected_attempt_ids)}"
+                )
+            for attempt_id, attempt in execution.attempts.items():
+                if attempt.status != "finalized":
+                    raise PairedExecutionError(
+                        f"Paired resume requires finalized prior attempts: {attempt_id} is {attempt.status}."
+                    )
+                materialized_attempt_ids.add(attempt_id)
+
+        if len(selected_order) != len(materialized_attempt_ids):
+            raise PairedExecutionError("Paired resume lifecycle selection/materialization count mismatch.")
+        observations_from_routing_state(self.manifest, state)
+        return state, materialized_attempt_ids
 
     def _run_attempt(
         self,
@@ -165,6 +269,7 @@ class PairedSmokeRunner:
         config_hash: str,
         run_started: float,
         deadline: float,
+        elapsed_offset_ms: float,
     ) -> None:
         remaining_agent_seconds = max(0.001, deadline - self.clock())
         task = Task(
@@ -314,7 +419,7 @@ class PairedSmokeRunner:
                 "resource_observation": {
                     "agent_duration_ms": finalized.duration_ms,
                     "evaluator_duration_ms": sum(result.duration_ms for result in evaluations),
-                    "experiment_elapsed_ms": (self.clock() - run_started) * 1000,
+                    "experiment_elapsed_ms": elapsed_offset_ms + (self.clock() - run_started) * 1000,
                     "metadata": asdict(finalized.metadata) if finalized.metadata is not None else {},
                 },
                 "workspace_modified_files": list(finalized.workspace_modified_files),

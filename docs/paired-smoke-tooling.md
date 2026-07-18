@@ -32,6 +32,12 @@ PYTHONPATH=src python3 -m adaptive_orchestrator.cli paired run \
   --workspace-root /protected/fresh-paired-run \
   --control-state-dir /protected/fresh-paired-control \
   --confirm-agent-execution
+
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli paired resume \
+  experiments/phase2a-smoke-v1.json --source-repository . \
+  --workspace-root /protected/fresh-paired-run \
+  --control-state-dir /protected/fresh-paired-control \
+  --confirm-agent-execution
 ```
 
 `plan`은 manifest만 읽어 seeded assignment와 예정 path 8개를 결정한다. workspace root를
@@ -60,13 +66,23 @@ one-sided/incomplete pair를 분모에서 제거하지 않는다. secondary repo
 attempt/pair evaluator coverage, agent/evaluator/runner wall time, agent별 비용·token
 missingness, 수정 파일 관측 여부를 함께 낸다.
 
-`run`은 `--confirm-agent-execution` 없이는 workspace도 만들지 않고 실패한다. 실행 전
+`run`과 `resume`은 `--confirm-agent-execution` 없이는 agent를 시작하지 않고 실패한다. `run`은 실행 전
 manifest의 CLI version pin을 설치된 Claude/Codex CLI와 대조하고, 비어 있는 전용
 control-state directory와 fresh workspace root를 요구한다. 각 agent time limit과 전체
 wall-time budget을 적용하며 보호 evaluator command는 agent checkout 밖의 absolute
-artifact path로 정규화한다. 같은 control log 위에 재실행하거나 dry-run checkout을
+artifact path로 정규화한다. 같은 control log 위에 `run`을 재실행하거나 dry-run checkout을
 reset/reuse하지 않는다. agent infrastructure failure나 evaluator error/timeout은 해당
 attempt를 finalized/missing-quality로 남긴 뒤 다음 subprocess 전에 즉시 중단한다.
+
+`resume`은 이 pause 뒤 같은 전용 workspace/control 경계만 이어서 사용한다. lifecycle의
+selection이 manifest가 정한 attempt 순서의 정확한 접두사이고 기존 attempt가 모두
+finalized인지 먼저 검증한다. 이미 materialized된 attempt는 다시 실행하지 않는다. 아직
+시작하지 않은 checkout은 exact detached base/tree, fixture hash, 독립 Git metadata와
+clean 상태를 유지해야 하고, 기존 checkout topology에 예상하지 않은 entry가 있어도
+실패한다. 이전 invocation의 active runner elapsed를 전체 wall-time budget에서 차감한 뒤
+남은 접미사만 실행하므로 pause 대기 시간 자체는 예산에 넣지 않는다. 실패 행은 삭제하거나
+quality 0으로 대체하지 않고 최종 분석에 그대로 남는다.
+
 새 runner가 남기는 finalized event에는 resource observation과 수정 파일 목록도 포함한다.
 이 필드 도입 전의 lifecycle log를 분석할 때는 terminal/evaluation duration만 복원하고
 비용·token·runner elapsed·수정 파일은 추정하지 않은 결측으로 보고한다.
