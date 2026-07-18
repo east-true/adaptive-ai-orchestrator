@@ -1,0 +1,1123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "paired-pilot-manifest-v1.schema.json",
+  "title": "Adaptive AI Orchestrator Phase 2b paired pilot manifest",
+  "description": "Preregistration contract for the 60-task variance/discordance pilot. This schema does not authorize agent execution.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "protocol_version",
+    "study_phase",
+    "pilot_purpose",
+    "experiment_id",
+    "task_set_version",
+    "construction_roles",
+    "repositories",
+    "environment",
+    "agents",
+    "assignment",
+    "tasks",
+    "analysis_plan",
+    "maximum_resource_budget",
+    "rules",
+    "confirmatory_holdout",
+    "authorization"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "paired-pilot-manifest-v1"
+    },
+    "protocol_version": {
+      "const": "phase2b-pilot-prereg-v1"
+    },
+    "study_phase": {
+      "const": "phase2b-variance-pilot"
+    },
+    "pilot_purpose": {
+      "const": "pipeline-discordance-variance-missingness-and-confirmatory-sizing"
+    },
+    "experiment_id": {
+      "$ref": "#/$defs/safeIdentifier"
+    },
+    "task_set_version": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "construction_roles": {
+      "$ref": "#/$defs/constructionRoles"
+    },
+    "repositories": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/repository"
+      }
+    },
+    "environment": {
+      "$ref": "#/$defs/environment"
+    },
+    "agents": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/agent"
+      },
+      "allOf": [
+        {
+          "contains": {
+            "type": "object",
+            "required": ["base_id"],
+            "properties": {
+              "base_id": {
+                "const": "claude-code"
+              }
+            }
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["base_id"],
+            "properties": {
+              "base_id": {
+                "const": "codex"
+              }
+            }
+          },
+          "minContains": 1,
+          "maxContains": 1
+        }
+      ]
+    },
+    "assignment": {
+      "$ref": "#/$defs/assignment"
+    },
+    "tasks": {
+      "type": "array",
+      "minItems": 60,
+      "maxItems": 60,
+      "items": {
+        "$ref": "#/$defs/task"
+      },
+      "allOf": [
+        {
+          "contains": {
+            "type": "object",
+            "required": ["instruction_language"],
+            "properties": {
+              "instruction_language": {
+                "const": "ko"
+              }
+            }
+          },
+          "minContains": 20,
+          "maxContains": 20
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["instruction_language"],
+            "properties": {
+              "instruction_language": {
+                "const": "en"
+              }
+            }
+          },
+          "minContains": 20,
+          "maxContains": 20
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["instruction_language"],
+            "properties": {
+              "instruction_language": {
+                "const": "mixed"
+              }
+            }
+          },
+          "minContains": 20,
+          "maxContains": 20
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["task_category"],
+            "properties": {
+              "task_category": {
+                "const": "implementation"
+              }
+            }
+          },
+          "minContains": 12,
+          "maxContains": 12
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["task_category"],
+            "properties": {
+              "task_category": {
+                "const": "debugging"
+              }
+            }
+          },
+          "minContains": 12,
+          "maxContains": 12
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["task_category"],
+            "properties": {
+              "task_category": {
+                "const": "testing"
+              }
+            }
+          },
+          "minContains": 12,
+          "maxContains": 12
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["task_category"],
+            "properties": {
+              "task_category": {
+                "const": "refactoring"
+              }
+            }
+          },
+          "minContains": 12,
+          "maxContains": 12
+        },
+        {
+          "contains": {
+            "type": "object",
+            "required": ["task_category"],
+            "properties": {
+              "task_category": {
+                "const": "repository-analysis-planning"
+              }
+            }
+          },
+          "minContains": 12,
+          "maxContains": 12
+        }
+      ]
+    },
+    "analysis_plan": {
+      "$ref": "#/$defs/analysisPlan"
+    },
+    "maximum_resource_budget": {
+      "$ref": "#/$defs/resourceBudget"
+    },
+    "rules": {
+      "$ref": "#/$defs/rules"
+    },
+    "confirmatory_holdout": {
+      "$ref": "#/$defs/confirmatoryHoldout"
+    },
+    "authorization": {
+      "$ref": "#/$defs/authorization"
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "safeIdentifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*[*?\\[]).+$"
+    },
+    "roleIdList": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/safeIdentifier"
+      }
+    },
+    "constructionRoles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_author_role_ids",
+        "evaluator_author_role_ids",
+        "validity_reviewer_role_ids",
+        "run_operator_role_ids",
+        "analyst_role_ids",
+        "construction_role_sets_disjoint_attested",
+        "task_selection_frozen_before_agent_results",
+        "evaluator_authors_blind_to_agent_identity",
+        "validity_reviewers_blind_to_agent_results"
+      ],
+      "properties": {
+        "task_author_role_ids": {
+          "$ref": "#/$defs/roleIdList"
+        },
+        "evaluator_author_role_ids": {
+          "$ref": "#/$defs/roleIdList"
+        },
+        "validity_reviewer_role_ids": {
+          "$ref": "#/$defs/roleIdList"
+        },
+        "run_operator_role_ids": {
+          "$ref": "#/$defs/roleIdList"
+        },
+        "analyst_role_ids": {
+          "$ref": "#/$defs/roleIdList"
+        },
+        "construction_role_sets_disjoint_attested": {
+          "const": true
+        },
+        "task_selection_frozen_before_agent_results": {
+          "const": true
+        },
+        "evaluator_authors_blind_to_agent_identity": {
+          "const": true
+        },
+        "validity_reviewers_blind_to_agent_results": {
+          "const": true
+        },
+        "conflict_policy": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository_id",
+        "source",
+        "base_revision",
+        "base_tree_hash",
+        "license_or_use_basis"
+      ],
+      "properties": {
+        "repository_id": {
+          "$ref": "#/$defs/safeIdentifier"
+        },
+        "source": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "base_revision": {
+          "$ref": "#/$defs/hash"
+        },
+        "base_tree_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "license_or_use_basis": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "environment_epoch",
+        "workspace_isolation",
+        "protected_control_state",
+        "protected_evaluators",
+        "protected_evaluator_root_id",
+        "network_access",
+        "secret_access",
+        "push_access",
+        "production_mutation"
+      ],
+      "properties": {
+        "environment_epoch": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "workspace_isolation": {
+          "const": "independent-exact-base-checkouts"
+        },
+        "protected_control_state": {
+          "const": "outside-agent-workspace-read-write-by-runner-only"
+        },
+        "protected_evaluators": {
+          "const": "outside-agent-workspace-read-only"
+        },
+        "protected_evaluator_root_id": {
+          "$ref": "#/$defs/safeIdentifier"
+        },
+        "network_access": {
+          "const": "forbidden"
+        },
+        "secret_access": {
+          "const": "forbidden"
+        },
+        "push_access": {
+          "const": "forbidden"
+        },
+        "production_mutation": {
+          "const": "forbidden"
+        }
+      }
+    },
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agent_id",
+        "base_id",
+        "model",
+        "reasoning_tier",
+        "cli_version",
+        "permission_mode",
+        "time_limit_seconds"
+      ],
+      "properties": {
+        "agent_id": {
+          "$ref": "#/$defs/safeIdentifier"
+        },
+        "base_id": {
+          "enum": ["claude-code", "codex"]
+        },
+        "model": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "reasoning_tier": {
+          "type": ["string", "null"]
+        },
+        "cli_version": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "permission_mode": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "time_limit_seconds": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "assignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "random_seed",
+        "order_assignment_rule",
+        "stable_identity_rule",
+        "balanced_first_position",
+        "agent_result_isolation"
+      ],
+      "properties": {
+        "random_seed": {
+          "type": "integer"
+        },
+        "order_assignment_rule": {
+          "const": "seeded-balanced-sha256-v1"
+        },
+        "stable_identity_rule": {
+          "const": "uuidv5-experiment-task-agent-v1"
+        },
+        "balanced_first_position": {
+          "const": true
+        },
+        "agent_result_isolation": {
+          "const": true
+        }
+      }
+    },
+    "sourceProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_kind",
+        "source_reference",
+        "source_revision",
+        "selection_rationale",
+        "origin_language",
+        "native_task",
+        "translation_relationship_id",
+        "adaptation_history",
+        "license_or_use_basis",
+        "selected_by_role_id",
+        "selected_at"
+      ],
+      "properties": {
+        "source_kind": {
+          "enum": [
+            "maintainer-authored",
+            "public-issue-derived",
+            "benchmark-adapted",
+            "synthetic-fixture"
+          ]
+        },
+        "source_reference": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "source_revision": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "selection_rationale": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "origin_language": {
+          "enum": ["ko", "en", "mixed"]
+        },
+        "native_task": {
+          "const": true
+        },
+        "translation_relationship_id": {
+          "type": "null"
+        },
+        "adaptation_history": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "license_or_use_basis": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "selected_by_role_id": {
+          "$ref": "#/$defs/safeIdentifier"
+        },
+        "selected_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "assertionContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assertion_id",
+        "evaluator_requirement",
+        "task_contract_field",
+        "task_contract_text"
+      ],
+      "properties": {
+        "assertion_id": {
+          "$ref": "#/$defs/safeIdentifier"
+        },
+        "evaluator_requirement": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "task_contract_field": {
+          "enum": ["description", "objective", "constraints", "acceptance_criteria"]
+        },
+        "task_contract_text": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "controlEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "control_id",
+        "description",
+        "expected_quality",
+        "observed_quality",
+        "artifact_hash",
+        "completed_at"
+      ],
+      "properties": {
+        "control_id": {
+          "$ref": "#/$defs/safeIdentifier"
+        },
+        "description": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "expected_quality": {
+          "enum": [0, 1]
+        },
+        "observed_quality": {
+          "enum": [0, 1]
+        },
+        "artifact_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "completed_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "evaluator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evaluator_id",
+        "version",
+        "role",
+        "evaluation_mode",
+        "aggregation",
+        "command",
+        "artifact_paths",
+        "artifact_hash",
+        "timeout_seconds",
+        "agent_blind",
+        "protected_read_only",
+        "evaluator_author_role_id",
+        "validity_reviewer_role_id",
+        "assertion_inventory_complete",
+        "assertion_contracts",
+        "negative_control",
+        "positive_control",
+        "validity_review_completed",
+        "validity_reviewed_at"
+      ],
+      "properties": {
+        "evaluator_id": {
+          "$ref": "#/$defs/safeIdentifier"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "role": {
+          "const": "objective_quality"
+        },
+        "evaluation_mode": {
+          "enum": [
+            "deterministic-acceptance-test",
+            "golden-output-or-patch-invariant",
+            "property-or-integration-evaluator"
+          ]
+        },
+        "aggregation": {
+          "const": "binary-single-v1"
+        },
+        "command": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "artifact_paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/relativePath"
+          }
+        },
+        "artifact_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "timeout_seconds": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "agent_blind": {
+          "const": true
+        },
+        "protected_read_only": {
+          "const": true
+        },
+        "evaluator_author_role_id": {
+          "$ref": "#/$defs/safeIdentifier"
+        },
+        "validity_reviewer_role_id": {
+          "$ref": "#/$defs/safeIdentifier"
+        },
+        "assertion_inventory_complete": {
+          "const": true
+        },
+        "assertion_contracts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/assertionContract"
+          }
+        },
+        "negative_control": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/controlEvidence"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "expected_quality": {
+                  "const": 0
+                },
+                "observed_quality": {
+                  "const": 0
+                }
+              }
+            }
+          ]
+        },
+        "positive_control": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/controlEvidence"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "expected_quality": {
+                  "const": 1
+                },
+                "observed_quality": {
+                  "const": 1
+                }
+              }
+            }
+          ]
+        },
+        "validity_review_completed": {
+          "const": true
+        },
+        "validity_reviewed_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_id",
+        "task_set_version",
+        "source_provenance",
+        "description",
+        "objective",
+        "constraints",
+        "acceptance_criteria",
+        "instruction_language",
+        "repository_code_language",
+        "repository_doc_language",
+        "task_category",
+        "required_capabilities",
+        "risk",
+        "mutation_scope",
+        "read_only",
+        "repository_id",
+        "fixture_paths",
+        "fixture_hash",
+        "estimated_resource_bucket",
+        "modified_file_allowlist",
+        "task_author_role_ids",
+        "confirmatory_reuse_allowed",
+        "evaluator"
+      ],
+      "properties": {
+        "task_id": {
+          "$ref": "#/$defs/safeIdentifier"
+        },
+        "task_set_version": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "source_provenance": {
+          "$ref": "#/$defs/sourceProvenance"
+        },
+        "description": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "objective": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "constraints": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "instruction_language": {
+          "enum": ["ko", "en", "mixed"]
+        },
+        "repository_code_language": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "repository_doc_language": {
+          "enum": ["ko", "en", "mixed", "none"]
+        },
+        "task_category": {
+          "enum": [
+            "implementation",
+            "debugging",
+            "testing",
+            "refactoring",
+            "repository-analysis-planning"
+          ]
+        },
+        "required_capabilities": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/safeIdentifier"
+          }
+        },
+        "risk": {
+          "const": "low"
+        },
+        "mutation_scope": {
+          "const": "isolated-checkout-only"
+        },
+        "read_only": {
+          "type": "boolean"
+        },
+        "repository_id": {
+          "$ref": "#/$defs/safeIdentifier"
+        },
+        "fixture_paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/relativePath"
+          }
+        },
+        "fixture_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "estimated_resource_bucket": {
+          "enum": ["small", "medium"]
+        },
+        "modified_file_allowlist": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/relativePath"
+          }
+        },
+        "task_author_role_ids": {
+          "$ref": "#/$defs/roleIdList"
+        },
+        "confirmatory_reuse_allowed": {
+          "const": false
+        },
+        "evaluator": {
+          "$ref": "#/$defs/evaluator"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "instruction_language": {
+                "const": "ko"
+              }
+            },
+            "required": ["instruction_language"]
+          },
+          "then": {
+            "properties": {
+              "source_provenance": {
+                "properties": {
+                  "origin_language": {
+                    "const": "ko"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "instruction_language": {
+                "const": "en"
+              }
+            },
+            "required": ["instruction_language"]
+          },
+          "then": {
+            "properties": {
+              "source_provenance": {
+                "properties": {
+                  "origin_language": {
+                    "const": "en"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "instruction_language": {
+                "const": "mixed"
+              }
+            },
+            "required": ["instruction_language"]
+          },
+          "then": {
+            "properties": {
+              "source_provenance": {
+                "properties": {
+                  "origin_language": {
+                    "const": "mixed"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "decisionMargin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metric", "scope", "value", "rationale", "frozen_before_pilot"],
+      "properties": {
+        "metric": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "scope": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "value": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "rationale": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "frozen_before_pilot": {
+          "const": true
+        }
+      }
+    },
+    "analysisPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "primary_estimand",
+        "primary_population",
+        "reporting_strata",
+        "minimum_reporting_cell_size",
+        "pilot_inference_scope",
+        "binary_interval_method",
+        "continuous_interval_method",
+        "confidence_level",
+        "decision_margins",
+        "secondary_metrics",
+        "missingness",
+        "target_workload_aggregate"
+      ],
+      "properties": {
+        "primary_estimand": {
+          "const": "paired-objective-quality-risk-difference"
+        },
+        "primary_population": {
+          "const": "experimental-quota-by-preregistered-stratum"
+        },
+        "reporting_strata": {
+          "const": ["instruction_language", "task_category"]
+        },
+        "minimum_reporting_cell_size": {
+          "type": "integer",
+          "minimum": 4
+        },
+        "pilot_inference_scope": {
+          "const": "variance-discordance-missingness-and-confirmatory-sizing-not-agent-ranking"
+        },
+        "binary_interval_method": {
+          "const": "exact-mcnemar-binomial-and-paired-risk-difference-v1"
+        },
+        "continuous_interval_method": {
+          "enum": ["seeded-paired-bootstrap-v1", "exact-paired-permutation-v1"]
+        },
+        "confidence_level": {
+          "const": 0.95
+        },
+        "decision_margins": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/decisionMargin"
+          }
+        },
+        "secondary_metrics": {
+          "const": [
+            "reliability",
+            "constraint-and-safety-violations",
+            "agent-evaluator-and-experiment-time",
+            "comparable-resource-units-with-raw-token-caveat",
+            "cost-when-observed-for-both-agents",
+            "modified-file-scope",
+            "evaluator-coverage-and-missingness"
+          ]
+        },
+        "missingness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["quality", "cost", "terminal", "subjective_disagreement"],
+          "properties": {
+            "quality": {
+              "const": "missing-never-impute-zero-or-pass"
+            },
+            "cost": {
+              "const": "unknown-never-impute-zero"
+            },
+            "terminal": {
+              "const": "incomplete-until-reconciled"
+            },
+            "subjective_disagreement": {
+              "const": "not-applicable-primary-objective-evaluators-only"
+            }
+          }
+        },
+        "target_workload_aggregate": {
+          "const": "not-estimable-without-independent-representative-intake-weights"
+        }
+      }
+    },
+    "resourceBudget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maximum_executions",
+        "maximum_agent_execution_count",
+        "maximum_evaluator_execution_count",
+        "maximum_active_wall_time_seconds"
+      ],
+      "properties": {
+        "maximum_executions": {
+          "const": 120
+        },
+        "maximum_agent_execution_count": {
+          "const": 120
+        },
+        "maximum_evaluator_execution_count": {
+          "const": 120
+        },
+        "maximum_active_wall_time_seconds": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stopping", "pause", "exclusion", "resume"],
+      "properties": {
+        "stopping": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "pause": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "exclusion": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "resume": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "retain_finalized_prefix",
+            "run_only_untouched_suffix",
+            "preserve_missing_failure_rows",
+            "reject_duplicate_attempt_ids"
+          ],
+          "properties": {
+            "retain_finalized_prefix": {
+              "const": true
+            },
+            "run_only_untouched_suffix": {
+              "const": true
+            },
+            "preserve_missing_failure_rows": {
+              "const": true
+            },
+            "reject_duplicate_attempt_ids": {
+              "const": true
+            }
+          }
+        }
+      }
+    },
+    "confirmatoryHoldout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pilot_tasks_reusable",
+        "new_tasks_required",
+        "sample_size_method",
+        "sample_size_frozen_before_confirmatory_execution"
+      ],
+      "properties": {
+        "pilot_tasks_reusable": {
+          "const": false
+        },
+        "new_tasks_required": {
+          "const": true
+        },
+        "sample_size_method": {
+          "enum": [
+            "conservative-discordance-bound",
+            "preregistered-internal-pilot-reestimation"
+          ]
+        },
+        "sample_size_frozen_before_confirmatory_execution": {
+          "const": true
+        }
+      }
+    },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest_must_be_committed_before_results",
+        "agent_free_validation_required",
+        "separate_run_authorization_required",
+        "agent_execution_authorized_by_this_manifest"
+      ],
+      "properties": {
+        "manifest_must_be_committed_before_results": {
+          "const": true
+        },
+        "agent_free_validation_required": {
+          "const": true
+        },
+        "separate_run_authorization_required": {
+          "const": true
+        },
+        "agent_execution_authorized_by_this_manifest": {
+          "const": false
+        }
+      }
+    }
+  }
+}

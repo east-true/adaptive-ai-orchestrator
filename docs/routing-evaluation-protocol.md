@@ -1,6 +1,6 @@
 # Adaptive Routing 평가 프로토콜
 
-> 버전: draft-2
+> 버전: draft-3 (`draft-2`는 Phase 2a historical manifest에 고정)
 > 기준일: 2026-07-18
 > 대상: Claude Code와 Codex CLI를 고르는 routing 정책
 
@@ -28,7 +28,10 @@ randomized overlap이 필요하지만 현재 traffic에서는 보류하고 paire
 
 ## 2. 사전 등록할 것
 
-첫 결과를 보기 전에 실험 manifest를 version control에 남긴다.
+첫 결과를 보기 전에 실험 manifest를 version control에 남긴다. Phase 2b의 역할 분리,
+construction, validity review와 manifest 경계는
+[paired pilot 사전등록 계약](paired-pilot-preregistration.md)과
+`paired-pilot-manifest-v1` schema가 구체화한다.
 
 ```text
 protocol_version
@@ -67,8 +70,8 @@ cohort 간 row를 단순 합쳐 성공률을 만들지 않는다.
 초기 paired pilot의 계획 단위는 60 task, 120 execution이다.
 
 - instruction language: native Korean 20, native English 20, mixed 20;
-- 주요 task category: implementation, debugging, testing, refactoring,
-  repository analysis/planning;
+- 주요 task category: implementation 12, debugging 12, testing 12, refactoring 12,
+  repository analysis/planning 12;
 - repository language: 현재 실제 사용 언어를 반영하되 Python 하나에만 몰리지 않게
   다음 round에서 확장;
 - risk: low 중심. destructive, secret-bearing, production mutation task 제외;
@@ -96,7 +99,8 @@ agent 선택과 독립적인 intake에서 stratum 빈도를 먼저 측정하고 
 ### 4.3 최소 metadata
 
 ```text
-task_id / task_set_version / source
+task_id / task_set_version / source revision
+native·adaptation provenance / task author role
 instruction_language
 repository_code_language / repository_doc_language
 task_category / required_capabilities
@@ -152,6 +156,11 @@ target-workload-weighted policy value, aggregate best-single, overall 개선 주
 
 lint, typecheck, command exit, process completion은 constraint/reliability 지표이지
 그 자체로 objective quality가 아니다.
+
+Phase 2b에서는 task author, evaluator author, validity reviewer를 분리한다. evaluator
+author와 reviewer는 agent identity와 결과를 보지 않고 task contract와 보호 artifact만
+검토한다. 모든 evaluator assertion은 task의 literal acceptance text에 매핑하고,
+negative control과 positive/sanity control을 모두 통과해야 한다.
 
 `testing` task에서는 agent가 작성한 test가 자기 자신을 증명하지 못하게 hidden
 buggy implementation, mutation testing, 또는 외부 held-out test로 test quality를
@@ -327,4 +336,6 @@ target workload weight가 없거나 대표성 검토를 통과하지 못하면 w
 - 분석기가 synthetic 2×2 결과와 결측을 올바르게 처리;
 - report가 희소 stratum의 순위를 거부.
 
-dry run과 작은 4-task smoke pair가 성공한 뒤 60-task pilot을 시작한다.
+두 번의 4-task smoke는 완료됐다. 다음에는 별도 Phase 2b schema로 작성한 60-task
+manifest, 독립 evaluator validity review와 agent-free dry run을 동결한다. 그 결과를
+검토하고 별도 실행 승인을 받은 뒤에만 60-task pilot을 시작한다.
