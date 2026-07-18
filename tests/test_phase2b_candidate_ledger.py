@@ -8,6 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 LEDGER_PATH = ROOT / "experiments" / "phase2b-candidate-ledger-v1.json"
+LICENSE_PROBE_PATH = ROOT / "experiments" / "phase2b-license-probe-2026-07-19.json"
 EXPECTED_INCLUSION_RULES = {
     "license-or-use-basis",
     "exact-base-resolvable",
@@ -189,6 +190,33 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
                 "ghko-minacle--swift-tui-issue-18",
             },
         )
+
+    def test_license_probe_is_never_treated_as_terminal(self) -> None:
+        probe = json.loads(LICENSE_PROBE_PATH.read_text(encoding="utf-8"))
+
+        # The probe reads default-branch HEAD, not a candidate's pinned revision,
+        # so it may order work but must never settle license-or-use-basis.
+        self.assertFalse(probe["terminal_status"])
+        self.assertTrue(probe["terminal_status_note"])
+
+        probed = {entry["repository"] for entry in probe["entries"]}
+        self.assertEqual(len(probed), len(probe["entries"]))
+
+        for entry in probe["entries"]:
+            self.assertIn(
+                entry["signal"],
+                {"license-artifact-or-spdx-present", "none-observed"},
+            )
+            self.assertIn(
+                entry["probe_method"],
+                set(probe["probe_methods"]),
+            )
+
+        # No candidate may have been marked license-passing on this evidence: every
+        # row whose license_or_use_basis passes must carry its own recorded basis.
+        for candidate in self.ledger["candidates"]:
+            if candidate["screening"]["license_or_use_basis"] == "pass":
+                self.assertTrue(candidate["license_or_use_basis"])
 
     def test_every_inclusion_rule_has_a_terminal_exclusion_path(self) -> None:
         # A required inclusion criterion with no corresponding exclusion reason

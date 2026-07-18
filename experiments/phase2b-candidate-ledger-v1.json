@@ -38609,7 +38609,13 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened."
+        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened.",
+        "Linux reproducibility investigated agent-free. TimePilot.WinForms/TimePilot.WinForms.csproj is an SDK-style project (Microsoft.NET.Sdk) targeting net8.0-windows with UseWindowsForms=true, OutputType=WinExe, and a single PackageReference to Microsoft.Data.Sqlite 10.0.7. It is not a legacy .NET Framework project.",
+        "Not excluded for a Windows-only toolchain. The .NET SDK property EnableWindowsTargeting=true is documented to build Windows Forms and WPF projects on non-Windows platforms; without it the build reports NETSDK1100 because targeting and runtime packs are not downloaded there. Source: https://learn.microsoft.com/en-us/dotnet/core/project-sdk/msbuild-props . This differs from xcodebuild, which is macOS-only and has no Linux path at all.",
+        "The same documentation warns that a non-Windows build is for development rather than release: the executable is not marked as a Windows application and embeds no icon. That affects shipping the binary, not compiling and statically inspecting the resource extraction this task requires.",
+        "objective_evaluator_feasible looks satisfiable without running the UI. Three of the four stated completion criteria are static: UI strings managed from resources, a structure that can later accept English resources, and a successful build. The remaining criterion, that the Korean UI renders as before, can be decided by comparing each extracted resource value against the hardcoded literal at the base revision rather than by rendering the form.",
+        "reproducible_within_budget remains unknown. Before it may pass: pin one .NET 8 SDK by exact version and artifact digest; verify offline NuGet restore of the Windows targeting/runtime ref packs and Microsoft.Data.Sqlite 10.0.7; reproduce the base build and the negative and positive controls agent-free with EnableWindowsTargeting=true; and measure SDK acquisition, restore, and build wall time and disk against the preregistered resource bucket.",
+        "The csproj was read from the repository default branch through the raw endpoint because this row has no resolved base_revision yet. That is a screening signal about project shape, not a pinned-revision fact, and it is not used as license evidence."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
