@@ -546,6 +546,9 @@ description/objective/constraints 문구에 매핑하고 assertion inventory가 
 reviewer attestation을 요구한다. validator는 문구 포함과 ID/경로 형식을 검증하지만
 evaluator code에서 assertion을 추론하지 않는다. task별 exact modified-file allowlist와
 모든 attempt의 수정 파일 관측이 있을 때만 전체 unexpected-file count를 확정한다.
+같은 base/evaluator를 쓰는 v2 4-task rehearsal manifest는 23개 assertion mapping과
+task별 allowlist를 사전 등록했고 negative control, plan/validate, agent-free dry-run을
+통과했다. v2 agent execution은 아직 수행하지 않았다.
 
 - 독립 task-specific evaluator가 있는 4개 low-risk task를 같은 base revision의
   격리 workspace에서 양쪽 agent로 실행한다.

@@ -1,0 +1,423 @@
+{
+  "schema_version": "paired-smoke-manifest-v2",
+  "protocol_version": "draft-2",
+  "experiment_id": "phase2a-smoke-v2",
+  "task_set_version": "phase2a-smoke-tasks-v2",
+  "environment_epoch": "2026-07-18-claude-code-2.1.212-codex-cli-0.144.5",
+  "base_revision": "fe47cc1e36b2217cf5529e613a3b5dd1d21acf1e",
+  "base_tree_hash": "a3fa5b6c1a1c66e6eaadae1236fb135b7edaa4e4",
+  "random_seed": 2026071802,
+  "order_assignment_rule": "seeded-balanced-sha256-v1",
+  "agents": [
+    {
+      "agent_id": "claude-code:claude-opus-4-8",
+      "base_id": "claude-code",
+      "model": "claude-opus-4-8",
+      "reasoning_tier": null,
+      "cli_version": "2.1.212",
+      "permission_mode": "acceptEdits",
+      "time_limit_seconds": 600
+    },
+    {
+      "agent_id": "codex:gpt-5.6-terra:none",
+      "base_id": "codex",
+      "model": "gpt-5.6-terra",
+      "reasoning_tier": "none",
+      "cli_version": "0.144.5",
+      "permission_mode": "workspace-write",
+      "time_limit_seconds": 600
+    }
+  ],
+  "tasks": [
+    {
+      "task_id": "plan-cost-limit",
+      "task_set_version": "phase2a-smoke-tasks-v2",
+      "source": "maintainer-authored-phase2a-contract-rehearsal",
+      "description": "JSON plan task spec에 선택적 cost_limit_usd 숫자 필드를 지원하라. `_task_from_spec`은 숫자 `cost_limit_usd` 값을 `Task.cost_limit_usd`로 보존해야 한다. 음수 `cost_limit_usd`는 기존 `Task` 검증을 통해 `ValueError`로 거부해야 한다. `cost_limit_usd`를 포함한 유효한 plan JSON은 `_validate_plan_file`을 통과해야 한다. `_load_plan`은 plan JSON의 `cost_limit_usd` 값을 보존해야 한다. plan-generation task description에는 literal field name `cost_limit_usd`가 포함되어야 한다. 기존 필드와 CLI 동작은 호환되어야 한다.",
+      "objective": "plan JSON의 cost_limit_usd가 생성·검증·loading 경로에서 손실 없이 동작하고 음수 제한이 거부된다.",
+      "constraints": [
+        "네트워크를 사용하지 않는다.",
+        "격리 checkout 밖의 파일을 읽거나 수정하지 않는다.",
+        "기존 plan schema와 unit test를 깨뜨리지 않는다."
+      ],
+      "instruction_language": "ko",
+      "repository_code_language": "python",
+      "repository_doc_language": "mixed",
+      "task_category": "implementation",
+      "required_capabilities": [
+        "code_generation",
+        "testing"
+      ],
+      "risk": "low",
+      "mutation_scope": "isolated-checkout-only",
+      "read_only": false,
+      "fixture_paths": [
+        "src/adaptive_orchestrator/cli.py",
+        "src/adaptive_orchestrator/domain.py"
+      ],
+      "fixture_hash": "5c73393c2078455efb6211f4f9bc1d21174a4553c829cde67c41061a59219380",
+      "estimated_resource_bucket": "small",
+      "modified_file_allowlist": [
+        "src/adaptive_orchestrator/cli.py",
+        "tests/test_cli.py"
+      ],
+      "evaluator": {
+        "evaluator_id": "quality-plan-cost-limit-v1",
+        "version": "sha256:b8264b82117fa1a2c093ee7d3d24483fc36f443a386ae3a6869aff14d91322cb",
+        "role": "quality",
+        "aggregation": "binary-single-v1",
+        "command": [
+          "python3",
+          "../../adaptive-ai-orchestrator-evaluators/phase2a-smoke-v1/task-1-plan-cost-limit.py"
+        ],
+        "artifact_paths": [
+          "../../adaptive-ai-orchestrator-evaluators/phase2a-smoke-v1/task-1-plan-cost-limit.py"
+        ],
+        "artifact_hash": "e86ac2290233c6073ec3216119ad9a8daa5e0f954289fef9eb555bc0935a68ea",
+        "timeout_seconds": 120,
+        "assertion_inventory_complete": true,
+        "assertion_contracts": [
+          {
+            "assertion_id": "task-from-spec-preserves-cost",
+            "evaluator_requirement": "_task_from_spec returns a Task whose cost_limit_usd equals the supplied numeric value.",
+            "task_contract_field": "description",
+            "task_contract_text": "`_task_from_spec`은 숫자 `cost_limit_usd` 값을 `Task.cost_limit_usd`로 보존해야 한다."
+          },
+          {
+            "assertion_id": "negative-cost-rejected",
+            "evaluator_requirement": "A negative cost_limit_usd raises ValueError through Task validation.",
+            "task_contract_field": "description",
+            "task_contract_text": "음수 `cost_limit_usd`는 기존 `Task` 검증을 통해 `ValueError`로 거부해야 한다."
+          },
+          {
+            "assertion_id": "plan-validation-accepts-cost",
+            "evaluator_requirement": "_validate_plan_file accepts a valid plan containing cost_limit_usd.",
+            "task_contract_field": "description",
+            "task_contract_text": "`cost_limit_usd`를 포함한 유효한 plan JSON은 `_validate_plan_file`을 통과해야 한다."
+          },
+          {
+            "assertion_id": "plan-load-preserves-cost",
+            "evaluator_requirement": "_load_plan preserves the cost_limit_usd value from plan JSON.",
+            "task_contract_field": "description",
+            "task_contract_text": "`_load_plan`은 plan JSON의 `cost_limit_usd` 값을 보존해야 한다."
+          },
+          {
+            "assertion_id": "generation-schema-names-cost",
+            "evaluator_requirement": "The plan-generation task description contains the literal cost_limit_usd field name.",
+            "task_contract_field": "description",
+            "task_contract_text": "plan-generation task description에는 literal field name `cost_limit_usd`가 포함되어야 한다."
+          }
+        ]
+      }
+    },
+    {
+      "task_id": "replay-status-summary",
+      "task_set_version": "phase2a-smoke-tasks-v2",
+      "source": "maintainer-authored-phase2a-contract-rehearsal",
+      "description": "Extend the replay CLI JSON report with finalized_attempt_count and attempt_status_counts. An ordinary replay CLI invocation over a valid event log must exit with code 0. For the declared two-attempt fixture, top-level attempt_count must equal 2, finalized_attempt_count must equal 1, and incomplete_attempt_count must equal 1. Top-level attempt_status_counts must equal exactly {\"finalized\": 1, \"started\": 1}. Derive all counts from replayed RoutingState without mutating or reconciling the event log.",
+      "objective": "Replay reports total, finalized, incomplete, and per-status attempt counts consistently from one immutable state projection.",
+      "constraints": [
+        "Do not change lifecycle event rows during ordinary replay.",
+        "Do not access the network or files outside the isolated checkout.",
+        "Preserve existing replay output fields and tests."
+      ],
+      "instruction_language": "en",
+      "repository_code_language": "python",
+      "repository_doc_language": "en",
+      "task_category": "implementation",
+      "required_capabilities": [
+        "repository_understanding",
+        "code_generation",
+        "testing"
+      ],
+      "risk": "low",
+      "mutation_scope": "isolated-checkout-only",
+      "read_only": false,
+      "fixture_paths": [
+        "src/adaptive_orchestrator/cli.py",
+        "src/adaptive_orchestrator/replay.py",
+        "src/adaptive_orchestrator/routing_state.py"
+      ],
+      "fixture_hash": "980e630746dc2821308ae48b734203562977248e613ba0575fbe01b92144bac3",
+      "estimated_resource_bucket": "small",
+      "modified_file_allowlist": [
+        "src/adaptive_orchestrator/cli.py",
+        "src/adaptive_orchestrator/replay.py",
+        "tests/test_cli.py",
+        "tests/test_events.py"
+      ],
+      "evaluator": {
+        "evaluator_id": "quality-replay-status-summary-v1",
+        "version": "sha256:bfbf42a9a14b49cc6433159a4bdd48806bce4b5c78e662c8fac0a4433050de99",
+        "role": "quality",
+        "aggregation": "binary-single-v1",
+        "command": [
+          "python3",
+          "../../adaptive-ai-orchestrator-evaluators/phase2a-smoke-v1/task-2-replay-status-summary.py"
+        ],
+        "artifact_paths": [
+          "../../adaptive-ai-orchestrator-evaluators/phase2a-smoke-v1/task-2-replay-status-summary.py"
+        ],
+        "artifact_hash": "c29497ba0d81c547f2d5363ecfbcf50cab49f6bcb91f8d71c5296b8431ea9d19",
+        "timeout_seconds": 120,
+        "assertion_inventory_complete": true,
+        "assertion_contracts": [
+          {
+            "assertion_id": "replay-exits-zero",
+            "evaluator_requirement": "The replay CLI invocation exits with code 0.",
+            "task_contract_field": "description",
+            "task_contract_text": "An ordinary replay CLI invocation over a valid event log must exit with code 0."
+          },
+          {
+            "assertion_id": "attempt-count-two",
+            "evaluator_requirement": "The fixture report has attempt_count equal to 2.",
+            "task_contract_field": "description",
+            "task_contract_text": "top-level attempt_count must equal 2"
+          },
+          {
+            "assertion_id": "finalized-count-one",
+            "evaluator_requirement": "The fixture report has finalized_attempt_count equal to 1.",
+            "task_contract_field": "description",
+            "task_contract_text": "finalized_attempt_count must equal 1"
+          },
+          {
+            "assertion_id": "incomplete-count-one",
+            "evaluator_requirement": "The fixture report has incomplete_attempt_count equal to 1.",
+            "task_contract_field": "description",
+            "task_contract_text": "incomplete_attempt_count must equal 1"
+          },
+          {
+            "assertion_id": "exact-status-counts",
+            "evaluator_requirement": "The fixture report has exact finalized and started status counts with no extra keys.",
+            "task_contract_field": "description",
+            "task_contract_text": "Top-level attempt_status_counts must equal exactly {\"finalized\": 1, \"started\": 1}."
+          }
+        ]
+      }
+    },
+    {
+      "task_id": "paired-plan-command",
+      "task_set_version": "phase2a-smoke-tasks-v2",
+      "source": "maintainer-authored-phase2a-contract-rehearsal",
+      "description": "`paired plan MANIFEST --workspace-root ROOT` command를 추가하라. manifest schema만 읽고 JSON을 반환해야 한다. 두 번의 `paired plan` 호출은 각각 exit code 0을 반환해야 한다. 두 호출의 parsed JSON data는 동일해야 한다. Top-level `agent_execution_started` must be boolean false. Top-level `workspace_creation_started` must be boolean false. Top-level `assignments` must contain exactly 4 entries. Top-level `workspaces` must contain exactly 8 entries. The 8 `workspaces[*].path` values must be unique. `ROOT` must not exist after either invocation.",
+      "objective": "paired workspace layout과 identity를 명시된 JSON contract로 filesystem mutation 없이 사전 검토할 수 있다.",
+      "constraints": [
+        "plan command는 source repository나 evaluator artifact의 현재 상태를 검사하지 않는다.",
+        "ROOT를 포함한 어떤 경로도 만들거나 덮어쓰지 않는다.",
+        "기존 validate, dry-run, analyze command를 유지한다.",
+        "No network access."
+      ],
+      "instruction_language": "mixed",
+      "repository_code_language": "python",
+      "repository_doc_language": "mixed",
+      "task_category": "planning",
+      "required_capabilities": [
+        "repository_understanding",
+        "code_generation",
+        "planning",
+        "testing"
+      ],
+      "risk": "low",
+      "mutation_scope": "isolated-checkout-only",
+      "read_only": false,
+      "fixture_paths": [
+        "src/adaptive_orchestrator/cli.py",
+        "src/adaptive_orchestrator/paired_experiment.py"
+      ],
+      "fixture_hash": "2ca483fce812733c32b3e09a590f56e86bcd18e18462d7a503052df8414d4662",
+      "estimated_resource_bucket": "small",
+      "modified_file_allowlist": [
+        "docs/paired-smoke-tooling.md",
+        "src/adaptive_orchestrator/cli.py",
+        "src/adaptive_orchestrator/paired_experiment.py",
+        "tests/test_cli.py",
+        "tests/test_paired_experiment.py"
+      ],
+      "evaluator": {
+        "evaluator_id": "quality-paired-plan-command-v1",
+        "version": "sha256:56f463c88005f11501f6bcaefd77c8123a05ea56b3e1cec99d09558fef02930d",
+        "role": "quality",
+        "aggregation": "binary-single-v1",
+        "command": [
+          "python3",
+          "../../adaptive-ai-orchestrator-evaluators/phase2a-smoke-v1/task-3-paired-plan.py"
+        ],
+        "artifact_paths": [
+          "../../adaptive-ai-orchestrator-evaluators/phase2a-smoke-v1/task-3-paired-plan.py",
+          "../../adaptive-ai-orchestrator-evaluators/phase2a-smoke-v1/common.py"
+        ],
+        "artifact_hash": "41dab833ed2a733f7392bac7800dcc64bb985b63656c66f7c99f931dd9e219f2",
+        "timeout_seconds": 120,
+        "assertion_inventory_complete": true,
+        "assertion_contracts": [
+          {
+            "assertion_id": "plan-invocations-exit-zero",
+            "evaluator_requirement": "Each of two paired plan invocations exits with code 0.",
+            "task_contract_field": "description",
+            "task_contract_text": "두 번의 `paired plan` 호출은 각각 exit code 0을 반환해야 한다."
+          },
+          {
+            "assertion_id": "plan-json-deterministic",
+            "evaluator_requirement": "The parsed JSON data from both invocations is equal.",
+            "task_contract_field": "description",
+            "task_contract_text": "두 호출의 parsed JSON data는 동일해야 한다."
+          },
+          {
+            "assertion_id": "agent-execution-false",
+            "evaluator_requirement": "Top-level agent_execution_started is boolean false.",
+            "task_contract_field": "description",
+            "task_contract_text": "Top-level `agent_execution_started` must be boolean false."
+          },
+          {
+            "assertion_id": "workspace-creation-false",
+            "evaluator_requirement": "Top-level workspace_creation_started is boolean false.",
+            "task_contract_field": "description",
+            "task_contract_text": "Top-level `workspace_creation_started` must be boolean false."
+          },
+          {
+            "assertion_id": "four-assignments",
+            "evaluator_requirement": "Top-level assignments contains exactly four entries.",
+            "task_contract_field": "description",
+            "task_contract_text": "Top-level `assignments` must contain exactly 4 entries."
+          },
+          {
+            "assertion_id": "eight-workspaces",
+            "evaluator_requirement": "Top-level workspaces contains exactly eight entries.",
+            "task_contract_field": "description",
+            "task_contract_text": "Top-level `workspaces` must contain exactly 8 entries."
+          },
+          {
+            "assertion_id": "unique-workspace-paths",
+            "evaluator_requirement": "All eight workspaces path values are unique.",
+            "task_contract_field": "description",
+            "task_contract_text": "The 8 `workspaces[*].path` values must be unique."
+          },
+          {
+            "assertion_id": "workspace-root-not-created",
+            "evaluator_requirement": "The requested workspace root does not exist after either invocation.",
+            "task_contract_field": "description",
+            "task_contract_text": "`ROOT` must not exist after either invocation."
+          }
+        ]
+      }
+    },
+    {
+      "task_id": "paired-evaluator-coverage",
+      "task_set_version": "phase2a-smoke-tasks-v2",
+      "source": "maintainer-authored-phase2a-contract-rehearsal",
+      "description": "paired analysis의 overall 및 모든 stratum summary에 evaluator_coverage를 추가하라. 값은 binary_observed_pair_count / pair_count이며 pair가 없을 때만 null이어야 한다. One-sided/incomplete fixture에서 overall `pair_count`는 4여야 한다. Overall `binary_observed_pair_count`는 1이어야 한다. Overall `quality_missing_pair_count`는 3이어야 한다. Overall `evaluator_coverage`는 0.25여야 한다. `evaluator_coverage`는 항상 0.0 이상 1.0 이하여야 한다. one-sided failure와 incomplete pair를 분모에서 제거하지 말고 기존 2x2, missing count, promotion blocker semantics를 유지하라.",
+      "objective": "objective evaluator 결측이 0으로 대체되지 않고 0..1 coverage로 명시적으로 보고된다.",
+      "constraints": [
+        "결측 quality를 pass 또는 fail로 대체하지 않는다.",
+        "기존 paired risk difference와 2x2 집계를 변경하지 않는다.",
+        "격리 checkout 밖을 읽거나 수정하지 않고 네트워크를 사용하지 않는다."
+      ],
+      "instruction_language": "ko",
+      "repository_code_language": "python",
+      "repository_doc_language": "mixed",
+      "task_category": "analysis",
+      "required_capabilities": [
+        "code_generation",
+        "testing"
+      ],
+      "risk": "low",
+      "mutation_scope": "isolated-checkout-only",
+      "read_only": false,
+      "fixture_paths": [
+        "src/adaptive_orchestrator/paired_experiment.py"
+      ],
+      "fixture_hash": "5939125f68cbcbcd75f8073b021b2fbcff5d7cf3f6f04db45ec0d65194989590",
+      "estimated_resource_bucket": "small",
+      "modified_file_allowlist": [
+        "src/adaptive_orchestrator/paired_experiment.py",
+        "tests/test_paired_experiment.py"
+      ],
+      "evaluator": {
+        "evaluator_id": "quality-paired-evaluator-coverage-v1",
+        "version": "sha256:6c3d3fbe29222870e645dadfc873765444822068d2af8e9f63ddcc735e47f3e0",
+        "role": "quality",
+        "aggregation": "binary-single-v1",
+        "command": [
+          "python3",
+          "../../adaptive-ai-orchestrator-evaluators/phase2a-smoke-v1/task-4-evaluator-coverage.py"
+        ],
+        "artifact_paths": [
+          "../../adaptive-ai-orchestrator-evaluators/phase2a-smoke-v1/task-4-evaluator-coverage.py",
+          "../../adaptive-ai-orchestrator-evaluators/phase2a-smoke-v1/common.py"
+        ],
+        "artifact_hash": "18e2a451c4323f20e37188a46aa1dd470ef6aff89375751357aa30d1b80995d4",
+        "timeout_seconds": 120,
+        "assertion_inventory_complete": true,
+        "assertion_contracts": [
+          {
+            "assertion_id": "overall-pair-count-four",
+            "evaluator_requirement": "The overall summary retains all four preregistered pairs.",
+            "task_contract_field": "description",
+            "task_contract_text": "One-sided/incomplete fixture에서 overall `pair_count`는 4여야 한다."
+          },
+          {
+            "assertion_id": "one-binary-observed-pair",
+            "evaluator_requirement": "The fixture has exactly one pair with binary quality observed for both agents.",
+            "task_contract_field": "description",
+            "task_contract_text": "Overall `binary_observed_pair_count`는 1이어야 한다."
+          },
+          {
+            "assertion_id": "three-quality-missing-pairs",
+            "evaluator_requirement": "The fixture retains three pairs with missing paired quality.",
+            "task_contract_field": "description",
+            "task_contract_text": "Overall `quality_missing_pair_count`는 3이어야 한다."
+          },
+          {
+            "assertion_id": "coverage-one-quarter",
+            "evaluator_requirement": "The overall evaluator coverage equals one observed binary pair divided by four preregistered pairs.",
+            "task_contract_field": "description",
+            "task_contract_text": "Overall `evaluator_coverage`는 0.25여야 한다."
+          },
+          {
+            "assertion_id": "coverage-bounded",
+            "evaluator_requirement": "Evaluator coverage is bounded between zero and one inclusive.",
+            "task_contract_field": "description",
+            "task_contract_text": "`evaluator_coverage`는 항상 0.0 이상 1.0 이하여야 한다."
+          }
+        ]
+      }
+    }
+  ],
+  "primary_metric": "paired-objective-quality-risk-difference",
+  "secondary_metrics": [
+    "reliability",
+    "evaluator-coverage",
+    "wall-time",
+    "unexpected-modified-files"
+  ],
+  "reporting_strata": [
+    "instruction_language",
+    "task_category"
+  ],
+  "minimum_reporting_cell_size": 4,
+  "non_inferiority_margin": 0.0,
+  "confidence_level": 0.95,
+  "interval_method": "exact-mcnemar-binomial-95-v1",
+  "maximum_executions": 8,
+  "maximum_resource_budget": {
+    "wall_time_seconds": 4800,
+    "agent_execution_count": 8,
+    "evaluator_execution_count": 8
+  },
+  "stopping_rules": [
+    "Stop immediately on secret, production, network, push, or unexpected external access.",
+    "Stop immediately if any prepared checkout commit, tree, or fixture hash differs.",
+    "Stop immediately if evaluator artifact version/hash differs before or after evaluation.",
+    "Stop when the declared wall-time or execution-count budget is exhausted."
+  ],
+  "pause_rules": [
+    "Pause after any permission or sandbox failure until both agents have an equal corrected environment.",
+    "Pause after a one-sided infrastructure failure; retain the row and classify it before resuming.",
+    "Pause if lifecycle propensity or deterministic pair/order identity is missing."
+  ],
+  "exclusion_rules": [
+    "Exclude only a task whose base fixture is broken before both agent executions.",
+    "Do not exclude agent failure, timeout, interruption, one-sided failure, or missing quality caused after execution starts.",
+    "Publish every excluded task ID and the preregistered exclusion reason."
+  ]
+}

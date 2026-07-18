@@ -33,3 +33,13 @@ files. The manifest passed `paired validate`, an agent-free eight-checkout
 The historical v1 manifest is intentionally unchanged. Tooling also accepts a
 v2 schema for a future preregistered run; v2 requires evaluator assertion/task
 wording coverage attestations and exact per-task modified-file allowlists.
+
+`phase2a-smoke-v2.json` is the agent-free contract rehearsal for the same four
+maintenance tasks and evaluated base. It reuses the same protected evaluator
+artifacts but makes all 23 evaluator assertions explicit in task wording,
+including the formerly undocumented top-level `workspaces` field. Its exact
+modified-file allowlists are based on the union observed across both v1 agent
+workspaces, then preregistered rather than inferred during analysis. The v2
+manifest passed parsing, contract coverage, exact-base negative controls,
+`paired plan`, `paired validate`, and an eight-checkout `paired dry-run`. No v2
+agent execution has been approved or started.
