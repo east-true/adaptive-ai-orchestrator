@@ -298,6 +298,88 @@ bucket이므로 단일 한도로 계산하지 않는다.
 | Stage 2 (`min(D, 150)`) | search | ≤ 150 |
 | 기존 pool early filter | core | ≤ 179 |
 
+### 2026-07-19 3차 handoff — 첫 selected 2건까지
+
+Frame B 사전등록, license 조기 필터 전수, 후보 심사, provisioned 재현 실측을 마쳤다.
+**`selected`가 처음으로 0을 벗어나 2건이 됐다.** agent 실행·evaluator 저술·60-task manifest는
+여전히 미착수이며 승인되지 않았다.
+
+| 항목 | 값 |
+|---|---:|
+| 전체 candidate | 1,130 |
+| `screening` | 1,066 |
+| `excluded` | 62 |
+| **`selected-for-task-authoring`** | **2** |
+
+#### selected 2건 (11/11)
+
+| candidate | 언어/범주 | base tree | 라이선스 | bucket |
+|---|---|---|---|---|
+| `ghmix-semantic-reasoning--factlog-issue-26` | ko / debugging | `12a8b1a1` | Apache-2.0 | `small` (2초) |
+| `ghmix-joshua-jingu-lee--ante-issue-2349` | ko / debugging | `c9df9724` | MIT | `small` (<1초) |
+
+둘 다 digest 고정 toolchain으로 base·negative·positive control을 agent 없이 재현했다. 상세
+절차와 수치는 [provisioned-environment 재현 절차](provisioned-reproduction.md)와
+[측정 artifact](../experiments/phase2b-provisioning-measurements-2026-07-19.json)에 있다.
+
+#### 근접 후보와 각각의 정확한 장애물
+
+| candidate | pass | 남은 것과 이유 |
+|---|---|---|
+| `ghko-SeoyunL--factlog-academic-issue-314` | 10/11 | `reproducible_within_budget` 미실측. Python 3.11 + `pyrewire`. 같은 계열인 `factlog #26`이 pyrewire 없이도 evaluator가 도는 것을 확인했으므로 재현 비용은 낮을 가능성이 크다 |
+| `ghmix-hskim-solv--BidMate-DocAgent-issue-1152` | 10/11 | `reproducible_within_budget` 미실측. Python(버전 미확인), 정답 PR이 `tests/test_doc_links.py`를 수정하므로 PR 시점 재구성 가능 |
+| `ghmix-YSbookcase--TimePilot-issue-62` | 10/11 | 정답 PR에 **테스트가 0개**라 재구성할 gold test가 없다. evaluator를 새로 저술해야 하며 이는 §3 역할 분리 대상 — task-source 판정을 한 역할이 같은 맥락에서 채점 기준을 쓰면 독립 construction이 아니다 |
+| `ghko-minacle--swift-tui-issue-18` | 6/11 | 상류 테스트를 evaluator로 **쓸 수 없음이 실측으로 확인**됐다. PR 테스트 hunk를 base에 적용하면 compile error 171개이며, `RenderedTextInputAnchor` 등 이슈가 명명하지 않은 내부 타입을 요구한다 |
+
+#### 이번 세션에서 확정된 규칙
+
+- **linked PR 선정**: merged이고, **이 이슈 번호를 실제로 참조**하며, **릴리스 자동화 PR이
+  아니어야** 한다. "timeline의 첫 merged PR"은 두 번 틀렸다 — 릴리스 PR과 다른 이슈의 PR.
+- **base tree hash 출처**: `git rev-parse HEAD^{tree}`. `GET /git/trees/{commit_sha}`는 입력
+  SHA를 되돌려주므로 tree hash로 쓰면 안 된다(3개 행이 이 오류로 들어갔다 정정됨).
+- **license 판정**: pinned revision의 artifact를 직접 읽는다. classifier는 우선순위 신호일
+  뿐이며, selected 5건 후보 전부 classifier가 `spdx=None`이었는데 실제로는 MIT/Apache였다.
+- **resource bucket**: evaluator wall time 기준 `small` ≤ 30초, `medium` ≤ 120초(cold 측정).
+  manifest schema에 용량 필드가 없으므로 디스크로 판정하지 않는다.
+- **objective evaluator 판정 기준**: 상류 테스트의 **존재**가 아니라 그 테스트가 **과제 문구가
+  진술한 수준**을 검사하는지다.
+
+#### API 없이 되는 경로 (core 한도 밖)
+
+core는 미인증 시간당 60이라 쉽게 소진된다. 다음은 한도를 쓰지 않는다.
+
+```text
+raw.githubusercontent.com/{repo}/{ref}/{path}     파일 내용 (임의 ref 가능)
+github.com/{repo}/pull/{n}.diff                   PR unified diff
+github.com/{repo}/commit/{short}.patch            첫 줄에서 full SHA 해석
+git fetch --depth 1 origin {full_sha}             base materialize (짧은 SHA는 안 받음)
+```
+
+#### 휘발성 artifact와 재구성
+
+`/tmp` 아래는 세션과 함께 사라진다. 재구성을 가능하게 하는 것은 기록된 identity다.
+
+| 경로 | 내용 | 재구성 근거 |
+|---|---|---|
+| `/tmp/claude-1000/py311`, `py313` | CPython 3.11.15 / 3.13.14 | 측정 artifact의 digest |
+| `/tmp/claude-1000/dotnet` | .NET SDK 8.0.423 | `dotnet-install.sh --channel 8.0` |
+| `/tmp/claude-1000/swift` | Swift 6.3.3 ubuntu22.04 | download.swift.org URL |
+| `/tmp/claude-1000/repro/*` | base checkout과 control 사본 | ledger의 base_revision |
+| `/tmp/claude-1000/frameB/*` | license probe 원자료 | 결론은 probe artifact에 반영됨 |
+| `/tmp/phase2b-schema-lib` | jsonschema 4.26.0 | Draft 2020-12 검증용 재설치 필요 |
+
+#### 다음에 할 수 있는 것
+
+1. `factlog #314`와 `BidMate #1152`의 provisioned 재현 — 절차가 이미 문서화돼 있고 상류
+   테스트도 있으므로 가장 짧은 경로다. 통과하면 selected 4건.
+2. `TimePilot`·`swift-tui`의 **역할 분리된 evaluator 저술** — 별도 역할/세션이 task 문구만
+   보고 작성해야 한다.
+3. explicit-language reviewed 나머지 15개와 Korean reviewed 미판정분 심사.
+4. Frame B Stage 1 수집 — exact query 78개(6 KO_TERM × 13 license) 목록 동결과 별도 승인 필요.
+
+quota는 ko 2/20이고 selected 2건이 모두 `debugging`이다. marginal quota이므로 현 단계에서
+문제로 보지 않지만, category 편중은 기록해 둔다.
+
 다음 세션의 순서는 고정한다.
 
 0. 아래 절차 전에 이 handoff와 [사전등록 §4.4](paired-pilot-preregistration.md)를 읽는다.
