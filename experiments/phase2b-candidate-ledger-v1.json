@@ -37994,7 +37994,7 @@
       "source_statement_available": true,
       "task_statement_hash": "c1dc75f26ada1d9635faa001e6120251f150d9d5784b03f5cba4b1ef66042282",
       "base_revision": "9a91c5869623261762274eaf092d0c6bb6a0c176",
-      "base_tree_hash": "9a91c5869623261762274eaf092d0c6bb6a0c176",
+      "base_tree_hash": "40c93b2720fa97c94f479f0c5e13f6c4950df64b",
       "solution_reference": "https://github.com/hskim-solv/BidMate-DocAgent/pull/1174",
       "solution_revision": null,
       "solution_artifact_hash": null,
@@ -38039,7 +38039,8 @@
         "low_risk_isolated_execution / no_network_secret_push_production: base revision의 `scripts/check_doc_links.py`에 requests·httpx·urllib·socket 사용 흔적이 없고 링크 대상 파일 존재만 로컬로 검사한다. 변경 범위도 문서 4개와 스크립트·테스트다.",
         "objective_evaluator_feasible: 이슈가 주장한 근거를 base에서 확인했다 — `normalize_target`이 `t.split(\"#\", 1)[0]`으로 fragment를 떼어내 검증하지 않는다. 깨진 fragment 링크를 탐지하는지 deterministic하게 판정할 수 있고, 이슈가 4개 깨진 대상을 전수 열거해 assertion 매핑도 가능하다.",
         "gold_and_evaluator_hideable: 정답 PR은 기존 `tests/test_doc_links.py`를 수정한다. 수정 후 버전을 보호 경로에 두면 새 assertion은 노출되지 않는다.",
-        "reproducible_within_budget만 unknown으로 남는다. 고정 버전·artifact digest pin, 오프라인 의존성 복원, agent-free base/negative/positive control 재현, 사전 resource bucket 대비 실측이 끝나기 전에는 pass로 두지 않는다."
+        "reproducible_within_budget만 unknown으로 남는다. 고정 버전·artifact digest pin, 오프라인 의존성 복원, agent-free base/negative/positive control 재현, 사전 resource bucket 대비 실측이 끝나기 전에는 pass로 두지 않는다.",
+        "base_tree_hash 정정: 이전 값 9a91c5869623261762274eaf092d0c6bb6a0c176는 commit SHA였다. `GET /git/trees/{commit_sha}`가 입력 SHA를 그대로 되돌려준 것을 tree hash로 받아 기록한 오류이며, base를 실제로 materialize해 `git rev-parse HEAD^{tree}`로 확인한 값 40c93b2720fa97c94f479f0c5e13f6c4950df64b로 교체했다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -38594,7 +38595,7 @@
       "source_statement_available": true,
       "task_statement_hash": "89fdd1f484fc1754408026846837198ca2633eaf83eea4f342d9769da74fb43c",
       "base_revision": "8ad41b136ecab5c5f2f1f97806cfbfe784004249",
-      "base_tree_hash": "8ad41b136ecab5c5f2f1f97806cfbfe784004249",
+      "base_tree_hash": "182937e72345ba447982a9709c36b91c55d4599a",
       "solution_reference": "https://github.com/YSbookcase/TimePilot/pull/97",
       "solution_revision": null,
       "solution_artifact_hash": null,
@@ -38651,7 +38652,8 @@
         "low_risk_isolated_execution / no_network_secret_push_production: 변경 대상 12개가 모두 `TimePilot.WinForms/` 아래 소스이며 UI 문자열을 `UiText.cs` 등 리소스 경로로 옮기는 작업이다. 실행 중 네트워크·비밀·push·production 변경이 필요 없다(NuGet 복원은 사전 provisioning 단계이지 task 실행이 아니다).",
         "objective_evaluator_feasible: UI를 렌더링하지 않고 정적으로 판정할 수 있다. base의 하드코딩 리터럴과 추출된 리소스 값의 문자열 동등성, 리소스 경유 여부, 그리고 Linux 빌드 성공으로 네 완료 기준을 모두 덮는다.",
         "gold_and_evaluator_hideable: 정답 PR의 12개 변경 파일과 추출된 리소스 값을 agent checkout 밖에 두면 노출되지 않는다.",
-        "reproducible_within_budget만 unknown으로 남는다. 고정 버전·artifact digest pin, 오프라인 의존성 복원, agent-free base/negative/positive control 재현, 사전 resource bucket 대비 실측이 끝나기 전에는 pass로 두지 않는다."
+        "reproducible_within_budget만 unknown으로 남는다. 고정 버전·artifact digest pin, 오프라인 의존성 복원, agent-free base/negative/positive control 재현, 사전 resource bucket 대비 실측이 끝나기 전에는 pass로 두지 않는다.",
+        "base_tree_hash 정정: 이전 값 8ad41b136ecab5c5f2f1f97806cfbfe784004249는 commit SHA였다. `GET /git/trees/{commit_sha}`가 입력 SHA를 그대로 되돌려준 것을 tree hash로 받아 기록한 오류이며, base를 실제로 materialize해 `git rev-parse HEAD^{tree}`로 확인한 값 182937e72345ba447982a9709c36b91c55d4599a로 교체했다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -47429,7 +47431,7 @@
       "source_statement_available": true,
       "task_statement_hash": "c2871f3842d4e9bd60269b75c4599f00c3136ff8c087fb94e7fd81c64ae04432",
       "base_revision": "61d9ad9ed1b77a674499a2d4a281db0164dad730",
-      "base_tree_hash": "61d9ad9ed1b77a674499a2d4a281db0164dad730",
+      "base_tree_hash": "12a8b1a18e99c07121bdcef7be87573383e13228",
       "solution_reference": "https://github.com/semantic-reasoning/factlog/pull/27",
       "solution_revision": null,
       "solution_artifact_hash": null,
@@ -47470,7 +47472,14 @@
         "low_risk_isolated_execution / no_network_secret_push_production: base revision의 `tools/ask_router.py`는 stdlib과 repo-local `common`만 import하고 네트워크 호출 흔적이 없으며, 탐색 대상도 저장소 안의 `sources/`·`runs/sources/`다. 격리 checkout에서 비파괴적으로 수행된다.",
         "objective_evaluator_feasible: base에 이슈가 지목한 `len(word) > 2` 필터가 실재함을 확인했다. 2글자 한국어 키워드가 추출되어 검색 결과가 나오는지, NFC-only 무회귀인지를 deterministic하게 판정할 수 있다.",
         "gold_and_evaluator_hideable: 정답 PR은 기존 `tests/test_ask_router.sh`를 수정한다. 파일 자체는 base에 있지만 새 assertion은 없으므로, 수정 후 버전을 agent checkout 밖의 보호 경로에 두면 정답이 노출되지 않는다. base의 기존 테스트가 checkout에 남는 것은 실제 작업 조건과 같다.",
-        "reproducible_within_budget만 unknown으로 남는다. 고정 버전·artifact digest pin, 오프라인 의존성 복원, agent-free base/negative/positive control 재현, 사전 resource bucket 대비 실측이 끝나기 전에는 pass로 두지 않는다."
+        "reproducible_within_budget만 unknown으로 남는다. 고정 버전·artifact digest pin, 오프라인 의존성 복원, agent-free base/negative/positive control 재현, 사전 resource bucket 대비 실측이 끝나기 전에는 pass로 두지 않는다.",
+        "base_tree_hash 정정: 이전 값 61d9ad9ed1b77a674499a2d4a281db0164dad730는 commit SHA였다. `GET /git/trees/{commit_sha}`가 입력 SHA를 그대로 되돌려준 것을 tree hash로 받아 기록한 오류이며, base를 실제로 materialize해 `git rev-parse HEAD^{tree}`로 확인한 값 12a8b1a18e99c07121bdcef7be87573383e13228로 교체했다.",
+        "Provisioned-environment 재현을 agent 없이 실측했다. CPython 3.11.15 (python-build-standalone 20260718, x86_64-unknown-linux-gnu, install_only)를 사용자 경로에 격리 설치했고, 내려받은 tarball의 SHA-256 c2082e977138e307e3da4ea2c65421d3cb6b80f4890890b28b96fc6b422d4f0d가 게시자 SHA256SUMS 값과 일치했다. 시스템 Python 3.10과 분리된 prefix에서 실행된다.",
+        "base checkout에서 그 인터프리터로 기존 suite가 44 passed / 0 failed로 통과했다. `tests/test_ask_router.sh`는 스스로 'no install / no pyrewire needed'라고 밝히며, pyrewire 부재는 policy-predicate assertion 하나를 SKIP시킬 뿐 실패시키지 않는다. 따라서 이 evaluator 경로는 pyrewire 전이 의존성 고정을 필요로 하지 않는다.",
+        "Negative control: PR #27이 테스트에 추가한 assertion 2개만 base 테스트에 적용해 PR 시점 evaluator를 재구성하고 workspace 밖 0444 경로에서 실행한 결과 44 passed / 2 failed였고, 두 실패는 '2-char Korean keywords found nothing'과 'CJK keyword did not match across a particle'로 의도한 미구현 동작과 정확히 일치했다.",
+        "Positive control: 같은 evaluator를 정답 구현 패치만 적용한 사본에 실행해 46 passed / 0 failed를 얻었다. evaluator wall time은 2초이고, 실행 전후 보호 artifact 해시가 동일했으며 workspace는 clean으로 남았다.",
+        "발견한 evaluator 제약: 상류 테스트는 `dirname $0/..`로 저장소 root를 유도하므로 workspace 밖으로 옮기면 경로가 깨져 의도와 다른 이유로 실패한다. 보호 evaluator를 만들 때 root를 주입 가능하게 바꾸는 한 줄 적응이 필요하며, 그 적응이 assertion을 바꾸지 않았음을 검토해야 한다.",
+        "HEAD 시점 테스트를 그대로 쓰면 PR #27 이후 추가된 다른 기능의 assertion까지 실패해 negative control이 의도한 이유로만 실패하지 않는다. 반드시 해당 PR 시점의 evaluator를 재구성해야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
