@@ -6,7 +6,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
+from .domain import EvaluatorRole
 from .escalation import trigger_classes_for
+
+_EVALUATOR_ROLES = tuple(role.value for role in EvaluatorRole)
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,6 +39,27 @@ class AgentMetrics:
     def average_cost_usd(self) -> float | None:
         # None (not 0.0) when no execution logged a cost, e.g. Codex today (see agents.py CodexAgent).
         return self.total_cost_usd / self.cost_samples if self.cost_samples else None
+
+
+@dataclass(frozen=True, slots=True)
+class EvaluatorMetrics:
+    """Role-specific observation counts. Roles are never substituted for one another."""
+
+    result_count: int = 0
+    observed_count: int = 0
+    passed_count: int = 0
+    failed_count: int = 0
+    error_count: int = 0
+    score_total: float = 0.0
+    score_samples: int = 0
+
+    @property
+    def pass_rate(self) -> float | None:
+        return self.passed_count / self.observed_count if self.observed_count else None
+
+    @property
+    def average_score(self) -> float | None:
+        return self.score_total / self.score_samples if self.score_samples else None
 
 
 class ExecutionHistory:
@@ -79,6 +103,28 @@ class ExecutionHistory:
 
     def metrics_for_base(self, base_id: str) -> AgentMetrics:
         return self._metrics_matching(lambda item: item.get("agent_base_id", item.get("agent_id")) == base_id)
+
+    def evaluator_metrics_for(self, agent_id: str, role: EvaluatorRole | str) -> EvaluatorMetrics:
+        role_name = role.value if isinstance(role, EvaluatorRole) else role
+        if role_name not in _EVALUATOR_ROLES:
+            raise ValueError(f"Unknown evaluator role: {role_name}")
+        metrics = EvaluatorMetrics()
+        for item in self.records():
+            if item.get("agent_id") != agent_id:
+                continue
+            role_projection = (item.get("evaluation_projection") or {}).get(role_name) or {}
+            scores = [_finite_float(score) for score in role_projection.get("scores", ())]
+            finite_scores = [score for score in scores if score is not None]
+            metrics = EvaluatorMetrics(
+                result_count=metrics.result_count + int(role_projection.get("result_count", 0)),
+                observed_count=metrics.observed_count + int(role_projection.get("observed_count", 0)),
+                passed_count=metrics.passed_count + int(role_projection.get("passed_count", 0)),
+                failed_count=metrics.failed_count + int(role_projection.get("failed_count", 0)),
+                error_count=metrics.error_count + int(role_projection.get("error_count", 0)),
+                score_total=metrics.score_total + sum(finite_scores),
+                score_samples=metrics.score_samples + len(finite_scores),
+            )
+        return metrics
 
     def _metrics_matching(self, predicate: Callable[[dict], bool], routing_evidence_only: bool = False) -> AgentMetrics:
         metrics = AgentMetrics()
@@ -145,4 +191,64 @@ def _with_derived_labels(item: dict) -> dict:
         if not item.get("trigger_classes"):
             normalized["trigger_classes"] = list(trigger_classes_for(reasons))
 
+    if not item.get("evaluation_projection"):
+        normalized["evaluation_projection"] = _derive_evaluation_projection(item)
+
     return normalized
+
+
+def _derive_evaluation_projection(item: dict) -> dict[str, dict[str, object]]:
+    projection: dict[str, dict[str, object]] = {
+        role: {
+            "result_count": 0,
+            "observed": False,
+            "observed_count": 0,
+            "passed_count": 0,
+            "failed_count": 0,
+            "error_count": 0,
+            "scores": [],
+        }
+        for role in _EVALUATOR_ROLES
+    }
+    evaluations = item.get("evaluations")
+    if isinstance(evaluations, list) and evaluations:
+        for result in evaluations:
+            if not isinstance(result, dict) or result.get("role") not in projection:
+                continue
+            _add_projection_result(projection[result["role"]], result)
+        return projection
+
+    # Old terminal rows had no roles. Process status is reliability, while the
+    # old verifier can only be migrated conservatively to constraint evidence.
+    status = item.get("status")
+    if status in {"completed", "failed", "timed_out", "spawn_error"}:
+        _add_projection_result(projection[EvaluatorRole.RELIABILITY.value], {
+            "status": "passed" if status == "completed" else "failed",
+            "observed": True,
+        })
+    verification = item.get("verification")
+    if isinstance(verification, dict) and verification.get("status") in {"passed", "failed", "timed_out", "skipped"}:
+        _add_projection_result(projection[EvaluatorRole.CONSTRAINT.value], {
+            "status": verification["status"],
+            "observed": verification["status"] != "skipped",
+        })
+    return projection
+
+
+def _add_projection_result(projection: dict[str, object], result: dict) -> None:
+    projection["result_count"] = int(projection["result_count"]) + 1
+    observed = result.get("observed") is True
+    if observed:
+        projection["observed"] = True
+        projection["observed_count"] = int(projection["observed_count"]) + 1
+        if result.get("status") == "passed":
+            projection["passed_count"] = int(projection["passed_count"]) + 1
+        elif result.get("status") in {"failed", "timed_out"}:
+            projection["failed_count"] = int(projection["failed_count"]) + 1
+    if result.get("status") == "error":
+        projection["error_count"] = int(projection["error_count"]) + 1
+    score = _finite_float(result.get("score"))
+    if score is not None:
+        scores = projection["scores"]
+        assert isinstance(scores, list)
+        scores.append(score)

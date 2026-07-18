@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
 from adaptive_orchestrator.agents import CodexAgent
-from adaptive_orchestrator.domain import Capability, ExecutionStatus, Task, VerificationStatus
+from adaptive_orchestrator.domain import Capability, EvaluatorRole, EvaluatorSpec, ExecutionStatus, Task, VerificationStatus
 from adaptive_orchestrator.kernel import OrchestratorKernel
 from adaptive_orchestrator.logging import JsonlExecutionLogger
 from adaptive_orchestrator.planning import CapabilitySelector
@@ -43,6 +43,10 @@ class WorkflowTests(unittest.TestCase):
             self.assertEqual(len(record.execution_id or ""), 36)
             self.assertEqual(len(record.attempt_id or ""), 36)
             self.assertEqual(len(record.config_hash or ""), 64)
+            self.assertEqual([item.role for item in record.evaluations], [EvaluatorRole.RELIABILITY, EvaluatorRole.CONSTRAINT])
+            self.assertTrue(record.evaluation_projection["reliability"]["observed"])
+            self.assertTrue(record.evaluation_projection["constraint"]["observed"])
+            self.assertFalse(record.evaluation_projection["quality"]["observed"])
 
     def test_verification_is_skipped_when_execution_fails(self) -> None:
         class FailingRunner(SequencedRunner):
@@ -58,6 +62,46 @@ class WorkflowTests(unittest.TestCase):
             _, record = EngineeringWorkflow(kernel, CapabilitySelector(), CommandVerifier(("python3", "-V"))).run(Task("Run", "Run"))
             self.assertEqual(record.verification.status, VerificationStatus.SKIPPED)
             self.assertEqual(len(runner.calls), 1)
+            self.assertTrue(record.evaluations[0].observed)
+            self.assertFalse(record.evaluations[1].observed)
+            self.assertFalse(record.evaluation_projection["quality"]["observed"])
+
+    def test_explicit_quality_evaluator_is_separate_from_constraint_verification(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            artifact = root / "held-out.py"
+            artifact.write_text("# held-out quality evaluator\n")
+            artifact.chmod(0o444)
+            runner = SequencedRunner()
+            agent = CodexAgent(capabilities=frozenset())
+            kernel = OrchestratorKernel({agent.agent_id: agent}, JsonlExecutionLogger(workspace / "log.jsonl"), workspace, runner)
+            quality = EvaluatorSpec(
+                "held-out-quality",
+                "v1",
+                EvaluatorRole.QUALITY,
+                "task objective",
+                ("python3", str(artifact)),
+                evidence_scope="held-out acceptance test",
+                artifact_paths=(str(artifact),),
+            )
+            workflow = EngineeringWorkflow(
+                kernel,
+                CapabilitySelector(),
+                CommandVerifier(("python3", "-V"), evaluator_specs=(quality,)),
+            )
+
+            _, record = workflow.run(Task("Implement feature", "Acceptance test passes"))
+
+            self.assertEqual(record.verification.status, VerificationStatus.PASSED)
+            self.assertEqual([item.role for item in record.evaluations], [
+                EvaluatorRole.RELIABILITY,
+                EvaluatorRole.CONSTRAINT,
+                EvaluatorRole.QUALITY,
+            ])
+            self.assertEqual(record.evaluation_projection["quality"]["scores"], [1.0])
+            self.assertEqual(len(runner.calls), 3)
 
     def test_same_config_hash_has_unique_execution_and_attempt_ids(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

@@ -45,9 +45,9 @@ Adaptive routing 개선 작업은 다음 문서에서 추적한다.
 - [Claude 독립 검토와 반영 판단](docs/routing-claude-review.md)
 - [진행상황과 이어하기](docs/adaptive-routing-progress.md)
 
-설계는 아직 runtime 구현이 아니다. 현재의 적은 legacy telemetry로 복잡한
-bandit을 바로 활성화하지 않고, typed evaluator와 durable event부터 구현하는
-순서를 택했다.
+Phase -1 telemetry baseline과 Phase 0 typed evaluator까지 runtime에 반영했다.
+현재의 적은 legacy telemetry로 복잡한 bandit을 바로 활성화하지 않고, 다음으로
+durable lifecycle event와 replay boundary를 구현하는 순서를 택했다.
 
 ## Run the prototype
 
@@ -96,11 +96,29 @@ Configured variants receive derived registry IDs (`claude-code:<model>` and `cod
 
 Historical success/verification rates are confidence-weighted by sample count — a handful of logged runs pulls a candidate's score toward the same neutral baseline a brand-new agent gets, rather than being fully trusted. Set `Task.cost_limit_usd` and a candidate whose logged average cost (currently tracked for Claude Code only) exceeds it is penalized; leave it unset and cost has no effect on routing.
 
-`--verify-command` is repeatable — every configured check runs (they're treated as independent, e.g. lint + typecheck + test) and the worst outcome wins:
+`--verify-command` is repeatable — every configured check runs and the worst
+outcome wins. These commands are conservatively recorded as `constraint`
+evaluators, never as task-quality evidence:
 
 ```bash
 --verify-command "ruff check ." --verify-command "python3 -m unittest discover -s tests -v"
 ```
+
+Use `--quality-evaluator-command` only for a task-specific objective evaluator.
+It must directly reference at least one read-only artifact outside the agent
+workspace. The artifact content is hashed before agent execution and before and
+after evaluation; a mismatch invalidates the result. Both flags are repeatable.
+
+```bash
+--quality-evaluator-command "python3 /opt/orchestrator-evaluators/login-acceptance.py ." \
+--quality-evaluator-artifact /opt/orchestrator-evaluators/login-acceptance.py
+```
+
+For testing tasks, that protected artifact should implement a held-out test,
+mutation check, or hidden buggy implementation rather than accepting a test the
+agent just wrote as proof of its own quality. `VerificationResult` remains the
+backward-compatible aggregate used to control workflow success; typed
+`evaluations` and `evaluation_projection` carry the evidence semantics.
 
 ## Run a structured plan
 
@@ -260,13 +278,12 @@ The current implementation was locally validated against Claude Code `2.1.211` a
 - Cost limits cannot be reliably enforced for subscription-backed CLIs.
 - The execution JSONL log records telemetry; engineering memory lives in a separate JSONL store and is only populated by explicit `memory record` calls.
 - Log redaction is best-effort; it cannot guarantee removal of every secret embedded in free text or diffs.
+- Evaluator path/mode and pre/post hash checks detect common artifact contamination, but v0.1 is not a hardened sandbox or immutable evaluation service.
 
 ## Next development increment
 
-Implement Phase -1 of the adaptive-routing design: add stable execution/policy
-identity, repair usage redaction and duration semantics, and label escalation
-cohorts without changing the selection policy to an arbitrary new neutral. Then
-distinguish task-quality evidence from constraint/process checks and record
-interruption-safe lifecycle events. Only after those observations are
-trustworthy should routing thresholds or learned policies be tuned. See the
+Implement Phase 1 of the adaptive-routing design: record interruption-safe
+lifecycle events, make terminal projections replayable, and define the corrected
+simple baseline without turning exploration on. Only after those observations
+are trustworthy should routing thresholds or learned policies be tuned. See the
 [progress handoff](docs/adaptive-routing-progress.md) for the ordered checklist.
