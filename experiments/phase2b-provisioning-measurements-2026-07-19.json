@@ -1,0 +1,128 @@
+{
+  "artifact_id": "phase2b-provisioning-measurements-2026-07-19",
+  "protocol_version": "phase2b-pilot-prereg-v1",
+  "created_at": "2026-07-18T22:31:54.131678+00:00",
+  "purpose": "Agent-free provisioned-environment measurements for candidate screening. Establishes what the reproducible_within_budget rule costs in practice and which toolchains are reachable on the fixed Linux host.",
+  "host": {
+    "os": "Ubuntu 22.04.5 LTS",
+    "arch": "x86_64",
+    "sudo": false,
+    "note": "No uv, pyenv, conda, docker or podman available; all toolchains were provisioned into user-writable paths without elevated privileges."
+  },
+  "bucket_definition": {
+    "small_max_evaluator_seconds": 30,
+    "medium_max_evaluator_seconds": 120,
+    "basis": "Defined by evaluator wall time because paired-pilot-manifest-v1 constrains time and declares no disk or memory field. The medium ceiling continues the evaluator.timeout_seconds = 120 that Phase 2a preregistered and used.",
+    "measurement_condition": "cold; no build cache or scratch reuse, matching a fresh paired checkout"
+  },
+  "toolchains": [
+    {
+      "id": "cpython-3.11.15",
+      "source": "python-build-standalone 20260718 install_only",
+      "sha256": "c2082e977138e307e3da4ea2c65421d3cb6b80f4890890b28b96fc6b422d4f0d",
+      "sha256_verified_against": "publisher SHA256SUMS",
+      "download_mb": 49,
+      "installed_mb": 161,
+      "provision_seconds": 16,
+      "extra_dependencies_mb": 0,
+      "note": "The candidate's suite declares no install and no pyrewire needed; absence only skips one policy-predicate assertion."
+    },
+    {
+      "id": "cpython-3.13.14",
+      "source": "python-build-standalone 20260718 install_only",
+      "sha256": "5df2686713fcc114",
+      "sha256_truncated": true,
+      "sha256_verified_against": "publisher SHA256SUMS",
+      "download_mb": 113,
+      "installed_mb": 378,
+      "provision_seconds": 16,
+      "extra_dependencies_mb": 578,
+      "dependency_install_seconds": 33
+    },
+    {
+      "id": "dotnet-sdk-8.0.423",
+      "source": "dotnet-install.sh --channel 8.0",
+      "download_mb": null,
+      "installed_mb": 578,
+      "provision_seconds": 21,
+      "extra_dependencies_mb": 94,
+      "note": "NuGet cache size after one build."
+    },
+    {
+      "id": "swift-6.3.3-RELEASE-ubuntu22.04",
+      "source": "download.swift.org",
+      "sha256": "2c3ad7ad74ab7249",
+      "sha256_truncated": true,
+      "sha256_verified_against": "not verified; publisher ships a detached PGP signature rather than a checksum list",
+      "download_mb": 1019,
+      "installed_mb": 3362,
+      "provision_seconds": 109,
+      "extra_dependencies_mb": 129,
+      "note": "Largest environment measured. Six SwiftPM dependencies pinned in Package.resolved."
+    }
+  ],
+  "candidates": [
+    {
+      "candidate_id": "ghmix-semantic-reasoning--factlog-issue-26",
+      "toolchain": "cpython-3.11.15",
+      "base_suite": "44 passed / 0 failed",
+      "negative_control": "44 passed / 2 failed",
+      "negative_control_intended": true,
+      "negative_control_failures": [
+        "2-char Korean keywords found nothing",
+        "CJK keyword did not match across a particle"
+      ],
+      "positive_control": "46 passed / 0 failed",
+      "evaluator_seconds": 2,
+      "bucket": "small",
+      "reproducible_within_budget": "pass"
+    },
+    {
+      "candidate_id": "ghmix-joshua-jingu-lee--ante-issue-2349",
+      "toolchain": "cpython-3.13.14",
+      "base_suite": "17 passed",
+      "negative_control": "17 passed / 10 failed",
+      "negative_control_intended": true,
+      "negative_control_failures": [
+        "tr_id three-month boundary AssertionErrors"
+      ],
+      "positive_control": "27 passed / 0 failed",
+      "evaluator_seconds": 1,
+      "bucket": "small",
+      "reproducible_within_budget": "pass"
+    },
+    {
+      "candidate_id": "ghmix-YSbookcase--TimePilot-issue-62",
+      "toolchain": "dotnet-sdk-8.0.423",
+      "base_suite": "build succeeded, 0 warnings, 0 errors",
+      "negative_control": null,
+      "positive_control": null,
+      "evaluator_seconds": 8,
+      "bucket": "small",
+      "reproducible_within_budget": "unknown",
+      "note": "Built with -p:EnableWindowsTargeting=true. A passing build is not a negative control."
+    },
+    {
+      "candidate_id": "ghko-minacle--swift-tui-issue-18",
+      "toolchain": "swift-6.3.3-RELEASE-ubuntu22.04",
+      "base_suite": "1064 tests in 90 suites passed",
+      "negative_control": null,
+      "positive_control": null,
+      "evaluator_seconds": 90,
+      "bucket": "medium",
+      "reproducible_within_budget": "unknown",
+      "note": "Twice proposed for resource exclusion before measurement; both proposals were wrong."
+    }
+  ],
+  "evaluator_constraints_found": [
+    "An upstream test moved outside the repository loses repo-local context and then fails for unintended reasons. Two distinct forms were observed: a shell suite deriving the repository root from dirname $0/.., and a pytest suite depending on the repository's asyncio_mode setting.",
+    "Using the default-branch version of a test as the evaluator contaminates the negative control with assertions for changes made after the candidate's pull request. The evaluator must be reconstructed at the pull request's point in history.",
+    "Both constraints require a small adaptation to the protected evaluator, and that adaptation must be reviewed to confirm it changes no assertion."
+  ],
+  "known_limitations": [
+    "Measurements come from one host and one network; provisioning times will vary.",
+    "The Swift toolchain archive was verified only by recording its SHA-256, not by checking a publisher checksum list, because the publisher distributes a detached PGP signature instead.",
+    "Only two candidates have negative and positive controls; the other two have a passing build or suite, which is weaker evidence.",
+    "Environments were provisioned under /tmp and are ephemeral; the identities recorded here are what makes them reconstructible."
+  ]
+}

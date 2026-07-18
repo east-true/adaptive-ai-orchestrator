@@ -249,6 +249,9 @@ medium   보호 evaluator 1회 실행이 30초 초과 120초 이내
 시간 안에 끝나면 이 실험의 예산을 위협하지 않는다. Phase 2a가 사전 등록해 실제로 사용한
 `evaluator.timeout_seconds = 120`을 `medium`의 상한으로 그대로 잇는다.
 
+실측한 절차와 toolchain별 비용, 그리고 evaluator를 workspace 밖으로 뺄 때 생기는 제약은
+[provisioned-environment 재현 절차](provisioned-reproduction.md)에 있다.
+
 측정은 **cold 상태**에서 한다. paired runner는 attempt마다 새 checkout을 쓰므로 빌드
 캐시나 scratch 디렉터리 재사용을 가정하지 않는다.
 

@@ -182,6 +182,8 @@ additive identity + policy/cohort labels
 - [x] `GET /rate_limit`·`GET /licenses` snapshot 동결(L = 13)
 - [ ] Stage 1 exact query 78개 목록 생성·동결 및 수집 승인 요청
 - [ ] 기존 411 pool의 repository 단위 early filter(≤179 core 요청)
+- [x] 4개 toolchain provisioned 재현 실측과 절차 문서화
+- [x] resource bucket(`small`/`medium`) 정의와 첫 selected 2건
 - [ ] explicit-language reviewed screening 28개 판정
 - [ ] native Korean 20/English 20/mixed 20 task 후보 screening과 provenance ledger 동결
 - [ ] 독립 evaluator 제작·validity review, assertion inventory와 negative control 완료
