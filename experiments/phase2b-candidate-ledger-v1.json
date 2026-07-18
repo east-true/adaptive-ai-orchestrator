@@ -38653,7 +38653,8 @@
         "objective_evaluator_feasible: UI를 렌더링하지 않고 정적으로 판정할 수 있다. base의 하드코딩 리터럴과 추출된 리소스 값의 문자열 동등성, 리소스 경유 여부, 그리고 Linux 빌드 성공으로 네 완료 기준을 모두 덮는다.",
         "gold_and_evaluator_hideable: 정답 PR의 12개 변경 파일과 추출된 리소스 값을 agent checkout 밖에 두면 노출되지 않는다.",
         "reproducible_within_budget만 unknown으로 남는다. 고정 버전·artifact digest pin, 오프라인 의존성 복원, agent-free base/negative/positive control 재현, 사전 resource bucket 대비 실측이 끝나기 전에는 pass로 두지 않는다.",
-        "base_tree_hash 정정: 이전 값 8ad41b136ecab5c5f2f1f97806cfbfe784004249는 commit SHA였다. `GET /git/trees/{commit_sha}`가 입력 SHA를 그대로 되돌려준 것을 tree hash로 받아 기록한 오류이며, base를 실제로 materialize해 `git rev-parse HEAD^{tree}`로 확인한 값 182937e72345ba447982a9709c36b91c55d4599a로 교체했다."
+        "base_tree_hash 정정: 이전 값 8ad41b136ecab5c5f2f1f97806cfbfe784004249는 commit SHA였다. `GET /git/trees/{commit_sha}`가 입력 SHA를 그대로 되돌려준 것을 tree hash로 받아 기록한 오류이며, base를 실제로 materialize해 `git rev-parse HEAD^{tree}`로 확인한 값 182937e72345ba447982a9709c36b91c55d4599a로 교체했다.",
+        "Linux 빌드 가능성을 실측으로 확정했다. .NET SDK 8.0.423을 dotnet-install로 사용자 경로에 격리 설치(578MB, 21초)한 뒤 base checkout에서 `dotnet build TimePilot.WinForms/TimePilot.WinForms.csproj -p:EnableWindowsTargeting=true`를 실행해 0 warnings / 0 errors로 성공했다(8초, NuGet 캐시 94MB). 앞선 판단은 문서 근거였고 이제 실제 빌드로 확인됐다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -44040,7 +44041,11 @@
         "low_risk_isolated_execution / no_network_secret_push_production: 상수 매핑과 분기 추가라 격리 checkout에서 비파괴적이며, unit test 경로는 외부 endpoint나 자격증명을 요구하지 않는다.",
         "gold_and_evaluator_hideable: 정답 구현과 동반 test를 agent checkout 밖 보호 경로에 둘 수 있다.",
         "reproducible_within_budget은 unknown이다. pyproject가 requires-python >=3.13,<3.14를 선언하고 aiohttp·polars·pydantic·pandas-ta 등 무거운 의존성을 가져 격리 환경 재현을 아직 실측하지 않았다.",
-        "관찰 기록: PR #2357은 이슈가 지목한 tr_id 외에 fill_scheduler와 pagination까지 함께 바꾼다. task를 저술할 때 범위를 이슈 문구에 맞춰 좁히고 modified-file allowlist를 그에 맞게 고정해야 한다."
+        "관찰 기록: PR #2357은 이슈가 지목한 tr_id 외에 fill_scheduler와 pagination까지 함께 바꾼다. task를 저술할 때 범위를 이슈 문구에 맞춰 좁히고 modified-file allowlist를 그에 맞게 고정해야 한다.",
+        "Provisioned-environment 재현을 agent 없이 실측했다. CPython 3.13.14 (python-build-standalone 20260718, install_only)를 격리 설치했고 tarball SHA-256이 게시자 SHA256SUMS와 일치했다 (113MB 다운로드 13초, 압축해제 378MB 3초). 선언 의존성 설치는 561MB/30초, 테스트 도구 추가는 +17MB/3초였다.",
+        "base checkout에서 기존 `tests/unit/test_kis_pagination.py`가 17 passed로 통과했다. PR #2357이 그 파일에 추가한 hunk만 적용해 PR 시점 evaluator를 재구성하고 workspace 밖 0444 경로에 두고 실행하니 17 passed / 10 failed였고, 실패 10개는 모두 tr_id 3개월 경계 분기에 대한 AssertionError로 의도한 미구현 동작과 일치했다.",
+        "Positive control: 구현 파일(`src/ante/broker/*.py`)만 적용한 사본에서 같은 evaluator가 27 passed / 0 failed였다. 실행 전후 보호 artifact 해시가 동일했고 base workspace는 clean이었다.",
+        "발견한 evaluator 제약: 보호 경로에서 pytest를 실행하면 저장소의 `asyncio_mode = \"auto\"` 설정을 읽지 못해 모든 async 테스트가 'async def functions are not natively supported'로 실패한다. `-c pyproject.toml --rootdir .`로 저장소 설정을 명시해야 의도한 이유로만 실패한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
