@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
 import re
 import shutil
 import subprocess
@@ -17,6 +18,7 @@ from .routing_state import RoutingState
 from .verification import evaluator_content_version, hash_evaluator_artifacts, validate_evaluator_artifacts
 
 PAIRED_MANIFEST_SCHEMA = "paired-smoke-manifest-v1"
+PAIRED_PLAN_SCHEMA = "paired-workspace-plan-v1"
 PAIRED_ANALYSIS_SCHEMA = "paired-analysis-v1"
 ORDER_ASSIGNMENT_RULE = "seeded-balanced-sha256-v1"
 QUALITY_AGGREGATION_RULE = "binary-single-v1"
@@ -147,6 +149,14 @@ class PairedAttemptObservation:
     terminal_status: str
     quality_observed: bool
     quality_score: float | None
+    agent_duration_ms: float | None = None
+    evaluator_duration_ms: float | None = None
+    experiment_elapsed_ms: float | None = None
+    cost_usd: float | None = None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    cached_input_tokens: int | None = None
+    workspace_modified_files: tuple[str, ...] | None = None
 
     def __post_init__(self) -> None:
         if self.terminal_status not in _TERMINAL_STATUSES:
@@ -156,6 +166,14 @@ class PairedAttemptObservation:
                 raise PairedExperimentError("Observed paired quality must be binary 0 or 1.")
         elif self.quality_score is not None:
             raise PairedExperimentError("Unobserved paired quality cannot carry a score.")
+        for name, value in (
+            ("agent_duration_ms", self.agent_duration_ms),
+            ("evaluator_duration_ms", self.evaluator_duration_ms),
+            ("experiment_elapsed_ms", self.experiment_elapsed_ms),
+            ("cost_usd", self.cost_usd),
+        ):
+            if value is not None and (not math.isfinite(value) or value < 0):
+                raise PairedExperimentError(f"{name} must be a non-negative finite number when observed.")
 
 
 def load_paired_manifest(path: Path) -> PairedManifest:
@@ -274,6 +292,45 @@ def assign_pairs(manifest: PairedManifest) -> tuple[PairAssignment, ...]:
             },
         ))
     return tuple(assignments)
+
+
+def plan_paired_workspaces(manifest: PairedManifest, workspace_root: Path) -> dict[str, Any]:
+    """Project deterministic workspace identities without reading or changing the filesystem."""
+
+    root = Path(os.path.abspath(workspace_root.expanduser()))
+    experiment_root = root / _path_component(manifest.experiment_id)
+    assignments = assign_pairs(manifest)
+    workspaces: list[dict[str, Any]] = []
+    for assignment in assignments:
+        for position, agent_id in enumerate(assignment.agent_order):
+            workspaces.append({
+                "task_id": assignment.task_id,
+                "pair_id": assignment.pair_id,
+                "execution_id": assignment.execution_id,
+                "attempt_id": assignment.attempt_ids[agent_id],
+                "agent_id": agent_id,
+                "agent_order_position": position,
+                "path": str(
+                    experiment_root
+                    / _path_component(assignment.task_id)
+                    / _path_component(agent_id)
+                ),
+            })
+    if len({item["path"] for item in workspaces}) != len(workspaces):
+        raise PairedExperimentError("Planned paired workspace paths collide after path sanitization.")
+    return {
+        "schema_version": PAIRED_PLAN_SCHEMA,
+        "manifest_schema_version": manifest.schema_version,
+        "experiment_id": manifest.experiment_id,
+        "agent_execution_started": False,
+        "workspace_creation_started": False,
+        "base_revision": manifest.base_revision,
+        "base_tree_hash": manifest.base_tree_hash,
+        "workspace_root": str(root),
+        "assignment_rule": manifest.order_assignment_rule,
+        "assignments": [assignment.as_dict() for assignment in assignments],
+        "workspaces": workspaces,
+    }
 
 
 def validate_paired_environment(manifest: PairedManifest, manifest_path: Path, source_repository: Path) -> dict[str, Any]:
@@ -488,6 +545,25 @@ def observations_from_routing_state(
                         raise PairedExperimentError(f"Evaluator artifact changed for paired attempt {attempt_id}.")
                     observed = True
                     score = result.get("score")
+            agent_duration = attempt.terminal.get("duration_ms")
+            if isinstance(agent_duration, bool) or not isinstance(agent_duration, (int, float)):
+                agent_duration = None
+            evaluator_durations = [
+                result.get("duration_ms")
+                for result in attempt.evaluations
+                if isinstance(result.get("duration_ms"), (int, float))
+                and not isinstance(result.get("duration_ms"), bool)
+            ]
+            resource = attempt.outcome.get("resource_observation") or {}
+            metadata = resource.get("metadata") or {} if isinstance(resource, Mapping) else {}
+            if not isinstance(metadata, Mapping):
+                metadata = {}
+            modified = attempt.outcome.get("workspace_modified_files")
+            modified_files = (
+                tuple(item for item in modified if isinstance(item, str))
+                if isinstance(modified, list)
+                else None
+            )
             observations.append(PairedAttemptObservation(
                 assignment.task_id,
                 assignment.pair_id,
@@ -497,6 +573,16 @@ def observations_from_routing_state(
                 terminal_status,
                 observed,
                 score,
+                float(agent_duration) if agent_duration is not None else None,
+                float(sum(evaluator_durations)) if evaluator_durations else None,
+                _optional_nonnegative_number(resource.get("experiment_elapsed_ms"))
+                if isinstance(resource, Mapping)
+                else None,
+                _optional_nonnegative_number(metadata.get("cost_usd")),
+                _optional_nonnegative_int(metadata.get("input_tokens")),
+                _optional_nonnegative_int(metadata.get("output_tokens")),
+                _optional_nonnegative_int(metadata.get("cached_input_tokens")),
+                modified_files,
             ))
     return tuple(observations)
 
@@ -562,6 +648,7 @@ def analyze_paired_observations(
         "pair_count": len(pair_rows),
         "pairs": pair_rows,
         "overall_quota_diagnostic_not_workload_value": overall,
+        "secondary_metrics": _summarize_secondary_metrics(manifest, indexed, overall),
         "strata": strata,
         "promotion_allowed": False,
         "promotion_blockers": [
@@ -587,6 +674,7 @@ def _summarize_pairs(rows: Sequence[Mapping[str, Any]], minimum_cell_size: int) 
         table[key] += 1
     n = len(binary_rows)
     risk_difference = (table["claude_pass_codex_fail"] - table["claude_fail_codex_pass"]) / n if n else None
+    evaluator_coverage = n / len(rows) if rows else None
     return {
         "pair_count": len(rows),
         "pair_status_counts": {
@@ -595,6 +683,7 @@ def _summarize_pairs(rows: Sequence[Mapping[str, Any]], minimum_cell_size: int) 
         },
         "binary_observed_pair_count": n,
         "quality_missing_pair_count": len(rows) - n,
+        "evaluator_coverage": evaluator_coverage,
         "table_2x2": table,
         "claude_win_tie_loss": {
             "win": table["claude_pass_codex_fail"],
@@ -606,6 +695,126 @@ def _summarize_pairs(rows: Sequence[Mapping[str, Any]], minimum_cell_size: int) 
         "preferred_agent": None,
         "ranking_withheld_reason": "Phase 2a validates the pipeline; it does not promote or rank a policy.",
     }
+
+
+def _summarize_secondary_metrics(
+    manifest: PairedManifest,
+    indexed: Mapping[tuple[str, str], PairedAttemptObservation],
+    overall: Mapping[str, Any],
+) -> dict[str, Any]:
+    expected_count = manifest.maximum_executions
+    observations = list(indexed.values())
+    missing_attempts = expected_count - len(observations)
+    terminal_status_counts = {
+        status: sum(observation.terminal_status == status for observation in observations)
+        for status in sorted({observation.terminal_status for observation in observations} | {"incomplete"})
+    }
+    terminal_status_counts["incomplete"] += missing_attempts
+    quality_observed_count = sum(observation.quality_observed for observation in observations)
+
+    agent_durations = [item.agent_duration_ms for item in observations if item.agent_duration_ms is not None]
+    evaluator_durations = [
+        item.evaluator_duration_ms
+        for item in observations
+        if item.evaluator_duration_ms is not None
+    ]
+    elapsed_observations = [
+        item.experiment_elapsed_ms
+        for item in observations
+        if item.experiment_elapsed_ms is not None
+    ]
+    modified_observations = [
+        item.workspace_modified_files
+        for item in observations
+        if item.workspace_modified_files is not None
+    ]
+
+    by_agent: dict[str, dict[str, Any]] = {}
+    for agent_spec in manifest.agents:
+        expected_agent_count = len(manifest.tasks)
+        agent_observations = [item for item in observations if item.agent_id == agent_spec.agent_id]
+        by_agent[agent_spec.base_id] = {
+            "agent_id": agent_spec.agent_id,
+            "expected_attempt_count": expected_agent_count,
+            "materialized_attempt_count": len(agent_observations),
+            "completed_attempt_count": sum(item.terminal_status == "completed" for item in agent_observations),
+            "quality_observed_count": sum(item.quality_observed for item in agent_observations),
+            "agent_duration_observed_count": sum(item.agent_duration_ms is not None for item in agent_observations),
+            "agent_duration_sum_ms": sum(item.agent_duration_ms or 0 for item in agent_observations),
+            "reported_cost_usd": _observed_numeric_summary(agent_observations, "cost_usd", expected_agent_count),
+            "input_tokens": _observed_numeric_summary(agent_observations, "input_tokens", expected_agent_count),
+            "output_tokens": _observed_numeric_summary(agent_observations, "output_tokens", expected_agent_count),
+            "cached_input_tokens": _observed_numeric_summary(
+                agent_observations,
+                "cached_input_tokens",
+                expected_agent_count,
+            ),
+        }
+
+    return {
+        "reliability": {
+            "expected_attempt_count": expected_count,
+            "materialized_attempt_count": len(observations),
+            "completed_attempt_count": sum(item.terminal_status == "completed" for item in observations),
+            "terminal_status_counts": terminal_status_counts,
+        },
+        "evaluator_coverage": {
+            "quality_observed_attempt_count": quality_observed_count,
+            "expected_attempt_count": expected_count,
+            "attempt_coverage": quality_observed_count / expected_count if expected_count else None,
+            "fully_observed_pair_coverage": overall["evaluator_coverage"],
+        },
+        "wall_time": {
+            "agent_duration_observed_count": len(agent_durations),
+            "agent_duration_missing_count": expected_count - len(agent_durations),
+            "agent_duration_sum_ms": sum(agent_durations),
+            "evaluator_duration_observed_count": len(evaluator_durations),
+            "evaluator_duration_missing_count": expected_count - len(evaluator_durations),
+            "evaluator_duration_sum_ms": sum(evaluator_durations),
+            "runner_elapsed_ms": max(elapsed_observations) if elapsed_observations else None,
+            "runner_elapsed_observed_count": len(elapsed_observations),
+            "runner_elapsed_missing_reason": (
+                None
+                if elapsed_observations
+                else "pre-resource-observation-lifecycle-log"
+            ),
+        },
+        "resource": {"by_agent": by_agent},
+        "modified_files": {
+            "observed_attempt_count": len(modified_observations),
+            "missing_attempt_count": expected_count - len(modified_observations),
+            "observed_paths": sorted({path for paths in modified_observations for path in paths}),
+            "unexpected_modified_file_count": None,
+            "not_estimable_reason": "manifest-v1-has-no-task-specific-modified-file-allowlist",
+        },
+    }
+
+
+def _observed_numeric_summary(
+    observations: Sequence[PairedAttemptObservation],
+    field_name: str,
+    expected_count: int,
+) -> dict[str, Any]:
+    values = [getattr(observation, field_name) for observation in observations]
+    observed = [value for value in values if value is not None]
+    return {
+        "observed_count": len(observed),
+        "missing_count": expected_count - len(observed),
+        "sum": sum(observed) if observed else None,
+    }
+
+
+def _optional_nonnegative_number(value: Any) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    number = float(value)
+    return number if math.isfinite(number) and number >= 0 else None
+
+
+def _optional_nonnegative_int(value: Any) -> int | None:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        return None
+    return value
 
 
 def _pair_status(

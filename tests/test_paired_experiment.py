@@ -3,6 +3,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from dataclasses import replace
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
@@ -12,6 +13,7 @@ from adaptive_orchestrator.domain import ExecutionStatus
 from adaptive_orchestrator.paired_experiment import (
     ORDER_ASSIGNMENT_RULE,
     PAIRED_MANIFEST_SCHEMA,
+    PAIRED_PLAN_SCHEMA,
     PRIMARY_METRIC,
     PairedAttemptObservation,
     PairedExperimentError,
@@ -20,6 +22,7 @@ from adaptive_orchestrator.paired_experiment import (
     load_paired_manifest,
     observations_from_routing_state,
     paired_manifest_from_dict,
+    plan_paired_workspaces,
     prepare_paired_workspaces,
     validate_paired_environment,
 )
@@ -259,6 +262,44 @@ class PairAssignmentTests(unittest.TestCase):
                 prepare_paired_workspaces(manifest, manifest_path, source, root / "workspaces")
 
 
+class PairedPlanTests(unittest.TestCase):
+    def test_plans_eight_workspaces_without_reading_or_creating_the_root(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            _, manifest_path, _ = build_manifest_fixture(root)
+            manifest = load_paired_manifest(manifest_path)
+            workspace_root = root / "planned-workspaces"
+            before = sorted(str(path) for path in root.rglob("*"))
+
+            first = plan_paired_workspaces(manifest, workspace_root)
+            second = plan_paired_workspaces(manifest, workspace_root)
+
+            self.assertEqual(first, second)
+            self.assertEqual(first["schema_version"], PAIRED_PLAN_SCHEMA)
+            self.assertFalse(first["agent_execution_started"])
+            self.assertFalse(first["workspace_creation_started"])
+            self.assertEqual(len(first["workspaces"]), 8)
+            self.assertEqual(len({item["path"] for item in first["workspaces"]}), 8)
+            self.assertFalse(workspace_root.exists())
+            self.assertEqual(sorted(str(path) for path in root.rglob("*")), before)
+
+    def test_planned_paths_match_a_later_dry_run(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, manifest_path, _ = build_manifest_fixture(root)
+            manifest = load_paired_manifest(manifest_path)
+            workspace_root = root / "workspaces"
+
+            planned = plan_paired_workspaces(manifest, workspace_root)
+            prepared = prepare_paired_workspaces(manifest, manifest_path, source, workspace_root)
+
+            self.assertEqual(
+                [(item["task_id"], item["agent_id"], item["path"]) for item in planned["workspaces"]],
+                [(item["task_id"], item["agent_id"], item["path"]) for item in prepared["workspaces"]],
+            )
+            self.assertEqual(planned["assignments"], prepared["assignments"])
+
+
 class PairedRunnerTests(unittest.TestCase):
     def test_execution_gate_prevents_any_workspace_or_process_activity(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -419,6 +460,10 @@ class PairedRunnerTests(unittest.TestCase):
                 sum(event.event_type is LifecycleEventType.OUTCOME_FINALIZED for event in events),
                 8,
             )
+            secondary = report["analysis"]["secondary_metrics"]
+            self.assertEqual(secondary["wall_time"]["agent_duration_observed_count"], 8)
+            self.assertEqual(secondary["wall_time"]["runner_elapsed_observed_count"], 8)
+            self.assertEqual(secondary["modified_files"]["observed_attempt_count"], 8)
 
             with self.assertRaisesRegex(PairedExecutionError, "new or empty"):
                 PairedSmokeRunner(
@@ -450,6 +495,12 @@ class PairedAnalysisTests(unittest.TestCase):
             })
             self.assertEqual(overall["claude_win_tie_loss"], {"win": 1, "tie": 2, "loss": 1})
             self.assertEqual(overall["paired_risk_difference"], 0.0)
+            self.assertEqual(overall["evaluator_coverage"], 1.0)
+            secondary = report["secondary_metrics"]
+            self.assertEqual(secondary["reliability"]["expected_attempt_count"], 8)
+            self.assertEqual(secondary["evaluator_coverage"]["attempt_coverage"], 1.0)
+            self.assertEqual(secondary["wall_time"]["agent_duration_missing_count"], 8)
+            self.assertEqual(secondary["modified_files"]["missing_attempt_count"], 8)
             self.assertEqual(overall["reporting_status"], "estimable")
             self.assertIsNone(overall["preferred_agent"])
             self.assertFalse(report["promotion_allowed"])
@@ -458,6 +509,43 @@ class PairedAnalysisTests(unittest.TestCase):
                 for stratum in report["strata"].values()
                 for cell in stratum.values()
             ))
+
+    def test_secondary_metrics_preserve_observed_resources_and_missingness(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            _, manifest_path, _ = build_manifest_fixture(Path(directory))
+            manifest = load_paired_manifest(manifest_path)
+            observations = list(binary_observations(manifest, ((1, 1), (1, 1), (1, 1), (1, 1))))
+            observations[0] = replace(
+                observations[0],
+                agent_duration_ms=10.0,
+                evaluator_duration_ms=2.0,
+                experiment_elapsed_ms=12.5,
+                cost_usd=1.25,
+                input_tokens=100,
+                output_tokens=20,
+                cached_input_tokens=40,
+                workspace_modified_files=("src/example.py",),
+            )
+
+            secondary = analyze_paired_observations(manifest, observations)["secondary_metrics"]
+            base_id = next(
+                agent.base_id for agent in manifest.agents if agent.agent_id == observations[0].agent_id
+            )
+            agent_resource = secondary["resource"]["by_agent"][base_id]
+
+            self.assertEqual(secondary["wall_time"]["agent_duration_sum_ms"], 10.0)
+            self.assertEqual(secondary["wall_time"]["evaluator_duration_sum_ms"], 2.0)
+            self.assertEqual(secondary["wall_time"]["runner_elapsed_ms"], 12.5)
+            self.assertEqual(agent_resource["reported_cost_usd"], {
+                "observed_count": 1,
+                "missing_count": 3,
+                "sum": 1.25,
+            })
+            self.assertEqual(agent_resource["input_tokens"]["sum"], 100)
+            self.assertEqual(agent_resource["output_tokens"]["sum"], 20)
+            self.assertEqual(agent_resource["cached_input_tokens"]["sum"], 40)
+            self.assertEqual(secondary["modified_files"]["observed_paths"], ["src/example.py"])
+            self.assertEqual(secondary["modified_files"]["missing_attempt_count"], 7)
 
     def test_one_sided_failure_and_incomplete_pairs_are_retained_as_missing_quality(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -489,7 +577,41 @@ class PairedAnalysisTests(unittest.TestCase):
             })
             self.assertEqual(overall["binary_observed_pair_count"], 0)
             self.assertEqual(overall["quality_missing_pair_count"], 4)
+            self.assertEqual(overall["evaluator_coverage"], 0.0)
             self.assertIsNone(overall["paired_risk_difference"])
+
+    def test_evaluator_coverage_keeps_missing_pairs_in_the_denominator(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            _, manifest_path, _ = build_manifest_fixture(Path(directory))
+            manifest = load_paired_manifest(manifest_path)
+            assignments = assign_pairs(manifest)
+            agents = {agent.base_id: agent.agent_id for agent in manifest.agents}
+            first = binary_observations(manifest, ((1, 1), (1, 0), (0, 1), (0, 0)))[:2]
+            second = assignments[1]
+            one_sided = (
+                PairedAttemptObservation(
+                    second.task_id, second.pair_id, second.execution_id,
+                    second.attempt_ids[agents["claude-code"]], agents["claude-code"],
+                    "completed", True, 1,
+                ),
+                PairedAttemptObservation(
+                    second.task_id, second.pair_id, second.execution_id,
+                    second.attempt_ids[agents["codex"]], agents["codex"],
+                    "failed", False, None,
+                ),
+            )
+
+            report = analyze_paired_observations(manifest, (*first, *one_sided))
+            overall = report["overall_quota_diagnostic_not_workload_value"]
+
+            self.assertEqual(overall["binary_observed_pair_count"], 1)
+            self.assertEqual(overall["quality_missing_pair_count"], 3)
+            self.assertEqual(overall["evaluator_coverage"], 0.25)
+            self.assertTrue(all(
+                cell["evaluator_coverage"] is not None
+                for stratum in report["strata"].values()
+                for cell in stratum.values()
+            ))
 
     def test_projects_paired_event_state_with_pinned_evaluator_integrity(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

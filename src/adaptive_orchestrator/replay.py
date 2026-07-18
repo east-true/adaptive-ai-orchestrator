@@ -2,11 +2,21 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections import Counter
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Mapping
 
 from .events import JsonlEventStore, LifecycleEvent
 from .routing_state import EventProjector, RoutingState
+
+
+@dataclass(frozen=True, slots=True)
+class AttemptSummary:
+    attempt_count: int
+    finalized_attempt_count: int
+    incomplete_attempt_count: int
+    attempt_status_counts: Mapping[str, int]
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,6 +38,24 @@ def replay_events(events: tuple[LifecycleEvent, ...]) -> RoutingState:
 
 def replay_event_log(path: Path) -> RoutingState:
     return replay_events(JsonlEventStore(path).read())
+
+
+def summarize_attempts(state: RoutingState) -> AttemptSummary:
+    """Count every materialized attempt once from one immutable replay projection."""
+
+    observed = Counter(
+        attempt.status
+        for execution in state.executions.values()
+        for attempt in execution.attempts.values()
+    )
+    attempt_count = sum(observed.values())
+    finalized = observed["finalized"]
+    return AttemptSummary(
+        attempt_count=attempt_count,
+        finalized_attempt_count=finalized,
+        incomplete_attempt_count=attempt_count - finalized,
+        attempt_status_counts={status: observed[status] for status in sorted(observed)},
+    )
 
 
 def replay_digest(state: RoutingState) -> str:
