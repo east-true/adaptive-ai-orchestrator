@@ -54,7 +54,7 @@ Adaptive routing 개선 작업은 다음 문서에서 추적한다.
 - [진행상황과 이어하기](docs/adaptive-routing-progress.md)
 
 Phase -1 telemetry baseline, Phase 0 typed evaluator, Phase 1 lifecycle/replay와
-corrected static L0, Phase 2a agent-free paired dry-run tooling까지 반영했다. 현재의
+corrected static L0, Phase 2a v1/v2 paired smoke와 pause/resume audit까지 반영했다. 현재의
 적은 legacy telemetry로 bandit이나 탐색을 활성화하지 않는다.
 
 ## Run the prototype
@@ -322,8 +322,8 @@ PYTHONPATH=src python3 -m adaptive_orchestrator.cli paired resume \
 Omitting `--confirm-agent-execution` starts no agent and fails closed. The first
 preregistered Phase 2a smoke completed on 2026-07-18; see the
 [pipeline result and validity audit](experiments/results/phase2a-smoke-v1.md).
-The v2 contract-rehearsal manifest has passed negative controls and an
-agent-free dry run, but no v2 agent execution has been approved or started.
+The v2 contract rehearsal also completed with one retained infrastructure
+failure; see the [v2 result, pause/resume, and scope audit](experiments/results/phase2a-smoke-v2.md).
 
 ## Run a structured plan
 
