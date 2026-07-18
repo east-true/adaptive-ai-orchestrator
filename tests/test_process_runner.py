@@ -2,7 +2,9 @@ import sys
 import tempfile
 import time
 import unittest
+from io import StringIO
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
@@ -74,6 +76,31 @@ class SubprocessRunnerTests(unittest.TestCase):
         self.assertIsNone(result.exit_code)
         self.assertEqual(lines, ["start\n"])
         self.assertEqual(result.stdout, "start\n")
+
+    def test_interrupt_kills_and_reaps_child_before_reraising(self) -> None:
+        class InterruptingProcess:
+            def __init__(self) -> None:
+                self.stdout = StringIO("")
+                self.stderr = StringIO("")
+                self.killed = False
+                self.wait_calls = 0
+
+            def wait(self, timeout=None):
+                self.wait_calls += 1
+                if self.wait_calls == 1:
+                    raise KeyboardInterrupt()
+                return -9
+
+            def kill(self):
+                self.killed = True
+
+        process = InterruptingProcess()
+        with tempfile.TemporaryDirectory() as directory, patch("adaptive_orchestrator.process_runner.subprocess.Popen", return_value=process):
+            with self.assertRaises(KeyboardInterrupt):
+                SubprocessRunner().run(("agent",), Path(directory), None)
+
+        self.assertTrue(process.killed)
+        self.assertEqual(process.wait_calls, 2)
 
 
 if __name__ == "__main__":

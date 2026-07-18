@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
 import shlex
 import sys
 from dataclasses import asdict
@@ -11,11 +13,15 @@ from typing import Sequence
 from .agents import Agent, ClaudeCodeAgent, CodexAgent, default_agents
 from .domain import Capability, EvaluatorRole, EvaluatorSpec, MemoryEntry, MemoryEntryType, Priority, Task
 from .escalation import EscalationPolicy
+from .events import EventLogError, JsonlEventStore
 from .kernel import OrchestratorKernel
 from .memory import EngineeringMemoryStore
 from .logging import JsonlExecutionLogger
 from .history import ExecutionHistory
-from .routing import AdaptiveRouter, TaskAnalyzer
+from .routing import TaskAnalyzer
+from .routing_policy import RoutingPolicyRouter
+from .routing_state import LifecycleRecorder, ReplayError, RoutingStateStore
+from .replay import replay_digest, replay_event_log, validate_legacy_execution_log
 from .process_runner import SubprocessRunner
 from .verification import CommandVerifier, evaluator_content_version, validate_evaluator_artifacts
 from .workflow import EngineeringWorkflow, execution_succeeded
@@ -83,6 +89,16 @@ def build_parser() -> argparse.ArgumentParser:
     memory_search.add_argument("--tag")
     memory_search.add_argument("--keyword")
 
+    replay = subparsers.add_parser("replay", help="validate lifecycle events and optionally rebuild derived routing state")
+    replay.add_argument("--workspace", type=Path, default=Path.cwd())
+    replay.add_argument("--control-state-dir", type=Path, help="Protected event/state directory; defaults to an XDG state path keyed by workspace.")
+    replay.add_argument("--rebuild-state", action="store_true", help="Rewrite routing-state.json solely from the event log.")
+    replay.add_argument(
+        "--reconcile-incomplete",
+        action="store_true",
+        help="Append abandoned reconciliation events for non-live started attempts, then rebuild state.",
+    )
+
     return parser
 
 
@@ -117,6 +133,17 @@ def _add_workflow_arguments(parser: argparse.ArgumentParser) -> None:
         help="Read-only evaluator or golden-fixture path outside the agent workspace. Repeatable and shared by quality commands.",
     )
     parser.add_argument("--quality-evaluator-time-limit", type=float)
+    parser.add_argument(
+        "--routing-policy",
+        choices=("legacy", "static"),
+        default="legacy",
+        help="Active deterministic policy. 'static' is corrected L0 and requires an explicit baseline agent.",
+    )
+    parser.add_argument("--routing-baseline-agent", help="Configured baseline agent used by corrected static routing and its shadow.")
+    parser.add_argument("--routing-shadow", action="store_true", help="Record execution-free baseline decisions without changing the selected agent.")
+    parser.add_argument("--routing-seed", type=int, default=0, help="Seed used only for deterministic shadow assignments; exploration remains disabled.")
+    parser.add_argument("--environment-epoch", default="default-v1", help="Version boundary for model/CLI/permission/cache evidence.")
+    parser.add_argument("--control-state-dir", type=Path, help="Protected event/state directory outside the agent workspace.")
     parser.add_argument("--include-git-diff", action="store_true", help="Log the full workspace diff; use only when it contains no sensitive data.")
     parser.add_argument("--no-escalation", action="store_true", help="Disable escalating to a second agent on failure, high risk, or high uncertainty.")
     parser.add_argument("--escalation-risk-threshold", type=int, default=3, help="Minimum analyzed risk (0-5) that triggers escalation.")
@@ -134,6 +161,7 @@ def _task_from_spec(spec: dict) -> Task:
         required_capabilities=tuple(Capability(item) for item in spec.get("capabilities", ())),
         priority=Priority(spec.get("priority", Priority.NORMAL.value)),
         time_limit_seconds=spec.get("time_limit_seconds"),
+        task_id=spec.get("task_id"),
     )
 
 
@@ -254,15 +282,52 @@ def _build_workflow(args: argparse.Namespace, workspace: Path) -> EngineeringWor
     agents = _configured_agents(args)
     logger = JsonlExecutionLogger(workspace / ".orchestrator" / "executions.jsonl")
     runner = SubprocessRunner(_verbose_output_callback(f"[{args.command}:{args.agent}]")) if args.verbose else SubprocessRunner()
-    kernel = OrchestratorKernel({agent.agent_id: agent for agent in agents}, logger, workspace, runner=runner, include_git_diff=args.include_git_diff)
+    control_dir = _control_state_directory(workspace, getattr(args, "control_state_dir", None))
+    lifecycle = LifecycleRecorder(
+        JsonlEventStore(control_dir / "events.jsonl"),
+        RoutingStateStore(control_dir / "routing-state.json"),
+    )
+    kernel = OrchestratorKernel(
+        {agent.agent_id: agent for agent in agents},
+        logger,
+        workspace,
+        runner=runner,
+        include_git_diff=args.include_git_diff,
+        lifecycle_recorder=lifecycle,
+    )
     commands = [tuple(shlex.split(item)) for item in args.verify_command]
     quality_specs = _quality_evaluator_specs(args, workspace)
     verifier = CommandVerifier(commands[0] if commands else (), args.verify_time_limit, tuple(commands[1:]), quality_specs)
-    router = AdaptiveRouter(TaskAnalyzer(), ExecutionHistory(workspace / ".orchestrator" / "executions.jsonl"))
+    history = ExecutionHistory(workspace / ".orchestrator" / "executions.jsonl")
+    router = RoutingPolicyRouter(
+        getattr(args, "routing_policy", "legacy"),
+        TaskAnalyzer(),
+        history,
+        baseline_agent_id=getattr(args, "routing_baseline_agent", None),
+        shadow=bool(getattr(args, "routing_shadow", False)),
+        seed=int(getattr(args, "routing_seed", 0)),
+        environment_epoch=str(getattr(args, "environment_epoch", "default-v1")),
+        objective_evaluator_available=bool(quality_specs),
+        constraint_evaluator_count=len(commands),
+        routing_state_provider=lifecycle.rebuild_state,
+    )
     escalation_policy = None if args.no_escalation else EscalationPolicy(
         args.escalation_risk_threshold, args.escalation_uncertainty_threshold, args.escalation_difficulty_threshold
     )
     return EngineeringWorkflow(kernel, router, verifier, escalation_policy)
+
+
+def _control_state_directory(workspace: Path, configured: Path | None = None) -> Path:
+    resolved_workspace = workspace.resolve()
+    if configured is not None:
+        control_dir = configured.expanduser().resolve()
+    else:
+        xdg_state_home = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local" / "state")).expanduser()
+        workspace_key = hashlib.sha256(str(resolved_workspace).encode("utf-8")).hexdigest()[:20]
+        control_dir = (xdg_state_home / "adaptive-ai-orchestrator" / "workspaces" / workspace_key).resolve()
+    if control_dir == resolved_workspace or control_dir.is_relative_to(resolved_workspace):
+        raise ValueError(f"Control state directory must be outside the agent workspace: {control_dir}")
+    return control_dir
 
 
 def _quality_evaluator_specs(args: argparse.Namespace, workspace: Path) -> tuple[EvaluatorSpec, ...]:
@@ -304,6 +369,14 @@ def _quality_evaluator_specs(args: argparse.Namespace, workspace: Path) -> tuple
     return tuple(specs)
 
 
+def _build_workflow_for_cli(args: argparse.Namespace, workspace: Path) -> EngineeringWorkflow | None:
+    try:
+        return _build_workflow(args, workspace)
+    except (EventLogError, ReplayError, OSError, ValueError) as exc:
+        print(f"Workflow configuration failed: {exc}", file=sys.stderr)
+        return None
+
+
 def _verbose_output_callback(prefix: str):
     def write_line(line: str) -> None:
         sys.stderr.write(f"{prefix} {line}")
@@ -341,8 +414,44 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps([asdict(entry) for entry in entries], default=str, indent=2))
         return 0
 
+    if args.command == "replay":
+        try:
+            control_dir = _control_state_directory(workspace, args.control_state_dir)
+            event_path = control_dir / "events.jsonl"
+            if args.reconcile_incomplete:
+                before_events = JsonlEventStore(event_path).read()
+                recorder = LifecycleRecorder(JsonlEventStore(event_path))
+                state = recorder.rebuild_state()
+                after_events = JsonlEventStore(event_path).read()
+                reconciled_count = sum(
+                    event.event_type.value == "execution_reconciled" for event in after_events
+                ) - sum(event.event_type.value == "execution_reconciled" for event in before_events)
+            else:
+                state = replay_event_log(event_path)
+                reconciled_count = 0
+                if args.rebuild_state:
+                    RoutingStateStore(control_dir / "routing-state.json").write(state)
+        except (EventLogError, ReplayError, OSError, ValueError) as exc:
+            print(f"Replay failed: {exc}", file=sys.stderr)
+            return 1
+        attempts = [attempt for execution in state.executions.values() for attempt in execution.attempts.values()]
+        legacy_report = validate_legacy_execution_log(workspace / ".orchestrator" / "executions.jsonl")
+        print(json.dumps({
+            "event_count": len(state.applied_event_ids),
+            "execution_count": len(state.executions),
+            "attempt_count": len(attempts),
+            "incomplete_attempt_count": sum(attempt.status != "finalized" for attempt in attempts),
+            "reconciled_count": reconciled_count,
+            "replay_digest": replay_digest(state),
+            "state_rebuilt": bool(args.rebuild_state or args.reconcile_incomplete),
+            "legacy_execution_log": legacy_report.as_dict(),
+        }, indent=2))
+        return 0
+
     if args.command == "run-plan":
-        workflow = _build_workflow(args, workspace)
+        workflow = _build_workflow_for_cli(args, workspace)
+        if workflow is None:
+            return 2
         tasks = _load_plan(args.plan_file)
         result = workflow.run_plan(tasks, args.agent, stop_on_failure=not args.continue_on_failure)
         print(json.dumps({"steps": [{"plan": asdict(step.plan), "execution": asdict(step.record)} for step in result.steps], "stopped_early": result.stopped_early}, default=str, indent=2))
@@ -354,7 +463,9 @@ def main(argv: list[str] | None = None) -> int:
         validate_command = [sys.executable, "-m", "adaptive_orchestrator.cli", "plan", "validate", str(resolved_output)]
         args.verify_command = [shlex.join(validate_command), *args.verify_command]
         task = _build_plan_generation_task(args.request, workspace, resolved_output)
-        workflow = _build_workflow(args, workspace)
+        workflow = _build_workflow_for_cli(args, workspace)
+        if workflow is None:
+            return 2
         plan, record = workflow.run(task, args.agent)
         if not execution_succeeded(record):
             print(json.dumps({"plan": asdict(plan), "execution": asdict(record)}, default=str, indent=2))
@@ -377,7 +488,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     run_parser = getattr(args, "_parser", None)
-    workflow = _build_workflow(args, workspace)
+    workflow = _build_workflow_for_cli(args, workspace)
+    if workflow is None:
+        return 2
     description = _resolve_description(args, run_parser)
     objective = _resolve_objective(args, run_parser)
     task = Task(

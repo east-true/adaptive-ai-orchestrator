@@ -68,6 +68,13 @@ class SubprocessRunner:
                 process.wait()
                 status = ExecutionStatus.TIMED_OUT
                 return_code = None
+            except BaseException:
+                # Do not leave a CLI agent running after the orchestrator is
+                # interrupted. Kernel lifecycle telemetry records the terminal
+                # interruption while this layer owns child cleanup.
+                process.kill()
+                process.wait()
+                raise
             finally:
                 stdout_reader.join()
                 stderr_reader.join()

@@ -7,6 +7,7 @@ from typing import Sequence
 from uuid import uuid4
 
 from .domain import EscalationRecord, ExecutionRecord, ExecutionStatus, Task, VerificationStatus
+from .events import LifecycleEventType
 from .escalation import EscalationPolicy
 from .kernel import OrchestratorKernel
 from .planning import CapabilitySelector, ExecutionPlan
@@ -73,14 +74,24 @@ class EngineeringWorkflow:
         }
         encoded_config = json.dumps(config, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
         self._policy_version = str(getattr(selector, "policy_version", "legacy-biased"))
+        self._policy_name = type(selector).__qualname__
         self._config_hash = hashlib.sha256(encoded_config).hexdigest()
 
     def run(self, task: Task, requested_agent_id: str = "auto") -> tuple[ExecutionPlan, ExecutionRecord]:
         plan = self._selector.select(task, self._kernel.agents, requested_agent_id)
         execution_id = str(uuid4())
+        task_id = task.task_id or str(uuid4())
         selection_mode = "manual" if requested_agent_id != "auto" else "exploit"
         cohort = "manual" if requested_agent_id != "auto" else "legacy"
-        record = self._run_agent(task, plan, execution_id=execution_id, selection_mode=selection_mode, cohort=cohort)
+        record = self._run_agent(
+            task,
+            plan,
+            execution_id=execution_id,
+            task_id=task_id,
+            attempt_id=str(uuid4()),
+            selection_mode=selection_mode,
+            cohort=cohort,
+        )
 
         escalation = None
         escalation_reasons: tuple[str, ...] = ()
@@ -98,6 +109,8 @@ class EngineeringWorkflow:
                         task,
                         escalated_plan,
                         execution_id=execution_id,
+                        task_id=task_id,
+                        attempt_id=str(uuid4()),
                         parent_attempt_id=record.attempt_id,
                         selection_mode="escalation",
                         cohort="escalation",
@@ -138,6 +151,8 @@ class EngineeringWorkflow:
         plan: ExecutionPlan,
         *,
         execution_id: str,
+        task_id: str,
+        attempt_id: str,
         parent_attempt_id: str | None = None,
         selection_mode: str,
         cohort: str,
@@ -149,6 +164,8 @@ class EngineeringWorkflow:
             plan.agent_id,
             log_execution=False,
             execution_id=execution_id,
+            task_id=task_id,
+            attempt_id=attempt_id,
             parent_attempt_id=parent_attempt_id,
             policy_version=self._policy_version,
             config_hash=self._config_hash,
@@ -157,14 +174,29 @@ class EngineeringWorkflow:
             routing_evidence_eligible=False,
             escalation_reasons=escalation_reasons,
             trigger_classes=trigger_classes,
+            selection_payload=self._selection_payload(plan, selection_mode, cohort),
+            context_schema=str(((plan.decision or {}).get("routing_context") or {}).get("schema_version") or "task-analysis-v1"),
+            routing_context=(plan.decision or {}).get("routing_context") or {},
+            environment_epoch=str(((plan.decision or {}).get("routing_context") or {}).get("environment_epoch") or "default-v1"),
         )
-        verification, evaluations = self._verifier.verify_with_evaluations(
-            task,
-            record.status,
-            self._kernel.workspace,
-            self._kernel.runner,
-        )
-        return replace(
+        try:
+            verification, evaluations = self._verifier.verify_with_evaluations(
+                task,
+                record.status,
+                self._kernel.workspace,
+                self._kernel.runner,
+            )
+        except BaseException as exc:
+            self._kernel.record_lifecycle(
+                LifecycleEventType.OUTCOME_FINALIZED,
+                execution_id=execution_id,
+                task_id=task_id,
+                attempt_id=attempt_id,
+                parent_attempt_id=parent_attempt_id,
+                payload={"status": "evaluation_interrupted", "error_type": type(exc).__name__},
+            )
+            raise
+        finalized = replace(
             record,
             verification=verification,
             evaluations=evaluations,
@@ -172,6 +204,64 @@ class EngineeringWorkflow:
             task_analysis=plan.analysis,
             routing_decision=plan.decision,
         )
+        for result in evaluations:
+            self._kernel.record_lifecycle(
+                LifecycleEventType.EVALUATION_COMPLETED,
+                execution_id=execution_id,
+                task_id=task_id,
+                attempt_id=attempt_id,
+                parent_attempt_id=parent_attempt_id,
+                payload=asdict(result),
+            )
+        self._kernel.record_lifecycle(
+            LifecycleEventType.OUTCOME_FINALIZED,
+            execution_id=execution_id,
+            task_id=task_id,
+            attempt_id=attempt_id,
+            parent_attempt_id=parent_attempt_id,
+            payload={
+                "execution_status": finalized.status.value,
+                "verification": asdict(verification),
+                "evaluation_projection": finalized.evaluation_projection,
+                "routing_evidence_eligible": finalized.routing_evidence_eligible,
+            },
+        )
+        return finalized
+
+    def _selection_payload(self, plan: ExecutionPlan, selection_mode: str, cohort: str) -> dict[str, object]:
+        decision = plan.decision or {}
+        candidate_scores = decision.get("candidate_scores") or {}
+        candidate_ids = list(candidate_scores) if isinstance(candidate_scores, dict) else []
+        if plan.agent_id not in candidate_ids:
+            candidate_ids.append(plan.agent_id)
+        candidate_probabilities = {
+            agent.agent_id: float(agent.agent_id == plan.agent_id)
+            for agent in self._kernel.agents
+        }
+        ineligible = {
+            agent.agent_id: "not_eligible_or_not_requested"
+            for agent in self._kernel.agents
+            if agent.agent_id not in candidate_ids
+        }
+        return {
+            "policy_name": self._policy_name,
+            "policy_version": self._policy_version,
+            "config_hash": self._config_hash,
+            "selection_mode": selection_mode,
+            "cohort": cohort,
+            "context_schema": str((decision.get("routing_context") or {}).get("schema_version") or "task-analysis-v1"),
+            "context_features": decision.get("routing_context") or plan.analysis or {
+                "required_capabilities": [item.value for item in plan.task.required_capabilities],
+            },
+            "eligible_candidates": candidate_ids,
+            "ineligible_reasons": ineligible,
+            "candidate_probabilities": candidate_probabilities,
+            "selected_agent": plan.agent_id,
+            "selected_probability": 1.0,
+            "baseline_candidate": plan.agent_id,
+            "random_draw_id": None,
+            "shadow_decisions": decision.get("shadow_decisions") or {},
+        }
 
     def _next_candidate(self, plan: ExecutionPlan) -> str | None:
         """The next-best routed candidate, or any other capable agent if the selector kept no ranking."""

@@ -45,9 +45,9 @@ Adaptive routing 개선 작업은 다음 문서에서 추적한다.
 - [Claude 독립 검토와 반영 판단](docs/routing-claude-review.md)
 - [진행상황과 이어하기](docs/adaptive-routing-progress.md)
 
-Phase -1 telemetry baseline과 Phase 0 typed evaluator까지 runtime에 반영했다.
-현재의 적은 legacy telemetry로 복잡한 bandit을 바로 활성화하지 않고, 다음으로
-durable lifecycle event와 replay boundary를 구현하는 순서를 택했다.
+Phase -1 telemetry baseline, Phase 0 typed evaluator, Phase 1 lifecycle/replay와
+corrected static L0까지 runtime에 반영했다. 현재의 적은 legacy telemetry로 복잡한
+bandit이나 탐색을 활성화하지 않고, 다음으로 작은 paired smoke를 준비한다.
 
 ## Run the prototype
 
@@ -82,6 +82,27 @@ PYTHONPATH=src python3 -m adaptive_orchestrator.cli run \
 
 The default policy is only a starting hypothesis: it mildly favors Codex for code/test/debug signals and Claude Code for repository/architecture/planning signals. Both remain eligible whenever they support the analyzed capabilities; selection is not a fixed role assignment. The policy and historical evidence are visible in every routing decision.
 
+That legacy policy remains the compatibility default and is still marked
+`legacy-biased`. The corrected L0 makes no pre-evidence vendor skill claim: it
+uses explicitly required capabilities only as eligibility and requires the
+caller to name a baseline. Inferred capabilities remain versioned context.
+
+```bash
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli run \
+  --workspace . --agent auto \
+  --routing-policy static --routing-baseline-agent codex \
+  --routing-shadow --routing-seed 17 --environment-epoch local-v1 \
+  --description "Review the change" --objective "Report whether it is correct"
+```
+
+`--routing-shadow` records always-Claude/Codex, corrected-static,
+legacy-adaptive, history-free legacy profile, best-single, stratified
+Beta/greedy, and seeded random-safe comparators without changing the active
+selection. Only typed binary quality from `paired`/`prospective` cohorts enters
+best-single or stratified estimates. Missing evidence remains unavailable, and
+the random policy remains shadow-only; exploration is not implemented or
+enabled.
+
 To pin a model or Codex reasoning effort for a routed command, pass the corresponding adapter options. They are accepted by `run`, `run-plan`, and `plan generate`:
 
 ```bash
@@ -92,7 +113,7 @@ PYTHONPATH=src python3 -m adaptive_orchestrator.cli run \
   --description "Run the unit tests" --objective "Confirm the suite passes"
 ```
 
-Configured variants receive derived registry IDs (`claude-code:<model>` and `codex:<model>:<reasoning-effort>`; omitted parts are left out). Use that derived ID with `--agent` to request a specific variant, or leave `--agent auto` to route between the configured variants. Execution logs retain both the exact variant ID and its stable vendor base ID. The current router nevertheless reads exact-ID metrics only, so routing history does **not** yet back off across model changes; that is an explicit next-step gap.
+Configured variants receive derived registry IDs (`claude-code:<model>` and `codex:<model>:<reasoning-effort>`; omitted parts are left out). Use that derived ID with `--agent` to request a specific variant, or leave `--agent auto` to route between the configured variants. Execution logs retain both the exact variant ID and its stable vendor base ID. The compatibility legacy router still reads exact-ID operational metrics. Phase 1 objective-quality shadows instead use explicit exact-agent → base-agent backoff within one environment epoch and never treat a static prior as a measured sample.
 
 Historical success/verification rates are confidence-weighted by sample count — a handful of logged runs pulls a candidate's score toward the same neutral baseline a brand-new agent gets, rather than being fully trusted. Set `Task.cost_limit_usd` and a candidate whose logged average cost (currently tracked for Claude Code only) exceeds it is penalized; leave it unset and cost has no effect on routing.
 
@@ -119,6 +140,35 @@ mutation check, or hidden buggy implementation rather than accepting a test the
 agent just wrote as proof of its own quality. `VerificationResult` remains the
 backward-compatible aggregate used to control workflow success; typed
 `evaluations` and `evaluation_projection` carry the evidence semantics.
+
+## Lifecycle events and replay
+
+CLI workflows fsync append-only `selection_made`, `execution_started`,
+`execution_terminal`/`execution_reconciled`, per-evaluator
+`evaluation_completed`, and `outcome_finalized` events. Selection events record
+the policy/config/context/environment versions, every eligible candidate's
+deterministic propensity, selected propensity, and shadow decisions before the
+agent subprocess starts.
+
+The event source and disposable `routing-state.json` projection default to an
+XDG user-state directory keyed by the resolved workspace, outside the
+agent-writeable repository. Override it with `--control-state-dir` when the
+runtime has a different protected writable location. The directory must remain
+outside `--workspace`.
+
+```bash
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli replay --workspace .
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli replay --workspace . --rebuild-state
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli replay --workspace . --reconcile-incomplete
+```
+
+Replay rejects sequence gaps, event-ID collisions, invalid transitions, and
+malformed rows. Duplicate identical event IDs are idempotent. On the next local
+startup, a `started` attempt whose PID is no longer alive is reconciled as
+abandoned and finalized; a live concurrent owner is left alone. Interrupting a
+subprocess kills and reaps it before re-raising the interrupt. Legacy execution
+JSONL is reported only for schema/record reproduction and explicitly never as
+counterfactual support.
 
 ## Run a structured plan
 
@@ -228,7 +278,7 @@ settings
 
 The defaults are translated back into normal CLI argv. A time limit applies only to `task`/`run`, because `run-plan` and `plan generate` do not expose that task-level flag; the other workflow defaults apply to all routed shell commands. Options then follow their existing argparse behavior: a later single-value option such as `--time-limit` wins, repeatable `--verify-command` values accumulate with the session default, and a session-level `no_escalation` must be turned off with `set no_escalation off` before a command because the CLI has no inverse flag.
 
-`recent [count]` reads the existing workspace JSONL log and shows the last appended records first with agent, execution status, verification status, agent-process duration, and a compact task description. Append order is not a timestamp or durable lifecycle order; the current schema has neither. The command only reads and formats the legacy telemetry, mapping a missing verification object to `not-run`. `help run`, `help run_plan`, `help plan_generate`, and the corresponding plan/memory topics delegate to the existing argparse help, keeping shell help aligned with CLI flags.
+`recent [count]` reads the compatibility workspace execution JSONL and shows the last appended final records first with agent, execution status, verification status, agent-process duration, and a compact task description. It does not read or summarize the protected lifecycle source; use `replay` for lifecycle validation. `help run`, `help run_plan`, `help plan_generate`, and the corresponding plan/memory topics delegate to the existing argparse help, keeping shell help aligned with CLI flags.
 
 Command names, `agent` values, workspace directories, and plan-file paths support tab completion. Invalid workspace paths are rejected without losing the current session state, command typos suggest a close match, and a blank line is a no-op rather than `cmd.Cmd`'s default behavior of repeating the previous command.
 
@@ -273,17 +323,18 @@ The current implementation was locally validated against Claude Code `2.1.211` a
 ## Current limits
 
 - Routing is rule-based and its initial preference values are not learned from enough production evidence yet.
-- Current `--agent auto` combines unvalidated capability/complexity/risk priors with selection-count shrinkage and deterministic argmax. Until the corrected L0 policy is implemented, do not treat new auto runs as unbiased skill evidence; use an explicit agent for ordinary work.
+- The compatibility default `--routing-policy legacy` still combines unvalidated capability/complexity/risk priors with selection-count shrinkage. Use explicit `--routing-policy static --routing-baseline-agent ...` for corrected L0; neither mode turns ordinary auto runs into unbiased skill evidence.
 - Both adapters parse structured CLI output into normalized `ExecutionMetadata`: Claude Code's `--print --output-format json` (verified against `2.1.211`) and Codex CLI's `exec --json` (verified against `0.144.5`). Codex CLI does not expose a cost field the way Claude Code does, so `ExecutionMetadata.cost_usd` stays `None` for Codex executions — this reflects what the CLI actually reports, not a parsing gap.
 - Cost limits cannot be reliably enforced for subscription-backed CLIs.
 - The execution JSONL log records telemetry; engineering memory lives in a separate JSONL store and is only populated by explicit `memory record` calls.
 - Log redaction is best-effort; it cannot guarantee removal of every secret embedded in free text or diffs.
 - Evaluator path/mode and pre/post hash checks detect common artifact contamination, but v0.1 is not a hardened sandbox or immutable evaluation service.
+- The protected control directory relies on the agent sandbox not granting writes outside the workspace; it is not a cryptographically signed remote ledger.
 
 ## Next development increment
 
-Implement Phase 1 of the adaptive-routing design: record interruption-safe
-lifecycle events, make terminal projections replayable, and define the corrected
-simple baseline without turning exploration on. Only after those observations
-are trustworthy should routing thresholds or learned policies be tuned. See the
-[progress handoff](docs/adaptive-routing-progress.md) for the ordered checklist.
+Implement Phase 2a tooling and run only the predeclared 4-task/8-execution paired
+smoke with protected task-specific evaluators and isolated equal-base
+workspaces. Do not enable prospective exploration or promote a learned policy.
+See the [progress handoff](docs/adaptive-routing-progress.md) for the ordered
+checklist.

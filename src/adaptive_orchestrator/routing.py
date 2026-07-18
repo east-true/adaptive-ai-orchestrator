@@ -25,6 +25,8 @@ _KEYWORDS: Mapping[Capability, tuple[str, ...]] = {
 @dataclass(frozen=True, slots=True)
 class TaskAnalysis:
     capabilities: tuple[Capability, ...]
+    required_capabilities: tuple[Capability, ...]
+    inferred_capabilities: tuple[Capability, ...]
     difficulty: int
     risk: int
     uncertainty: int
@@ -33,6 +35,8 @@ class TaskAnalysis:
     def as_dict(self) -> dict[str, object]:
         return {
             "capabilities": [item.value for item in self.capabilities],
+            "required_capabilities": [item.value for item in self.required_capabilities],
+            "inferred_capabilities": [item.value for item in self.inferred_capabilities],
             "difficulty": self.difficulty,
             "risk": self.risk,
             "uncertainty": self.uncertainty,
@@ -71,7 +75,15 @@ class TaskAnalyzer:
         risk = min(5, min(2, risk_word_hits) + int(explicit_security_review) * 2 + int(task.priority.value == "critical"))
 
         uncertainty = min(5, int(not task.required_capabilities) + int(not inferred) + int("?" in text or "unknown" in text or "모름" in text))
-        return TaskAnalysis(capabilities, difficulty, risk, uncertainty, tuple(sorted(signals)))
+        return TaskAnalysis(
+            capabilities,
+            tuple(sorted(task.required_capabilities, key=lambda item: item.value)),
+            tuple(sorted(inferred, key=lambda item: item.value)),
+            difficulty,
+            risk,
+            uncertainty,
+            tuple(sorted(signals)),
+        )
 
 
 @dataclass(frozen=True, slots=True)

@@ -73,6 +73,9 @@ class Task:
     priority: Priority = Priority.NORMAL
     time_limit_seconds: float | None = None
     cost_limit_usd: float | None = None
+    # Caller-supplied IDs let paired executions share one task identity. The
+    # workflow generates an ID when this is absent.
+    task_id: str | None = None
 
     def __post_init__(self) -> None:
         if not self.description.strip() or not self.objective.strip():
@@ -81,6 +84,8 @@ class Task:
             raise ValueError("cost_limit_usd cannot be negative.")
         if self.time_limit_seconds is not None and self.time_limit_seconds <= 0:
             raise ValueError("time_limit_seconds must be positive.")
+        if self.task_id is not None and not self.task_id.strip():
+            raise ValueError("task_id cannot be blank.")
 
 
 @dataclass(frozen=True, slots=True)
@@ -207,6 +212,10 @@ class ExecutionRecord:
     # aggregate used for workflow control; it is not implicitly task quality.
     evaluations: Sequence[EvaluatorResult] = field(default_factory=tuple)
     evaluation_projection: Mapping[str, Any] = field(default_factory=dict)
+    task_id: str | None = None
+    context_schema: str | None = None
+    routing_context: Mapping[str, Any] = field(default_factory=dict)
+    environment_epoch: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

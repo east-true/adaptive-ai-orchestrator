@@ -8,6 +8,7 @@ sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 from adaptive_orchestrator.agents import ClaudeCodeAgent, CodexAgent
 from adaptive_orchestrator.domain import Capability, ExecutionStatus, Task, VerificationStatus
 from adaptive_orchestrator.escalation import EscalationPolicy
+from adaptive_orchestrator.events import JsonlEventStore, LifecycleEventType
 from adaptive_orchestrator.kernel import OrchestratorKernel
 from adaptive_orchestrator.logging import JsonlExecutionLogger
 from adaptive_orchestrator.planning import CapabilitySelector
@@ -103,6 +104,13 @@ class WorkflowEscalationTests(unittest.TestCase):
             self.assertEqual(record.escalation.record.selection_mode, "escalation")
             self.assertEqual(record.escalation.record.cohort, "escalation")
             self.assertEqual(len(runner.calls), 2)
+            events = JsonlEventStore(workspace / ".orchestrator" / "events.jsonl").read()
+            selections = [event for event in events if event.event_type is LifecycleEventType.SELECTION_MADE]
+            self.assertEqual(len(selections), 2)
+            self.assertEqual(selections[1].parent_attempt_id, record.attempt_id)
+            self.assertEqual(selections[1].attempt_id, record.escalation.record.attempt_id)
+            self.assertEqual(selections[1].payload["selection_mode"], "escalation")
+            self.assertEqual([event.sequence for event in events], list(range(1, len(events) + 1)))
 
     def test_successful_run_does_not_escalate(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
