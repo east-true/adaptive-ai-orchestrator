@@ -94,6 +94,15 @@ pilot primary set에 넣지 않는다.
 아니라 사전에 고정한 quota와 eligibility 규칙으로 수행한다. 후보 탈락 row와 사유도
 ledger에 남겨 selection bias를 검토할 수 있게 한다.
 
+license/use basis는 **exact candidate revision에 실제로 존재하는 artifact**로 판정한다.
+저장소 metadata classifier의 추정이나 현재 default branch의 license를 과거 pinned
+revision에 소급 적용하지 않으며, "public repository"라는 사실 자체를 use basis로 보지
+않고, 불명확한 custom license를 임의 SPDX identifier로 분류하지 않는다. base와 solution
+revision의 license가 다르면 양쪽을 구분해 보고하고 `pass` 처리하지 않는다. 근거가 없어
+`license-or-use-basis`를 충족할 수 없는 후보는 `license-or-use-basis-unavailable`로
+terminal 처리한다. 이 사유는 공개 저장소에 새 use basis를 부여하지 않고, 충족 불가능한
+inclusion criterion이 무기한 `screening`으로 남지 않게 하는 표현일 뿐이다.
+
 ### 4.3 Repository와 환경
 
 repository별 exact commit/tree와 fixture hash를 기록하고 두 agent checkout이 동일한

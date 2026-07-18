@@ -24,6 +24,20 @@ EXPECTED_INCLUSION_RULES = {
 EXPECTED_SCREENING_FIELDS = {
     rule_id.replace("-", "_") for rule_id in EXPECTED_INCLUSION_RULES
 }
+EXPECTED_EXCLUSION_RULES = [
+    "no-parent-or-exact-base",
+    "task-source-unavailable-or-underspecified",
+    "license-or-use-basis-unavailable",
+    "translation-only",
+    "multiple-coupled-issues",
+    "unsafe-or-external-side-effect",
+    "subjective-only-evaluation",
+    "broken-or-flaky-fixture",
+    "gold-or-evaluator-leakage",
+    "resource-budget-exceeded",
+    "selected-after-agent-result",
+    "previous-paired-task-reuse",
+]
 
 
 class Phase2bCandidateLedgerTests(unittest.TestCase):
@@ -153,7 +167,7 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
         )
         self.assertEqual(
             Counter(candidate["decision"] for candidate in reviewed),
-            {"screening": 17, "excluded": 12},
+            {"screening": 2, "excluded": 27},
         )
         self.assertEqual(
             Counter(
@@ -175,6 +189,45 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
                 "ghko-minacle--swift-tui-issue-18",
             },
         )
+
+    def test_every_inclusion_rule_has_a_terminal_exclusion_path(self) -> None:
+        # A required inclusion criterion with no corresponding exclusion reason
+        # would strand unsatisfiable candidates in screening forever.
+        self.assertEqual(self.ledger["exclusion_rule_ids"], EXPECTED_EXCLUSION_RULES)
+        self.assertIn("license-or-use-basis-unavailable", EXPECTED_EXCLUSION_RULES)
+
+        for candidate in self.ledger["candidates"]:
+            failed = {
+                rule
+                for rule, value in candidate["screening"].items()
+                if value == "fail"
+            }
+            if failed:
+                self.assertEqual(candidate["decision"], "excluded")
+                self.assertTrue(candidate["exclusion_rule_ids_triggered"])
+            for rule in candidate["exclusion_rule_ids_triggered"]:
+                self.assertIn(rule, EXPECTED_EXCLUSION_RULES)
+
+    def test_license_exclusions_are_revision_grounded(self) -> None:
+        rows = [
+            candidate
+            for candidate in self.ledger["candidates"]
+            if "license-or-use-basis-unavailable"
+            in candidate["exclusion_rule_ids_triggered"]
+        ]
+
+        self.assertEqual(len(rows), 12)
+        for candidate in rows:
+            self.assertEqual(candidate["decision"], "excluded")
+            self.assertEqual(candidate["screening"]["license_or_use_basis"], "fail")
+            # The judgment must cite the pinned revision, not a default branch.
+            self.assertTrue(candidate["base_revision"])
+            self.assertTrue(
+                any(
+                    candidate["base_revision"] in reason
+                    for reason in candidate["decision_reasons"]
+                )
+            )
 
     def test_exact_base_rows_follow_the_provisioning_principle(self) -> None:
         by_id = {

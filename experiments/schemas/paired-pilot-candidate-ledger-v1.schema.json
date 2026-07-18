@@ -65,6 +65,7 @@
       "const": [
         "no-parent-or-exact-base",
         "task-source-unavailable-or-underspecified",
+        "license-or-use-basis-unavailable",
         "translation-only",
         "multiple-coupled-issues",
         "unsafe-or-external-side-effect",
@@ -348,6 +349,7 @@
             "enum": [
               "no-parent-or-exact-base",
               "task-source-unavailable-or-underspecified",
+              "license-or-use-basis-unavailable",
               "translation-only",
               "multiple-coupled-issues",
               "unsafe-or-external-side-effect",
