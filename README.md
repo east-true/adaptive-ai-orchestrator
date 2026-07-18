@@ -413,6 +413,27 @@ Command names, `agent` values, workspace directories, and plan-file paths suppor
 
 Most commands still only build an argv list and call the existing `adaptive_orchestrator.cli.main` dispatch, so they stay aligned with normal CLI flags and output conventions. Shell-native convenience commands include session views (`status`, `settings`) and read-only local-data views (`history`, `recent`, `usage`). `history` currently exposes legacy operational metrics, not objective task-quality or unbiased policy estimates; do not use its percentages to rank agents.
 
+## Full-screen terminal UI
+
+For a dashboard-oriented local workflow, start the stdlib `curses` TUI:
+
+```bash
+PYTHONPATH=src python3 -m adaptive_orchestrator.tui --workspace .
+```
+
+It groups terminal records by execution, keeps escalated attempts together, and
+shows a compact outcome for the selected run. Press `n` to compose a short task;
+the TUI launches the normal `cli run` path as a shell-free child process and
+shows its combined live output. Only one task is admitted at a time. `c` sends
+SIGTERM to the dedicated child process group, preventing a cancelled UI child
+from leaving its coding-agent subprocess behind. `r` refreshes terminal records,
+arrow keys or `j`/`k` move through them, and `q` exits only when no task is
+running.
+
+The TUI is intentionally a client of existing CLI and telemetry contracts. It
+does not duplicate routing, verification, escalation, configuration, or report
+logic.
+
 ## Watching a long run
 
 `run`, `run-plan`, and `plan generate` accept `--verbose`, which streams the running agent's stdout to stderr as it arrives instead of staying silent until the process exits:
