@@ -34946,7 +34946,11 @@
         "Linux 재현을 agent 없이 실측했다. swift.org의 Swift 6.3.3 Ubuntu 22.04 배포본을 격리 경로에 설치했다(1,019MB 다운로드 38초, 압축해제 3,362MB 71초). base commit 8d63a793c422d760bc9ba37f108f4bbe0d914be3을 materialize하니 tree가 기록값 56bf597e58a103217d56530007f9ec30ee9f187e와 일치했고 checkout은 clean이었다.",
         "`swift build`가 Package.resolved의 6개 pin으로 성공했다(52초, scratch 129MB). 이어 `swift test`가 90 suites 1,064 tests 전부 통과했다(빌드 포함 90초, scratch 최종 376MB). 따라서 이 후보는 Linux에서 재현 불가능하지 않으며, 앞서 두 차례 `resource-budget-exceeded`로 제외하려 했던 판단은 실측으로 반박됐다.",
         "다만 환경 크기가 지금까지 측정한 후보 중 최대다. 압축해제 3.36GB에 scratch 376MB로 후보당 약 3.7GB이며, Python 후보의 최대치(약 1.05GB)의 세 배가 넘는다. resource bucket 상한을 정할 때 이 값이 실측 상한선이다.",
-        "reproducible_within_budget은 unknown을 유지한다. cold `swift build` + `swift test`가 90초로 사전등록 정의상 `medium`(30초 초과 120초 이내)이며 evaluator timeout 120초 안에 든다. 다만 보호 evaluator를 아직 만들지 않아 negative·positive control을 재현하지 못했다. 환경이 3.7GB로 최대지만 이 schema는 용량을 제약하지 않으므로 그 자체는 탈락 사유가 아니다. 빌드나 기존 suite 통과는 negative control을 대신하지 않는다."
+        "reproducible_within_budget은 unknown을 유지한다. cold `swift build` + `swift test`가 90초로 사전등록 정의상 `medium`(30초 초과 120초 이내)이며 evaluator timeout 120초 안에 든다. 다만 보호 evaluator를 아직 만들지 않아 negative·positive control을 재현하지 못했다. 환경이 3.7GB로 최대지만 이 schema는 용량을 제약하지 않으므로 그 자체는 탈락 사유가 아니다. 빌드나 기존 suite 통과는 negative control을 대신하지 않는다.",
+        "상류 테스트를 held-out evaluator로 재사용할 수 있는지 실측했다. PR #19의 테스트 파일 hunk 13개만 base에 적용해 `swift build --build-tests`를 돌리니 **compile error 171개**로 실패했다. assertion 실패가 아니라 base에 없는 심볼을 참조해서다.",
+        "실패 심볼에는 `RenderedTextInputAnchor`, `RenderedBlock.textInputAnchor`처럼 이슈 #18이 명명하지 않은 내부 렌더링 타입이 포함된다. 이슈가 명시한 것은 `EditableText.InputPolicy` 추가와 `LineMode` 제거 같은 공개 API 수준이다. 따라서 이 테스트를 그대로 쓰면 agent가 동작을 올바르게 구현해도 내부 심볼 이름이 다르면 실패하는 over-specification이 된다.",
+        "objective_evaluator_feasible은 여전히 unknown이다. 이슈가 진술한 관측 가능한 동작(Return이 newline을 삽입, 유한 열 너비에서 visual line 줄바꿈, clipping·wheel·caret reveal을 ScrollView가 담당)을 공개 API 수준에서 검사하는 evaluator는 원리상 가능하지만, 상류 테스트 재사용으로는 얻을 수 없고 독립 저술이 필요하다. 그 비용은 아직 산정하지 않았다.",
+        "negative control은 성립하지 않았다. compile 단계에서 멈추면 '구현하지 않음'과 '다르게 구현함'을 구별할 수 없다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -38659,7 +38663,8 @@
         "reproducible_within_budget만 unknown으로 남는다. 고정 버전·artifact digest pin, 오프라인 의존성 복원, agent-free base/negative/positive control 재현, 사전 resource bucket 대비 실측이 끝나기 전에는 pass로 두지 않는다.",
         "base_tree_hash 정정: 이전 값 8ad41b136ecab5c5f2f1f97806cfbfe784004249는 commit SHA였다. `GET /git/trees/{commit_sha}`가 입력 SHA를 그대로 되돌려준 것을 tree hash로 받아 기록한 오류이며, base를 실제로 materialize해 `git rev-parse HEAD^{tree}`로 확인한 값 182937e72345ba447982a9709c36b91c55d4599a로 교체했다.",
         "Linux 빌드 가능성을 실측으로 확정했다. .NET SDK 8.0.423을 dotnet-install로 사용자 경로에 격리 설치(578MB, 21초)한 뒤 base checkout에서 `dotnet build TimePilot.WinForms/TimePilot.WinForms.csproj -p:EnableWindowsTargeting=true`를 실행해 0 warnings / 0 errors로 성공했다(8초, NuGet 캐시 94MB). 앞선 판단은 문서 근거였고 이제 실제 빌드로 확인됐다.",
-        "reproducible_within_budget은 unknown을 유지한다. 빌드가 8초로 `small` 범위이지만 보호 evaluator를 아직 만들지 않아 negative·positive control을 재현하지 못했다. 빌드나 기존 suite 통과는 negative control을 대신하지 않는다."
+        "reproducible_within_budget은 unknown을 유지한다. 빌드가 8초로 `small` 범위이지만 보호 evaluator를 아직 만들지 않아 negative·positive control을 재현하지 못했다. 빌드나 기존 suite 통과는 negative control을 대신하지 않는다.",
+        "정답 PR #97의 변경 12개에 테스트 파일이 하나도 없어 재구성할 상류 gold test가 없다. 따라서 보호 evaluator를 새로 저술해야 하며, 이는 사전등록 §3의 역할 분리 대상이다 — task-source 판정을 수행한 역할이 같은 맥락에서 채점 기준까지 쓰면 독립 construction으로 인정되지 않는다. reproducible_within_budget과 objective_evaluator_feasible은 그 저술과 validity review 뒤에 판정한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
