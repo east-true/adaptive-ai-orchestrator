@@ -300,10 +300,19 @@ real manifest.
 The actual runner is a separate, explicit gate. It revalidates the manifest,
 installed CLI versions, protected evaluators, and a fresh workspace/control
 boundary before starting the eight attempts. It never reuses or overwrites a
-dry-run checkout or an existing control log.
+dry-run checkout or an existing control log. If an infrastructure/evaluator
+pause leaves a finalized prefix, `paired resume` validates that prefix and all
+eight existing checkout identities, then runs only the untouched suffix under
+the remaining active wall-time budget.
 
 ```bash
 PYTHONPATH=src python3 -m adaptive_orchestrator.cli paired run \
+  experiments/phase2a-smoke-v1.json --source-repository . \
+  --workspace-root /protected/fresh-paired-run \
+  --control-state-dir /protected/fresh-paired-control \
+  --confirm-agent-execution
+
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli paired resume \
   experiments/phase2a-smoke-v1.json --source-repository . \
   --workspace-root /protected/fresh-paired-run \
   --control-state-dir /protected/fresh-paired-control \

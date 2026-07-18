@@ -151,7 +151,10 @@ def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser
         help="Append abandoned reconciliation events for non-live started attempts, then rebuild state.",
     )
 
-    paired = subparsers.add_parser("paired", help="plan, validate, dry-run, or execute the Phase 2a paired smoke")
+    paired = subparsers.add_parser(
+        "paired",
+        help="plan, validate, dry-run, execute, or resume the Phase 2a paired smoke",
+    )
     paired_subparsers = paired.add_subparsers(dest="paired_command", required=True)
 
     paired_validate = paired_subparsers.add_parser("validate", help="validate a paired manifest and its pinned environment")
@@ -189,6 +192,20 @@ def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser
         "--confirm-agent-execution",
         action="store_true",
         help="explicitly allow the eight agent/evaluator attempts described by the manifest",
+    )
+
+    paired_resume = paired_subparsers.add_parser(
+        "resume",
+        help="continue only the unmaterialized suffix of a paused paired smoke",
+    )
+    paired_resume.add_argument("manifest", type=Path)
+    paired_resume.add_argument("--source-repository", type=Path, default=Path.cwd())
+    paired_resume.add_argument("--workspace-root", type=Path, required=True)
+    paired_resume.add_argument("--control-state-dir", type=Path, required=True)
+    paired_resume.add_argument(
+        "--confirm-agent-execution",
+        action="store_true",
+        help="explicitly allow the remaining preregistered agent/evaluator attempts",
     )
 
     return parser
@@ -748,14 +765,19 @@ def _run_paired_command(args: argparse.Namespace) -> int:
             observations = observations_from_routing_state(manifest, state)
             print(json.dumps(analyze_paired_observations(manifest, observations), indent=2))
             return 0
-        if args.paired_command == "run":
-            report = PairedSmokeRunner(
+        if args.paired_command in {"run", "resume"}:
+            runner = PairedSmokeRunner(
                 manifest,
                 manifest_path,
                 args.source_repository,
                 args.workspace_root,
                 args.control_state_dir,
-            ).run(confirm_agent_execution=args.confirm_agent_execution)
+            )
+            report = (
+                runner.resume(confirm_agent_execution=args.confirm_agent_execution)
+                if args.paired_command == "resume"
+                else runner.run(confirm_agent_execution=args.confirm_agent_execution)
+            )
             print(json.dumps(report, indent=2))
             return 0
         raise PairedExperimentError(f"Unsupported paired command: {args.paired_command}")
