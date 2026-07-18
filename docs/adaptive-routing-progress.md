@@ -1,7 +1,7 @@
 # Adaptive Routing 개선 작업 진행상황
 
 > 마지막 갱신: 2026-07-18
-> 상태: Phase -1/0/1과 Phase 2a dry-run tooling 완료, 실제 smoke manifest 대기
+> 상태: Phase -1/0/1과 Phase 2a manifest/tooling/runner 완료, 실제 8-run smoke 미실행
 > 목적: 다른 세션이 결정 근거와 다음 순서를 잃지 않고 작업을 이어간다.
 
 ## 1. 목표
@@ -138,9 +138,14 @@ additive identity + policy/cohort labels
 - [x] protected event-derived state 기반 simple shadow baseline
 - [x] Phase 1 완료 후 전체 unit test 실행(191 tests)
 - [x] Phase 2a versioned paired manifest/environment validation
-- [x] deterministic balanced assignment와 isolated Git worktree dry run
+- [x] deterministic balanced assignment와 independent exact-base checkout dry run
 - [x] event-derived pair projection과 synthetic 2×2 aggregation
 - [x] Phase 2a tooling 완료 후 전체 unit test 실행(200 tests)
+- [x] 4-task manifest와 canonical/protected evaluator 사전 등록 및 negative control
+- [x] explicit gate, CLI version pin, fresh control state, wall-time budget를 강제하는 paired runner
+- [x] 실제 manifest validation과 agent-free 8-checkout dry run
+- [x] fake-process 8-attempt/8-evaluator/48-event end-to-end 회귀 테스트
+- [x] Phase 2a runner 완료 후 전체 unit test 실행(206 tests)
 
 Phase -1은 routing score의 corrected L0를 임의로 만들지 않고 기존 legacy evidence는
 그대로 유지했다. 대신 모든 새 workflow row를 `routing_evidence_eligible=false`로
@@ -262,9 +267,9 @@ events.py
 - legacy execution replay는 schema/record reproduction 전용이며 counterfactual support를
   항상 false로 보고.
 
-### Phase 2a — paired smoke tooling (dry run 완료)
+### Phase 2a — paired smoke tooling/runner (실제 run 대기)
 
-실제 agent 8회를 호출하지 않고 다음 dry run을 구현했다.
+실제 agent 8회를 호출하지 않고 다음 control path를 구현·검증했다.
 
 - versioned paired manifest와 task/evaluator/base revision schema validation;
 - 동일 clean base에서 격리 workspace A/B 생성과 base hash 비교;
@@ -273,11 +278,16 @@ events.py
 - `paired` cohort, one-sided failure, incomplete pair projection;
 - 실행 없는 synthetic 2×2 결과가 수동 집계와 같은지 검증;
 - 희소 stratum, CI 미구현, target workload weight 부재를 promotion blocker로 유지.
+- 사전 등록 4-task manifest, canonical evaluator source와 외부 0444 protected copy;
+- explicit gate, installed CLI version pin, fresh workspace/control directory와
+  agent/evaluator count 및 wall-time budget guard;
+- 인프라 또는 evaluator error/timeout 뒤 finalized partial log를 남기고 즉시 pause.
 
-다음은 실제 결과를 보기 전에 4개 low-risk task, 보호된 objective evaluator와 resource
-budget을 manifest로 사전 등록하는 일이다. manifest를 커밋하고 `paired validate`와
-`paired dry-run` report를 검토한 뒤에만 4-task/8-execution runner와 실제 smoke를 별도
-승인 범위에서 진행한다. 세부 계약은 `docs/paired-smoke-tooling.md`에 있다.
+4개 low-risk task, 보호 objective evaluator와 resource budget은 결과를 보기 전에
+manifest로 사전 등록했고, evaluator negative control, `paired validate`, agent-free
+`paired dry-run`을 통과했다. 다음 게이트는 이 변경을 커밋·push한 뒤 fresh 경로에서
+`--confirm-agent-execution`을 명시하는 실제 4-task/8-execution smoke다. 세부 계약은
+`docs/paired-smoke-tooling.md`에 있다.
 
 ### Phase 2b 이후
 

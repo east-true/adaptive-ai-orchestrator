@@ -308,6 +308,20 @@ class PairedDispatchTests(unittest.TestCase):
         self.assertEqual(args.source_repository, Path("/repo"))
         self.assertEqual(args.workspace_root, Path("/isolated/workspaces"))
 
+    def test_paired_run_requires_an_explicit_execution_gate(self) -> None:
+        parser = cli.build_parser()
+        args = parser.parse_args([
+            "paired", "run", "manifest.json",
+            "--source-repository", "/repo",
+            "--workspace-root", "/isolated/workspaces",
+            "--control-state-dir", "/protected/control",
+            "--confirm-agent-execution",
+        ])
+
+        self.assertEqual(args.paired_command, "run")
+        self.assertEqual(args.control_state_dir, Path("/protected/control"))
+        self.assertTrue(args.confirm_agent_execution)
+
     def test_paired_missing_manifest_fails_without_traceback(self) -> None:
         stderr = io.StringIO()
         with contextlib.redirect_stderr(stderr):

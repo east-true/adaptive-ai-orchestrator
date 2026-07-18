@@ -185,12 +185,29 @@ PYTHONPATH=src python3 -m adaptive_orchestrator.cli paired dry-run \
   --workspace-root /protected/paired-workspaces
 ```
 
-The dry run invokes neither Claude Code nor Codex. It does create eight
-persistent detached worktrees, checks that all have the same clean base and
-fixture hashes, and emits balanced seeded order plus stable pair/execution/
-attempt IDs. Existing targets are never overwritten. See the
+The dry run invokes neither Claude Code nor Codex. It creates eight persistent,
+independent shallow checkouts containing only the exact detached base commit,
+checks their clean base and fixture hashes, and emits balanced seeded order plus
+stable pair/execution/attempt IDs. They share neither Git refs nor a common Git
+directory, and existing targets are never overwritten. See the
 [paired-smoke tooling contract](docs/paired-smoke-tooling.md) before preparing a
 real manifest.
+
+The actual runner is a separate, explicit gate. It revalidates the manifest,
+installed CLI versions, protected evaluators, and a fresh workspace/control
+boundary before starting the eight attempts. It never reuses or overwrites a
+dry-run checkout or an existing control log.
+
+```bash
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli paired run \
+  experiments/phase2a-smoke-v1.json --source-repository . \
+  --workspace-root /protected/fresh-paired-run \
+  --control-state-dir /protected/fresh-paired-control \
+  --confirm-agent-execution
+```
+
+Omitting `--confirm-agent-execution` starts no agent and fails closed. The
+preregistered Phase 2a smoke has not been executed yet.
 
 ## Run a structured plan
 
