@@ -153,7 +153,7 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
         )
         self.assertEqual(
             Counter(candidate["decision"] for candidate in reviewed),
-            {"screening": 18, "excluded": 11},
+            {"screening": 17, "excluded": 12},
         )
         self.assertEqual(
             Counter(
@@ -175,6 +175,41 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
                 "ghko-minacle--swift-tui-issue-18",
             },
         )
+
+    def test_exact_base_rows_follow_the_provisioning_principle(self) -> None:
+        by_id = {
+            candidate["candidate_id"]: candidate
+            for candidate in self.ledger["candidates"]
+        }
+
+        # A missing runtime on the screening host is not an exclusion reason on its
+        # own; both rows stay screening until a provisioned environment is verified.
+        for candidate_id in (
+            "ghko-SeoyunL--factlog-academic-issue-314",
+            "ghko-minacle--swift-tui-issue-18",
+        ):
+            candidate = by_id[candidate_id]
+            self.assertEqual(candidate["decision"], "screening")
+            self.assertEqual(candidate["exclusion_rule_ids_triggered"], [])
+            self.assertEqual(candidate["screening"]["native_language_source"], "pass")
+            self.assertEqual(candidate["screening"]["exact_base_resolvable"], "pass")
+            self.assertEqual(
+                candidate["screening"]["reproducible_within_budget"], "unknown"
+            )
+
+        # Prose-only deliverables fail the objective evaluator rule and are excluded
+        # on that reason alone.
+        docker = by_id["ghko-Chigo55--Docker-Compose-issue-38"]
+        self.assertEqual(docker["decision"], "excluded")
+        self.assertEqual(
+            docker["exclusion_rule_ids_triggered"], ["subjective-only-evaluation"]
+        )
+        self.assertEqual(docker["screening"]["objective_evaluator_feasible"], "fail")
+
+        # The macOS-only toolchain row stays excluded on resource grounds.
+        ios = by_id["ghko-ProudlyOffbeat--ProudlyOffbeat-MVP-iOS-issue-93"]
+        self.assertEqual(ios["decision"], "excluded")
+        self.assertIn("resource-budget-exceeded", ios["exclusion_rule_ids_triggered"])
 
     def test_preserves_explicit_multilingual_probe_audit(self) -> None:
         candidates = [

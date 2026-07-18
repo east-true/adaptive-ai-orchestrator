@@ -24145,11 +24145,11 @@
         "license_or_use_basis": "pass",
         "exact_base_resolvable": "pass",
         "single_bounded_task": "pass",
-        "native_language_source": "unknown",
-        "low_risk_isolated_execution": "unknown",
-        "no_network_secret_push_production": "unknown",
-        "objective_evaluator_feasible": "unknown",
-        "gold_and_evaluator_hideable": "unknown",
+        "native_language_source": "pass",
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass",
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
@@ -24157,7 +24157,12 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "The licensed exact base commit and tree materialized from the upstream repository; evaluator feasibility, leakage, isolation, and resource reproducibility remain unscreened."
+        "Issue #314 is natively authored Korean and states three explicit acceptance criteria: a mixed NFC/NFD single subject sharing an identity value must not be classified duplicate_record, a genuine two-subject shared value must remain duplicate_record, and NFC-only output must stay byte-identical. A deterministic held-out acceptance test plus a --strict exit-code check can decide all three.",
+        "The solution's test path tests/unit/test_value_audit_owners_nfc.py is absent from the verified base tree 47004414a82cbf9d2218cda3661690b15c159ef2, so the gold test can be held outside the agent checkout.",
+        "tools/value_audit.py imports only the standard library and repository-local modules, so the task itself needs no network, secret, push, or production mutation.",
+        "reproducible_within_budget stays unknown: pyproject.toml declares requires-python >= 3.11 and depends on pyrewire>=1.0.3,<2.0, and neither an interpreter >= 3.11 nor that dependency has been reproduced in an isolated provisioned environment yet.",
+        "Provisioning is permitted under the recorded environment principle, but this row may not pass reproducible_within_budget until all of the following are demonstrated: an exact Python 3.11 patch-version pin; version and artifact-hash pins for pyrewire and its transitive dependencies; byte-equivalent immutable environments for both agents; no network during agent or evaluator execution; agent-free reproduction of the base and of the negative and positive controls; installation and execution inside the preregistered resource bucket; and a recorded environment epoch and fixture provenance.",
+        "AGENTS.md (1047 bytes) and CLAUDE.md (11 bytes, containing only the import line '@AGENTS.md') exist in the base tree and must not be deleted or edited. Before environment parity or reproducibility may be marked pass, the effective instruction each CLI actually receives must be shown to be equivalent."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -27968,19 +27973,23 @@
         "license_or_use_basis": "pass",
         "exact_base_resolvable": "pass",
         "single_bounded_task": "pass",
-        "native_language_source": "unknown",
+        "native_language_source": "pass",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
-        "objective_evaluator_feasible": "unknown",
+        "objective_evaluator_feasible": "fail",
         "gold_and_evaluator_hideable": "unknown",
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "subjective-only-evaluation"
+      ],
       "decision_reasons": [
-        "The licensed exact base commit and tree materialized from the upstream repository; evaluator feasibility, leakage, isolation, and resource reproducibility remain unscreened."
+        "Issue #38 is natively authored Korean and asks for a Keep a Changelog [Unreleased] section summarizing the changes merged since v1.1.1.",
+        "The deliverable is free-form release-note prose. None of the three objective modes allowed for the pilot primary set applies: there is no deterministic acceptance test, no fair golden invariant, and no property or integration check that decides the core requirement. Many different changelog wordings satisfy the issue equally well, so the merged prose must not be forced as an exact golden.",
+        "Excluded on subjective-only-evaluation alone. Absence of pwsh or docker on the screening host was not verified as a reproduction blocker for this documentation-only change and is deliberately not recorded as a further exclusion reason."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -34830,7 +34839,7 @@
         "license_or_use_basis": "pass",
         "exact_base_resolvable": "pass",
         "single_bounded_task": "pass",
-        "native_language_source": "unknown",
+        "native_language_source": "pass",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
         "objective_evaluator_feasible": "unknown",
@@ -34842,7 +34851,12 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "The licensed exact base commit and tree materialized from the upstream repository; evaluator feasibility, leakage, isolation, and resource reproducibility remain unscreened."
+        "Issue #18 is natively authored Korean and states a concrete API consolidation requirement for EditableText.",
+        "Linux reproduction is not ruled out. Sources import Glibc alongside Darwin under conditional compilation, all six SwiftPM dependencies are pinned to exact revisions in Package.resolved, and platforms: [.macOS(.v15)] declares a minimum deployment target rather than restricting the supported platform set. Swift 6.3.3 is distributed for Linux and can satisfy the declared swift-tools-version: 6.3.",
+        "This row is not excluded for a missing local toolchain. Eligibility does not depend on which runtimes happen to be installed on the screening host, because that would import the host's incidental tooling as a selection bias.",
+        "reproducible_within_budget stays unknown. The issue author verified on macOS with Apple Swift 6.4-dev using a /private/tmp scratch path and --disable-sandbox, so an equivalent Linux Swift 6.3.3 build of the four modules plus the package test suite is still unproven.",
+        "Fixed criteria before this row may pass reproducible_within_budget: pin one Linux Swift toolchain by exact version and artifact digest; vendor the six pinned SwiftPM dependencies so build and test run with no network; reproduce the base build and the negative and positive controls agent-free; and measure toolchain acquisition, build, and test wall time and disk against the preregistered resource bucket. If that measurement itself exceeds the screening budget, record these criteria and exclude under resource-budget-exceeded.",
+        "single_bounded_task remains pass as previously screened. The merged solution touched 31 files (+1421/-1083) and is source-breaking; that magnitude is recorded as a flag for task authoring and modified-file allowlist scope, not as proven failure of the rule."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -52490,8 +52504,8 @@
   ],
   "summary": {
     "candidate_count": 1130,
-    "screening_count": 1095,
-    "excluded_count": 35,
+    "screening_count": 1094,
+    "excluded_count": 36,
     "selected_for_task_authoring_count": 0,
     "language_assignment_counts": {
       "ko": 56,
@@ -52509,14 +52523,16 @@
     },
     "known_gaps": [
       "No selected task-authoring candidate exists; every non-excluded row still has at least one unknown inclusion check.",
-      "Only 29 of 411 Korean-bearing GitHub rows have manual language/category review; 27 resolved a merged PR, 2 did not, and 382 remain unprobed.",
+      "Only 29 of 411 Korean-bearing GitHub rows have manual language/category review; 27 resolved a merged PR, 2 did not, and 382 remain unprobed. Of the 29, 12 are now excluded and 17 remain screening.",
       "A second explicit-language pool added 383 nonduplicate rows; a deterministic 50-row review found 21 provisional mixed requirements, but 22 rows failed translation-only, subjectivity, coupling, or external-side-effect rules.",
       "The reviewed rows now provide 56 provisional Korean, 301 English, and 22 mixed assignments, but no row is selected and the 20/20/20 quota cannot yet be filled.",
       "The 300 externally inventoried statements are provisionally English, but native-source fidelity has not been verified instance by instance.",
       "GitHub linked solution PR, exact base, patch scope, and upstream license remain unresolved for most of the Korean-bearing discovery pool.",
       "Task category remains unassigned for 1051 of 1130 rows.",
       "Upstream license, exact base/tree, objective evaluator coverage, protected-fixture leakage, isolation, flakiness, and resource reproducibility remain unscreened.",
-      "Public benchmark exposure may contaminate agent behavior; this pilot cannot turn those instances into confirmatory capability evidence."
+      "Public benchmark exposure may contaminate agent behavior; this pilot cannot turn those instances into confirmatory capability evidence.",
+      "Eligibility does not depend on runtimes that happen to be installed on the screening host. A Linux-reproducible runtime or toolchain may be provisioned into an isolated immutable environment before manifest freeze, subject to exact version and artifact-hash pins, byte-equivalent environments for both agents, no network during agent or evaluator execution, agent-free base and control reproduction, the preregistered resource bucket, and a recorded environment epoch and fixture provenance.",
+      "factlog-academic issue 314 and swift-tui issue 18 now hold verified exact bases and native Korean statements, but both remain screening because provisioned-environment reproducibility is unverified; neither may be selected before that verification."
     ]
   }
 }
