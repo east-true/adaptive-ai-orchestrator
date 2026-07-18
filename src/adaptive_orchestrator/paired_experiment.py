@@ -4,7 +4,9 @@ import hashlib
 import json
 import math
 import re
+import shutil
 import subprocess
+import tempfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
@@ -128,6 +130,8 @@ class PreparedWorkspace:
     commit_hash: str
     tree_hash: str
     clean: bool
+    isolated_git_dir: bool
+    visible_ref_count: int
     evaluator_id: str
     evaluator_version: str
     evaluator_artifact_hash: str
@@ -280,11 +284,6 @@ def validate_paired_environment(manifest: PairedManifest, manifest_path: Path, s
     if _git(source, "status", "--porcelain", "--untracked-files=all"):
         raise PairedExperimentError(f"Source repository must be clean before paired preparation: {source}")
     commit_hash = _git(source, "rev-parse", f"{manifest.base_revision}^{{commit}}")
-    head_hash = _git(source, "rev-parse", "HEAD")
-    if head_hash != commit_hash:
-        raise PairedExperimentError(
-            f"Source HEAD must equal the manifest base revision: expected {commit_hash}, got {head_hash}"
-        )
     tree_hash = _git(source, "rev-parse", f"{commit_hash}^{{tree}}")
     if tree_hash != manifest.base_tree_hash:
         raise PairedExperimentError(
@@ -306,11 +305,15 @@ def validate_paired_environment(manifest: PairedManifest, manifest_path: Path, s
             raise PairedExperimentError(f"Evaluator command must reference a protected artifact for task {task.task_id}.")
         artifact_hashes[task.task_id] = artifact_hash
 
-        fixture_paths = _resolve_fixture_paths(source, task.fixture_paths)
-        fixture_hash = hash_evaluator_artifacts(tuple(str(path) for path in fixture_paths))
-        if fixture_hash != task.fixture_hash:
-            raise PairedExperimentError(f"Fixture hash changed for task {task.task_id}.")
-        fixture_hashes[task.task_id] = fixture_hash
+    with tempfile.TemporaryDirectory(prefix="paired-base-validation-") as temporary_directory:
+        validation_checkout = Path(temporary_directory) / "base"
+        _create_isolated_checkout(source, validation_checkout, commit_hash)
+        for task in manifest.tasks:
+            fixture_paths = _resolve_fixture_paths(validation_checkout, task.fixture_paths)
+            fixture_hash = hash_evaluator_artifacts(tuple(str(path) for path in fixture_paths))
+            if fixture_hash != task.fixture_hash:
+                raise PairedExperimentError(f"Fixture hash changed for task {task.task_id}.")
+            fixture_hashes[task.task_id] = fixture_hash
 
     return {
         "commit_hash": commit_hash,
@@ -326,7 +329,7 @@ def prepare_paired_workspaces(
     source_repository: Path,
     workspace_root: Path,
 ) -> dict[str, Any]:
-    """Create detached, clean worktrees only; no coding agent is invoked."""
+    """Create independent exact-base Git checkouts only; no coding agent is invoked."""
 
     source = source_repository.resolve(strict=True)
     root = workspace_root.expanduser().resolve()
@@ -351,12 +354,21 @@ def prepare_paired_workspaces(
     try:
         for assignment, agent_id, target in planned:
             target.parent.mkdir(parents=True, exist_ok=True)
-            _git(source, "worktree", "add", "--detach", str(target), environment["commit_hash"])
+            _create_isolated_checkout(source, target, environment["commit_hash"])
             created.append(target)
             commit_hash = _git(target, "rev-parse", "HEAD")
             tree_hash = _git(target, "rev-parse", "HEAD^{tree}")
             clean = not bool(_git(target, "status", "--porcelain", "--untracked-files=all"))
-            if commit_hash != environment["commit_hash"] or tree_hash != environment["tree_hash"] or not clean:
+            git_common_dir = _resolve_git_path(target, _git(target, "rev-parse", "--git-common-dir"))
+            isolated_git_dir = git_common_dir == (target / ".git").resolve()
+            visible_refs = tuple(line for line in _git(target, "for-each-ref", "--format=%(refname)").splitlines() if line)
+            if (
+                commit_hash != environment["commit_hash"]
+                or tree_hash != environment["tree_hash"]
+                or not clean
+                or not isolated_git_dir
+                or visible_refs
+            ):
                 raise PairedExperimentError(f"Prepared workspace failed base integrity validation: {target}")
             task = task_by_id[assignment.task_id]
             fixture_hash = hash_evaluator_artifacts(tuple(
@@ -371,18 +383,15 @@ def prepare_paired_workspaces(
                 commit_hash=commit_hash,
                 tree_hash=tree_hash,
                 clean=clean,
+                isolated_git_dir=isolated_git_dir,
+                visible_ref_count=len(visible_refs),
                 evaluator_id=task.evaluator.evaluator_id,
                 evaluator_version=task.evaluator.version,
                 evaluator_artifact_hash=task.evaluator.artifact_hash,
             ))
     except BaseException:
         for target in reversed(created):
-            subprocess.run(
-                ("git", "-C", str(source), "worktree", "remove", "--force", str(target)),
-                check=False,
-                capture_output=True,
-                text=True,
-            )
+            shutil.rmtree(target, ignore_errors=True)
         raise
 
     return {
@@ -713,6 +722,27 @@ def _git(repository: Path, *arguments: str) -> str:
     return completed.stdout.strip()
 
 
+def _create_isolated_checkout(source: Path, target: Path, commit_hash: str) -> None:
+    if target.exists():
+        raise PairedExperimentError(f"Paired workspace target already exists: {target}")
+    target.mkdir(parents=True)
+    try:
+        _git(target, "init", "-q")
+        _git(target, "fetch", "--quiet", "--depth", "1", "--no-tags", str(source), commit_hash)
+        _git(target, "checkout", "--quiet", "--detach", "FETCH_HEAD")
+        alternates = target / ".git" / "objects" / "info" / "alternates"
+        if alternates.exists():
+            raise PairedExperimentError(f"Isolated checkout unexpectedly shares Git objects: {target}")
+    except BaseException:
+        shutil.rmtree(target, ignore_errors=True)
+        raise
+
+
+def _resolve_git_path(repository: Path, raw_path: str) -> Path:
+    path = Path(raw_path)
+    return (path if path.is_absolute() else repository / path).resolve()
+
+
 def _resolve_manifest_paths(manifest_path: Path, raw_paths: Iterable[str]) -> tuple[Path, ...]:
     base = manifest_path.expanduser().resolve().parent
     return tuple((Path(path).expanduser() if Path(path).expanduser().is_absolute() else base / path).resolve(strict=True) for path in raw_paths)
@@ -816,5 +846,7 @@ def _resource_budget(value: Any) -> dict[str, float]:
             raise PairedExperimentError("Resource budget keys must be non-empty strings.")
         if isinstance(limit, bool) or not isinstance(limit, (int, float)) or not math.isfinite(float(limit)) or float(limit) <= 0:
             raise PairedExperimentError(f"Resource budget limit must be a positive finite number: {key}")
+        if key.endswith("_count") and not float(limit).is_integer():
+            raise PairedExperimentError(f"Resource count budget must be an integer: {key}")
         budget[key] = float(limit)
     return budget

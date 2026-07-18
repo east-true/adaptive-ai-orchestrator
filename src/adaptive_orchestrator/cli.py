@@ -27,6 +27,7 @@ from .paired_experiment import (
     prepare_paired_workspaces,
     validate_paired_environment,
 )
+from .paired_runner import PairedSmokeRunner
 from .routing import TaskAnalyzer
 from .routing_policy import RoutingPolicyRouter
 from .routing_state import LifecycleRecorder, ReplayError, RoutingStateStore
@@ -117,7 +118,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     paired_dry_run = paired_subparsers.add_parser(
         "dry-run",
-        help="create and verify isolated paired worktrees without invoking either agent",
+        help="create and verify independent exact-base checkouts without invoking either agent",
     )
     paired_dry_run.add_argument("manifest", type=Path)
     paired_dry_run.add_argument("--source-repository", type=Path, default=Path.cwd())
@@ -126,6 +127,20 @@ def build_parser() -> argparse.ArgumentParser:
     paired_analyze = paired_subparsers.add_parser("analyze", help="project paired outcomes from a lifecycle event source")
     paired_analyze.add_argument("manifest", type=Path)
     paired_analyze.add_argument("--control-state-dir", type=Path, required=True)
+
+    paired_run = paired_subparsers.add_parser(
+        "run",
+        help="execute a pre-registered paired smoke (requires explicit confirmation)",
+    )
+    paired_run.add_argument("manifest", type=Path)
+    paired_run.add_argument("--source-repository", type=Path, default=Path.cwd())
+    paired_run.add_argument("--workspace-root", type=Path, required=True)
+    paired_run.add_argument("--control-state-dir", type=Path, required=True)
+    paired_run.add_argument(
+        "--confirm-agent-execution",
+        action="store_true",
+        help="explicitly allow the eight agent/evaluator attempts described by the manifest",
+    )
 
     return parser
 
@@ -566,6 +581,16 @@ def _run_paired_command(args: argparse.Namespace) -> int:
             state = replay_event_log(args.control_state_dir.expanduser().resolve() / "events.jsonl")
             observations = observations_from_routing_state(manifest, state)
             print(json.dumps(analyze_paired_observations(manifest, observations), indent=2))
+            return 0
+        if args.paired_command == "run":
+            report = PairedSmokeRunner(
+                manifest,
+                manifest_path,
+                args.source_repository,
+                args.workspace_root,
+                args.control_state_dir,
+            ).run(confirm_agent_execution=args.confirm_agent_execution)
+            print(json.dumps(report, indent=2))
             return 0
         raise PairedExperimentError(f"Unsupported paired command: {args.paired_command}")
     except (EventLogError, OSError, PairedExperimentError, ReplayError, ValueError) as exc:

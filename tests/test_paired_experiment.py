@@ -8,6 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
 from adaptive_orchestrator.events import JsonlEventStore, LifecycleEventType
+from adaptive_orchestrator.domain import ExecutionStatus
 from adaptive_orchestrator.paired_experiment import (
     ORDER_ASSIGNMENT_RULE,
     PAIRED_MANIFEST_SCHEMA,
@@ -22,6 +23,8 @@ from adaptive_orchestrator.paired_experiment import (
     prepare_paired_workspaces,
     validate_paired_environment,
 )
+from adaptive_orchestrator.paired_runner import PairedExecutionError, PairedSmokeRunner
+from adaptive_orchestrator.process_runner import ProcessResult
 from adaptive_orchestrator.routing_state import LifecycleRecorder
 from adaptive_orchestrator.verification import evaluator_content_version, hash_evaluator_artifacts
 
@@ -73,7 +76,7 @@ def build_manifest_fixture(root: Path) -> tuple[Path, Path, dict]:
             "task_category": categories[index],
             "required_capabilities": ["code_generation"],
             "risk": "low",
-            "mutation_scope": "isolated-worktree",
+            "mutation_scope": "isolated-checkout",
             "read_only": False,
             "fixture_paths": ["fixture.txt"],
             "fixture_hash": fixture_hash,
@@ -160,11 +163,31 @@ def binary_observations(manifest, outcomes):
     return tuple(observations)
 
 
+class RecordingProcessRunner:
+    def __init__(self) -> None:
+        self.calls: list[tuple[tuple[str, ...], Path, float | None]] = []
+
+    def run(self, command, cwd, timeout_seconds):
+        command = tuple(command)
+        self.calls.append((command, cwd, timeout_seconds))
+        return ProcessResult(command, ExecutionStatus.COMPLETED, "ok\n", "", 0, 1.0)
+
+
+class FailingProcessRunner(RecordingProcessRunner):
+    def run(self, command, cwd, timeout_seconds):
+        command = tuple(command)
+        self.calls.append((command, cwd, timeout_seconds))
+        return ProcessResult(command, ExecutionStatus.SPAWN_ERROR, "", "unavailable", None, 1.0)
+
+
 class PairedManifestTests(unittest.TestCase):
     def test_validates_manifest_environment_and_pinned_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source, manifest_path, _ = build_manifest_fixture(root)
+            (source / "later-control-change.txt").write_text("not part of the pinned base\n")
+            git(source, "add", "later-control-change.txt")
+            git(source, "-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "-qm", "later")
 
             manifest = load_paired_manifest(manifest_path)
             environment = validate_paired_environment(manifest, manifest_path, source)
@@ -177,6 +200,7 @@ class PairedManifestTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source, manifest_path, raw = build_manifest_fixture(root)
+            valid_raw = json.loads(json.dumps(raw))
             unpinned_model = json.loads(json.dumps(raw))
             unpinned_model["agents"][0]["model"] = None
             with self.assertRaisesRegex(PairedExperimentError, "model must be a non-empty string"):
@@ -185,6 +209,10 @@ class PairedManifestTests(unittest.TestCase):
             raw["tasks"].pop()
             with self.assertRaisesRegex(PairedExperimentError, "exactly four tasks"):
                 paired_manifest_from_dict(raw)
+
+            valid_raw["maximum_resource_budget"]["agent_execution_count"] = 7.5
+            with self.assertRaisesRegex(PairedExperimentError, "count budget must be an integer"):
+                paired_manifest_from_dict(valid_raw)
 
             manifest = load_paired_manifest(manifest_path)
             artifact = Path(manifest.tasks[0].evaluator.artifact_paths[0])
@@ -211,7 +239,7 @@ class PairAssignmentTests(unittest.TestCase):
             self.assertEqual(len({assignment.execution_id for assignment in first}), 4)
             self.assertEqual(len({attempt for assignment in first for attempt in assignment.attempt_ids.values()}), 8)
 
-    def test_prepares_eight_clean_isolated_workspaces_at_identical_base(self) -> None:
+    def test_prepares_eight_clean_independent_checkouts_at_identical_base(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source, manifest_path, _ = build_manifest_fixture(root)
@@ -224,9 +252,184 @@ class PairAssignmentTests(unittest.TestCase):
             self.assertEqual(len(report["workspaces"]), 8)
             self.assertEqual(len({item["path"] for item in report["workspaces"]}), 8)
             self.assertTrue(all(item["clean"] for item in report["workspaces"]))
+            self.assertTrue(all(item["isolated_git_dir"] for item in report["workspaces"]))
+            self.assertEqual({item["visible_ref_count"] for item in report["workspaces"]}, {0})
             self.assertEqual({item["tree_hash"] for item in report["workspaces"]}, {manifest.base_tree_hash})
             with self.assertRaisesRegex(PairedExperimentError, "target already exists"):
                 prepare_paired_workspaces(manifest, manifest_path, source, root / "workspaces")
+
+
+class PairedRunnerTests(unittest.TestCase):
+    def test_execution_gate_prevents_any_workspace_or_process_activity(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, manifest_path, _ = build_manifest_fixture(root)
+            manifest = load_paired_manifest(manifest_path)
+            process_runner = RecordingProcessRunner()
+            workspace_root = root / "workspaces"
+
+            runner = PairedSmokeRunner(
+                manifest,
+                manifest_path,
+                source,
+                workspace_root,
+                root / "control",
+                process_runner_factory=lambda: process_runner,
+                version_resolver=lambda spec: spec.cli_version,
+            )
+
+            with self.assertRaisesRegex(PairedExecutionError, "confirm-agent-execution"):
+                runner.run()
+
+            self.assertFalse(workspace_root.exists())
+            self.assertEqual(process_runner.calls, [])
+
+    def test_rejects_nonempty_workspace_and_insufficient_count_budget_before_preparation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, manifest_path, raw = build_manifest_fixture(root)
+            workspace_root = root / "workspaces"
+            workspace_root.mkdir()
+            (workspace_root / "belongs-to-another-run").mkdir()
+            manifest = load_paired_manifest(manifest_path)
+
+            with self.assertRaisesRegex(PairedExecutionError, "new or empty dedicated"):
+                PairedSmokeRunner(
+                    manifest,
+                    manifest_path,
+                    source,
+                    workspace_root,
+                    root / "control",
+                    version_resolver=lambda spec: spec.cli_version,
+                ).run(confirm_agent_execution=True)
+
+            empty_workspace_root = root / "empty-workspaces"
+            raw["maximum_resource_budget"]["agent_execution_count"] = 7
+            manifest_path.write_text(json.dumps(raw, indent=2))
+            manifest = load_paired_manifest(manifest_path)
+            with self.assertRaisesRegex(PairedExecutionError, "cannot cover 8"):
+                PairedSmokeRunner(
+                    manifest,
+                    manifest_path,
+                    source,
+                    empty_workspace_root,
+                    root / "control",
+                    version_resolver=lambda spec: spec.cli_version,
+                ).run(confirm_agent_execution=True)
+
+            self.assertFalse(empty_workspace_root.exists())
+
+    def test_cli_version_mismatch_fails_before_workspace_preparation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, manifest_path, _ = build_manifest_fixture(root)
+            manifest = load_paired_manifest(manifest_path)
+            workspace_root = root / "workspaces"
+
+            runner = PairedSmokeRunner(
+                manifest,
+                manifest_path,
+                source,
+                workspace_root,
+                root / "control",
+                version_resolver=lambda spec: "unexpected-version",
+            )
+
+            with self.assertRaisesRegex(PairedExecutionError, "CLI version mismatch"):
+                runner.run(confirm_agent_execution=True)
+
+            self.assertFalse(workspace_root.exists())
+
+    def test_pauses_after_infrastructure_failure_with_a_finalized_partial_log(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, manifest_path, _ = build_manifest_fixture(root)
+            manifest = load_paired_manifest(manifest_path)
+            process_runner = FailingProcessRunner()
+            control = root / "control"
+
+            runner = PairedSmokeRunner(
+                manifest,
+                manifest_path,
+                source,
+                root / "workspaces",
+                control,
+                process_runner_factory=lambda: process_runner,
+                version_resolver=lambda spec: spec.cli_version,
+            )
+
+            with self.assertRaisesRegex(PairedExecutionError, "paused after infrastructure"):
+                runner.run(confirm_agent_execution=True)
+
+            self.assertEqual(len(process_runner.calls), 1)
+            events = JsonlEventStore(control / "events.jsonl").read()
+            self.assertEqual(len(events), 6)
+            self.assertEqual(events[-1].event_type, LifecycleEventType.OUTCOME_FINALIZED)
+
+    def test_runs_eight_attempts_with_protected_evaluators_and_paired_lifecycle(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, manifest_path, raw = build_manifest_fixture(root)
+            for task in raw["tasks"]:
+                absolute_artifact = Path(task["evaluator"]["artifact_paths"][0])
+                relative_artifact = str(absolute_artifact.relative_to(root))
+                command = ("python3", relative_artifact)
+                task["evaluator"]["command"] = list(command)
+                task["evaluator"]["artifact_paths"] = [relative_artifact]
+                task["evaluator"]["version"] = evaluator_content_version(
+                    command,
+                    (str(absolute_artifact),),
+                )
+            manifest_path.write_text(json.dumps(raw, indent=2))
+            manifest = load_paired_manifest(manifest_path)
+            process_runner = RecordingProcessRunner()
+            control = root / "control"
+
+            report = PairedSmokeRunner(
+                manifest,
+                manifest_path,
+                source,
+                root / "workspaces",
+                control,
+                process_runner_factory=lambda: process_runner,
+                version_resolver=lambda spec: f"tool {spec.cli_version}",
+            ).run(confirm_agent_execution=True)
+
+            self.assertEqual(report["schema_version"], "paired-run-v1")
+            self.assertEqual(report["manifest_schema_version"], PAIRED_MANIFEST_SCHEMA)
+            self.assertTrue(report["agent_execution_started"])
+            self.assertEqual(report["completed_attempts"], 8)
+            self.assertEqual(len(process_runner.calls), 16)
+            evaluator_calls = [call for call in process_runner.calls if call[0][0] == "python3"]
+            self.assertEqual(len(evaluator_calls), 8)
+            self.assertTrue(all(Path(call[0][1]).is_absolute() for call in evaluator_calls))
+            self.assertTrue(all(call[2] == 30 for call in evaluator_calls))
+            self.assertEqual(
+                report["analysis"]["overall_quota_diagnostic_not_workload_value"]["table_2x2"],
+                {
+                    "claude_pass_codex_pass": 4,
+                    "claude_pass_codex_fail": 0,
+                    "claude_fail_codex_pass": 0,
+                    "claude_fail_codex_fail": 0,
+                },
+            )
+            events = JsonlEventStore(control / "events.jsonl").read()
+            self.assertEqual(len(events), 48)
+            self.assertEqual(
+                sum(event.event_type is LifecycleEventType.OUTCOME_FINALIZED for event in events),
+                8,
+            )
+
+            with self.assertRaisesRegex(PairedExecutionError, "new or empty"):
+                PairedSmokeRunner(
+                    manifest,
+                    manifest_path,
+                    source,
+                    root / "second-workspace-root",
+                    control,
+                    process_runner_factory=lambda: process_runner,
+                    version_resolver=lambda spec: spec.cli_version,
+                ).run(confirm_agent_execution=True)
 
 
 class PairedAnalysisTests(unittest.TestCase):

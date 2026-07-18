@@ -68,10 +68,16 @@ metrics, budget, and stopping rules before results exist. A SHA-256-ranked,
 balanced order rule and UUIDv5 identities make the four pair assignments
 reproducible.
 
-The agent-free dry run creates eight distinct detached worktrees and verifies
-their commit/tree/fixture equality without invoking either CLI agent. Analysis
+The agent-free dry run fetches only the pinned commit into eight independent
+shallow Git directories and verifies their commit/tree/fixture equality without
+invoking either CLI agent. They expose neither shared refs nor other workspace
+paths through Git metadata. Analysis
 joins only deterministic paired IDs to protected lifecycle state, preserves
 one-sided failure and incomplete pairs, and never imputes missing quality.
+The execution runner fails closed without an explicit gate, verifies installed
+CLI versions against the manifest, requires a fresh protected control directory,
+normalizes protected evaluator commands outside agent workspaces, and applies
+the preregistered per-agent and overall wall-time limits.
 Phase 2a reports are pipeline diagnostics: sparse cells, missing confidence
 intervals, and absent target-workload weights prevent ranking or promotion.
 
