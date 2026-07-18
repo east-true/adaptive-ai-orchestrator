@@ -313,6 +313,8 @@ PYTHONPATH=src python3 -m adaptive_orchestrator.cli paired run \
 Omitting `--confirm-agent-execution` starts no agent and fails closed. The first
 preregistered Phase 2a smoke completed on 2026-07-18; see the
 [pipeline result and validity audit](experiments/results/phase2a-smoke-v1.md).
+The v2 contract-rehearsal manifest has passed negative controls and an
+agent-free dry run, but no v2 agent execution has been approved or started.
 
 ## Run a structured plan
 

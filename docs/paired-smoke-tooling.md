@@ -1,6 +1,6 @@
 # Phase 2a Paired-Smoke Tooling
 
-> 상태: 4-task manifest/tooling/gated runner와 실제 8 execution 완료
+> 상태: v1 실제 8 execution 완료, v2 contract rehearsal/agent-free dry-run 완료
 > manifest schema: 역사적 `paired-smoke-manifest-v1`, 차기 `paired-smoke-manifest-v2`
 > assignment rule: `seeded-balanced-sha256-v1`
 
@@ -142,6 +142,13 @@ Phase 2a report는 pooled/quota diagnostic을 target-workload policy value라고
 JSON key를 요구한 evaluator-contract 불일치 한 건이 발견되어 결과를 agent 순위로
 해석하지 않는다. 상세 결과와 후속 gate는
 `experiments/results/phase2a-smoke-v1.md`에 있다.
+
+`experiments/phase2a-smoke-v2.json`은 같은 exact base와 보호 evaluator를 사용하는
+4-task contract rehearsal이다. 평가기 assertion 23개를 task wording에 명시적으로
+매핑하고 v1 양쪽 workspace에서 관측한 task별 수정 파일 합집합을 exact allowlist로
+고정했다. negative control, non-mutating plan, clean-source validation, 독립 checkout 8개의
+agent-free dry-run과 plan/dry-run path 일치를 통과했다. v2 agent 실행은 아직 승인되거나
+시작되지 않았다.
 
 현재 첫 manifest와 canonical evaluator source는 `experiments/`에 있다. evaluated base는
 manifest commit보다 이전 commit이며 dry run은 source repository의 현재 branch/ref를

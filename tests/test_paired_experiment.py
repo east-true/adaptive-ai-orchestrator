@@ -203,6 +203,21 @@ class FailingProcessRunner(RecordingProcessRunner):
 
 
 class PairedManifestTests(unittest.TestCase):
+    def test_repository_v2_manifest_has_complete_audited_contract(self) -> None:
+        manifest_path = Path(__file__).parents[1] / "experiments" / "phase2a-smoke-v2.json"
+        manifest = load_paired_manifest(manifest_path)
+        coverage = paired_contract_coverage(manifest)
+        paired_plan = next(task for task in manifest.tasks if task.task_id == "paired-plan-command")
+
+        self.assertEqual(manifest.schema_version, PAIRED_MANIFEST_SCHEMA_V2)
+        self.assertTrue(coverage["preflight_contract_coverage_complete"])
+        self.assertEqual(sum(
+            task_report["declared_assertion_count"]
+            for task_report in coverage["tasks"].values()
+        ), 23)
+        self.assertIn("Top-level `workspaces` must contain exactly 8 entries.", paired_plan.description)
+        self.assertIn("tests/test_paired_experiment.py", paired_plan.modified_file_allowlist or ())
+
     def test_validates_manifest_environment_and_pinned_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
