@@ -14,15 +14,20 @@ Task -> Task analysis -> Adaptive Router -> CLI Agent (capabilities + command bu
 
 `EngineeringWorkflow.run_plan(tasks)` runs an explicit, caller-supplied ordered list of `Task`s through the unchanged single-task `run()` pipeline, one at a time, stopping at the first non-succeeding step by default (`stop_on_failure`, overridable). There is deliberately no inference of steps from a single task's free-text description: a regex/heuristic decomposition of prose (e.g. numbered lists) risks misfiring on ordinary text ("the bug in section 2.1") that only looks structured — the same category of risk as guessing at an unverified CLI output schema instead of confirming it live (see evolution #1). Structure comes only from what the caller explicitly supplied (a JSON plan file via the `run-plan` CLI subcommand, or a list of `Task` objects programmatically).
 
-`CommandVerifier` similarly gained `additional_commands: Sequence[Sequence[str]]` alongside its original single `command` field (fully backward compatible — existing single-command callers are unaffected). Every configured command runs regardless of the others' outcome, since they are typically independent checks (lint, typecheck, test); the aggregate `VerificationResult.status` is the worst of the individual outcomes, with per-command output concatenated under a `$ <command>` header.
+`CommandVerifier` retains `command` and `additional_commands` for backward
+compatibility. They now produce per-command `EvaluatorResult`s with role
+`constraint`; their worst outcome is still projected to the legacy
+`VerificationResult` used for workflow control. The built-in process terminal
+observation has role `reliability`, while explicit `EvaluatorSpec`s can represent
+`quality`, `safety`, or `resource` without substituting one role for another.
 
-This is richer command execution, but it is **not yet typed outcome evidence**.
-The current contract cannot distinguish a task-specific acceptance test from
-lint, typecheck, process health, or a diff-scope constraint. Consequently, a
-passing command must not automatically be interpreted as task-quality reward.
-The next routing increment adds evaluator roles and per-evaluator results before
-historical outcomes are used for learning; see
-[Adaptive Routing v2](adaptive-routing-v2.md).
+The repeatable `--quality-evaluator-command` is intentionally stricter than
+`--verify-command`: it requires a directly referenced read-only artifact outside
+the agent workspace. The spec version includes the command and initial artifact
+hash, and evaluator results preserve expected/before/after hashes plus whether
+integrity was verified. A missing, workspace-local, writable, or changed
+artifact invalidates the quality result. Legacy log rows are still readable,
+but their untyped verification is projected only to `constraint`, never quality.
 
 ## Planner
 
@@ -91,7 +96,7 @@ The interactive shell in `adaptive_orchestrator.shell` remains deliberately thin
 - **Adaptive Router:** infers task signals, scores capable agents using configurable policy and local history, and emits an explainable decision.
 - **Process runner:** runs argument vectors without a shell, handles timeouts, normalizes output/state, and can optionally stream stdout as it arrives without changing what it returns.
 - **Git snapshot:** best-effort collection of workspace state after execution. It does not attribute changes to an agent.
-- **Telemetry:** records task, selected agent, command, agent-process duration, result, errors, workspace files, and an opt-in diff. Final records now have stable execution/attempt identity, UTC occurrence time, policy/config identity, cohort, and evidence-eligibility fields. It still lacks started/terminal lifecycle events and end-to-end workflow/evaluator duration, so interrupted execution reconciliation is not yet durable.
+- **Telemetry:** records task, selected agent, command, agent-process duration, result, errors, workspace files, and an opt-in diff. Final records now have stable execution/attempt identity, UTC occurrence time, policy/config identity, cohort, evidence eligibility, evaluator-level typed results, and role-separated observation projections. It still lacks started/terminal lifecycle events and end-to-end workflow duration, so interrupted execution reconciliation is not yet durable.
 
 ## Security posture of local tools
 

@@ -38,6 +38,22 @@ class VerificationStatus(str, Enum):
     SKIPPED = "skipped"
 
 
+class EvaluatorRole(str, Enum):
+    RELIABILITY = "reliability"
+    QUALITY = "quality"
+    CONSTRAINT = "constraint"
+    SAFETY = "safety"
+    RESOURCE = "resource"
+
+
+class EvaluatorStatus(str, Enum):
+    PASSED = "passed"
+    FAILED = "failed"
+    TIMED_OUT = "timed_out"
+    ERROR = "error"
+    SKIPPED = "skipped"
+
+
 class MemoryEntryType(str, Enum):
     ARCHITECTURE_DECISION = "ARCHITECTURE_DECISION"
     DESIGN_REASONING = "DESIGN_REASONING"
@@ -93,6 +109,51 @@ class VerificationResult:
 
 
 @dataclass(frozen=True, slots=True)
+class EvaluatorSpec:
+    """Versioned contract for one typed observation of an execution outcome."""
+
+    evaluator_id: str
+    version: str
+    role: EvaluatorRole
+    subject: str
+    command: Sequence[str]
+    required: bool = True
+    timeout_seconds: float | None = None
+    language: str | None = None
+    evidence_scope: str = ""
+    artifact_paths: Sequence[str] = field(default_factory=tuple)
+
+    def __post_init__(self) -> None:
+        if not self.evaluator_id.strip() or not self.version.strip() or not self.subject.strip():
+            raise ValueError("EvaluatorSpec id, version, and subject are required.")
+        if not self.command:
+            raise ValueError("EvaluatorSpec command is required.")
+        if self.timeout_seconds is not None and self.timeout_seconds <= 0:
+            raise ValueError("EvaluatorSpec timeout_seconds must be positive.")
+
+
+@dataclass(frozen=True, slots=True)
+class EvaluatorResult:
+    evaluator_id: str
+    version: str
+    role: EvaluatorRole
+    status: EvaluatorStatus
+    observed: bool
+    required: bool
+    command: Sequence[str] = field(default_factory=tuple)
+    score: float | None = None
+    exit_code: int | None = None
+    duration_ms: float = 0.0
+    stdout: str | None = None
+    stderr: str | None = None
+    evidence_scope: str = ""
+    artifact_hash_expected: str | None = None
+    artifact_hash_before: str | None = None
+    artifact_hash_after: str | None = None
+    artifact_integrity_verified: bool | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class ExecutionMetadata:
     """Provider-neutral execution metadata parsed from a CLI's structured output.
 
@@ -142,6 +203,10 @@ class ExecutionRecord:
     routing_evidence_eligible: bool | None = None
     escalation_reasons: Sequence[str] = field(default_factory=tuple)
     trigger_classes: Sequence[str] = field(default_factory=tuple)
+    # Typed evaluator evidence. `verification` remains the backward-compatible
+    # aggregate used for workflow control; it is not implicitly task quality.
+    evaluations: Sequence[EvaluatorResult] = field(default_factory=tuple)
+    evaluation_projection: Mapping[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)

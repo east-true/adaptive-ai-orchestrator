@@ -1,7 +1,21 @@
 """CLI-first orchestration kernel for adaptive AI software engineering."""
 
 from .agents import Agent, ClaudeCodeAgent, CodexAgent
-from .domain import Capability, ExecutionRecord, ExecutionStatus, MemoryEntry, MemoryEntryType, Priority, Task, VerificationResult, VerificationStatus
+from .domain import (
+    Capability,
+    EvaluatorResult,
+    EvaluatorRole,
+    EvaluatorSpec,
+    EvaluatorStatus,
+    ExecutionRecord,
+    ExecutionStatus,
+    MemoryEntry,
+    MemoryEntryType,
+    Priority,
+    Task,
+    VerificationResult,
+    VerificationStatus,
+)
 from .kernel import OrchestratorKernel
 from .memory import EngineeringMemoryStore
 
@@ -11,6 +25,10 @@ __all__ = [
     "ClaudeCodeAgent",
     "CodexAgent",
     "EngineeringMemoryStore",
+    "EvaluatorResult",
+    "EvaluatorRole",
+    "EvaluatorSpec",
+    "EvaluatorStatus",
     "ExecutionRecord",
     "ExecutionStatus",
     "MemoryEntry",

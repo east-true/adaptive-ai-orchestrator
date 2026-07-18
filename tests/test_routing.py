@@ -7,7 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
 from adaptive_orchestrator.agents import ClaudeCodeAgent, CodexAgent
-from adaptive_orchestrator.domain import Capability, Task
+from adaptive_orchestrator.domain import Capability, EvaluatorRole, Task
 from adaptive_orchestrator.history import ExecutionHistory
 from adaptive_orchestrator.routing import _MIN_SAMPLES_FOR_FULL_CONFIDENCE as _MIN_SAMPLES
 from adaptive_orchestrator.routing import AdaptiveRouter, AgentRoutingProfile, TaskAnalyzer
@@ -153,6 +153,50 @@ class AdaptiveRouterTests(unittest.TestCase):
             self.assertEqual((manual["selection_mode"], manual["cohort"]), ("manual", "manual"))
             self.assertEqual((escalated["selection_mode"], escalated["cohort"]), ("escalation", "escalation"))
             self.assertEqual(primary["trigger_classes"], ["outcome", "task_analysis"])
+
+    def test_legacy_verification_projects_to_constraint_but_never_quality(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "history.jsonl"
+            path.write_text(json.dumps({
+                "agent_id": "codex",
+                "status": "completed",
+                "verification": {"status": "passed", "commands": [["python3", "-m", "unittest"]]},
+            }) + "\n")
+
+            record = ExecutionHistory(path).records()[0]
+            constraint = record["evaluation_projection"]["constraint"]
+            quality = record["evaluation_projection"]["quality"]
+
+            self.assertTrue(constraint["observed"])
+            self.assertEqual(constraint["passed_count"], 1)
+            self.assertFalse(quality["observed"])
+            self.assertEqual(quality["result_count"], 0)
+            self.assertIsNone(ExecutionHistory(path).evaluator_metrics_for("codex", EvaluatorRole.QUALITY).pass_rate)
+
+    def test_typed_evaluator_metrics_remain_separate_by_role(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "history.jsonl"
+            path.write_text(json.dumps({
+                "agent_id": "codex",
+                "status": "completed",
+                "evaluations": [
+                    {"role": "reliability", "status": "passed", "observed": True},
+                    {"role": "constraint", "status": "passed", "observed": True},
+                    {"role": "quality", "status": "failed", "observed": True, "score": 0.0},
+                    {"role": "safety", "status": "skipped", "observed": False},
+                ],
+            }) + "\n")
+            history = ExecutionHistory(path)
+
+            constraint = history.evaluator_metrics_for("codex", EvaluatorRole.CONSTRAINT)
+            quality = history.evaluator_metrics_for("codex", EvaluatorRole.QUALITY)
+            safety = history.evaluator_metrics_for("codex", EvaluatorRole.SAFETY)
+
+            self.assertEqual(constraint.pass_rate, 1.0)
+            self.assertEqual(quality.pass_rate, 0.0)
+            self.assertEqual(quality.average_score, 0.0)
+            self.assertEqual(safety.result_count, 1)
+            self.assertIsNone(safety.pass_rate)
 
     def test_history_reports_distinct_agent_ids_in_first_seen_order(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

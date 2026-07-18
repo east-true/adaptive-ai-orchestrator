@@ -11,7 +11,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
 from adaptive_orchestrator import cli
-from adaptive_orchestrator.domain import Capability, MemoryEntryType, Priority
+from adaptive_orchestrator.domain import Capability, EvaluatorRole, MemoryEntryType, Priority
 
 
 class BuildWorkflowTests(unittest.TestCase):
@@ -44,6 +44,20 @@ class BuildWorkflowTests(unittest.TestCase):
                 self.assertEqual(args.codex_model, "gpt-5.5")
                 self.assertEqual(args.codex_reasoning_effort, "high")
 
+    def test_typed_evaluator_flags_are_available_on_routed_commands(self) -> None:
+        parser = cli.build_parser()
+        for argv in (["run", "--description", "Do it", "--objective", "Done"], ["run-plan", "plan.json"]):
+            with self.subTest(command=argv):
+                args = parser.parse_args([
+                    *argv,
+                    "--verify-command", "ruff check .",
+                    "--quality-evaluator-command", "python3 /protected/acceptance.py",
+                    "--quality-evaluator-artifact", "/protected/acceptance.py",
+                ])
+                self.assertEqual(args.verify_command, ["ruff check ."])
+                self.assertEqual(args.quality_evaluator_command, ["python3 /protected/acceptance.py"])
+                self.assertEqual(args.quality_evaluator_artifact, [Path("/protected/acceptance.py")])
+
     def test_verbose_flag_installs_streaming_runner(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             args = type(
@@ -70,6 +84,47 @@ class BuildWorkflowTests(unittest.TestCase):
         runner_ctor.assert_called_once()
         self.assertIs(workflow._kernel.runner, runner_instance)
         self.assertTrue(callable(runner_ctor.call_args.args[0]))
+
+    def test_quality_evaluator_specs_are_versioned_and_protected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            artifact = root / "acceptance.py"
+            artifact.write_text("# hidden acceptance evaluator\n")
+            artifact.chmod(0o444)
+            args = type("Args", (), {
+                "quality_evaluator_command": [f"python3 {artifact}"],
+                "quality_evaluator_artifact": [artifact],
+                "quality_evaluator_time_limit": 12,
+            })()
+
+            specs = cli._quality_evaluator_specs(args, workspace)
+
+            self.assertEqual(len(specs), 1)
+            self.assertEqual(specs[0].role, EvaluatorRole.QUALITY)
+            self.assertTrue(specs[0].version.startswith("sha256:"))
+            self.assertEqual(specs[0].timeout_seconds, 12)
+            self.assertEqual(specs[0].artifact_paths, (str(artifact),))
+
+    def test_quality_evaluator_requires_external_read_only_referenced_artifact(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            artifact = root / "acceptance.py"
+            artifact.write_text("# evaluator\n")
+            base = {
+                "quality_evaluator_command": ["python3 -V"],
+                "quality_evaluator_artifact": [artifact],
+                "quality_evaluator_time_limit": None,
+            }
+            with self.assertRaisesRegex(ValueError, "read-only"):
+                cli._quality_evaluator_specs(type("Args", (), base)(), workspace)
+
+            artifact.chmod(0o444)
+            with self.assertRaisesRegex(ValueError, "directly reference"):
+                cli._quality_evaluator_specs(type("Args", (), base)(), workspace)
 
 
 class TaskFromSpecTests(unittest.TestCase):

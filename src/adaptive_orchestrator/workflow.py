@@ -10,7 +10,7 @@ from .domain import EscalationRecord, ExecutionRecord, ExecutionStatus, Task, Ve
 from .escalation import EscalationPolicy
 from .kernel import OrchestratorKernel
 from .planning import CapabilitySelector, ExecutionPlan
-from .verification import CommandVerifier
+from .verification import CommandVerifier, evaluation_projection
 
 
 def execution_succeeded(record: ExecutionRecord) -> bool:
@@ -69,6 +69,7 @@ class EngineeringWorkflow:
                 for agent in kernel.agents
             ],
             "escalation": asdict(escalation_policy) if escalation_policy is not None else None,
+            "evaluation": verifier.policy_config(),
         }
         encoded_config = json.dumps(config, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
         self._policy_version = str(getattr(selector, "policy_version", "legacy-biased"))
@@ -157,8 +158,20 @@ class EngineeringWorkflow:
             escalation_reasons=escalation_reasons,
             trigger_classes=trigger_classes,
         )
-        verification = self._verifier.verify(task, record.status, self._kernel.workspace, self._kernel.runner)
-        return replace(record, verification=verification, task_analysis=plan.analysis, routing_decision=plan.decision)
+        verification, evaluations = self._verifier.verify_with_evaluations(
+            task,
+            record.status,
+            self._kernel.workspace,
+            self._kernel.runner,
+        )
+        return replace(
+            record,
+            verification=verification,
+            evaluations=evaluations,
+            evaluation_projection=evaluation_projection(evaluations),
+            task_analysis=plan.analysis,
+            routing_decision=plan.decision,
+        )
 
     def _next_candidate(self, plan: ExecutionPlan) -> str | None:
         """The next-best routed candidate, or any other capable agent if the selector kept no ranking."""

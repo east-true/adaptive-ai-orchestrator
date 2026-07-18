@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Sequence
 
 from .agents import Agent, ClaudeCodeAgent, CodexAgent, default_agents
-from .domain import Capability, MemoryEntry, MemoryEntryType, Priority, Task
+from .domain import Capability, EvaluatorRole, EvaluatorSpec, MemoryEntry, MemoryEntryType, Priority, Task
 from .escalation import EscalationPolicy
 from .kernel import OrchestratorKernel
 from .memory import EngineeringMemoryStore
@@ -17,7 +17,7 @@ from .logging import JsonlExecutionLogger
 from .history import ExecutionHistory
 from .routing import AdaptiveRouter, TaskAnalyzer
 from .process_runner import SubprocessRunner
-from .verification import CommandVerifier
+from .verification import CommandVerifier, evaluator_content_version, validate_evaluator_artifacts
 from .workflow import EngineeringWorkflow, execution_succeeded
 
 
@@ -100,9 +100,23 @@ def _add_workflow_arguments(parser: argparse.ArgumentParser) -> None:
         "--verify-command",
         action="append",
         default=[],
-        help="Command text parsed into argument tokens; never run through a shell. Repeatable: every check runs and the worst outcome wins.",
+        help="Constraint command parsed into argument tokens; never run through a shell. Repeatable: every check runs and the worst outcome wins. It is not task-quality evidence.",
     )
     parser.add_argument("--verify-time-limit", type=float)
+    parser.add_argument(
+        "--quality-evaluator-command",
+        action="append",
+        default=[],
+        help="Task-specific objective-quality command. Repeatable and shell-free; requires protected evaluator artifact(s).",
+    )
+    parser.add_argument(
+        "--quality-evaluator-artifact",
+        action="append",
+        type=Path,
+        default=[],
+        help="Read-only evaluator or golden-fixture path outside the agent workspace. Repeatable and shared by quality commands.",
+    )
+    parser.add_argument("--quality-evaluator-time-limit", type=float)
     parser.add_argument("--include-git-diff", action="store_true", help="Log the full workspace diff; use only when it contains no sensitive data.")
     parser.add_argument("--no-escalation", action="store_true", help="Disable escalating to a second agent on failure, high risk, or high uncertainty.")
     parser.add_argument("--escalation-risk-threshold", type=int, default=3, help="Minimum analyzed risk (0-5) that triggers escalation.")
@@ -242,12 +256,52 @@ def _build_workflow(args: argparse.Namespace, workspace: Path) -> EngineeringWor
     runner = SubprocessRunner(_verbose_output_callback(f"[{args.command}:{args.agent}]")) if args.verbose else SubprocessRunner()
     kernel = OrchestratorKernel({agent.agent_id: agent for agent in agents}, logger, workspace, runner=runner, include_git_diff=args.include_git_diff)
     commands = [tuple(shlex.split(item)) for item in args.verify_command]
-    verifier = CommandVerifier(commands[0] if commands else (), args.verify_time_limit, tuple(commands[1:]))
+    quality_specs = _quality_evaluator_specs(args, workspace)
+    verifier = CommandVerifier(commands[0] if commands else (), args.verify_time_limit, tuple(commands[1:]), quality_specs)
     router = AdaptiveRouter(TaskAnalyzer(), ExecutionHistory(workspace / ".orchestrator" / "executions.jsonl"))
     escalation_policy = None if args.no_escalation else EscalationPolicy(
         args.escalation_risk_threshold, args.escalation_uncertainty_threshold, args.escalation_difficulty_threshold
     )
     return EngineeringWorkflow(kernel, router, verifier, escalation_policy)
+
+
+def _quality_evaluator_specs(args: argparse.Namespace, workspace: Path) -> tuple[EvaluatorSpec, ...]:
+    command_texts = tuple(getattr(args, "quality_evaluator_command", ()) or ())
+    configured_artifacts = tuple(getattr(args, "quality_evaluator_artifact", ()) or ())
+    if not command_texts:
+        if configured_artifacts:
+            raise ValueError("--quality-evaluator-artifact requires --quality-evaluator-command.")
+        return ()
+    artifact_paths = tuple(str(path.expanduser().resolve()) for path in configured_artifacts)
+    validate_evaluator_artifacts(artifact_paths, workspace)
+    commands = tuple(tuple(shlex.split(item)) for item in command_texts)
+    if any(not command for command in commands):
+        raise ValueError("Quality evaluator commands cannot be empty.")
+    artifact_roots = tuple(Path(path) for path in artifact_paths)
+    for command in commands:
+        referenced_paths = []
+        for token in command:
+            candidate = Path(token).expanduser()
+            if candidate.is_absolute() and candidate.exists():
+                referenced_paths.append(candidate.resolve())
+        if not any(candidate == root or candidate.is_relative_to(root) for candidate in referenced_paths for root in artifact_roots):
+            raise ValueError("Every quality evaluator command must directly reference a protected artifact path.")
+
+    timeout = getattr(args, "quality_evaluator_time_limit", None)
+    specs = []
+    for index, command in enumerate(commands, start=1):
+        version = evaluator_content_version(command, artifact_paths)
+        specs.append(EvaluatorSpec(
+            evaluator_id=f"quality-command-{index}",
+            version=version,
+            role=EvaluatorRole.QUALITY,
+            subject="task objective",
+            command=command,
+            timeout_seconds=timeout,
+            evidence_scope="Task-specific objective-quality command with protected external artifacts.",
+            artifact_paths=artifact_paths,
+        ))
+    return tuple(specs)
 
 
 def _verbose_output_callback(prefix: str):

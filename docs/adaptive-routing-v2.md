@@ -1,6 +1,6 @@
 # Adaptive Routing v2: Evidence-First Stratified Temporal Routing
 
-> 상태: 설계 검토 완료, 구현 전
+> 상태: 설계 검토, Phase -1 및 Phase 0 evaluator truth 구현 완료
 > 기준일: 2026-07-18
 > 관련 문서: [연구 검토](routing-research-review.md),
 > [평가 프로토콜](routing-evaluation-protocol.md),
@@ -470,6 +470,11 @@ lifecycle event는 각각 Phase 1 범위로 남아 있다.
 현재 biased auto feedback을 새 실력 evidence로 축적하지 않는다.
 
 ### Phase 0 — evaluator truth
+
+구현 상태(2026-07-18): typed evaluator, legacy constraint migration, 역할별 관측
+projection, 외부 read-only artifact의 baseline/실행 전후 hash 검증과 CLI 품질
+evaluator를 구현했다. 여러 quality evaluator의 정책용 단일 점수 aggregation은
+실험 manifest에서 사전 정의할 때까지 수행하지 않는다.
 
 - typed evaluator와 per-evaluator result를 추가한다.
 - reliability/quality/constraint/safety/resource를 분리한다.
