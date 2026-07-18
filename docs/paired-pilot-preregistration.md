@@ -150,8 +150,10 @@ exclude  other · noassertion · null 등 명시적 사용조건을 제공하지
 freeze   수율을 본 뒤 keyword를 추가하거나 제거하지 않는다
 ```
 
-사용 가능한 keyword 수를 `L`이라 하고, Stage 1 최대 요청은 `6 × L`이다. exact query
-목록은 `L`이 확정된 뒤 생성해 사전등록한다.
+사용 가능한 keyword 수를 `L`이라 하고, Stage 1 최대 요청은 `6 × L`이다.
+`GET /licenses` snapshot에서 `L = 13`이 확정됐고, 그에 따른 exact query **78개**는 결과를
+보기 전에 [`frameb-stage1-queries-2026-07-19.json`](../experiments/frameb-stage1-queries-2026-07-19.json)으로
+동결했다. 그 artifact는 query 문자열 전체와 canonical SHA-256, 고정 파라미터, 기록 요건을 담는다.
 
 #### Stage 1 — repository frame
 

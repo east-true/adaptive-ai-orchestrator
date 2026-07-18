@@ -1,0 +1,528 @@
+{
+  "artifact_id": "frameb-stage1-queries-2026-07-19",
+  "protocol_version": "phase2b-pilot-prereg-v1",
+  "frozen_at": "2026-07-18T23:42:37.616572+00:00",
+  "frozen_before_results": true,
+  "endpoint": "GET https://api.github.com/search/repositories",
+  "rate_limit_bucket": "search",
+  "fixed_parameters": {
+    "sort": "updated",
+    "order": "desc",
+    "per_page": 100,
+    "pagination": "none; first page only",
+    "dedup_key": "repository numeric id"
+  },
+  "ko_terms": [
+    "사용법",
+    "설치",
+    "기여",
+    "개발",
+    "실행",
+    "테스트"
+  ],
+  "license_keywords": [
+    "agpl-3.0",
+    "apache-2.0",
+    "bsd-2-clause",
+    "bsd-3-clause",
+    "bsl-1.0",
+    "cc0-1.0",
+    "epl-2.0",
+    "gpl-2.0",
+    "gpl-3.0",
+    "lgpl-2.1",
+    "mit",
+    "mpl-2.0",
+    "unlicense"
+  ],
+  "license_source": {
+    "artifact": "frameb-licenses-snapshot-2026-07-19",
+    "canonical_json_sha256": "2afa963bf74968514a1819b6eb61a54a64777cb49556c25821436b375f89132b",
+    "L": 13
+  },
+  "query_count": 78,
+  "queries_canonical_sha256": "c4ea23f31430c29fc42702f11a732839831e78edcec1518dcd05ac101ddbf2f2",
+  "queries": [
+    {
+      "query_id": "s1-사용법-agpl-3.0",
+      "ko_term": "사용법",
+      "license": "agpl-3.0",
+      "q": "\"사용법\" in:readme,description license:agpl-3.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-사용법-apache-2.0",
+      "ko_term": "사용법",
+      "license": "apache-2.0",
+      "q": "\"사용법\" in:readme,description license:apache-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-사용법-bsd-2-clause",
+      "ko_term": "사용법",
+      "license": "bsd-2-clause",
+      "q": "\"사용법\" in:readme,description license:bsd-2-clause fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-사용법-bsd-3-clause",
+      "ko_term": "사용법",
+      "license": "bsd-3-clause",
+      "q": "\"사용법\" in:readme,description license:bsd-3-clause fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-사용법-bsl-1.0",
+      "ko_term": "사용법",
+      "license": "bsl-1.0",
+      "q": "\"사용법\" in:readme,description license:bsl-1.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-사용법-cc0-1.0",
+      "ko_term": "사용법",
+      "license": "cc0-1.0",
+      "q": "\"사용법\" in:readme,description license:cc0-1.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-사용법-epl-2.0",
+      "ko_term": "사용법",
+      "license": "epl-2.0",
+      "q": "\"사용법\" in:readme,description license:epl-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-사용법-gpl-2.0",
+      "ko_term": "사용법",
+      "license": "gpl-2.0",
+      "q": "\"사용법\" in:readme,description license:gpl-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-사용법-gpl-3.0",
+      "ko_term": "사용법",
+      "license": "gpl-3.0",
+      "q": "\"사용법\" in:readme,description license:gpl-3.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-사용법-lgpl-2.1",
+      "ko_term": "사용법",
+      "license": "lgpl-2.1",
+      "q": "\"사용법\" in:readme,description license:lgpl-2.1 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-사용법-mit",
+      "ko_term": "사용법",
+      "license": "mit",
+      "q": "\"사용법\" in:readme,description license:mit fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-사용법-mpl-2.0",
+      "ko_term": "사용법",
+      "license": "mpl-2.0",
+      "q": "\"사용법\" in:readme,description license:mpl-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-사용법-unlicense",
+      "ko_term": "사용법",
+      "license": "unlicense",
+      "q": "\"사용법\" in:readme,description license:unlicense fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-설치-agpl-3.0",
+      "ko_term": "설치",
+      "license": "agpl-3.0",
+      "q": "\"설치\" in:readme,description license:agpl-3.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-설치-apache-2.0",
+      "ko_term": "설치",
+      "license": "apache-2.0",
+      "q": "\"설치\" in:readme,description license:apache-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-설치-bsd-2-clause",
+      "ko_term": "설치",
+      "license": "bsd-2-clause",
+      "q": "\"설치\" in:readme,description license:bsd-2-clause fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-설치-bsd-3-clause",
+      "ko_term": "설치",
+      "license": "bsd-3-clause",
+      "q": "\"설치\" in:readme,description license:bsd-3-clause fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-설치-bsl-1.0",
+      "ko_term": "설치",
+      "license": "bsl-1.0",
+      "q": "\"설치\" in:readme,description license:bsl-1.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-설치-cc0-1.0",
+      "ko_term": "설치",
+      "license": "cc0-1.0",
+      "q": "\"설치\" in:readme,description license:cc0-1.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-설치-epl-2.0",
+      "ko_term": "설치",
+      "license": "epl-2.0",
+      "q": "\"설치\" in:readme,description license:epl-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-설치-gpl-2.0",
+      "ko_term": "설치",
+      "license": "gpl-2.0",
+      "q": "\"설치\" in:readme,description license:gpl-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-설치-gpl-3.0",
+      "ko_term": "설치",
+      "license": "gpl-3.0",
+      "q": "\"설치\" in:readme,description license:gpl-3.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-설치-lgpl-2.1",
+      "ko_term": "설치",
+      "license": "lgpl-2.1",
+      "q": "\"설치\" in:readme,description license:lgpl-2.1 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-설치-mit",
+      "ko_term": "설치",
+      "license": "mit",
+      "q": "\"설치\" in:readme,description license:mit fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-설치-mpl-2.0",
+      "ko_term": "설치",
+      "license": "mpl-2.0",
+      "q": "\"설치\" in:readme,description license:mpl-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-설치-unlicense",
+      "ko_term": "설치",
+      "license": "unlicense",
+      "q": "\"설치\" in:readme,description license:unlicense fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-기여-agpl-3.0",
+      "ko_term": "기여",
+      "license": "agpl-3.0",
+      "q": "\"기여\" in:readme,description license:agpl-3.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-기여-apache-2.0",
+      "ko_term": "기여",
+      "license": "apache-2.0",
+      "q": "\"기여\" in:readme,description license:apache-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-기여-bsd-2-clause",
+      "ko_term": "기여",
+      "license": "bsd-2-clause",
+      "q": "\"기여\" in:readme,description license:bsd-2-clause fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-기여-bsd-3-clause",
+      "ko_term": "기여",
+      "license": "bsd-3-clause",
+      "q": "\"기여\" in:readme,description license:bsd-3-clause fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-기여-bsl-1.0",
+      "ko_term": "기여",
+      "license": "bsl-1.0",
+      "q": "\"기여\" in:readme,description license:bsl-1.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-기여-cc0-1.0",
+      "ko_term": "기여",
+      "license": "cc0-1.0",
+      "q": "\"기여\" in:readme,description license:cc0-1.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-기여-epl-2.0",
+      "ko_term": "기여",
+      "license": "epl-2.0",
+      "q": "\"기여\" in:readme,description license:epl-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-기여-gpl-2.0",
+      "ko_term": "기여",
+      "license": "gpl-2.0",
+      "q": "\"기여\" in:readme,description license:gpl-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-기여-gpl-3.0",
+      "ko_term": "기여",
+      "license": "gpl-3.0",
+      "q": "\"기여\" in:readme,description license:gpl-3.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-기여-lgpl-2.1",
+      "ko_term": "기여",
+      "license": "lgpl-2.1",
+      "q": "\"기여\" in:readme,description license:lgpl-2.1 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-기여-mit",
+      "ko_term": "기여",
+      "license": "mit",
+      "q": "\"기여\" in:readme,description license:mit fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-기여-mpl-2.0",
+      "ko_term": "기여",
+      "license": "mpl-2.0",
+      "q": "\"기여\" in:readme,description license:mpl-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-기여-unlicense",
+      "ko_term": "기여",
+      "license": "unlicense",
+      "q": "\"기여\" in:readme,description license:unlicense fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-개발-agpl-3.0",
+      "ko_term": "개발",
+      "license": "agpl-3.0",
+      "q": "\"개발\" in:readme,description license:agpl-3.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-개발-apache-2.0",
+      "ko_term": "개발",
+      "license": "apache-2.0",
+      "q": "\"개발\" in:readme,description license:apache-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-개발-bsd-2-clause",
+      "ko_term": "개발",
+      "license": "bsd-2-clause",
+      "q": "\"개발\" in:readme,description license:bsd-2-clause fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-개발-bsd-3-clause",
+      "ko_term": "개발",
+      "license": "bsd-3-clause",
+      "q": "\"개발\" in:readme,description license:bsd-3-clause fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-개발-bsl-1.0",
+      "ko_term": "개발",
+      "license": "bsl-1.0",
+      "q": "\"개발\" in:readme,description license:bsl-1.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-개발-cc0-1.0",
+      "ko_term": "개발",
+      "license": "cc0-1.0",
+      "q": "\"개발\" in:readme,description license:cc0-1.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-개발-epl-2.0",
+      "ko_term": "개발",
+      "license": "epl-2.0",
+      "q": "\"개발\" in:readme,description license:epl-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-개발-gpl-2.0",
+      "ko_term": "개발",
+      "license": "gpl-2.0",
+      "q": "\"개발\" in:readme,description license:gpl-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-개발-gpl-3.0",
+      "ko_term": "개발",
+      "license": "gpl-3.0",
+      "q": "\"개발\" in:readme,description license:gpl-3.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-개발-lgpl-2.1",
+      "ko_term": "개발",
+      "license": "lgpl-2.1",
+      "q": "\"개발\" in:readme,description license:lgpl-2.1 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-개발-mit",
+      "ko_term": "개발",
+      "license": "mit",
+      "q": "\"개발\" in:readme,description license:mit fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-개발-mpl-2.0",
+      "ko_term": "개발",
+      "license": "mpl-2.0",
+      "q": "\"개발\" in:readme,description license:mpl-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-개발-unlicense",
+      "ko_term": "개발",
+      "license": "unlicense",
+      "q": "\"개발\" in:readme,description license:unlicense fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-실행-agpl-3.0",
+      "ko_term": "실행",
+      "license": "agpl-3.0",
+      "q": "\"실행\" in:readme,description license:agpl-3.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-실행-apache-2.0",
+      "ko_term": "실행",
+      "license": "apache-2.0",
+      "q": "\"실행\" in:readme,description license:apache-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-실행-bsd-2-clause",
+      "ko_term": "실행",
+      "license": "bsd-2-clause",
+      "q": "\"실행\" in:readme,description license:bsd-2-clause fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-실행-bsd-3-clause",
+      "ko_term": "실행",
+      "license": "bsd-3-clause",
+      "q": "\"실행\" in:readme,description license:bsd-3-clause fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-실행-bsl-1.0",
+      "ko_term": "실행",
+      "license": "bsl-1.0",
+      "q": "\"실행\" in:readme,description license:bsl-1.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-실행-cc0-1.0",
+      "ko_term": "실행",
+      "license": "cc0-1.0",
+      "q": "\"실행\" in:readme,description license:cc0-1.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-실행-epl-2.0",
+      "ko_term": "실행",
+      "license": "epl-2.0",
+      "q": "\"실행\" in:readme,description license:epl-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-실행-gpl-2.0",
+      "ko_term": "실행",
+      "license": "gpl-2.0",
+      "q": "\"실행\" in:readme,description license:gpl-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-실행-gpl-3.0",
+      "ko_term": "실행",
+      "license": "gpl-3.0",
+      "q": "\"실행\" in:readme,description license:gpl-3.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-실행-lgpl-2.1",
+      "ko_term": "실행",
+      "license": "lgpl-2.1",
+      "q": "\"실행\" in:readme,description license:lgpl-2.1 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-실행-mit",
+      "ko_term": "실행",
+      "license": "mit",
+      "q": "\"실행\" in:readme,description license:mit fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-실행-mpl-2.0",
+      "ko_term": "실행",
+      "license": "mpl-2.0",
+      "q": "\"실행\" in:readme,description license:mpl-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-실행-unlicense",
+      "ko_term": "실행",
+      "license": "unlicense",
+      "q": "\"실행\" in:readme,description license:unlicense fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-테스트-agpl-3.0",
+      "ko_term": "테스트",
+      "license": "agpl-3.0",
+      "q": "\"테스트\" in:readme,description license:agpl-3.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-테스트-apache-2.0",
+      "ko_term": "테스트",
+      "license": "apache-2.0",
+      "q": "\"테스트\" in:readme,description license:apache-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-테스트-bsd-2-clause",
+      "ko_term": "테스트",
+      "license": "bsd-2-clause",
+      "q": "\"테스트\" in:readme,description license:bsd-2-clause fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-테스트-bsd-3-clause",
+      "ko_term": "테스트",
+      "license": "bsd-3-clause",
+      "q": "\"테스트\" in:readme,description license:bsd-3-clause fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-테스트-bsl-1.0",
+      "ko_term": "테스트",
+      "license": "bsl-1.0",
+      "q": "\"테스트\" in:readme,description license:bsl-1.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-테스트-cc0-1.0",
+      "ko_term": "테스트",
+      "license": "cc0-1.0",
+      "q": "\"테스트\" in:readme,description license:cc0-1.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-테스트-epl-2.0",
+      "ko_term": "테스트",
+      "license": "epl-2.0",
+      "q": "\"테스트\" in:readme,description license:epl-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-테스트-gpl-2.0",
+      "ko_term": "테스트",
+      "license": "gpl-2.0",
+      "q": "\"테스트\" in:readme,description license:gpl-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-테스트-gpl-3.0",
+      "ko_term": "테스트",
+      "license": "gpl-3.0",
+      "q": "\"테스트\" in:readme,description license:gpl-3.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-테스트-lgpl-2.1",
+      "ko_term": "테스트",
+      "license": "lgpl-2.1",
+      "q": "\"테스트\" in:readme,description license:lgpl-2.1 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-테스트-mit",
+      "ko_term": "테스트",
+      "license": "mit",
+      "q": "\"테스트\" in:readme,description license:mit fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-테스트-mpl-2.0",
+      "ko_term": "테스트",
+      "license": "mpl-2.0",
+      "q": "\"테스트\" in:readme,description license:mpl-2.0 fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    },
+    {
+      "query_id": "s1-테스트-unlicense",
+      "ko_term": "테스트",
+      "license": "unlicense",
+      "q": "\"테스트\" in:readme,description license:unlicense fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19"
+    }
+  ],
+  "recording_requirements": [
+    "query별 total_count",
+    "returned",
+    "truncated 여부",
+    "total_count > 100이면 상위 100개만 포함됐음을 명시",
+    "누락분을 무작위 표본으로 해석하지 않음",
+    "부족분을 query 재실행으로 보충하지 않음"
+  ],
+  "known_limitations": [
+    "sort=updated와 pushed cutoff가 activity bias를 중복 도입한다. 이 pool을 Korean OSS 대표표본이나 target workload 분포로 해석하지 않는다.",
+    "GitHub Search는 완전 결정적이지 않다. snapshot과 counts로 감사 가능성만 확보된다.",
+    "license 매칭은 GitHub 분류기 결과이며 terminal 근거가 아니다. selected 전 exact revision artifact 검사가 항상 필요하다."
+  ]
+}
