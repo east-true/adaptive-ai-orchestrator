@@ -110,6 +110,133 @@ object에서 만들어졌음을 검증한다. workspace에는 다른 branch/ref,
 보호 evaluator/golden artifact, secret, production credential을 노출하지 않는다.
 network, push, production mutation은 허용하지 않는다.
 
+### 4.4 Licensed-repository-first source frame (Frame B)
+
+기존 Korean-bearing pool은 삭제하거나 재정의하지 않는다. 이 frame은 agent 결과와
+무관한 eligibility 실패(license 근거 부재)를 이유로 추가하는 **result-blind
+amendment**이며, 기존 pool과 제외 row는 선택 경로 감사를 위해 모두 보존한다. 두 pool은
+분리된 `source_pool_id`를 갖고 합산 보고하지 않는다.
+
+`license:` qualifier는 **repository search에만** 사용하고 issue search에서 지원된다고
+가정하지 않는다.
+
+#### License 상태 모델
+
+license 판정은 다음 네 상태로 구분한다. repository metadata classifier 결과는
+**early-priority cache로만** 쓰고 terminal 판정으로 쓰지 않는다.
+
+| 상태 | 의미 | terminal 근거 |
+|---|---|---|
+| `classifier-confirmed-spdx` | repository metadata가 SPDX를 보고 | 아님 (revision 확인 필요) |
+| `classifier-none-uninspected-tree` | metadata에 license 없음, exact revision 미검사 | **아님** |
+| `exact-revision-license-confirmed` | pinned revision artifact에서 사용조건 확인 | 근거 |
+| `exact-revision-no-license-basis` | pinned revision의 LICENSE/COPYING/NOTICE/manifest/README를 **모두** 확인했으나 사용조건 없음 | 근거 |
+
+`exact-revision-no-license-basis`는 다섯 경로를 모두 검사했을 때만 부여한다. 일부만
+검사했으면 검사 범위를 명시해 기록하고 exclusion 근거로 쓰지 않는다. GitHub classifier는
+최종 근거가 아니므로 `selected` 전 exact revision artifact 검사는 항상 필요하다.
+
+#### License keyword 범위
+
+임의 allowlist를 쓰지 않는다. license family를 선별하면 license type에 따른 불필요한
+source selection이 생기기 때문이다. 수집 전 `GET /licenses` 응답 전체를 별도 snapshot으로
+고정한다.
+
+```text
+record   API version · retrieval timestamp · 반환된 key/SPDX 전체 목록
+         · canonical JSON SHA-256
+use      그 snapshot에서 repository search keyword로 사용 가능하다고 검증된 전체 목록
+exclude  other · noassertion · null 등 명시적 사용조건을 제공하지 않는 값
+freeze   수율을 본 뒤 keyword를 추가하거나 제거하지 않는다
+```
+
+사용 가능한 keyword 수를 `L`이라 하고, Stage 1 최대 요청은 `6 × L`이다. exact query
+목록은 `L`이 확정된 뒤 생성해 사전등록한다.
+
+#### Stage 1 — repository frame
+
+```text
+endpoint    GET /search/repositories                        (search bucket)
+query       "{KO_TERM}" in:readme,description license:{LICENSE}
+            fork:false archived:false created:<=2026-07-18 pushed:>=2025-07-19
+sort        updated, order desc
+KO_TERM     사용법 · 설치 · 기여 · 개발 · 실행 · 테스트     (6개 고정)
+LICENSE     GET /licenses snapshot의 검증된 전체 목록        (L개)
+queries     6 × L
+cap         query당 100 (첫 페이지), pagination 없음
+dedup       repository numeric id
+record      query별 total_count · returned · truncated · snapshot SHA-256
+```
+
+`sort=updated`는 중립 표본이라는 뜻이 **아니다.** `stars`보다 popularity/maturity 편향을
+덜 직접적으로 도입하고, 최근 활동 저장소가 fixture 재현 가능성이 높다는 operational
+discovery 기준일 뿐이다. `pushed:>=` cutoff와 `updated` 정렬은 activity bias를 **중복으로**
+도입한다. 이 pool을 Korean OSS 대표표본이나 target workload 분포로 해석하지 않는다.
+
+pagination 없는 capped discovery frame이므로 다음을 함께 기록한다.
+
+- `total_count > 100`이면 상위 100개만 포함됐음을 명시한다;
+- 누락분을 무작위 표본처럼 해석하지 않는다;
+- `updated` rank가 결과 선택에 직접 영향을 준다;
+- 부족분을 query 재실행으로 보충하지 않는다.
+
+#### Stage 2 — issue frame
+
+Stage 1이 만든 repository 집합 **안에서만** 검색한다.
+
+```text
+sampling    Stage 1 dedup 결과가 150개 이상이면 seed "phase2b-licensed-frame-v1"의
+            SHA-256("{seed}:{repository_id}") 오름차순 상위 150; 150개 미만이면 전부
+endpoint    GET /search/issues, repository당 정확히 1회      (search bucket)
+query       repo:{full_name} is:issue is:closed linked:pr created:<=2026-07-18
+sort        created, order desc
+cap         repository당 반환 상위 100 (1 page)
+korean      title+"\n\n"+body의 Hangul 음절 비율 >= 0.10 이고 Hangul >= 50자
+per-repo    candidate 최대 2개, 동일 seed의 SHA-256 rank로 선택
+dedup       issue URL, 그리고 기존 411 pool과의 교차 중복 제거
+```
+
+Hangul 규칙은 **discovery filter일 뿐 native 판정이 아니다.**
+`native-language-source`는 계속 instance별 수동 판정 대상이다.
+
+#### Rate limit 준수
+
+인증 토큰을 사용하지 않는다. 환경에 저장된 credential을 탐색하거나 출력하지 않는다.
+
+GitHub REST의 **core와 search는 별도 bucket**이므로 총 요청을 단일 한도로 계산하지
+않는다. 수집 전 read-only `GET /rate_limit`을 호출해 core와 search 각각의
+limit/remaining/reset을 snapshot으로 기록한다. 실행 중에는 각 응답의
+`x-ratelimit-resource`, `remaining`, `reset`, `retry-after`를 따르고, 403/429를 받으면
+reset 이전에 반복 요청하지 않는다. 예상 wall time은 bucket별로 따로 계산해 기록한다.
+
+| bucket | 사용 endpoint |
+|---|---|
+| core | `/licenses`, `/repos/*/git/trees`, `/repos/*/git/blobs`, `/repos/*/contents` |
+| search | `/search/repositories`, `/search/issues` |
+
+#### 기존 pool의 조기 필터
+
+기존 411 pool은 남은 행을 순서대로 전수 review하지 않는다. **repository ID로 dedup한 뒤
+license 결과를 repository 단위로 cache해 cheap early filter로만** 쓰고, 동일 repository에
+요청을 반복하지 않는다. 이 cache는 우선순위 신호이며 terminal 판정이 아니다.
+
+#### Frame D와 Frame C
+
+Frame D(조직 frame)는 **열지 않는다.** 결과를 보고 특정 기업 목록을 만들지 않으며,
+사용하려면 포함 조직을 정하는 외부·객관적 기준, 전체 조직 목록, cutoff,
+repo/issue enumeration 규칙, 조직당 cap을 결과 확인 전에 고정해야 한다. 사용하게 되면
+B와 분리된 `source_pool_id`를 갖고 mature Korean OSS bias를 known limitation으로 남긴다.
+
+Frame C(native task authoring)는 B pool의 실제 license·native·exact-base·evaluator
+수율을 확인할 때까지 보류한다. Korean만 authored task로 채우고 English는 upstream
+issue로 채우는 방식은 source-construction confounding이므로 허용하지 않는다.
+
+#### Quota
+
+60 task와 ko/en/mixed 각 20, category 각 12는 고정 marginal quota다. 수율이 낮다는
+이유로 45-task나 불균형 quota로 축소하지 않는다. 충족하지 못하면
+**construction incomplete / pilot not authorized**로 보고하고 agent 실행을 시작하지 않는다.
+
 ## 5. Evaluator construction
 
 Pilot primary set은 다음 objective mode만 허용한다.

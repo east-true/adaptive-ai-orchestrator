@@ -1,0 +1,102 @@
+{
+  "snapshot_id": "frameb-github-licenses-2026-07-19",
+  "protocol_version": "phase2b-pilot-prereg-v1",
+  "purpose": "Frame B Stage 1 license keyword vocabulary. Frozen before any candidate collection.",
+  "endpoint": "https://api.github.com/licenses",
+  "api_version": "2022-11-28",
+  "retrieved_at": "2026-07-18T17:52:06.997546+00:00",
+  "returned_count": 13,
+  "canonical_json_sha256": "2afa963bf74968514a1819b6eb61a54a64777cb49556c25821436b375f89132b",
+  "canonical_json_basis": "SHA-256 of json.dumps(response, sort_keys=True, separators=(',',':')) over the raw GET /licenses array.",
+  "entries": [
+    {
+      "key": "agpl-3.0",
+      "spdx_id": "AGPL-3.0",
+      "name": "GNU Affero General Public License v3.0"
+    },
+    {
+      "key": "apache-2.0",
+      "spdx_id": "Apache-2.0",
+      "name": "Apache License 2.0"
+    },
+    {
+      "key": "bsd-2-clause",
+      "spdx_id": "BSD-2-Clause",
+      "name": "BSD 2-Clause \"Simplified\" License"
+    },
+    {
+      "key": "bsd-3-clause",
+      "spdx_id": "BSD-3-Clause",
+      "name": "BSD 3-Clause \"New\" or \"Revised\" License"
+    },
+    {
+      "key": "bsl-1.0",
+      "spdx_id": "BSL-1.0",
+      "name": "Boost Software License 1.0"
+    },
+    {
+      "key": "cc0-1.0",
+      "spdx_id": "CC0-1.0",
+      "name": "Creative Commons Zero v1.0 Universal"
+    },
+    {
+      "key": "epl-2.0",
+      "spdx_id": "EPL-2.0",
+      "name": "Eclipse Public License 2.0"
+    },
+    {
+      "key": "gpl-2.0",
+      "spdx_id": "GPL-2.0",
+      "name": "GNU General Public License v2.0"
+    },
+    {
+      "key": "gpl-3.0",
+      "spdx_id": "GPL-3.0",
+      "name": "GNU General Public License v3.0"
+    },
+    {
+      "key": "lgpl-2.1",
+      "spdx_id": "LGPL-2.1",
+      "name": "GNU Lesser General Public License v2.1"
+    },
+    {
+      "key": "mit",
+      "spdx_id": "MIT",
+      "name": "MIT License"
+    },
+    {
+      "key": "mpl-2.0",
+      "spdx_id": "MPL-2.0",
+      "name": "Mozilla Public License 2.0"
+    },
+    {
+      "key": "unlicense",
+      "spdx_id": "Unlicense",
+      "name": "The Unlicense"
+    }
+  ],
+  "excluded_keys": [],
+  "excluded_rule": "Keys whose spdx_id is null or NOASSERTION, and the keys 'other' and 'noassertion', are excluded because they provide no explicit terms. None of the returned entries met that rule.",
+  "usable_keyword_count_L": 13,
+  "stage1_max_requests": 78,
+  "rate_limit_snapshot": {
+    "retrieved_at": "2026-07-18T17:51:43.953427+00:00",
+    "core": {
+      "limit": 60,
+      "remaining": 24,
+      "reset": 1784398697,
+      "used": 36
+    },
+    "search": {
+      "limit": 10,
+      "remaining": 10,
+      "reset": 1784397164,
+      "used": 0
+    },
+    "note": "core and search are separate REST buckets; request ceilings and wall time are computed per bucket."
+  },
+  "known_limitations": [
+    "GET /licenses returns GitHub's commonly-used license list, not every SPDX identifier, so the Stage 1 vocabulary is bounded by what GitHub repository search supports.",
+    "A repository search license match reflects GitHub's classifier, which is not terminal evidence; exact pinned revision artifacts must still be inspected before any row is selected."
+  ]
+}

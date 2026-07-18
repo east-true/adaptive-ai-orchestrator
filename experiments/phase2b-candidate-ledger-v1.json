@@ -17128,7 +17128,9 @@
         "Deterministic source probe resolved a same-repository merged PR and exact base/head; remaining inclusion checks require isolated fixture screening.",
         "License screening at the pinned base revision 37cebe94096b12bd73c6ba10604aeafefb34a593 of Hard-Click/Hard-Click-BackEnd: the tree carries no LICENSE, LICENCE, COPYING, NOTICE, UNLICENSE artifact, and the build manifest build.gradle (blob 704c24472625, sha256 39769ea1769a026e) declares no license field. The current default branch was not used, since a later license cannot be applied retroactively to this revision.",
         "No explicit license or recorded use basis exists for this revision, so license-or-use-basis cannot become pass. Public availability alone is not treated as a use basis, and an unclear or absent license is not classified into an SPDX identifier. Excluded as license-or-use-basis-unavailable.",
-        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead."
+        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead.",
+        "Evidence completed at revision 37cebe94096b12bd73c6ba10604aeafefb34a593: the full recursive tree (1520 blobs, truncated=False) contains no LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact at any path. README README.md (sha256 7796c906c261c2b7) contains no license heading, no SPDX-License-Identifier, and no license name; the raw-endpoint content hash matched the independent API blob fetch. All five evidence paths (LICENSE/COPYING/NOTICE/manifest/README) were inspected at the pinned revision, so the status is exact-revision-no-license-basis rather than classifier-none-uninspected-tree.",
+        "Filename scan false positives were reviewed and rejected as license artifacts: src/main/java/com/wanted/backend/domain/notice/domain/model/Notice.java are source files whose names merely contain 'notice'."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -18273,7 +18275,8 @@
         "Deterministic source probe resolved a same-repository merged PR and exact base/head; remaining inclusion checks require isolated fixture screening.",
         "License screening at the pinned base revision 90fe854a3d5b90408124aec54265dfd424a9048a of m9-m9/talkhugam: the tree carries no LICENSE, LICENCE, COPYING, NOTICE, UNLICENSE artifact, and the build manifest package.json (blob 473541dc895d, sha256 a10dcd060c7ac418) declares no license field. The current default branch was not used, since a later license cannot be applied retroactively to this revision.",
         "No explicit license or recorded use basis exists for this revision, so license-or-use-basis cannot become pass. Public availability alone is not treated as a use basis, and an unclear or absent license is not classified into an SPDX identifier. Excluded as license-or-use-basis-unavailable.",
-        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead."
+        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead.",
+        "Evidence completed at revision 90fe854a3d5b90408124aec54265dfd424a9048a: the full recursive tree (236 blobs, truncated=False) contains no LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact at any path. README README.md (sha256 5803ed98ffaf9fd0) contains no license heading, no SPDX-License-Identifier, and no license name; the raw-endpoint content hash matched the independent API blob fetch. All five evidence paths (LICENSE/COPYING/NOTICE/manifest/README) were inspected at the pinned revision, so the status is exact-revision-no-license-basis rather than classifier-none-uninspected-tree."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -21914,7 +21917,8 @@
         "Deterministic source probe resolved a same-repository merged PR and exact base/head; remaining inclusion checks require isolated fixture screening.",
         "License screening at the pinned base revision 0982a3fd7eeeafcf3ba0c08c14005a1590a2e1a7 of call-from-ai/CallFromAi_Android: the tree carries no LICENSE, LICENCE, COPYING, NOTICE, UNLICENSE artifact, and the build manifest build.gradle.kts (blob 019848428205, sha256 aabf411b1e9ca350) declares no license field. The current default branch was not used, since a later license cannot be applied retroactively to this revision.",
         "No explicit license or recorded use basis exists for this revision, so license-or-use-basis cannot become pass. Public availability alone is not treated as a use basis, and an unclear or absent license is not classified into an SPDX identifier. Excluded as license-or-use-basis-unavailable.",
-        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead."
+        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead.",
+        "Evidence completed at revision 0982a3fd7eeeafcf3ba0c08c14005a1590a2e1a7: the full recursive tree (332 blobs, truncated=False) contains no LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact at any path. README README.md (sha256 0314c8635f9d17ab) contains no license heading, no SPDX-License-Identifier, and no license name; the raw-endpoint content hash matched the independent API blob fetch. All five evidence paths (LICENSE/COPYING/NOTICE/manifest/README) were inspected at the pinned revision, so the status is exact-revision-no-license-basis rather than classifier-none-uninspected-tree."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -22826,7 +22830,8 @@
         "Deterministic source probe resolved a same-repository merged PR and exact base/head; remaining inclusion checks require isolated fixture screening.",
         "License screening at the pinned base revision 31de9b19695ad24d279094f9a6ba549f39d454cf of Central-MakeUs/moyeo-client: the tree carries no LICENSE, LICENCE, COPYING, NOTICE, UNLICENSE artifact, and the build manifest package.json (blob f868925c5095, sha256 6f4cf9c77db46738) declares no license field. The current default branch was not used, since a later license cannot be applied retroactively to this revision.",
         "No explicit license or recorded use basis exists for this revision, so license-or-use-basis cannot become pass. Public availability alone is not treated as a use basis, and an unclear or absent license is not classified into an SPDX identifier. Excluded as license-or-use-basis-unavailable.",
-        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead."
+        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead.",
+        "Evidence completed at revision 31de9b19695ad24d279094f9a6ba549f39d454cf: the full recursive tree (254 blobs, truncated=False) contains no LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact at any path. README README.md (sha256 39138a06520a7ac6) contains no license heading, no SPDX-License-Identifier, and no license name; the raw-endpoint content hash matched the independent API blob fetch. All five evidence paths (LICENSE/COPYING/NOTICE/manifest/README) were inspected at the pinned revision, so the status is exact-revision-no-license-basis rather than classifier-none-uninspected-tree."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -23329,7 +23334,8 @@
         "Source-grounded correction: the statement and scope are TypeScript/Playwright, not Java. Grounding paths in the issue wording are e2e/auth.spec.ts (Playwright spec with page.route), .env.development (VITE_API_URL), and client.ts (axios baseURL behind the Vite dev proxy). The pinned base tree carries package.json and no Java build manifest for this scope.",
         "License screening at the pinned base revision 073879ea05cb05a8d17422284463f335ef469c53 of wcorn/orino: the tree carries no LICENSE, LICENCE, COPYING, NOTICE, UNLICENSE artifact, and the build manifest package.json (blob ccbc4186edf1, sha256 32eb59e9f9346ac1) declares no license field. The current default branch was not used, since a later license cannot be applied retroactively to this revision.",
         "No explicit license or recorded use basis exists for this revision, so license-or-use-basis cannot become pass. Public availability alone is not treated as a use basis, and an unclear or absent license is not classified into an SPDX identifier. Excluded as license-or-use-basis-unavailable.",
-        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead."
+        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead.",
+        "Evidence completed at revision 073879ea05cb05a8d17422284463f335ef469c53: the full recursive tree (939 blobs, truncated=False) contains no LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact at any path. No README blob exists at the pinned revision, so there is no README grant to inspect. All five evidence paths (LICENSE/COPYING/NOTICE/manifest/README) were inspected at the pinned revision, so the status is exact-revision-no-license-basis rather than classifier-none-uninspected-tree."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -24342,7 +24348,8 @@
         "Source-grounded correction: the task targets Rust/Tauri, not JavaScript or TypeScript. Grounding paths in the issue wording are src-tauri/src/lib.rs:75 (the tracing_subscriber::fmt subscriber to replace), Cargo.toml:52 (tracing-subscriber features, tracing-appender absent), and src-tauri/src/main.rs:2 (#![windows_subsystem = \"windows\"]).",
         "License screening at the pinned base revision 511f237f9bbc569281ce47d19b27f29fe917673d of Felix-LeeSM/table-view: the tree carries no LICENSE, LICENCE, COPYING, NOTICE, UNLICENSE artifact, and the build manifest package.json (blob f0df03632177, sha256 91a7a19d3b06f682) declares no license field. The current default branch was not used, since a later license cannot be applied retroactively to this revision.",
         "No explicit license or recorded use basis exists for this revision, so license-or-use-basis cannot become pass. Public availability alone is not treated as a use basis, and an unclear or absent license is not classified into an SPDX identifier. Excluded as license-or-use-basis-unavailable.",
-        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead."
+        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead.",
+        "Evidence completed at revision 511f237f9bbc569281ce47d19b27f29fe917673d: the full recursive tree (3413 blobs, truncated=False) contains no LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact at any path. README README.md (sha256 3fb3d422544c989b) contains no license heading, no SPDX-License-Identifier, and no license name; the raw-endpoint content hash matched the independent API blob fetch. All five evidence paths (LICENSE/COPYING/NOTICE/manifest/README) were inspected at the pinned revision, so the status is exact-revision-no-license-basis rather than classifier-none-uninspected-tree."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -24950,7 +24957,8 @@
         "Deterministic source probe resolved a same-repository merged PR and exact base/head; remaining inclusion checks require isolated fixture screening.",
         "License screening at the pinned base revision d64112d5f9edc1d1e4b3c77def2e108430fdbbc4 of BellWin98/BE-HCM: the tree carries no LICENSE, LICENCE, COPYING, NOTICE, UNLICENSE artifact, and the build manifest build.gradle (blob 0bc34c0da78e, sha256 e3c966b1d884f2f4) declares no license field. The current default branch was not used, since a later license cannot be applied retroactively to this revision.",
         "No explicit license or recorded use basis exists for this revision, so license-or-use-basis cannot become pass. Public availability alone is not treated as a use basis, and an unclear or absent license is not classified into an SPDX identifier. Excluded as license-or-use-basis-unavailable.",
-        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead."
+        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead.",
+        "Evidence completed at revision d64112d5f9edc1d1e4b3c77def2e108430fdbbc4: the full recursive tree (170 blobs, truncated=False) contains no LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact at any path. No README blob exists at the pinned revision, so there is no README grant to inspect. All five evidence paths (LICENSE/COPYING/NOTICE/manifest/README) were inspected at the pinned revision, so the status is exact-revision-no-license-basis rather than classifier-none-uninspected-tree."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -26945,7 +26953,8 @@
         "Deterministic source probe resolved a same-repository merged PR and exact base/head; remaining inclusion checks require isolated fixture screening.",
         "License screening at the pinned base revision 7d0d35b6c43ab429d52e81cab89c1a1ee5ee5ba1 of eodaego/eodaego-AI: the tree carries no LICENSE, LICENCE, COPYING, NOTICE, UNLICENSE artifact, and the build manifest pyproject.toml (blob dc5fdd5a1cea, sha256 221743881f427537) declares no license field. The current default branch was not used, since a later license cannot be applied retroactively to this revision.",
         "No explicit license or recorded use basis exists for this revision, so license-or-use-basis cannot become pass. Public availability alone is not treated as a use basis, and an unclear or absent license is not classified into an SPDX identifier. Excluded as license-or-use-basis-unavailable.",
-        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead."
+        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead.",
+        "Evidence completed at revision 7d0d35b6c43ab429d52e81cab89c1a1ee5ee5ba1: the full recursive tree (110 blobs, truncated=False) contains no LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact at any path. No README blob exists at the pinned revision, so there is no README grant to inspect. All five evidence paths (LICENSE/COPYING/NOTICE/manifest/README) were inspected at the pinned revision, so the status is exact-revision-no-license-basis rather than classifier-none-uninspected-tree."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -29058,7 +29067,8 @@
         "Deterministic source probe resolved a same-repository merged PR and exact base/head; remaining inclusion checks require isolated fixture screening.",
         "License screening at the pinned base revision 42dc9c0513bad71482ab248c69c9e0051fce2d08 of solduma/reporter: the tree carries no LICENSE, LICENCE, COPYING, NOTICE, UNLICENSE artifact, and the build manifest pyproject.toml (blob 2cde18addde2, sha256 aa1617f94440d249) declares no license field. The current default branch was not used, since a later license cannot be applied retroactively to this revision.",
         "No explicit license or recorded use basis exists for this revision, so license-or-use-basis cannot become pass. Public availability alone is not treated as a use basis, and an unclear or absent license is not classified into an SPDX identifier. Excluded as license-or-use-basis-unavailable.",
-        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead."
+        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead.",
+        "Evidence completed at revision 42dc9c0513bad71482ab248c69c9e0051fce2d08: the full recursive tree (435 blobs, truncated=False) contains no LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact at any path. README README.md (sha256 2d0f01b6569aeff3) contains no license heading, no SPDX-License-Identifier, and no license name; the raw-endpoint content hash matched the independent API blob fetch. All five evidence paths (LICENSE/COPYING/NOTICE/manifest/README) were inspected at the pinned revision, so the status is exact-revision-no-license-basis rather than classifier-none-uninspected-tree."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -29263,7 +29273,9 @@
         "Deterministic source probe resolved a same-repository merged PR and exact base/head; remaining inclusion checks require isolated fixture screening.",
         "License screening at the pinned base revision 34f675a50a397a2e0d33a6fe84cfd7080d65ebdc of kakao-tech-campus-3rd-step3/Team18_FE: the tree carries no LICENSE, LICENCE, COPYING, NOTICE, UNLICENSE artifact, and the build manifest package.json (blob 31ca6b6c4d7e, sha256 b33f0baed85647bc) declares no license field. The current default branch was not used, since a later license cannot be applied retroactively to this revision.",
         "No explicit license or recorded use basis exists for this revision, so license-or-use-basis cannot become pass. Public availability alone is not treated as a use basis, and an unclear or absent license is not classified into an SPDX identifier. Excluded as license-or-use-basis-unavailable.",
-        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead."
+        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead.",
+        "Evidence completed at revision 34f675a50a397a2e0d33a6fe84cfd7080d65ebdc: the full recursive tree (307 blobs, truncated=False) contains no LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact at any path. README README.md (sha256 74fb1d447fa703b1) contains no license heading, no SPDX-License-Identifier, and no license name; the raw-endpoint content hash matched the independent API blob fetch. All five evidence paths (LICENSE/COPYING/NOTICE/manifest/README) were inspected at the pinned revision, so the status is exact-revision-no-license-basis rather than classifier-none-uninspected-tree.",
+        "Filename scan false positives were reviewed and rejected as license artifacts: src/app/mocks/handler/notice.ts, src/app/mocks/repositories/notice.ts, src/pages/user/Notice/types/notice.ts are source files whose names merely contain 'notice'."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -29509,7 +29521,8 @@
         "Deterministic source probe resolved a same-repository merged PR and exact base/head; remaining inclusion checks require isolated fixture screening.",
         "License screening at the pinned base revision 414865266939e1bb82e1ca46d83c8108d9c6436d of myYack-team/BackEnd-SpringBoot: the tree carries no LICENSE, LICENCE, COPYING, NOTICE, UNLICENSE artifact, and the build manifest build.gradle (blob b324b8b1526d, sha256 901be6985622a83b) declares no license field. The current default branch was not used, since a later license cannot be applied retroactively to this revision.",
         "No explicit license or recorded use basis exists for this revision, so license-or-use-basis cannot become pass. Public availability alone is not treated as a use basis, and an unclear or absent license is not classified into an SPDX identifier. Excluded as license-or-use-basis-unavailable.",
-        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead."
+        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead.",
+        "Evidence completed at revision 414865266939e1bb82e1ca46d83c8108d9c6436d: the full recursive tree (310 blobs, truncated=False) contains no LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact at any path. README README.md (sha256 cd2a0a0aa7fb311c) contains no license heading, no SPDX-License-Identifier, and no license name; the raw-endpoint content hash matched the independent API blob fetch. All five evidence paths (LICENSE/COPYING/NOTICE/manifest/README) were inspected at the pinned revision, so the status is exact-revision-no-license-basis rather than classifier-none-uninspected-tree."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -33451,7 +33464,8 @@
         "Deterministic source probe resolved a same-repository merged PR and exact base/head; remaining inclusion checks require isolated fixture screening.",
         "License screening at the pinned base revision d3f4a92428a4cf09e909aa7f2e45122a28c367da of rktclgh/ieum_FE: the tree carries no LICENSE, LICENCE, COPYING, NOTICE, UNLICENSE artifact, and the build manifest package.json (blob da6a72f1f380, sha256 13ebb5c19a294145) declares no license field. The current default branch was not used, since a later license cannot be applied retroactively to this revision.",
         "No explicit license or recorded use basis exists for this revision, so license-or-use-basis cannot become pass. Public availability alone is not treated as a use basis, and an unclear or absent license is not classified into an SPDX identifier. Excluded as license-or-use-basis-unavailable.",
-        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead."
+        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead.",
+        "Evidence completed at revision d3f4a92428a4cf09e909aa7f2e45122a28c367da: the full recursive tree (849 blobs, truncated=False) contains no LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact at any path. No README blob exists at the pinned revision, so there is no README grant to inspect. All five evidence paths (LICENSE/COPYING/NOTICE/manifest/README) were inspected at the pinned revision, so the status is exact-revision-no-license-basis rather than classifier-none-uninspected-tree."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
