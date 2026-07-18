@@ -21,9 +21,9 @@
       "license-artifact-or-spdx-present": 21
     },
     "explicit": {
-      "none-observed": 45,
-      "repositories": 57,
-      "license-artifact-or-spdx-present": 12
+      "none-observed": 133,
+      "repositories": 182,
+      "license-artifact-or-spdx-present": 49
     }
   },
   "entries": [
@@ -937,6 +937,33 @@
       "screening_rows_behind_repository": 1
     },
     {
+      "repository": "OngoJishik/OngoJishik-client",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 3
+    },
+    {
+      "repository": "Ootzk/Wor-chain-dle",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 2
+    },
+    {
+      "repository": "Orchemi/my-resend",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 1
+    },
+    {
       "repository": "ParkSiYeol3/wabi-sabi",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "core-api-repository-metadata-classifier",
@@ -944,6 +971,33 @@
       "classifier_spdx_id": null,
       "license_file_at_head": null,
       "screening_rows_behind_repository": 2
+    },
+    {
+      "repository": "Peek-a-chu/peekle",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 3
+    },
+    {
+      "repository": "PhoMate/PhoMate_FastAPI_BE",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 2
+    },
+    {
+      "repository": "PitCrew-Agent/Agentory-fastAPI",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 5
     },
     {
       "repository": "ProudlyOffbeat/ProudlyOffbeat-MVP-iOS",
@@ -991,6 +1045,15 @@
       "screening_rows_behind_repository": 1
     },
     {
+      "repository": "RomainHartmann/loupe",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 2
+    },
+    {
       "repository": "RosieOh/ccStory",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "core-api-repository-metadata-classifier",
@@ -1000,6 +1063,15 @@
       "screening_rows_behind_repository": 3
     },
     {
+      "repository": "SIDED00R/algo-review",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 1
+    },
+    {
       "repository": "SIDED00R/quant-trader",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "core-api-repository-metadata-classifier",
@@ -1007,6 +1079,15 @@
       "classifier_spdx_id": null,
       "license_file_at_head": null,
       "screening_rows_behind_repository": 2
+    },
+    {
+      "repository": "SKALA-TEAM5/frontend",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
     },
     {
       "repository": "SKNETWORKS-FAMILY-AICAMP/SKN27-FINAL-3Team",
@@ -1045,6 +1126,15 @@
       "screening_rows_behind_repository": 1
     },
     {
+      "repository": "SNMac/SYKeyboard",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 2
+    },
+    {
       "repository": "SSAM-BBONG/Gym-Jjak_BE",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "core-api-repository-metadata-classifier",
@@ -1060,6 +1150,33 @@
       "signal": "none-observed",
       "classifier_spdx_id": null,
       "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "Sangam-Beavers/frontend",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 2
+    },
+    {
+      "repository": "Sangam-Beavers/gb-backend",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "SeniorAILab/eldercare-fall-ai",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
       "screening_rows_behind_repository": 1
     },
     {
@@ -1106,6 +1223,15 @@
       "classifier_spdx_id": null,
       "license_file_at_head": null,
       "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "Sungho-pk42ac/agentguard",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 2
     },
     {
       "repository": "Sungw0o/Booktown-V2",
@@ -1207,6 +1333,24 @@
       "screening_rows_behind_repository": 1
     },
     {
+      "repository": "TangoEnSkai/tangoenskai.github.io",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "TangoEnSkai/uber-go-style-guide-kr",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 4
+    },
+    {
       "repository": "Team-Routee/Routee-iOS",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "core-api-repository-metadata-classifier",
@@ -1243,9 +1387,27 @@
       "screening_rows_behind_repository": 3
     },
     {
+      "repository": "Teamie71/folioo-ai",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
       "repository": "Togedy/Togedy_Server_V2",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "core-api-repository-metadata-classifier",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "Trace-Hub/TraceHub",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
       "signal": "none-observed",
       "classifier_spdx_id": null,
       "license_file_at_head": null,
@@ -1315,6 +1477,15 @@
       "screening_rows_behind_repository": 1
     },
     {
+      "repository": "UMC10th-PLIMAP/PLIMAP-BE",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 2
+    },
+    {
       "repository": "WookJaes/coffee-order-system",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "core-api-repository-metadata-classifier",
@@ -1351,6 +1522,15 @@
       "screening_rows_behind_repository": 1
     },
     {
+      "repository": "YSbookcase/TimePilot",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 4
+    },
+    {
       "repository": "apinkpanda722/whispermate-mcp",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "core-api-repository-metadata-classifier",
@@ -1358,6 +1538,42 @@
       "classifier_spdx_id": null,
       "license_file_at_head": null,
       "screening_rows_behind_repository": 2
+    },
+    {
+      "repository": "ascend-kim/control-e2e-target",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 4
+    },
+    {
+      "repository": "ase10git/CrewHub",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "baekenough/oh-my-customcode",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "big-gates/MOZI",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
     },
     {
       "repository": "bjw202/mdedit",
@@ -1376,6 +1592,15 @@
       "classifier_spdx_id": null,
       "license_file_at_head": null,
       "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "bongmyung-ye/nexora-corporate-web",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 2
     },
     {
       "repository": "boogle-team/boogle-server",
@@ -1405,6 +1630,15 @@
       "screening_rows_behind_repository": 3
     },
     {
+      "repository": "buildon99x/copy-pet",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 1
+    },
+    {
       "repository": "cartoonpoet/ERDify",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "core-api-repository-metadata-classifier",
@@ -1432,6 +1666,42 @@
       "screening_rows_behind_repository": 1
     },
     {
+      "repository": "chichoi1991/Agent_Blog",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 8
+    },
+    {
+      "repository": "cloud-team2/bifrost",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 3
+    },
+    {
+      "repository": "code-logs/code-logs.github.io",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "cops-and-robbers/cops-and-robbers-FE",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 1
+    },
+    {
       "repository": "dEitY719/dotfiles",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "core-api-repository-metadata-classifier",
@@ -1448,6 +1718,42 @@
       "classifier_spdx_id": null,
       "license_file_at_head": null,
       "screening_rows_behind_repository": 3
+    },
+    {
+      "repository": "decodedcorp/decoded",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "dewring/bootcamp_rails_reading_log",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "digitie/kor-travel-geo",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "digitie/python-knps-api",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
     },
     {
       "repository": "dnd-side-project/dnd-14th-8-backend",
@@ -1468,6 +1774,24 @@
       "screening_rows_behind_repository": 4
     },
     {
+      "repository": "donghoon-bigvalue/token-usage-app",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "dongwandev/d-connect",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 2
+    },
+    {
       "repository": "dungsil-ai/intellij-plugin-egovframe",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "core-api-repository-metadata-classifier",
@@ -1486,12 +1810,111 @@
       "screening_rows_behind_repository": 1
     },
     {
+      "repository": "e7217/anygarden",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "efface-studio/QuirkyDay-Client",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "eun-day/yarnie",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
       "repository": "finance-simulater/backend",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "core-api-repository-metadata-classifier",
       "signal": "none-observed",
       "classifier_spdx_id": null,
       "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "fluojs/fluo",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "fomalhaut84/myFitness",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "fowoco/knowledge",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 3
+    },
+    {
+      "repository": "from-knu-import-potato/baro-backend",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "fwani/harness-game",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 3
+    },
+    {
+      "repository": "genonai/doc_parser",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "ggqgga/issue-runner",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 3
+    },
+    {
+      "repository": "ginishuh/contextforge",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
       "screening_rows_behind_repository": 1
     },
     {
@@ -1504,6 +1927,24 @@
       "screening_rows_behind_repository": 1
     },
     {
+      "repository": "greenheadHQ/nixos-config",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "h1tTAKA/nunopi",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 2
+    },
+    {
       "repository": "hamyeon/be-ai",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "core-api-repository-metadata-classifier",
@@ -1511,6 +1952,15 @@
       "classifier_spdx_id": null,
       "license_file_at_head": null,
       "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "handokei/subway-now",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 2
     },
     {
       "repository": "hang-in/tunaRound",
@@ -1556,6 +2006,42 @@
       "classifier_spdx_id": null,
       "license_file_at_head": null,
       "screening_rows_behind_repository": 3
+    },
+    {
+      "repository": "hoksi/codeigniter4-docs-ko",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "hoksi/nexusts",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "hskim-solv/BidMate-DocAgent",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 6
+    },
+    {
+      "repository": "hsu3046/MarkMind",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 1
     },
     {
       "repository": "hxx-dev/emotional-diary",
@@ -1612,6 +2098,15 @@
       "screening_rows_behind_repository": 1
     },
     {
+      "repository": "inbeomheo/insight-engine",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
       "repository": "indielife/wallpad-mqtt-bridge",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "raw-head-default-branch-file-presence",
@@ -1648,6 +2143,33 @@
       "screening_rows_behind_repository": 2
     },
     {
+      "repository": "ixxveon/career-wave",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 3
+    },
+    {
+      "repository": "j2enty/Pipeline",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "jaepaly/NHN-Project",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
       "repository": "jayleekr/hypeproof-studio",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "raw-head-default-branch-file-presence",
@@ -1655,6 +2177,87 @@
       "classifier_spdx_id": null,
       "license_file_at_head": null,
       "screening_rows_behind_repository": 2
+    },
+    {
+      "repository": "jee1/ten_bagger",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "jeongiryang/SoftwareEngineering_team15_project_-Smart-Edu-Platform",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 3
+    },
+    {
+      "repository": "jeongsk/daily_stock_analysis",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "jerryko570/butter-weather-shop",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "jhun-kim/cafe-pickup-hub",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "jinwon-int/a2a-nexus",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "jinwon-int/ccc-node",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "jiyoung04lee/aive-voice",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "jkas2016/hsr-warp",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 1
     },
     {
       "repository": "jobai-project/jobai-backend",
@@ -1675,6 +2278,42 @@
       "screening_rows_behind_repository": 1
     },
     {
+      "repository": "jongwony/epistemic-protocols",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "joshua-jingu-lee/ante",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 4
+    },
+    {
+      "repository": "juicyjusung/qgh",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "junsoo0719/BeyondToursSeoul-BTS_Back",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
       "repository": "kakao-tech-campus-3rd-step3/Team18_FE",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "raw-head-default-branch-file-presence",
@@ -1691,6 +2330,24 @@
       "classifier_spdx_id": null,
       "license_file_at_head": "LICENSE",
       "screening_rows_behind_repository": 6
+    },
+    {
+      "repository": "kanziman/nsq",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 2
+    },
+    {
+      "repository": "khuda-data/khuda-homepage-web",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
     },
     {
       "repository": "kid-mily/Algoga-backend",
@@ -1729,8 +2386,26 @@
       "screening_rows_behind_repository": 1
     },
     {
+      "repository": "kjh0209/cupid",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
       "repository": "klmhyeonwoo/kr-tech-recruitment",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "kochul2000/laymux",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
       "probe_method": "raw-head-default-branch-file-presence",
       "signal": "none-observed",
       "classifier_spdx_id": null,
@@ -1747,12 +2422,66 @@
       "screening_rows_behind_repository": 1
     },
     {
+      "repository": "kosa-biz-codemap/CodeMap",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 3
+    },
+    {
+      "repository": "krafton-jungle-project-4team/loop-ad_dashboard",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "landfill/secure-doc",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 1
+    },
+    {
       "repository": "leaf-nam/AlgoQueue",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "raw-head-default-branch-file-presence",
       "signal": "none-observed",
       "classifier_spdx_id": null,
       "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "lim010111/autocolor-calendar",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "limlimlim-studio/checkcheck",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "loopback-social/community-network-banner",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
       "screening_rows_behind_repository": 1
     },
     {
@@ -1763,6 +2492,15 @@
       "classifier_spdx_id": null,
       "license_file_at_head": null,
       "screening_rows_behind_repository": 3
+    },
+    {
+      "repository": "lvis-project/lvis-app",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 2
     },
     {
       "repository": "m9-m9/talkhugam",
@@ -1783,8 +2521,35 @@
       "screening_rows_behind_repository": 1
     },
     {
+      "repository": "mann-lab-apps/in-c",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 6
+    },
+    {
+      "repository": "mclayer/plugin-codeforge",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
       "repository": "mediunn/Livith-Server",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "mil-zip/milzip-be",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
       "probe_method": "raw-head-default-branch-file-presence",
       "signal": "none-observed",
       "classifier_spdx_id": null,
@@ -1846,6 +2611,33 @@
       "screening_rows_behind_repository": 2
     },
     {
+      "repository": "mlender-ai/simulo",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "money-pin/muffin-front",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "moodme-teo/mood-me-fe",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
       "repository": "myYack-team/BackEnd-SpringBoot",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "raw-head-default-branch-file-presence",
@@ -1862,6 +2654,24 @@
       "classifier_spdx_id": null,
       "license_file_at_head": null,
       "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "mynameisseohyeon/Turtle_Neck_Buddy",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "nanana3679/wordle-share",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 3
     },
     {
       "repository": "nodease/mbased",
@@ -1882,6 +2692,15 @@
       "screening_rows_behind_repository": 2
     },
     {
+      "repository": "nuro-pro/backend",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
       "repository": "ohah/zntc",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "raw-head-default-branch-file-presence",
@@ -1889,6 +2708,24 @@
       "classifier_spdx_id": null,
       "license_file_at_head": "LICENSE",
       "screening_rows_behind_repository": 3
+    },
+    {
+      "repository": "ohhalim/MembershipFlow",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "ohhalim/MembershipFlow-front",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
     },
     {
       "repository": "pachir1su/raspi-mc-server",
@@ -1900,6 +2737,15 @@
       "screening_rows_behind_repository": 3
     },
     {
+      "repository": "parkuiery/Stopit-Android",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 8
+    },
+    {
       "repository": "parsifal295/nobu16-korean-patch",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "raw-head-default-branch-file-presence",
@@ -1909,6 +2755,33 @@
       "screening_rows_behind_repository": 2
     },
     {
+      "repository": "pecos-lab/memozy",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "pillip/realtime-en2ko-captions",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 5
+    },
+    {
+      "repository": "pnu-camp-2026-S/Team4_rabbit-turtle",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
       "repository": "ppp1969/koready-backend",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "raw-head-default-branch-file-presence",
@@ -1916,6 +2789,24 @@
       "classifier_spdx_id": null,
       "license_file_at_head": null,
       "screening_rows_behind_repository": 7
+    },
+    {
+      "repository": "prgrms-aibe-devcourse/AIBE5_FinalProject_Team1_BE",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "prgrms-aibe-devcourse/AIBE5_FinalProject_Team7_JackPot",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
     },
     {
       "repository": "prgrms-be-adv-devcourse/beadv6_6_3JMT_BE",
@@ -1933,6 +2824,24 @@
       "signal": "none-observed",
       "classifier_spdx_id": null,
       "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "prgrms-be-devcourse/NBE9-11-final-Team08",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "raymond1203/LangAlpha-KR",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
       "screening_rows_behind_repository": 1
     },
     {
@@ -1972,6 +2881,42 @@
       "screening_rows_behind_repository": 3
     },
     {
+      "repository": "s4ngg/TFT-gogo",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 4
+    },
+    {
+      "repository": "semantic-reasoning/factlog",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 2
+    },
+    {
+      "repository": "seob717/nunchi",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 4
+    },
+    {
+      "repository": "shell-files/dev_triplevalues",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
       "repository": "simsim-lab/macro-logbot",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "raw-head-default-branch-file-presence",
@@ -1981,8 +2926,71 @@
       "screening_rows_behind_repository": 2
     },
     {
+      "repository": "slr-09/OwnFont",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
       "repository": "snorose/snorose-front-admin",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "solduma/agentic_design_pattern",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 4
+    },
+    {
+      "repository": "solsol-dollar/ai",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 2
+    },
+    {
+      "repository": "soma17th-369/Laimory-android",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "soojinsong/Opale",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "ssm0318/WhoamI-Today-backend",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "staralstjr/Jinary",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
       "probe_method": "raw-head-default-branch-file-presence",
       "signal": "none-observed",
       "classifier_spdx_id": null,
@@ -2017,6 +3025,15 @@
       "screening_rows_behind_repository": 3
     },
     {
+      "repository": "swyp-app-5th-team1/Kohere-iOS",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
       "repository": "swyp-web-13th-team4/plog-frontend",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
       "probe_method": "raw-head-default-branch-file-presence",
@@ -2024,6 +3041,15 @@
       "classifier_spdx_id": null,
       "license_file_at_head": null,
       "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "syann97/AgentCart",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 2
     },
     {
       "repository": "tccmw/certFit",
@@ -2037,6 +3063,24 @@
     {
       "repository": "team-balenz/balenz-client",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "tedeza-rize/platelets",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "thumbsup-studio/thumbsup",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
       "probe_method": "raw-head-default-branch-file-presence",
       "signal": "none-observed",
       "classifier_spdx_id": null,
@@ -2107,8 +3151,44 @@
       "screening_rows_behind_repository": 2
     },
     {
+      "repository": "weglow-glo/glo-us",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 3
+    },
+    {
       "repository": "whereIsMyParcel/whereIsMyParcel",
       "source_pool_id": "github-korean-bearing-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "whsanha55/scoophub-ui",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "woo-in/LoanServicing",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "woodruff2k/ai-chat",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
       "probe_method": "raw-head-default-branch-file-presence",
       "signal": "none-observed",
       "classifier_spdx_id": null,
@@ -2132,6 +3212,51 @@
       "classifier_spdx_id": null,
       "license_file_at_head": null,
       "screening_rows_behind_repository": 3
+    },
+    {
+      "repository": "yhzion/PortBridge",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 2
+    },
+    {
+      "repository": "yoon627/ytm-lyrics-translator",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "yt010108/kr-gov-job-mcp",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 2
+    },
+    {
+      "repository": "yumyum-corp/yumyum",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "license-artifact-or-spdx-present",
+      "classifier_spdx_id": null,
+      "license_file_at_head": "LICENSE",
+      "screening_rows_behind_repository": 1
+    },
+    {
+      "repository": "yunhyeokd/dozycoffee-backend",
+      "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
+      "probe_method": "raw-head-default-branch-file-presence",
+      "signal": "none-observed",
+      "classifier_spdx_id": null,
+      "license_file_at_head": null,
+      "screening_rows_behind_repository": 1
     },
     {
       "repository": "yvshdjcsldhdjt/ChunChuGwan",
@@ -2187,12 +3312,13 @@
     },
     "explicit": {
       "rows": 351,
-      "rows_covered": 133,
-      "rows_behind_signal": 26,
+      "rows_covered": 351,
+      "rows_behind_signal": 92,
       "repositories": 199,
-      "repositories_covered": 74,
-      "repositories_with_signal": 17
+      "repositories_covered": 199,
+      "repositories_with_signal": 54
     }
   },
-  "summary_attribution_note": "The per-entry source_pool_id records which probe run first reached that repository, and repositories are deduplicated globally, so a repository holding rows in both pools is attributed to one run only. Use pool_coverage_from_ledger for per-pool figures; it is recomputed from the ledger rows rather than from probe attribution."
+  "summary_attribution_note": "The per-entry source_pool_id records which probe run first reached that repository, and repositories are deduplicated globally, so a repository holding rows in both pools is attributed to one run only. Use pool_coverage_from_ledger for per-pool figures; it is recomputed from the ledger rows rather than from probe attribution.",
+  "updated_at": "2026-07-18T21:30:21.196940+00:00"
 }
