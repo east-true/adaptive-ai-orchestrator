@@ -1,6 +1,6 @@
 # Adaptive Routing v2: Evidence-First Stratified Temporal Routing
 
-> 상태: 설계 검토와 Phase -1/0/1 구현 완료, Phase 2a paired smoke 대기
+> 상태: Phase -1/0/1과 Phase 2a dry-run tooling 완료, 실제 paired smoke 대기
 > 기준일: 2026-07-18
 > 관련 문서: [연구 검토](routing-research-review.md),
 > [평가 프로토콜](routing-evaluation-protocol.md),
@@ -527,6 +527,12 @@ prospective exploration과 정책 승격은 활성화하지 않았다.
 버전이 재현 가능하며 routing 결과나 agent 선택이 빈도 추정을 오염시키지 않는다.
 
 ### Phase 2a — paired smoke
+
+구현 상태(2026-07-18): `paired-smoke-manifest-v1` validation, clean equal-base
+detached worktree 8개 준비, balanced seeded order와 stable pair/execution/attempt ID,
+pinned evaluator integrity, lifecycle-derived complete/one-sided/incomplete projection과
+synthetic 2×2 aggregation을 구현했다. agent 실행 runner와 실제 manifest/results는 아직
+없으며 tooling report는 정책 순위와 promotion을 명시적으로 거부한다.
 
 - 독립 task-specific evaluator가 있는 4개 low-risk task를 같은 base revision의
   격리 workspace에서 양쪽 agent로 실행한다.

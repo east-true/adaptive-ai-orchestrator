@@ -42,12 +42,13 @@ Adaptive routing 개선 작업은 다음 문서에서 추적한다.
 - [설계: Evidence-First Stratified Temporal Routing](docs/adaptive-routing-v2.md)
 - [연구 교차검토](docs/routing-research-review.md)
 - [평가 프로토콜](docs/routing-evaluation-protocol.md)
+- [Phase 2a paired-smoke tooling](docs/paired-smoke-tooling.md)
 - [Claude 독립 검토와 반영 판단](docs/routing-claude-review.md)
 - [진행상황과 이어하기](docs/adaptive-routing-progress.md)
 
 Phase -1 telemetry baseline, Phase 0 typed evaluator, Phase 1 lifecycle/replay와
-corrected static L0까지 runtime에 반영했다. 현재의 적은 legacy telemetry로 복잡한
-bandit이나 탐색을 활성화하지 않고, 다음으로 작은 paired smoke를 준비한다.
+corrected static L0, Phase 2a agent-free paired dry-run tooling까지 반영했다. 현재의
+적은 legacy telemetry로 bandit이나 탐색을 활성화하지 않는다.
 
 ## Run the prototype
 
@@ -169,6 +170,27 @@ abandoned and finalized; a live concurrent owner is left alone. Interrupting a
 subprocess kills and reaps it before re-raising the interrupt. Legacy execution
 JSONL is reported only for schema/record reproduction and explicitly never as
 counterfactual support.
+
+## Prepare a paired smoke without running agents
+
+The `paired-smoke-manifest-v1` contract pins four low-risk tasks, both exact
+agent environments, one protected task-specific evaluator per task, the Git
+base/fixtures, metrics, budget, and stop/exclusion rules before outcomes exist.
+
+```bash
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli paired validate \
+  experiments/phase2a-smoke-v1.json --source-repository .
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli paired dry-run \
+  experiments/phase2a-smoke-v1.json --source-repository . \
+  --workspace-root /protected/paired-workspaces
+```
+
+The dry run invokes neither Claude Code nor Codex. It does create eight
+persistent detached worktrees, checks that all have the same clean base and
+fixture hashes, and emits balanced seeded order plus stable pair/execution/
+attempt IDs. Existing targets are never overwritten. See the
+[paired-smoke tooling contract](docs/paired-smoke-tooling.md) before preparing a
+real manifest.
 
 ## Run a structured plan
 
@@ -330,11 +352,12 @@ The current implementation was locally validated against Claude Code `2.1.211` a
 - Log redaction is best-effort; it cannot guarantee removal of every secret embedded in free text or diffs.
 - Evaluator path/mode and pre/post hash checks detect common artifact contamination, but v0.1 is not a hardened sandbox or immutable evaluation service.
 - The protected control directory relies on the agent sandbox not granting writes outside the workspace; it is not a cryptographically signed remote ledger.
+- Paired tooling validates and analyzes the pipeline but does not yet execute the 4-task/8-execution smoke or calculate confirmatory confidence intervals.
 
 ## Next development increment
 
-Implement Phase 2a tooling and run only the predeclared 4-task/8-execution paired
-smoke with protected task-specific evaluators and isolated equal-base
-workspaces. Do not enable prospective exploration or promote a learned policy.
-See the [progress handoff](docs/adaptive-routing-progress.md) for the ordered
-checklist.
+Pre-register the actual four low-risk tasks and protected task-specific
+evaluators, commit the manifest, and review `paired validate`/`paired dry-run`
+output before adding the 8-execution runner. Do not enable prospective
+exploration or promote a learned policy. See the
+[progress handoff](docs/adaptive-routing-progress.md) for the ordered checklist.

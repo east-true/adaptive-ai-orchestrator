@@ -59,6 +59,22 @@ never alter the action. Best-single and stratified Beta/greedy consume only
 typed binary quality from allowed cohorts and use explicit exact/base,
 environment, task, and language backoff.
 
+## Paired experiment boundary
+
+`paired_experiment.py` keeps Phase 2a experiment tooling separate from the
+runtime router. Its versioned manifest validator pins the clean Git base,
+fixtures, exact agent environments, protected task-specific evaluators,
+metrics, budget, and stopping rules before results exist. A SHA-256-ranked,
+balanced order rule and UUIDv5 identities make the four pair assignments
+reproducible.
+
+The agent-free dry run creates eight distinct detached worktrees and verifies
+their commit/tree/fixture equality without invoking either CLI agent. Analysis
+joins only deterministic paired IDs to protected lifecycle state, preserves
+one-sided failure and incomplete pairs, and never imputes missing quality.
+Phase 2a reports are pipeline diagnostics: sparse cells, missing confidence
+intervals, and absent target-workload weights prevent ranking or promotion.
+
 ## Engineering memory
 
 `EngineeringMemoryStore` keeps an append-only JSONL memory log separate from execution telemetry. It stores caller-authored `MemoryEntry`s for architecture decisions, design reasoning, trade-offs, failure history, project context, and code evolution, and it can query them by type, tag, or keyword. That separation matters: execution telemetry answers "what happened," while engineering memory answers "what should we remember," and both stay explicit rather than inferred from free text or agent output.

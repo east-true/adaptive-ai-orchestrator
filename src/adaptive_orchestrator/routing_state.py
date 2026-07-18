@@ -19,6 +19,7 @@ class ReplayError(ValueError):
 class AttemptState:
     task_id: str
     parent_attempt_id: str | None
+    selection_sequence: int
     status: str
     selection: Mapping[str, Any] = field(default_factory=dict)
     started: Mapping[str, Any] = field(default_factory=dict)
@@ -52,7 +53,7 @@ class RoutingState:
 class EventProjector:
     """Pure, deterministic lifecycle projector with transition validation."""
 
-    state_schema_version = 1
+    state_schema_version = 2
 
     def replay(self, events: Sequence[LifecycleEvent]) -> RoutingState:
         executions: dict[str, dict[str, Any]] = {}
@@ -92,6 +93,7 @@ class EventProjector:
                 attempt_id: AttemptState(
                     task_id=value["task_id"],
                     parent_attempt_id=value["parent_attempt_id"],
+                    selection_sequence=value["selection_sequence"],
                     status=value["status"],
                     selection=value["selection"],
                     started=value["started"],
@@ -120,6 +122,7 @@ class EventProjector:
             attempts[event.attempt_id] = {
                 "task_id": event.task_id,
                 "parent_attempt_id": event.parent_attempt_id,
+                "selection_sequence": event.sequence,
                 "status": "selected",
                 "selection": dict(event.payload),
                 "started": {},
