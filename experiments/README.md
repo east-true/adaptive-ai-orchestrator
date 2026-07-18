@@ -30,16 +30,27 @@ files. The manifest passed `paired validate`, an agent-free eight-checkout
 `paired dry-run`, and the explicitly approved eight-execution smoke on
 2026-07-18. The observed result and evaluator-validity finding are recorded in
 `results/phase2a-smoke-v1.md`; they are pipeline evidence, not an agent ranking.
-The historical v1 manifest is intentionally unchanged. Tooling also accepts a
-v2 schema for a future preregistered run; v2 requires evaluator assertion/task
-wording coverage attestations and exact per-task modified-file allowlists.
+The historical v1 manifest is intentionally unchanged. Tooling also accepts the
+v2 schema used by the second preregistered smoke; v2 requires evaluator
+assertion/task wording coverage attestations and exact per-task modified-file
+allowlists.
 
-`phase2a-smoke-v2.json` is the agent-free contract rehearsal for the same four
+`phase2a-smoke-v2.json` is the completed contract rehearsal for the same four
 maintenance tasks and evaluated base. It reuses the same protected evaluator
 artifacts but makes all 23 evaluator assertions explicit in task wording,
 including the formerly undocumented top-level `workspaces` field. Its exact
 modified-file allowlists are based on the union observed across both v1 agent
 workspaces, then preregistered rather than inferred during analysis. The v2
 manifest passed parsing, contract coverage, exact-base negative controls,
-`paired plan`, `paired validate`, and an eight-checkout `paired dry-run`. No v2
-agent execution has been approved or started.
+`paired plan`, `paired validate`, an eight-checkout `paired dry-run`, and the
+separately approved paired execution. The run materialized all eight attempts,
+preserved one Claude CLI session-quota infrastructure failure as missing quality,
+and resumed only the untouched five-attempt suffix after validating the first
+three finalized attempts. The result and scope audit are in
+`results/phase2a-smoke-v2.md`; this is pipeline evidence, not an agent ranking.
+
+Phase 2b does not reuse the smoke schema as a 60-task manifest. Its generalized
+construction and validity gates are defined in
+`../docs/paired-pilot-preregistration.md`, and its machine-readable contract is
+`schemas/paired-pilot-manifest-v1.schema.json`. No Phase 2b task set or 120-agent
+execution is preregistered or authorized yet.

@@ -148,18 +148,22 @@ Multi-Agent Collaboration
 
 목표는 최고 성능이 아니라 최소 충분 지능으로 문제를 해결하는 것이다.
 
-## 6. 현재 단계
+## 6. 출발 단계와 현재 구현
 
-현재는 최종 Orchestrator를 만드는 단계가 아니다.
+이 constitution을 처음 작성했을 때는 최종 Orchestrator가 아니라 CLI 기반
+Orchestrator Kernel v0.1을 만드는 단계였다.
 
-현재 상태:
+당시 출발 상태:
 
 - Router 없음
 - Multi-Agent 없음
 - API Integration 없음
 - Memory 없음
 
-목표는 CLI 기반 Orchestrator Kernel v0.1 구축이다.
+현재 구현에는 deterministic `AdaptiveRouter`, conditional one-agent escalation,
+`EngineeringMemoryStore`가 있다. 다만 objective-quality evidence가 충분한 adaptive
+policy와 독립적인 multi-agent collaboration/voting, API integration은 아직 없다.
+초기 목록은 역사적 baseline이며 현재 기능 목록으로 해석하지 않는다.
 
 ## 7. 왜 Kernel부터 만드는가
 

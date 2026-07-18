@@ -81,6 +81,13 @@ the preregistered per-agent and overall wall-time limits.
 Phase 2a reports are pipeline diagnostics: sparse cells, missing confidence
 intervals, and absent target-workload weights prevent ranking or promotion.
 
+Phase 2b is currently a preregistered construction boundary, not a runtime
+feature. Its `paired-pilot-manifest-v1` JSON Schema generalizes repository and
+task provenance, native-language quotas, independent task/evaluator/reviewer
+roles, control evidence, missingness, and confirmatory holdout. The Phase 2a
+parser intentionally rejects that schema until a separate semantic validator,
+planner, runner, and agent-free 120-checkout dry run are implemented and reviewed.
+
 ## Engineering memory
 
 `EngineeringMemoryStore` keeps an append-only JSONL memory log separate from execution telemetry. It stores caller-authored `MemoryEntry`s for architecture decisions, design reasoning, trade-offs, failure history, project context, and code evolution, and it can query them by type, tag, or keyword. That separation matters: execution telemetry answers "what happened," while engineering memory answers "what should we remember," and both stay explicit rather than inferred from free text or agent output.
@@ -156,7 +163,7 @@ The interactive shell in `adaptive_orchestrator.shell` remains deliberately thin
 
 ## Security posture of local tools
 
-The Process Runner uses argument vectors (`shell=False`). Claude defaults to `acceptEdits`; Codex defaults to `workspace-write`. Neither adapter adds a dangerous permission-bypass option. On interrupt the runner kills and reaps the child before preserving the exception. CLI lifecycle state lives outside the agent workspace with private local modes, though this relies on the CLI sandbox boundary and is not a signed remote ledger. The JSONL logger masks common sensitive keys and token patterns, but is not a DLP boundary; Git diff collection is opt-in. Numeric usage-count fields such as `input_tokens` now use a narrow allowlist so resource telemetry survives while string values under token-named keys and literal credentials remain redacted. v0.1 is a local-development runtime, not a sandbox or multi-tenant security boundary.
+The Process Runner uses argument vectors (`shell=False`). Claude defaults to `acceptEdits`; Codex defaults to `workspace-write`. Neither adapter adds a dangerous permission-bypass option. On interrupt the core runner kills and reaps its direct CLI child before preserving the exception; unlike the TUI launcher, it does not yet claim descendant process-group cleanup. CLI lifecycle state lives outside the agent workspace with private local modes, though this relies on the CLI sandbox boundary and is not a signed remote ledger. The JSONL logger masks common sensitive keys and token patterns, but is not a DLP boundary; Git diff collection is opt-in. Numeric usage-count fields such as `input_tokens` now use a narrow allowlist so resource telemetry survives while string values under token-named keys and literal credentials remain redacted. v0.1 is a local-development runtime, not a sandbox or multi-tenant security boundary.
 
 ## Evolution path
 

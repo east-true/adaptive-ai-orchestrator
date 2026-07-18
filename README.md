@@ -50,6 +50,7 @@ Adaptive routing 개선 작업은 다음 문서에서 추적한다.
 - [연구 교차검토](docs/routing-research-review.md)
 - [평가 프로토콜](docs/routing-evaluation-protocol.md)
 - [Phase 2a paired-smoke tooling](docs/paired-smoke-tooling.md)
+- [Phase 2b pilot 사전등록 계약](docs/paired-pilot-preregistration.md)
 - [Claude 독립 검토와 반영 판단](docs/routing-claude-review.md)
 - [진행상황과 이어하기](docs/adaptive-routing-progress.md)
 
@@ -537,12 +538,17 @@ The current implementation was locally validated against Claude Code `2.1.211` a
 - Log redaction is best-effort; it cannot guarantee removal of every secret embedded in free text or diffs.
 - Evaluator path/mode and pre/post hash checks detect common artifact contamination, but v0.1 is not a hardened sandbox or immutable evaluation service.
 - The protected control directory relies on the agent sandbox not granting writes outside the workspace; it is not a cryptographically signed remote ledger.
-- Paired tooling validates and analyzes the pipeline but does not yet execute the 4-task/8-execution smoke or calculate confirmatory confidence intervals.
+- Paired tooling has executed and replayed both preregistered 4-task/8-execution
+  Phase 2a smokes. Those runs validate the pipeline only: they do not rank agents,
+  authorize the 60-task pilot, or provide confirmatory confidence intervals.
 
 ## Next development increment
 
-Pre-register the actual four low-risk tasks and protected task-specific
-evaluators, commit the manifest, and review `paired validate`/`paired dry-run`
-output before adding the 8-execution runner. Do not enable prospective
-exploration or promote a learned policy. See the
-[progress handoff](docs/adaptive-routing-progress.md) for the ordered checklist.
+Use the frozen generalized Phase 2b contract to build the source-candidate ledger,
+then construct the 60 native Korean/English/mixed tasks and their protected
+task-specific evaluators through independent author/reviewer roles. Validate the
+completed manifest, evaluator controls, and agent-free dry run before requesting
+separate approval for 120 agent executions. Do not enable prospective exploration
+or promote a learned policy. See the
+[pilot preregistration contract](docs/paired-pilot-preregistration.md) and
+[progress handoff](docs/adaptive-routing-progress.md) for the gates.
