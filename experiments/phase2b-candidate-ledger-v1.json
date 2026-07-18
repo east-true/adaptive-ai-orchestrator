@@ -43995,15 +43995,22 @@
       "source_reference": "https://github.com/joshua-jingu-lee/ante/issues/2349",
       "source_statement_available": true,
       "task_statement_hash": "91f3be7ace797735a3317d2425efe2f6a34afb54c13b867d7863e7956829d4aa",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
+      "base_revision": "f3ca94a444582934e4893ef24e06e5a6f8d57ac7",
+      "base_tree_hash": "c9df972424265b8a96e39ba06720138b6fe2d58b",
+      "solution_reference": "https://github.com/joshua-jingu-lee/ante/pull/2357",
       "solution_revision": null,
       "solution_artifact_hash": null,
       "solution_tree_hash": null,
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "GitHub repository metadata did not identify an SPDX license; use basis remains unknown.",
+      "changed_files": [
+        "docs/specs/broker-adapter/08-kis-domestic-adapter.md",
+        "docs/specs/broker-adapter/18-fill-recovery.md",
+        "docs/specs/trade/03-07-position-reconciler.md",
+        "src/ante/broker/fill_scheduler.py",
+        "src/ante/broker/kis.py",
+        "tests/unit/test_kis_pagination.py"
+      ],
+      "license_or_use_basis": "MIT full text present at the pinned base revision f3ca94a444582934e4893ef24e06e5a6f8d57ac7 as LICENSE, read from a materialized checkout of that revision rather than from the default branch or a metadata classifier.",
       "provisional_classification": {
         "instruction_language": "ko",
         "task_category": "debugging",
@@ -44011,14 +44018,14 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
+        "license_or_use_basis": "pass",
+        "exact_base_resolvable": "pass",
         "single_bounded_task": "pass",
-        "native_language_source": "unknown",
-        "low_risk_isolated_execution": "unknown",
-        "no_network_secret_push_production": "unknown",
-        "objective_evaluator_feasible": "unknown",
-        "gold_and_evaluator_hideable": "unknown",
+        "native_language_source": "pass",
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass",
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
@@ -44027,7 +44034,13 @@
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
         "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened.",
-        "Withdrawn: an earlier resolution recorded a base revision from PR #2355, which was selected by taking the first merged pull request in the issue timeline. 그 PR의 제목은 다른 이슈 #2344를 참조한다. 이 이슈를 실제로 참조하는 merged PR은 #2357이다. Selecting a linked PR requires that the pull request actually reference this issue number and that release automation pull requests be excluded; the base and license basis are unknown again until they are re-derived under that rule."
+        "Withdrawn: an earlier resolution recorded a base revision from PR #2355, which was selected by taking the first merged pull request in the issue timeline. 그 PR의 제목은 다른 이슈 #2344를 참조한다. 이 이슈를 실제로 참조하는 merged PR은 #2357이다. Selecting a linked PR requires that the pull request actually reference this issue number and that release automation pull requests be excluded; the base and license basis are unknown again until they are re-derived under that rule.",
+        "재확정: 정정한 선정 규칙(이슈 번호를 실제로 참조 + 릴리스 자동화 PR 제외)으로 merged PR #2357을 얻었다. base commit f3ca94a4…를 materialize해 tree c9df9724…(960 blobs, clean)를 확인했고 LICENSE는 MIT다. base tree는 API가 아니라 `git rev-parse HEAD^{tree}`로 읽었다.",
+        "objective_evaluator_feasible: 변경의 핵심이 tr_id 상수와 3개월 경계 분기라는 결정적 로직이고 정답 PR이 `tests/unit/test_kis_pagination.py`를 동반한다. 실제 증권사 API 없이 unit test로 판정할 수 있으므로, 이슈 본문의 '효과 라이브 입증'은 저자의 검증 방식일 뿐 과제 요구가 아니다.",
+        "low_risk_isolated_execution / no_network_secret_push_production: 상수 매핑과 분기 추가라 격리 checkout에서 비파괴적이며, unit test 경로는 외부 endpoint나 자격증명을 요구하지 않는다.",
+        "gold_and_evaluator_hideable: 정답 구현과 동반 test를 agent checkout 밖 보호 경로에 둘 수 있다.",
+        "reproducible_within_budget은 unknown이다. pyproject가 requires-python >=3.13,<3.14를 선언하고 aiohttp·polars·pydantic·pandas-ta 등 무거운 의존성을 가져 격리 환경 재현을 아직 실측하지 않았다.",
+        "관찰 기록: PR #2357은 이슈가 지목한 tr_id 외에 fill_scheduler와 pagination까지 함께 바꾼다. task를 저술할 때 범위를 이슈 문구에 맞춰 좁히고 modified-file allowlist를 그에 맞게 고정해야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -49857,15 +49870,15 @@
       "source_reference": "https://github.com/seob717/nunchi/issues/35",
       "source_statement_available": true,
       "task_statement_hash": "05051e3de29dfca913fd37b27c6dd1137c628a8dbd74663557a813c80ab08a33",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
+      "base_revision": "464a1fcffdeedc08d48f6d5d7b2601f4363129d3",
+      "base_tree_hash": "6ccbcf068e0df548ef2cc61ef94aecece76f89ae",
+      "solution_reference": "https://github.com/seob717/nunchi/pull/37",
       "solution_revision": null,
       "solution_artifact_hash": null,
       "solution_tree_hash": null,
       "source_evaluator_artifact_hash": null,
       "changed_files": [],
-      "license_or_use_basis": "GitHub repository metadata did not identify an SPDX license; use basis remains unknown.",
+      "license_or_use_basis": "MIT full text present at the pinned base revision 464a1fcffdeedc08d48f6d5d7b2601f4363129d3 as LICENSE.",
       "provisional_classification": {
         "instruction_language": "ko",
         "task_category": "implementation",
@@ -49873,23 +49886,29 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
+        "license_or_use_basis": "pass",
+        "exact_base_resolvable": "pass",
         "single_bounded_task": "pass",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
-        "objective_evaluator_feasible": "unknown",
+        "objective_evaluator_feasible": "fail",
         "gold_and_evaluator_hideable": "unknown",
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "subjective-only-evaluation"
+      ],
       "decision_reasons": [
         "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened.",
-        "Withdrawn: an earlier resolution recorded a base revision from PR #28, which was selected by taking the first merged pull request in the issue timeline. 그 PR은 `chore(main): release 0.7.3` 릴리스 자동화 PR이다. 이 이슈를 구현한 merged PR은 #37이다. Selecting a linked PR requires that the pull request actually reference this issue number and that release automation pull requests be excluded; the base and license basis are unknown again until they are re-derived under that rule."
+        "Withdrawn: an earlier resolution recorded a base revision from PR #28, which was selected by taking the first merged pull request in the issue timeline. 그 PR은 `chore(main): release 0.7.3` 릴리스 자동화 PR이다. 이 이슈를 구현한 merged PR은 #37이다. Selecting a linked PR requires that the pull request actually reference this issue number and that release automation pull requests be excluded; the base and license basis are unknown again until they are re-derived under that rule.",
+        "재확정: 정정한 선정 규칙으로 merged PR #37을 얻었다. base commit 464a1fcf…를 materialize해 tree 6ccbcf06…(260 blobs, clean)와 MIT LICENSE를 확인했다.",
+        "그러나 산출물이 objective evaluator로 판정되지 않는다. 변경 26개 중 실제 산출물은 `commands/compile.md`의 자연어 스펙 절(§4.5 저신뢰 판단 확인 단계) 하나이고, 나머지 24개는 `pilot/compile-bench/`의 LLM 출력 JSON, 1개는 결과 서술 문서다.",
+        "그 스펙이 의도대로 작동했는지는 LLM 컴파일러를 돌려 산출물의 판단 품질을 평가해야 알 수 있다. 이는 deterministic acceptance test도, 공정한 golden invariant도, property/integration check도 아니다. 동일하게 유효한 스펙 문구가 다수이므로 병합된 산문을 exact golden으로 강제할 수 없다.",
+        "pilot primary set이 허용하는 세 objective mode 중 어느 것도 핵심 요구를 판정하지 못하므로 subjective-only-evaluation으로 제외한다. license와 exact base는 확인됐으나 그것만으로는 포함 기준을 충족하지 못한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -52699,8 +52718,8 @@
   ],
   "summary": {
     "candidate_count": 1130,
-    "screening_count": 1069,
-    "excluded_count": 61,
+    "screening_count": 1068,
+    "excluded_count": 62,
     "selected_for_task_authoring_count": 0,
     "language_assignment_counts": {
       "ko": 56,

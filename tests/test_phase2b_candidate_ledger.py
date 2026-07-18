@@ -309,7 +309,7 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
         self.assertEqual(len(reviewed), 50)
         self.assertEqual(
             Counter(candidate["decision"] for candidate in reviewed),
-            {"screening": 18, "excluded": 32},
+            {"screening": 17, "excluded": 33},
         )
         self.assertEqual(
             Counter(
