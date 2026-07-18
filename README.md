@@ -122,6 +122,31 @@ Claude Code and Codex CLIs for their local login status. Missing optional agents
 are warnings; having no usable agent, selecting an unavailable agent, an invalid
 profile, or an unsupported Python version is a failure.
 
+Set `notifications.terminal_bell` or `notifications.desktop` to opt into local
+completion notifications. Desktop notifications use `notify-send` when it is
+installed and include only status, verification, agent, and execution ID — task
+and result text are deliberately omitted.
+
+## Inspect, report, and retry an execution
+
+Terminal records can be addressed by execution ID, attempt ID, or a legacy
+one-based `#number` shown by the interactive shell:
+
+```bash
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli show <execution-id> --workspace .
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli report <execution-id> --workspace .
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli report <execution-id> \
+  --workspace . --output reports/run.md
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli retry <execution-id> --workspace .
+```
+
+`show` prints a compact human-readable outcome. `report` emits Markdown and
+omits the recorded Git diff unless `--include-diff` is explicit; it refuses to
+replace an existing output unless `--force` is supplied. `retry` reconstructs
+only the structured `Task` fields from the terminal record, not the old prompt
+or agent output. It requests the original agent by default; use `--agent auto`
+when that exact model variant is no longer configured.
+
 ## Run a task
 
 ```bash

@@ -38,6 +38,7 @@ class BuildWorkflowTests(unittest.TestCase):
             ["run", "--description", "Do it", "--objective", "Done"],
             ["run-plan", "plan.json"],
             ["plan", "generate", "Make a plan"],
+            ["retry", "exec-1", "--agent", "auto"],
         )
         for argv in cases:
             with self.subTest(command=argv):
@@ -153,6 +154,57 @@ class ProjectConfigCliTests(unittest.TestCase):
             self.assertEqual(exit_code, 0)
             self.assertTrue(config_path(Path(directory)).is_file())
             self.assertIn("Project config written", stdout.getvalue())
+
+    def test_show_and_report_dispatch_render_recorded_execution(self) -> None:
+        record = {
+            "execution_id": "exec-1",
+            "attempt_id": "attempt-1",
+            "task": {"description": "Fix it", "objective": "It works"},
+            "agent_id": "codex",
+            "status": "completed",
+            "duration_ms": 10,
+            "verification": {"status": "passed"},
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            log = workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir()
+            log.write_text(json.dumps(record), encoding="utf-8")
+
+            show_output = io.StringIO()
+            with contextlib.redirect_stdout(show_output):
+                show_exit = cli.main(["show", "exec-1", "--workspace", directory])
+            report_path = workspace / "report.md"
+            report_output = io.StringIO()
+            with contextlib.redirect_stdout(report_output):
+                report_exit = cli.main(["report", "exec-1", "--workspace", directory, "--output", str(report_path)])
+
+            self.assertEqual(show_exit, 0)
+            self.assertIn("Status: completed", show_output.getvalue())
+            self.assertEqual(report_exit, 0)
+            self.assertIn("# Execution exec-1", report_path.read_text(encoding="utf-8"))
+
+    def test_report_refuses_to_replace_existing_file_without_force(self) -> None:
+        record = {
+            "execution_id": "exec-1",
+            "attempt_id": "attempt-1",
+            "task": {"description": "Fix it", "objective": "It works"},
+            "agent_id": "codex",
+            "status": "completed",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            log = workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir()
+            log.write_text(json.dumps(record), encoding="utf-8")
+            output = workspace / "report.md"
+            output.write_text("keep", encoding="utf-8")
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                exit_code = cli.main(["report", "exec-1", "--workspace", directory, "--output", str(output)])
+            self.assertEqual(exit_code, 1)
+            self.assertEqual(output.read_text(encoding="utf-8"), "keep")
+            self.assertIn("already exists", stderr.getvalue())
 
     def test_quality_evaluator_specs_are_versioned_and_protected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
