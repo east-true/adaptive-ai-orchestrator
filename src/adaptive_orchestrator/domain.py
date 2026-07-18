@@ -129,6 +129,19 @@ class ExecutionRecord:
     metadata: ExecutionMetadata | None = None
     # Permanent logs must identify the vendor without joining against today's mutable registry.
     agent_base_id: str | None = None
+    # Phase -1 additive telemetry. Defaults keep old constructors/readers valid;
+    # every new kernel execution populates these fields.
+    execution_id: str | None = None
+    attempt_id: str | None = None
+    parent_attempt_id: str | None = None
+    occurred_at: str | None = None
+    policy_version: str | None = None
+    config_hash: str | None = None
+    selection_mode: str | None = None
+    cohort: str | None = None
+    routing_evidence_eligible: bool | None = None
+    escalation_reasons: Sequence[str] = field(default_factory=tuple)
+    trigger_classes: Sequence[str] = field(default_factory=tuple)
 
 
 @dataclass(frozen=True, slots=True)
@@ -138,3 +151,4 @@ class EscalationRecord:
     reasons: Sequence[str]
     agent_id: str
     record: ExecutionRecord
+    trigger_classes: Sequence[str] = field(default_factory=tuple)

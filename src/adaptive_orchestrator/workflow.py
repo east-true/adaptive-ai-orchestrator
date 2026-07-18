@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+import hashlib
+import json
+from dataclasses import asdict, dataclass, replace
 from typing import Sequence
+from uuid import uuid4
 
 from .domain import EscalationRecord, ExecutionRecord, ExecutionStatus, Task, VerificationStatus
 from .escalation import EscalationPolicy
@@ -57,24 +60,58 @@ class EngineeringWorkflow:
         self._selector = selector
         self._verifier = verifier
         self._escalation_policy = escalation_policy
+        policy_config = getattr(selector, "policy_config", None)
+        selector_config = policy_config() if callable(policy_config) else {"selector": type(selector).__qualname__}
+        config = {
+            "selector": selector_config,
+            "agents": [
+                {"agent_id": agent.agent_id, "agent_base_id": agent.base_id}
+                for agent in kernel.agents
+            ],
+            "escalation": asdict(escalation_policy) if escalation_policy is not None else None,
+        }
+        encoded_config = json.dumps(config, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+        self._policy_version = str(getattr(selector, "policy_version", "legacy-biased"))
+        self._config_hash = hashlib.sha256(encoded_config).hexdigest()
 
     def run(self, task: Task, requested_agent_id: str = "auto") -> tuple[ExecutionPlan, ExecutionRecord]:
         plan = self._selector.select(task, self._kernel.agents, requested_agent_id)
-        record = self._run_agent(task, plan)
+        execution_id = str(uuid4())
+        selection_mode = "manual" if requested_agent_id != "auto" else "exploit"
+        cohort = "manual" if requested_agent_id != "auto" else "legacy"
+        record = self._run_agent(task, plan, execution_id=execution_id, selection_mode=selection_mode, cohort=cohort)
 
         escalation = None
+        escalation_reasons: tuple[str, ...] = ()
+        trigger_classes: tuple[str, ...] = ()
         # An explicit agent request is a deliberate override; escalation would silently defeat it.
         if self._escalation_policy is not None and requested_agent_id == "auto":
             decision = self._escalation_policy.decide(plan.analysis, record.status, record.verification.status)
+            escalation_reasons = decision.reasons
+            trigger_classes = decision.trigger_classes
             if decision.should_escalate:
                 next_agent_id = self._next_candidate(plan)
                 if next_agent_id is not None:
                     escalated_plan = replace(plan, agent_id=next_agent_id, rationale="Escalated: " + ", ".join(decision.reasons))
-                    escalated_record = self._run_agent(task, escalated_plan)
+                    escalated_record = self._run_agent(
+                        task,
+                        escalated_plan,
+                        execution_id=execution_id,
+                        parent_attempt_id=record.attempt_id,
+                        selection_mode="escalation",
+                        cohort="escalation",
+                        escalation_reasons=decision.reasons,
+                        trigger_classes=decision.trigger_classes,
+                    )
                     self._kernel.log(escalated_record)
-                    escalation = EscalationRecord(decision.reasons, next_agent_id, escalated_record)
+                    escalation = EscalationRecord(decision.reasons, next_agent_id, escalated_record, decision.trigger_classes)
 
-        record = replace(record, escalation=escalation)
+        record = replace(
+            record,
+            escalation=escalation,
+            escalation_reasons=escalation_reasons,
+            trigger_classes=trigger_classes,
+        )
         self._kernel.log(record)
         return plan, record
 
@@ -94,8 +131,32 @@ class EngineeringWorkflow:
                 return WorkflowResult(tuple(steps), stopped_early=True)
         return WorkflowResult(tuple(steps), stopped_early=False)
 
-    def _run_agent(self, task: Task, plan: ExecutionPlan) -> ExecutionRecord:
-        record = self._kernel.execute(task, plan.agent_id, log_execution=False)
+    def _run_agent(
+        self,
+        task: Task,
+        plan: ExecutionPlan,
+        *,
+        execution_id: str,
+        parent_attempt_id: str | None = None,
+        selection_mode: str,
+        cohort: str,
+        escalation_reasons: tuple[str, ...] = (),
+        trigger_classes: tuple[str, ...] = (),
+    ) -> ExecutionRecord:
+        record = self._kernel.execute(
+            task,
+            plan.agent_id,
+            log_execution=False,
+            execution_id=execution_id,
+            parent_attempt_id=parent_attempt_id,
+            policy_version=self._policy_version,
+            config_hash=self._config_hash,
+            selection_mode=selection_mode,
+            cohort=cohort,
+            routing_evidence_eligible=False,
+            escalation_reasons=escalation_reasons,
+            trigger_classes=trigger_classes,
+        )
         verification = self._verifier.verify(task, record.status, self._kernel.workspace, self._kernel.runner)
         return replace(record, verification=verification, task_analysis=plan.analysis, routing_decision=plan.decision)
 

@@ -21,6 +21,15 @@ class ExecutionPlan:
 class CapabilitySelector:
     """Deterministic v0.1 selector. It does not estimate quality or cost yet."""
 
+    policy_version = "legacy-biased"
+
+    @staticmethod
+    def policy_config() -> dict[str, object]:
+        return {
+            "selector": "capability-selector",
+            "selection_rule": "first-capable-in-registry-order",
+        }
+
     def select(self, task: Task, agents: Iterable[Agent], requested_agent_id: str = "auto") -> ExecutionPlan:
         candidates = list(agents)
         if requested_agent_id != "auto":

@@ -96,6 +96,64 @@ class AdaptiveRouterTests(unittest.TestCase):
             metrics = ExecutionHistory(Path(directory) / "missing.jsonl").metrics_for("codex")
             self.assertIsNone(metrics.average_cost_usd)
 
+    def test_history_duration_average_uses_only_observed_samples(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "history.jsonl"
+            lines = [
+                {"agent_id": "codex", "status": "completed", "duration_ms": 10},
+                {"agent_id": "codex", "status": "completed"},
+                {"agent_id": "codex", "status": "failed", "duration_ms": None},
+            ]
+            path.write_text("\n".join(json.dumps(line) for line in lines) + "\n")
+            metrics = ExecutionHistory(path).metrics_for("codex")
+            self.assertEqual(metrics.executions, 3)
+            self.assertEqual(metrics.duration_samples, 1)
+            self.assertEqual(metrics.average_duration_ms, 10)
+
+    def test_new_legacy_biased_rows_are_frozen_out_of_routing_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "history.jsonl"
+            lines = [
+                {"agent_id": "codex", "status": "completed", "duration_ms": 10},
+                {
+                    "agent_id": "codex",
+                    "status": "failed",
+                    "duration_ms": 20,
+                    "policy_version": "legacy-biased",
+                    "routing_evidence_eligible": False,
+                },
+            ]
+            path.write_text("\n".join(json.dumps(line) for line in lines) + "\n")
+            history = ExecutionHistory(path)
+            self.assertEqual(history.metrics_for("codex").executions, 2)
+            routing_metrics = history.routing_metrics_for("codex")
+            self.assertEqual(routing_metrics.executions, 1)
+            self.assertEqual(routing_metrics.success_rate, 1.0)
+
+    def test_legacy_rows_get_best_effort_cohort_and_trigger_labels(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "history.jsonl"
+            rows = [
+                {
+                    "agent_id": "codex",
+                    "routing_decision": {"requested_agent": "codex", "selected_agent": "codex"},
+                },
+                {
+                    "agent_id": "claude-code",
+                    "routing_decision": {"requested_agent": "auto", "selected_agent": "codex"},
+                },
+                {
+                    "agent_id": "codex",
+                    "routing_decision": {"requested_agent": "auto", "selected_agent": "codex"},
+                    "escalation": {"reasons": ["execution_failed", "high_risk"]},
+                },
+            ]
+            path.write_text("\n".join(json.dumps(row) for row in rows) + "\n")
+            manual, escalated, primary = ExecutionHistory(path).records()
+            self.assertEqual((manual["selection_mode"], manual["cohort"]), ("manual", "manual"))
+            self.assertEqual((escalated["selection_mode"], escalated["cohort"]), ("escalation", "escalation"))
+            self.assertEqual(primary["trigger_classes"], ["outcome", "task_analysis"])
+
     def test_history_reports_distinct_agent_ids_in_first_seen_order(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "history.jsonl"
@@ -231,6 +289,33 @@ class AdaptiveRouterTests(unittest.TestCase):
             incidental_task = Task("This mentions security in passing", "Ship it")
             router = AdaptiveRouter(TaskAnalyzer(), ExecutionHistory(Path(directory) / "history.jsonl"))
             self.assertGreater(router.select(explicit_task, self.agents).analysis["risk"], router.select(incidental_task, self.agents).analysis["risk"])
+
+
+class TaskAnalyzerLanguageSymmetryTests(unittest.TestCase):
+    def test_korean_english_translation_pairs_have_symmetric_analysis(self) -> None:
+        pairs = (
+            ("Inspect repository dependencies", "저장소 의존성 점검"),
+            ("Implement a feature", "기능 구현"),
+            ("Debug this bug", "이 버그 디버깅"),
+            ("Design the architecture", "아키텍처 설계"),
+            ("Research and compare options", "선택지를 조사하고 비교"),
+            ("Review security permissions", "보안 권한 검토"),
+            ("Run tests and verify coverage", "테스트를 실행하고 커버리지 검증"),
+            ("Optimize performance and latency", "성능과 지연 최적화"),
+            ("Make a roadmap and plan", "로드맵과 계획 수립"),
+            ("Handle an unknown task", "모름 상태의 작업 처리"),
+            ("Write documentation", "문서 작성"),
+            ("Overwrite existing settings", "기존 설정 덮어쓰기"),
+        )
+        analyzer = TaskAnalyzer()
+        for english, korean in pairs:
+            with self.subTest(english=english, korean=korean):
+                english_analysis = analyzer.analyze(Task(english, "Complete the requested work"))
+                korean_analysis = analyzer.analyze(Task(korean, "요청한 작업 완료"))
+                self.assertEqual(english_analysis.capabilities, korean_analysis.capabilities)
+                self.assertEqual(english_analysis.difficulty, korean_analysis.difficulty)
+                self.assertEqual(english_analysis.risk, korean_analysis.risk)
+                self.assertEqual(english_analysis.uncertainty, korean_analysis.uncertainty)
 
 
 if __name__ == "__main__":

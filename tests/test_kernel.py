@@ -2,6 +2,7 @@ import json
 import sys
 import tempfile
 import unittest
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
@@ -40,6 +41,13 @@ class KernelTests(unittest.TestCase):
             payload = json.loads(log_path.read_text())
             self.assertEqual(payload["agent_id"], "codex")
             self.assertIsNone(payload["workspace_git_diff"])
+            self.assertEqual(payload["execution_id"], record.execution_id)
+            self.assertEqual(payload["attempt_id"], record.attempt_id)
+            self.assertEqual(payload["selection_mode"], "manual")
+            self.assertEqual(payload["cohort"], "manual")
+            self.assertFalse(payload["routing_evidence_eligible"])
+            self.assertEqual(len(payload["config_hash"]), 64)
+            self.assertIsNotNone(datetime.fromisoformat(payload["occurred_at"].replace("Z", "+00:00")))
 
     def test_claude_json_output_is_parsed_into_normalized_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

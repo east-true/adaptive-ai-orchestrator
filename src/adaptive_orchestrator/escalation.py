@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Mapping
+from typing import Iterable, Mapping
 
 from .domain import ExecutionStatus, VerificationStatus
 
@@ -10,6 +10,22 @@ from .domain import ExecutionStatus, VerificationStatus
 class EscalationDecision:
     should_escalate: bool
     reasons: tuple[str, ...]
+    trigger_classes: tuple[str, ...]
+
+
+_OUTCOME_REASONS = frozenset({"execution_failed", "verification_failed", "verification_timed_out"})
+_TASK_ANALYSIS_REASONS = frozenset({"high_risk", "high_uncertainty", "high_difficulty"})
+
+
+def trigger_classes_for(reasons: Iterable[str]) -> tuple[str, ...]:
+    """Collapse detailed escalation reasons without losing the original list."""
+    reason_set = set(reasons)
+    classes: list[str] = []
+    if reason_set & _OUTCOME_REASONS:
+        classes.append("outcome")
+    if reason_set & _TASK_ANALYSIS_REASONS:
+        classes.append("task_analysis")
+    return tuple(classes)
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,4 +72,5 @@ class EscalationPolicy:
             reasons.append("high_uncertainty")
         if int(analysis.get("difficulty", 0)) >= self.difficulty_threshold:
             reasons.append("high_difficulty")
-        return EscalationDecision(bool(reasons), tuple(reasons))
+        reason_tuple = tuple(reasons)
+        return EscalationDecision(bool(reason_tuple), reason_tuple, trigger_classes_for(reason_tuple))

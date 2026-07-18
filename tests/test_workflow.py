@@ -36,6 +36,13 @@ class WorkflowTests(unittest.TestCase):
             self.assertEqual(plan.agent_id, "codex")
             self.assertEqual(record.verification.status, VerificationStatus.PASSED)
             self.assertEqual(len(runner.calls), 2)
+            self.assertEqual(record.policy_version, "legacy-biased")
+            self.assertEqual(record.selection_mode, "exploit")
+            self.assertEqual(record.cohort, "legacy")
+            self.assertFalse(record.routing_evidence_eligible)
+            self.assertEqual(len(record.execution_id or ""), 36)
+            self.assertEqual(len(record.attempt_id or ""), 36)
+            self.assertEqual(len(record.config_hash or ""), 64)
 
     def test_verification_is_skipped_when_execution_fails(self) -> None:
         class FailingRunner(SequencedRunner):
@@ -51,6 +58,22 @@ class WorkflowTests(unittest.TestCase):
             _, record = EngineeringWorkflow(kernel, CapabilitySelector(), CommandVerifier(("python3", "-V"))).run(Task("Run", "Run"))
             self.assertEqual(record.verification.status, VerificationStatus.SKIPPED)
             self.assertEqual(len(runner.calls), 1)
+
+    def test_same_config_hash_has_unique_execution_and_attempt_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            runner = SequencedRunner()
+            agent = CodexAgent(capabilities=frozenset())
+            kernel = OrchestratorKernel({agent.agent_id: agent}, JsonlExecutionLogger(workspace / "log.jsonl"), workspace, runner)
+            workflow = EngineeringWorkflow(kernel, CapabilitySelector(), CommandVerifier(()))
+            task = Task("Run", "Run")
+
+            _, first = workflow.run(task)
+            _, second = workflow.run(task)
+
+            self.assertEqual(first.config_hash, second.config_hash)
+            self.assertNotEqual(first.execution_id, second.execution_id)
+            self.assertNotEqual(first.attempt_id, second.attempt_id)
 
     def test_run_plan_executes_every_step_in_order(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

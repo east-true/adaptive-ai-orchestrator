@@ -38,13 +38,15 @@ That choice keeps the system inside the existing CLI-agent boundary. It does not
 
 This implements the flow already named in project-constitution.md 5: Single Agent First -> Task Difficulty Analysis -> Need Additional Intelligence? -> Multi-Agent Collaboration. After the first agent runs and is (optionally) verified, `EscalationPolicy.decide` inspects the execution status, verification status, and the router's own risk/uncertainty/difficulty analysis. It escalates to exactly one more agent when the execution failed, verification failed or timed out, **or** analyzed risk, uncertainty, or difficulty crossed a configured threshold; the latter path can therefore escalate after a successful first attempt. The difficulty threshold defaults higher (4 of 5) than risk/uncertainty (3 of 5) because the difficulty score floors at 1 (never 0); a low threshold would escalate on nearly every multi-capability task, which would violate the "minimum sufficient intelligence" goal. It never overrides an explicitly requested agent (`--agent claude-code` / `--agent codex`) — escalation only applies when the router was free to choose. The second agent is the router's next-best-scored candidate (or, for the deterministic capability-only selector, any other capable agent).
 
-Both attempts are currently logged as separate JSONL records and the primary
-record also nests the escalated attempt. That makes them inspectable, but not
-statistically independent: outcome-triggered, analysis-triggered, and ordinary
-attempts are different cohorts, and the second attempt may see the first
-attempt's workspace changes. The current schema does not label those cohorts
-before `ExecutionHistory` aggregates them. This is an observed limitation, not
-evidence that the resulting per-agent metrics are accurate.
+Both attempts are logged as separate JSONL records and the primary record also
+nests the escalated attempt. Phase -1 now gives them the same `execution_id`,
+distinct `attempt_id`s, a `parent_attempt_id` edge, explicit
+`selection_mode`/`cohort`, the complete reason list, and derived
+`trigger_classes` (`outcome`, `task_analysis`). Legacy rows receive the same
+labels only where their old routing decision or nested escalation reasons make
+the derivation possible. These labels make the cohorts inspectable; they do not
+make them statistically independent, and the second attempt may still see the
+first attempt's workspace changes.
 
 ## Router: measured cost, richer risk, and telemetry confidence
 
@@ -62,6 +64,13 @@ the neutral value and then keep it unselected. Capability affinity also weights
 text-inferred and caller-required capabilities equally even though difficulty
 does not. These are current limitations to address together in the corrected L0
 policy; the legacy metrics are operational diagnostics, not objective quality.
+
+Phase -1 freezes further contamination without replacing that policy with an
+arbitrary neutral one: new workflow records are marked `policy_version =
+legacy-biased` and `routing_evidence_eligible = false`, and the router excludes
+only rows explicitly carrying that false flag. Existing legacy rows remain in
+the current score until corrected L0 and its migration boundary are defined in
+Phase 1.
 
 **Difficulty/risk no longer conflate thoroughness with complexity.** A real dogfooding run (using the orchestrator to delegate its own engineering-memory feature to Codex — see `memory.py`) surfaced this live: a long, well-specified, six-requirement task description hit the maximum difficulty (5) purely from text length and the number of keyword categories it happened to touch, and risk hit 4 because the test-writing instructions used the word "credential" as an example — not because the task was actually broad or security-sensitive. `difficulty` now weights `task.required_capabilities` (a deliberate, caller-declared signal) far more than merely-inferred-from-text capabilities (full weight vs. a third); the risk-keyword match now needs multiple distinct hits to reach its full contribution instead of any single incidental mention; and the SECURITY_REVIEW risk contribution only fires when that capability was explicitly required, not merely inferred from a stray word. Re-running the exact scenario that surfaced this: difficulty dropped from 5 to 3 and risk from 4 to 2 — below the default escalation thresholds, where before this would have triggered a wasteful second full agent run in `--agent auto` mode.
 
@@ -82,11 +91,11 @@ The interactive shell in `adaptive_orchestrator.shell` remains deliberately thin
 - **Adaptive Router:** infers task signals, scores capable agents using configurable policy and local history, and emits an explainable decision.
 - **Process runner:** runs argument vectors without a shell, handles timeouts, normalizes output/state, and can optionally stream stdout as it arrives without changing what it returns.
 - **Git snapshot:** best-effort collection of workspace state after execution. It does not attribute changes to an agent.
-- **Telemetry:** records task, selected agent, command, agent-process duration, result, errors, workspace files, and an opt-in diff. It does not yet record end-to-end workflow/evaluator duration and has no stable execution/attempt ID or timestamp, so durable lifecycle reconstruction and historical time-ordered analysis are not available.
+- **Telemetry:** records task, selected agent, command, agent-process duration, result, errors, workspace files, and an opt-in diff. Final records now have stable execution/attempt identity, UTC occurrence time, policy/config identity, cohort, and evidence-eligibility fields. It still lacks started/terminal lifecycle events and end-to-end workflow/evaluator duration, so interrupted execution reconciliation is not yet durable.
 
 ## Security posture of local tools
 
-The Process Runner uses argument vectors (`shell=False`). Claude defaults to `acceptEdits`; Codex defaults to `workspace-write`. Neither adapter adds a dangerous permission-bypass option. The JSONL logger masks common sensitive keys and token patterns, but is not a DLP boundary; Git diff collection is opt-in. Its current sensitive-key regex also over-redacts usage-count fields such as `input_tokens`, so resource telemetry must be repaired without weakening literal credential redaction. v0.1 is a local-development runtime, not a sandbox or multi-tenant security boundary.
+The Process Runner uses argument vectors (`shell=False`). Claude defaults to `acceptEdits`; Codex defaults to `workspace-write`. Neither adapter adds a dangerous permission-bypass option. The JSONL logger masks common sensitive keys and token patterns, but is not a DLP boundary; Git diff collection is opt-in. Numeric usage-count fields such as `input_tokens` now use a narrow allowlist so resource telemetry survives while string values under token-named keys and literal credentials remain redacted. v0.1 is a local-development runtime, not a sandbox or multi-tenant security boundary.
 
 ## Evolution path
 

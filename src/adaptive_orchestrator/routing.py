@@ -11,7 +11,7 @@ from .planning import ExecutionPlan
 
 _KEYWORDS: Mapping[Capability, tuple[str, ...]] = {
     Capability.REPOSITORY_UNDERSTANDING: ("repository", "repo", "codebase", "dependency", "의존성", "저장소", "코드베이스"),
-    Capability.CODE_GENERATION: ("implement", "create", "add feature", "write code", "구현", "기능 추가", "작성"),
+    Capability.CODE_GENERATION: ("implement", "create code", "create feature", "create a feature", "add feature", "write code", "구현", "기능 추가", "코드 작성"),
     Capability.DEBUGGING: ("bug", "error", "failure", "fix", "debug", "오류", "버그", "수정", "실패"),
     Capability.ARCHITECTURE_REASONING: ("architecture", "design", "refactor", "trade-off", "설계", "아키텍처", "리팩터링"),
     Capability.RESEARCH: ("research", "compare", "investigate", "조사", "비교", "리서치"),
@@ -64,7 +64,7 @@ class TaskAnalyzer:
         risk_words = (
             "security", "credential", "permission", "production", "deploy", "migration", "delete",
             "force push", "force-push", "rm -rf", "drop table", "overwrite", "irreversible", "no backup",
-            "보안", "권한", "운영", "배포", "마이그레이션", "삭제", "강제 푸시", "되돌릴 수 없", "백업 없이",
+            "보안", "권한", "운영", "배포", "마이그레이션", "삭제", "강제 푸시", "덮어쓰기", "되돌릴 수 없", "백업 없이",
         )
         risk_word_hits = sum(1 for word in risk_words if word in text)
         explicit_security_review = Capability.SECURITY_REVIEW in task.required_capabilities
@@ -112,10 +112,31 @@ _COST_LIMIT_PENALTY = 20.0
 class AdaptiveRouter:
     """Explainable routing based on task signals, configured policy, and history."""
 
+    policy_version = "legacy-biased"
+
     def __init__(self, analyzer: TaskAnalyzer, history: ExecutionHistory, profiles: Mapping[str, AgentRoutingProfile] | None = None) -> None:
         self._analyzer = analyzer
         self._history = history
         self._profiles = profiles or default_profiles()
+
+    def policy_config(self) -> dict[str, object]:
+        return {
+            "selector": "adaptive-router",
+            "profiles": {
+                agent_id: {
+                    "capability_affinity": {
+                        capability.value: value
+                        for capability, value in sorted(profile.capability_affinity.items(), key=lambda item: item[0].value)
+                    },
+                    "complexity_preference": profile.complexity_preference,
+                    "risk_preference": profile.risk_preference,
+                }
+                for agent_id, profile in sorted(self._profiles.items())
+            },
+            "min_samples_for_full_confidence": _MIN_SAMPLES_FOR_FULL_CONFIDENCE,
+            "neutral_evidence": _NEUTRAL_EVIDENCE,
+            "cost_limit_penalty": _COST_LIMIT_PENALTY,
+        }
 
     def select(self, task: Task, agents: Iterable[Agent], requested_agent_id: str = "auto") -> ExecutionPlan:
         analysis = self._analyzer.analyze(task)
@@ -138,7 +159,7 @@ class AdaptiveRouter:
             affinity = sum(profile.capability_affinity.get(capability, 1.0) for capability in analysis.capabilities) / max(len(analysis.capabilities), 1)
             complexity_fit = 1 - abs(profile.complexity_preference - analysis.difficulty / 5)
             risk_fit = 1 - abs(profile.risk_preference - analysis.risk / 5)
-            metrics = self._history.metrics_for(agent.agent_id)
+            metrics = self._history.routing_metrics_for(agent.agent_id)
 
             # Blend observed success/verification rates toward the neutral prior when there isn't
             # yet enough history to trust them outright (a single run should not decide routing).
