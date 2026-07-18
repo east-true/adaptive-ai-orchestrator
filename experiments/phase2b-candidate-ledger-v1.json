@@ -36146,7 +36146,7 @@
       "screening": {
         "license_or_use_basis": "unknown",
         "exact_base_resolvable": "unknown",
-        "single_bounded_task": "pass",
+        "single_bounded_task": "fail",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
@@ -36156,10 +36156,15 @@
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "multiple-coupled-issues"
+      ],
       "decision_reasons": [
-        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened."
+        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened.",
+        "The statement carries two distinct defects — per-user translation language collapsing to one shared language, and per-user translation ON/OFF being ignored — plus an architectural note that the web STT client is single-instance. They cannot be evaluated independently inside one bounded change.",
+        "Reproduction needs several simultaneous participants in a live video room across iOS and web, which no isolated single-checkout fixture provides.",
+        "Decided from the issue statement alone. License and exact-base screening were not performed for this row and are not claimed."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -36733,7 +36738,7 @@
       "screening": {
         "license_or_use_basis": "unknown",
         "exact_base_resolvable": "unknown",
-        "single_bounded_task": "pass",
+        "single_bounded_task": "fail",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
@@ -36743,10 +36748,14 @@
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "multiple-coupled-issues"
+      ],
       "decision_reasons": [
-        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened."
+        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened.",
+        "Five unrelated features are bundled: recipe hashtag badges, home carousel sizing and auto-rolling, mypage profile and count synchronization, an OS permission settings screen, and an app terms screen. Each would need its own acceptance criteria and modified-file allowlist.",
+        "Decided from the issue statement alone. License and exact-base screening were not performed for this row and are not claimed."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -42285,7 +42294,7 @@
       "screening": {
         "license_or_use_basis": "unknown",
         "exact_base_resolvable": "unknown",
-        "single_bounded_task": "pass",
+        "single_bounded_task": "fail",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
@@ -42295,10 +42304,14 @@
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "multiple-coupled-issues"
+      ],
       "decision_reasons": [
-        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened."
+        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened.",
+        "The work list couples order list/detail/count/export API implementation, mock removal, detail page layout redesign, batch Excel download, and payment-method data normalization into one issue.",
+        "Decided from the issue statement alone. License and exact-base screening were not performed for this row and are not claimed."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -43773,17 +43786,23 @@
         "single_bounded_task": "pass",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
-        "no_network_secret_push_production": "unknown",
+        "no_network_secret_push_production": "fail",
         "objective_evaluator_feasible": "unknown",
         "gold_and_evaluator_hideable": "unknown",
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "unsafe-or-external-side-effect",
+        "multiple-coupled-issues"
+      ],
       "decision_reasons": [
-        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened."
+        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened.",
+        "The moderation pipeline depends on a scheduled edge function calling a live Gemini endpoint, which needs network access and a provider credential.",
+        "It also bundles unrelated work: sponsor badge propagation and two chat UX items discovered during the change.",
+        "Decided from the issue statement alone. License and exact-base screening were not performed for this row and are not claimed."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -46660,16 +46679,20 @@
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
-        "objective_evaluator_feasible": "unknown",
+        "objective_evaluator_feasible": "fail",
         "gold_and_evaluator_hideable": "unknown",
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "task-source-unavailable-or-underspecified"
+      ],
       "decision_reasons": [
-        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened."
+        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened.",
+        "The issue is a gallery data contribution that uploads an attachment for bot processing. It states no engineering requirement, no expected behavior, and no acceptance criteria, so an evaluator author blind to the solution cannot derive assertions.",
+        "Decided from the issue statement alone. License and exact-base screening were not performed for this row and are not claimed."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -48010,7 +48033,7 @@
       "screening": {
         "license_or_use_basis": "unknown",
         "exact_base_resolvable": "unknown",
-        "single_bounded_task": "pass",
+        "single_bounded_task": "fail",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
@@ -48020,10 +48043,14 @@
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "multiple-coupled-issues"
+      ],
       "decision_reasons": [
-        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened."
+        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened.",
+        "Four separate improvements are bundled: a GitHub label catalog with a sync script, adoption of external tooling conventions, a personal/team applicability audit, and a blog-style readability pass over the documents.",
+        "Decided from the issue statement alone. License and exact-base screening were not performed for this row and are not claimed."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -49239,16 +49266,22 @@
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
-        "objective_evaluator_feasible": "unknown",
+        "objective_evaluator_feasible": "fail",
         "gold_and_evaluator_hideable": "unknown",
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "subjective-only-evaluation",
+        "unsafe-or-external-side-effect"
+      ],
       "decision_reasons": [
-        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened."
+        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened.",
+        "The issue is an open research and discussion item; it lists candidate book metadata APIs with strengths and weaknesses and explicitly marks the fallback trigger condition as still needing discussion, so there is no acceptance behavior to assert.",
+        "Comparing Aladin, Google Books, Open Library, and the National Library would also require live third-party API calls from the task workspace.",
+        "Decided from the issue statement alone. License and exact-base screening were not performed for this row and are not claimed."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -50683,16 +50716,20 @@
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
-        "objective_evaluator_feasible": "unknown",
+        "objective_evaluator_feasible": "fail",
         "gold_and_evaluator_hideable": "unknown",
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "subjective-only-evaluation"
+      ],
       "decision_reasons": [
-        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened."
+        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened.",
+        "The deliverable is a product-metric definition document plus explicit PM approval, and the definition of done requires human sign-off. No deterministic test, golden invariant, or property check decides whether the agreed metrics are correct.",
+        "Decided from the issue statement alone. License and exact-base screening were not performed for this row and are not claimed."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -51762,17 +51799,21 @@
         "single_bounded_task": "pass",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
-        "no_network_secret_push_production": "unknown",
+        "no_network_secret_push_production": "fail",
         "objective_evaluator_feasible": "unknown",
         "gold_and_evaluator_hideable": "unknown",
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "unsafe-or-external-side-effect"
+      ],
       "decision_reasons": [
-        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened."
+        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened.",
+        "The task requires converting store guideline text with OpenAI embeddings and serving retrieval-augmented answers, so it needs a live third-party LLM endpoint and an API credential inside the agent workspace.",
+        "Decided from the issue statement alone. License and exact-base screening were not performed for this row and are not claimed."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -52122,17 +52163,21 @@
         "single_bounded_task": "pass",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
-        "no_network_secret_push_production": "unknown",
+        "no_network_secret_push_production": "fail",
         "objective_evaluator_feasible": "unknown",
         "gold_and_evaluator_hideable": "unknown",
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "unsafe-or-external-side-effect"
+      ],
       "decision_reasons": [
-        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened."
+        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened.",
+        "The task switches the primary data path to scraping current CSV download links from live external government endpoints, and its own evidence cites live HTTP status observations, so it cannot run without network access.",
+        "Decided from the issue statement alone. License and exact-base screening were not performed for this row and are not claimed."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -52590,8 +52635,8 @@
   ],
   "summary": {
     "candidate_count": 1130,
-    "screening_count": 1079,
-    "excluded_count": 51,
+    "screening_count": 1069,
+    "excluded_count": 61,
     "selected_for_task_authoring_count": 0,
     "language_assignment_counts": {
       "ko": 56,
