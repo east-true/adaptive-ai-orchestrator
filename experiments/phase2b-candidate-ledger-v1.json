@@ -37993,15 +37993,22 @@
       "source_reference": "https://github.com/hskim-solv/BidMate-DocAgent/issues/1152",
       "source_statement_available": true,
       "task_statement_hash": "c1dc75f26ada1d9635faa001e6120251f150d9d5784b03f5cba4b1ef66042282",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
+      "base_revision": "9a91c5869623261762274eaf092d0c6bb6a0c176",
+      "base_tree_hash": "9a91c5869623261762274eaf092d0c6bb6a0c176",
+      "solution_reference": "https://github.com/hskim-solv/BidMate-DocAgent/pull/1174",
       "solution_revision": null,
       "solution_artifact_hash": null,
       "solution_tree_hash": null,
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        "docs/agentic/agentic-definition.md",
+        "docs/operations/auto-ship.md",
+        "docs/operations/deployment.md",
+        "docs/rag-challenges-solved.md",
+        "scripts/check_doc_links.py",
+        "tests/test_doc_links.py"
+      ],
+      "license_or_use_basis": "MIT full text present at the pinned base revision 9a91c5869623261762274eaf092d0c6bb6a0c176 as LICENSE, read directly from that revision rather than from the default branch or a metadata classifier.",
       "provisional_classification": {
         "instruction_language": "mixed",
         "task_category": "debugging",
@@ -38009,8 +38016,8 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
+        "license_or_use_basis": "pass",
+        "exact_base_resolvable": "pass",
         "single_bounded_task": "pass",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
@@ -38024,7 +38031,10 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened."
+        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened.",
+        "Linked merged PR #1174 resolved from the issue timeline, restricted to pull requests in the same repository. Its base commit 9a91c5869623261762274eaf092d0c6bb6a0c176 yields tree 9a91c5869623261762274eaf092d0c6bb6a0c176 with 769 blobs (recursive listing not truncated).",
+        "License confirmed at that pinned revision: MIT. GitHub's repository metadata classifier reported no SPDX identifier for this repository, so the classifier signal was used only to prioritise work and the terms were read from the revision itself.",
+        "The merged solution touched 6 files; those paths are recorded as construction-only provenance and must stay outside the agent checkout and prompt."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -38578,15 +38588,28 @@
       "source_reference": "https://github.com/YSbookcase/TimePilot/issues/62",
       "source_statement_available": true,
       "task_statement_hash": "89fdd1f484fc1754408026846837198ca2633eaf83eea4f342d9769da74fb43c",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
+      "base_revision": "8ad41b136ecab5c5f2f1f97806cfbfe784004249",
+      "base_tree_hash": "8ad41b136ecab5c5f2f1f97806cfbfe784004249",
+      "solution_reference": "https://github.com/YSbookcase/TimePilot/pull/97",
       "solution_revision": null,
       "solution_artifact_hash": null,
       "solution_tree_hash": null,
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        "TimePilot.WinForms/CenteredMessageDialog.cs",
+        "TimePilot.WinForms/Form1.Designer.cs",
+        "TimePilot.WinForms/Form1.cs",
+        "TimePilot.WinForms/GlobalUsings.cs",
+        "TimePilot.WinForms/KYS24/ActivityTimelineRow.cs",
+        "TimePilot.WinForms/KYS24/ProcessRuntimeSegmentRow.cs",
+        "TimePilot.WinForms/KYS24/ProcessRuntimeSummaryRow.cs",
+        "TimePilot.WinForms/KYS24/RuntimeCoverageSummary.cs",
+        "TimePilot.WinForms/KYS24/SummaryPeriodOption.cs",
+        "TimePilot.WinForms/KYS24/TimePilotStorage.cs",
+        "TimePilot.WinForms/KYS24/UiText.cs",
+        "TimePilot.WinForms/PreferencesForm.cs"
+      ],
+      "license_or_use_basis": "MIT full text present at the pinned base revision 8ad41b136ecab5c5f2f1f97806cfbfe784004249 as LICENSE, read directly from that revision rather than from the default branch or a metadata classifier.",
       "provisional_classification": {
         "instruction_language": "ko",
         "task_category": "refactoring",
@@ -38594,8 +38617,8 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
+        "license_or_use_basis": "pass",
+        "exact_base_resolvable": "pass",
         "single_bounded_task": "pass",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
@@ -38615,7 +38638,10 @@
         "The same documentation warns that a non-Windows build is for development rather than release: the executable is not marked as a Windows application and embeds no icon. That affects shipping the binary, not compiling and statically inspecting the resource extraction this task requires.",
         "objective_evaluator_feasible looks satisfiable without running the UI. Three of the four stated completion criteria are static: UI strings managed from resources, a structure that can later accept English resources, and a successful build. The remaining criterion, that the Korean UI renders as before, can be decided by comparing each extracted resource value against the hardcoded literal at the base revision rather than by rendering the form.",
         "reproducible_within_budget remains unknown. Before it may pass: pin one .NET 8 SDK by exact version and artifact digest; verify offline NuGet restore of the Windows targeting/runtime ref packs and Microsoft.Data.Sqlite 10.0.7; reproduce the base build and the negative and positive controls agent-free with EnableWindowsTargeting=true; and measure SDK acquisition, restore, and build wall time and disk against the preregistered resource bucket.",
-        "The csproj was read from the repository default branch through the raw endpoint because this row has no resolved base_revision yet. That is a screening signal about project shape, not a pinned-revision fact, and it is not used as license evidence."
+        "The csproj was read from the repository default branch through the raw endpoint because this row has no resolved base_revision yet. That is a screening signal about project shape, not a pinned-revision fact, and it is not used as license evidence.",
+        "Linked merged PR #97 resolved from the issue timeline, restricted to pull requests in the same repository. Its base commit 8ad41b136ecab5c5f2f1f97806cfbfe784004249 yields tree 8ad41b136ecab5c5f2f1f97806cfbfe784004249 with 61 blobs (recursive listing not truncated).",
+        "License confirmed at that pinned revision: MIT. GitHub's repository metadata classifier reported no SPDX identifier for this repository, so the classifier signal was used only to prioritise work and the terms were read from the revision itself.",
+        "The merged solution touched 12 files; those paths are recorded as construction-only provenance and must stay outside the agent checkout and prompt."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -43957,15 +43983,19 @@
       "source_reference": "https://github.com/joshua-jingu-lee/ante/issues/2349",
       "source_statement_available": true,
       "task_statement_hash": "91f3be7ace797735a3317d2425efe2f6a34afb54c13b867d7863e7956829d4aa",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
+      "base_revision": "c02eb07df23460f466263d43a3cd2117e4dcb511",
+      "base_tree_hash": "c02eb07df23460f466263d43a3cd2117e4dcb511",
+      "solution_reference": "https://github.com/joshua-jingu-lee/ante/pull/2355",
       "solution_revision": null,
       "solution_artifact_hash": null,
       "solution_tree_hash": null,
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        "docs/specs/broker-adapter/08-kis-domestic-adapter.md",
+        "src/ante/broker/kis.py",
+        "tests/unit/test_kis_order_tr_id.py"
+      ],
+      "license_or_use_basis": "MIT full text present at the pinned base revision c02eb07df23460f466263d43a3cd2117e4dcb511 as LICENSE, read directly from that revision rather than from the default branch or a metadata classifier.",
       "provisional_classification": {
         "instruction_language": "ko",
         "task_category": "debugging",
@@ -43973,8 +44003,8 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
+        "license_or_use_basis": "pass",
+        "exact_base_resolvable": "pass",
         "single_bounded_task": "pass",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
@@ -43988,7 +44018,10 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened."
+        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened.",
+        "Linked merged PR #2355 resolved from the issue timeline, restricted to pull requests in the same repository. Its base commit c02eb07df23460f466263d43a3cd2117e4dcb511 yields tree c02eb07df23460f466263d43a3cd2117e4dcb511 with 960 blobs (recursive listing not truncated).",
+        "License confirmed at that pinned revision: MIT. GitHub's repository metadata classifier reported no SPDX identifier for this repository, so the classifier signal was used only to prioritise work and the terms were read from the revision itself.",
+        "The merged solution touched 3 files; those paths are recorded as construction-only provenance and must stay outside the agent checkout and prompt."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -47391,15 +47424,18 @@
       "source_reference": "https://github.com/semantic-reasoning/factlog/issues/26",
       "source_statement_available": true,
       "task_statement_hash": "c2871f3842d4e9bd60269b75c4599f00c3136ff8c087fb94e7fd81c64ae04432",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
+      "base_revision": "61d9ad9ed1b77a674499a2d4a281db0164dad730",
+      "base_tree_hash": "61d9ad9ed1b77a674499a2d4a281db0164dad730",
+      "solution_reference": "https://github.com/semantic-reasoning/factlog/pull/27",
       "solution_revision": null,
       "solution_artifact_hash": null,
       "solution_tree_hash": null,
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        "tests/test_ask_router.sh",
+        "tools/ask_router.py"
+      ],
+      "license_or_use_basis": "Apache-2.0 full text present at the pinned base revision 61d9ad9ed1b77a674499a2d4a281db0164dad730 as LICENSE/NOTICE, read directly from that revision rather than from the default branch or a metadata classifier.",
       "provisional_classification": {
         "instruction_language": "ko",
         "task_category": "debugging",
@@ -47407,8 +47443,8 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
+        "license_or_use_basis": "pass",
+        "exact_base_resolvable": "pass",
         "single_bounded_task": "pass",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
@@ -47422,7 +47458,10 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened."
+        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened.",
+        "Linked merged PR #27 resolved from the issue timeline, restricted to pull requests in the same repository. Its base commit 61d9ad9ed1b77a674499a2d4a281db0164dad730 yields tree 61d9ad9ed1b77a674499a2d4a281db0164dad730 with 58 blobs (recursive listing not truncated).",
+        "License confirmed at that pinned revision: Apache-2.0. GitHub's repository metadata classifier reported no SPDX identifier for this repository, so the classifier signal was used only to prioritise work and the terms were read from the revision itself.",
+        "The merged solution touched 2 files; those paths are recorded as construction-only provenance and must stay outside the agent checkout and prompt."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -49800,15 +49839,19 @@
       "source_reference": "https://github.com/seob717/nunchi/issues/35",
       "source_statement_available": true,
       "task_statement_hash": "05051e3de29dfca913fd37b27c6dd1137c628a8dbd74663557a813c80ab08a33",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
+      "base_revision": "98fb6e5889e6650f22d1376f253546215ac635a6",
+      "base_tree_hash": "98fb6e5889e6650f22d1376f253546215ac635a6",
+      "solution_reference": "https://github.com/seob717/nunchi/pull/28",
       "solution_revision": null,
       "solution_artifact_hash": null,
       "solution_tree_hash": null,
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        ".claude-plugin/plugin.json",
+        ".release-please-manifest.json",
+        "CHANGELOG.md"
+      ],
+      "license_or_use_basis": "MIT full text present at the pinned base revision 98fb6e5889e6650f22d1376f253546215ac635a6 as LICENSE, read directly from that revision rather than from the default branch or a metadata classifier.",
       "provisional_classification": {
         "instruction_language": "ko",
         "task_category": "implementation",
@@ -49816,8 +49859,8 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
+        "license_or_use_basis": "pass",
+        "exact_base_resolvable": "pass",
         "single_bounded_task": "pass",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
@@ -49831,7 +49874,10 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened."
+        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened.",
+        "Linked merged PR #28 resolved from the issue timeline, restricted to pull requests in the same repository. Its base commit 98fb6e5889e6650f22d1376f253546215ac635a6 yields tree 98fb6e5889e6650f22d1376f253546215ac635a6 with 285 blobs (recursive listing not truncated).",
+        "License confirmed at that pinned revision: MIT. GitHub's repository metadata classifier reported no SPDX identifier for this repository, so the classifier signal was used only to prioritise work and the terms were read from the revision itself.",
+        "The merged solution touched 3 files; those paths are recorded as construction-only provenance and must stay outside the agent checkout and prompt."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
