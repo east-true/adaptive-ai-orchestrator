@@ -38,10 +38,13 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
 
         self.assertEqual(len(pool_ids), len(set(pool_ids)))
         self.assertEqual(len(candidate_ids), len(set(candidate_ids)))
+        self.assertEqual(
+            len(candidates),
+            len({candidate["source_reference"] for candidate in candidates}),
+        )
         self.assertTrue(
             all(candidate["source_pool_id"] in pool_ids for candidate in candidates)
         )
-        self.assertTrue(all(candidate["changed_files"] for candidate in candidates))
         self.assertFalse(self.ledger["agent_results_observed"])
 
     def test_selected_rows_are_fully_screened(self) -> None:
@@ -63,6 +66,8 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             self.assertTrue(candidate["task_statement_hash"])
             self.assertTrue(candidate["base_revision"])
             self.assertTrue(candidate["base_tree_hash"])
+            self.assertTrue(candidate["solution_artifact_hash"])
+            self.assertTrue(candidate["changed_files"])
             self.assertEqual(
                 set(candidate["screening"]),
                 EXPECTED_SCREENING_FIELDS,
@@ -122,7 +127,80 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             {
                 "aao-local-history-through-0e32241": 36,
                 "swebench-multilingual-at-2b7aced": 300,
+                "github-korean-bearing-issues-2026-07-19": 411,
+                "github-explicit-multilingual-issues-2026-07-19": 383,
             },
+        )
+
+    def test_preserves_korean_bearing_probe_audit(self) -> None:
+        candidates = [
+            candidate
+            for candidate in self.ledger["candidates"]
+            if candidate["source_pool_id"]
+            == "github-korean-bearing-issues-2026-07-19"
+        ]
+        reviewed = [
+            candidate
+            for candidate in candidates
+            if candidate["provisional_classification"]["task_category"] is not None
+        ]
+
+        self.assertEqual(len(candidates), 411)
+        self.assertEqual(len(reviewed), 29)
+        self.assertEqual(
+            Counter(candidate["source_kind"] for candidate in candidates),
+            {"public-issue-discovery": 384, "public-issue-pr-pair": 27},
+        )
+        self.assertEqual(
+            Counter(candidate["decision"] for candidate in reviewed),
+            {"screening": 18, "excluded": 11},
+        )
+        self.assertEqual(
+            Counter(
+                candidate["provisional_classification"]["instruction_language"]
+                for candidate in reviewed
+            ),
+            {"ko": 28, "mixed": 1},
+        )
+        self.assertEqual(
+            {
+                candidate["candidate_id"]
+                for candidate in candidates
+                if candidate["screening"]["exact_base_resolvable"] == "pass"
+            },
+            {
+                "ghko-Chigo55--Docker-Compose-issue-38",
+                "ghko-SeoyunL--factlog-academic-issue-314",
+                "ghko-ProudlyOffbeat--ProudlyOffbeat-MVP-iOS-issue-93",
+                "ghko-minacle--swift-tui-issue-18",
+            },
+        )
+
+    def test_preserves_explicit_multilingual_probe_audit(self) -> None:
+        candidates = [
+            candidate
+            for candidate in self.ledger["candidates"]
+            if candidate["source_pool_id"]
+            == "github-explicit-multilingual-issues-2026-07-19"
+        ]
+        reviewed = [
+            candidate
+            for candidate in candidates
+            if candidate["provisional_classification"]["task_category"] is not None
+        ]
+
+        self.assertEqual(len(candidates), 383)
+        self.assertEqual(len(reviewed), 50)
+        self.assertEqual(
+            Counter(candidate["decision"] for candidate in reviewed),
+            {"screening": 28, "excluded": 22},
+        )
+        self.assertEqual(
+            Counter(
+                candidate["provisional_classification"]["instruction_language"]
+                for candidate in reviewed
+            ),
+            {"ko": 28, "mixed": 21, "en": 1},
         )
 
 

@@ -114,6 +114,12 @@
         {"type": "null"}
       ]
     },
+    "nullableNonEmptyString": {
+      "anyOf": [
+        {"$ref": "#/$defs/nonEmptyString"},
+        {"type": "null"}
+      ]
+    },
     "screenState": {
       "enum": ["pass", "fail", "unknown"]
     },
@@ -281,6 +287,7 @@
           "enum": [
             "maintainer-history-delta",
             "public-issue-pr-pair",
+            "public-issue-discovery",
             "benchmark-instance",
             "synthetic-fixture-proposal"
           ]
@@ -301,13 +308,13 @@
           "$ref": "#/$defs/nullableHash"
         },
         "solution_reference": {
-          "$ref": "#/$defs/nonEmptyString"
+          "$ref": "#/$defs/nullableNonEmptyString"
         },
         "solution_revision": {
           "$ref": "#/$defs/nullableHash"
         },
         "solution_artifact_hash": {
-          "$ref": "#/$defs/hash"
+          "$ref": "#/$defs/nullableHash"
         },
         "solution_tree_hash": {
           "$ref": "#/$defs/nullableHash"
@@ -317,7 +324,6 @@
         },
         "changed_files": {
           "type": "array",
-          "minItems": 1,
           "uniqueItems": true,
           "items": {
             "$ref": "#/$defs/nonEmptyString"
@@ -412,6 +418,9 @@
               "task_statement_hash": {"$ref": "#/$defs/hash"},
               "base_revision": {"$ref": "#/$defs/hash"},
               "base_tree_hash": {"$ref": "#/$defs/hash"},
+              "solution_reference": {"$ref": "#/$defs/nonEmptyString"},
+              "solution_artifact_hash": {"$ref": "#/$defs/hash"},
+              "changed_files": {"minItems": 1},
               "screening": {
                 "properties": {
                   "license_or_use_basis": {"const": "pass"},
