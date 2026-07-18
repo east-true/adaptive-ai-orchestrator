@@ -266,9 +266,12 @@ counterfactual support.
 
 ## Prepare a paired smoke without running agents
 
-The `paired-smoke-manifest-v1` contract pins four low-risk tasks, both exact
-agent environments, one protected task-specific evaluator per task, the Git
-base/fixtures, metrics, budget, and stop/exclusion rules before outcomes exist.
+The historical `paired-smoke-manifest-v1` contract pins four low-risk tasks,
+both exact agent environments, one protected task-specific evaluator per task,
+the Git base/fixtures, metrics, budget, and stop/exclusion rules before outcomes
+exist. `paired-smoke-manifest-v2` additionally requires an assertion-by-assertion
+evaluator/task wording map, an explicit completeness attestation for that
+inventory, and an exact repository-relative modified-file allowlist per task.
 
 ```bash
 PYTHONPATH=src python3 -m adaptive_orchestrator.cli paired plan \
@@ -281,9 +284,10 @@ PYTHONPATH=src python3 -m adaptive_orchestrator.cli paired dry-run \
   --workspace-root /protected/paired-workspaces
 ```
 
-The plan command only reads the manifest. It returns deterministic assignments
-and eight paths under the explicit `workspaces` JSON field without reading or
-creating the workspace root. The later dry run must produce the same paths.
+The plan command only reads the manifest. It returns deterministic assignments,
+preflight contract coverage, and eight paths under the explicit `workspaces`
+JSON field without reading or creating the workspace root. The later dry run
+must produce the same paths.
 
 The dry run invokes neither Claude Code nor Codex. It creates eight persistent,
 independent shallow checkouts containing only the exact detached base commit,

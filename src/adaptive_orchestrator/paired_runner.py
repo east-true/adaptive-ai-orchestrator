@@ -15,7 +15,6 @@ from .events import JsonlEventStore, LifecycleEventType
 from .kernel import OrchestratorKernel
 from .logging import JsonlExecutionLogger
 from .paired_experiment import (
-    PAIRED_MANIFEST_SCHEMA,
     PairAssignment,
     PairedAgentSpec,
     PairedExperimentError,
@@ -146,7 +145,7 @@ class PairedSmokeRunner:
         observations = observations_from_routing_state(self.manifest, state)
         return {
             "schema_version": PAIRED_RUN_SCHEMA,
-            "manifest_schema_version": PAIRED_MANIFEST_SCHEMA,
+            "manifest_schema_version": self.manifest.schema_version,
             "experiment_id": self.manifest.experiment_id,
             "agent_execution_started": True,
             "control_state_dir": str(control),

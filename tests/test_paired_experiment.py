@@ -13,6 +13,7 @@ from adaptive_orchestrator.domain import ExecutionStatus
 from adaptive_orchestrator.paired_experiment import (
     ORDER_ASSIGNMENT_RULE,
     PAIRED_MANIFEST_SCHEMA,
+    PAIRED_MANIFEST_SCHEMA_V2,
     PAIRED_PLAN_SCHEMA,
     PRIMARY_METRIC,
     PairedAttemptObservation,
@@ -22,6 +23,7 @@ from adaptive_orchestrator.paired_experiment import (
     load_paired_manifest,
     observations_from_routing_state,
     paired_manifest_from_dict,
+    paired_contract_coverage,
     plan_paired_workspaces,
     prepare_paired_workspaces,
     validate_paired_environment,
@@ -166,6 +168,23 @@ def binary_observations(manifest, outcomes):
     return tuple(observations)
 
 
+def manifest_v2(raw: dict) -> dict:
+    upgraded = json.loads(json.dumps(raw))
+    upgraded["schema_version"] = PAIRED_MANIFEST_SCHEMA_V2
+    for task in upgraded["tasks"]:
+        contract_text = "Return the declared task result."
+        task["description"] = f'{task["description"]} {contract_text}'
+        task["modified_file_allowlist"] = ["app.py"]
+        task["evaluator"]["assertion_inventory_complete"] = True
+        task["evaluator"]["assertion_contracts"] = [{
+            "assertion_id": "declared-task-result",
+            "evaluator_requirement": "The evaluator checks the declared task result.",
+            "task_contract_field": "description",
+            "task_contract_text": contract_text,
+        }]
+    return upgraded
+
+
 class RecordingProcessRunner:
     def __init__(self) -> None:
         self.calls: list[tuple[tuple[str, ...], Path, float | None]] = []
@@ -225,6 +244,48 @@ class PairedManifestTests(unittest.TestCase):
             with self.assertRaisesRegex(PairedExperimentError, "artifact hash changed"):
                 validate_paired_environment(manifest, manifest_path, source)
 
+    def test_v2_requires_explicit_assertion_mapping_and_modified_file_scope(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            source, manifest_path, raw = build_manifest_fixture(Path(directory))
+            upgraded = manifest_v2(raw)
+            manifest_path.write_text(json.dumps(upgraded, indent=2))
+
+            manifest = load_paired_manifest(manifest_path)
+            coverage = paired_contract_coverage(manifest)
+            environment = validate_paired_environment(manifest, manifest_path, source)
+
+            self.assertEqual(manifest.schema_version, PAIRED_MANIFEST_SCHEMA_V2)
+            self.assertTrue(coverage["preflight_contract_coverage_complete"])
+            self.assertEqual(coverage["assertion_mapped_task_count"], 4)
+            self.assertEqual(coverage["modified_file_allowlist_task_count"], 4)
+            self.assertEqual(manifest.tasks[0].modified_file_allowlist, ("app.py",))
+            self.assertTrue(environment["contract_coverage"]["preflight_contract_coverage_complete"])
+
+            missing_attestation = json.loads(json.dumps(upgraded))
+            missing_attestation["tasks"][0]["evaluator"]["assertion_inventory_complete"] = False
+            with self.assertRaisesRegex(PairedExperimentError, "assertion_inventory_complete=true"):
+                paired_manifest_from_dict(missing_attestation)
+
+            unmapped_text = json.loads(json.dumps(upgraded))
+            unmapped_text["tasks"][0]["evaluator"]["assertion_contracts"][0]["task_contract_text"] = "not stated"
+            with self.assertRaisesRegex(PairedExperimentError, "not present in task description"):
+                paired_manifest_from_dict(unmapped_text)
+
+            unsafe_scope = json.loads(json.dumps(upgraded))
+            unsafe_scope["tasks"][0]["modified_file_allowlist"] = ["../outside.py"]
+            with self.assertRaisesRegex(PairedExperimentError, "normalized repository-relative"):
+                paired_manifest_from_dict(unsafe_scope)
+
+    def test_v1_remains_valid_without_post_smoke_audit_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            _, manifest_path, _ = build_manifest_fixture(Path(directory))
+            manifest = load_paired_manifest(manifest_path)
+            coverage = paired_contract_coverage(manifest)
+
+            self.assertFalse(coverage["preflight_contract_coverage_complete"])
+            self.assertEqual(coverage["assertion_mapped_task_count"], 0)
+            self.assertEqual(coverage["modified_file_allowlist_task_count"], 0)
+
 
 class PairAssignmentTests(unittest.TestCase):
     def test_seeded_assignment_is_balanced_and_byte_stable(self) -> None:
@@ -276,6 +337,7 @@ class PairedPlanTests(unittest.TestCase):
 
             self.assertEqual(first, second)
             self.assertEqual(first["schema_version"], PAIRED_PLAN_SCHEMA)
+            self.assertFalse(first["contract_coverage"]["preflight_contract_coverage_complete"])
             self.assertFalse(first["agent_execution_started"])
             self.assertFalse(first["workspace_creation_started"])
             self.assertEqual(len(first["workspaces"]), 8)
@@ -411,6 +473,7 @@ class PairedRunnerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source, manifest_path, raw = build_manifest_fixture(root)
+            raw = manifest_v2(raw)
             for task in raw["tasks"]:
                 absolute_artifact = Path(task["evaluator"]["artifact_paths"][0])
                 relative_artifact = str(absolute_artifact.relative_to(root))
@@ -437,7 +500,7 @@ class PairedRunnerTests(unittest.TestCase):
             ).run(confirm_agent_execution=True)
 
             self.assertEqual(report["schema_version"], "paired-run-v1")
-            self.assertEqual(report["manifest_schema_version"], PAIRED_MANIFEST_SCHEMA)
+            self.assertEqual(report["manifest_schema_version"], PAIRED_MANIFEST_SCHEMA_V2)
             self.assertTrue(report["agent_execution_started"])
             self.assertEqual(report["completed_attempts"], 8)
             self.assertEqual(len(process_runner.calls), 16)
@@ -464,6 +527,7 @@ class PairedRunnerTests(unittest.TestCase):
             self.assertEqual(secondary["wall_time"]["agent_duration_observed_count"], 8)
             self.assertEqual(secondary["wall_time"]["runner_elapsed_observed_count"], 8)
             self.assertEqual(secondary["modified_files"]["observed_attempt_count"], 8)
+            self.assertEqual(secondary["modified_files"]["unexpected_modified_file_count"], 0)
 
             with self.assertRaisesRegex(PairedExecutionError, "new or empty"):
                 PairedSmokeRunner(
@@ -546,6 +610,29 @@ class PairedAnalysisTests(unittest.TestCase):
             self.assertEqual(agent_resource["cached_input_tokens"]["sum"], 40)
             self.assertEqual(secondary["modified_files"]["observed_paths"], ["src/example.py"])
             self.assertEqual(secondary["modified_files"]["missing_attempt_count"], 7)
+
+    def test_v2_modified_file_allowlists_make_unexpected_count_estimable(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            _, _, raw = build_manifest_fixture(Path(directory))
+            manifest = paired_manifest_from_dict(manifest_v2(raw))
+            observations = list(binary_observations(manifest, ((1, 1), (1, 1), (1, 1), (1, 1))))
+            observations = [
+                replace(observation, workspace_modified_files=("app.py",))
+                for observation in observations
+            ]
+            observations[0] = replace(
+                observations[0],
+                workspace_modified_files=("app.py", "README.md"),
+            )
+
+            modified = analyze_paired_observations(manifest, observations)["secondary_metrics"]["modified_files"]
+
+            self.assertEqual(modified["modified_file_allowlist_task_count"], 4)
+            self.assertEqual(modified["observed_attempt_count"], 8)
+            self.assertEqual(modified["observed_unexpected_modified_file_count"], 1)
+            self.assertEqual(modified["unexpected_modified_file_count"], 1)
+            self.assertEqual(modified["unexpected_paths"], ["README.md"])
+            self.assertIsNone(modified["not_estimable_reason"])
 
     def test_one_sided_failure_and_incomplete_pairs_are_retained_as_missing_quality(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
