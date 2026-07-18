@@ -294,6 +294,29 @@ class ReplayDispatchTests(unittest.TestCase):
             self.assertIn("Replay failed", stderr.getvalue())
 
 
+class PairedDispatchTests(unittest.TestCase):
+    def test_paired_dry_run_arguments_are_explicit(self) -> None:
+        parser = cli.build_parser()
+        args = parser.parse_args([
+            "paired", "dry-run", "manifest.json",
+            "--source-repository", "/repo",
+            "--workspace-root", "/isolated/workspaces",
+        ])
+
+        self.assertEqual(args.paired_command, "dry-run")
+        self.assertEqual(args.manifest, Path("manifest.json"))
+        self.assertEqual(args.source_repository, Path("/repo"))
+        self.assertEqual(args.workspace_root, Path("/isolated/workspaces"))
+
+    def test_paired_missing_manifest_fails_without_traceback(self) -> None:
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            exit_code = cli.main(["paired", "validate", "/missing/paired-manifest.json"])
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("Paired experiment failed", stderr.getvalue())
+
+
 class WorkflowConfigurationDispatchTests(unittest.TestCase):
     def test_static_policy_without_baseline_fails_cleanly_before_agent_execution(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

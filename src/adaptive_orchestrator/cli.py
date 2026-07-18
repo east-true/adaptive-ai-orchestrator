@@ -18,6 +18,15 @@ from .kernel import OrchestratorKernel
 from .memory import EngineeringMemoryStore
 from .logging import JsonlExecutionLogger
 from .history import ExecutionHistory
+from .paired_experiment import (
+    PairedExperimentError,
+    analyze_paired_observations,
+    assign_pairs,
+    load_paired_manifest,
+    observations_from_routing_state,
+    prepare_paired_workspaces,
+    validate_paired_environment,
+)
 from .routing import TaskAnalyzer
 from .routing_policy import RoutingPolicyRouter
 from .routing_state import LifecycleRecorder, ReplayError, RoutingStateStore
@@ -98,6 +107,25 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Append abandoned reconciliation events for non-live started attempts, then rebuild state.",
     )
+
+    paired = subparsers.add_parser("paired", help="validate and dry-run the Phase 2a paired-smoke pipeline")
+    paired_subparsers = paired.add_subparsers(dest="paired_command", required=True)
+
+    paired_validate = paired_subparsers.add_parser("validate", help="validate a paired manifest and its pinned environment")
+    paired_validate.add_argument("manifest", type=Path)
+    paired_validate.add_argument("--source-repository", type=Path, default=Path.cwd())
+
+    paired_dry_run = paired_subparsers.add_parser(
+        "dry-run",
+        help="create and verify isolated paired worktrees without invoking either agent",
+    )
+    paired_dry_run.add_argument("manifest", type=Path)
+    paired_dry_run.add_argument("--source-repository", type=Path, default=Path.cwd())
+    paired_dry_run.add_argument("--workspace-root", type=Path, required=True)
+
+    paired_analyze = paired_subparsers.add_parser("analyze", help="project paired outcomes from a lifecycle event source")
+    paired_analyze.add_argument("manifest", type=Path)
+    paired_analyze.add_argument("--control-state-dir", type=Path, required=True)
 
     return parser
 
@@ -400,6 +428,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Valid plan file: {args.plan_file} ({len(tasks)} task(s))")
         return 0
 
+    if args.command == "paired":
+        return _run_paired_command(args)
+
     workspace = args.workspace.resolve()
 
     if args.command == "memory":
@@ -504,6 +535,42 @@ def main(argv: list[str] | None = None) -> int:
     plan, record = workflow.run(task, args.agent)
     print(json.dumps({"plan": asdict(plan), "execution": asdict(record)}, default=str, indent=2))
     return 0 if execution_succeeded(record) else 1
+
+
+def _run_paired_command(args: argparse.Namespace) -> int:
+    try:
+        manifest_path = args.manifest.expanduser().resolve(strict=True)
+        manifest = load_paired_manifest(manifest_path)
+        if args.paired_command == "validate":
+            environment = validate_paired_environment(manifest, manifest_path, args.source_repository)
+            print(json.dumps({
+                "valid": True,
+                "schema_version": manifest.schema_version,
+                "experiment_id": manifest.experiment_id,
+                "task_count": len(manifest.tasks),
+                "execution_count": manifest.maximum_executions,
+                "environment": environment,
+                "assignments": [assignment.as_dict() for assignment in assign_pairs(manifest)],
+            }, indent=2))
+            return 0
+        if args.paired_command == "dry-run":
+            report = prepare_paired_workspaces(
+                manifest,
+                manifest_path,
+                args.source_repository,
+                args.workspace_root,
+            )
+            print(json.dumps(report, indent=2))
+            return 0
+        if args.paired_command == "analyze":
+            state = replay_event_log(args.control_state_dir.expanduser().resolve() / "events.jsonl")
+            observations = observations_from_routing_state(manifest, state)
+            print(json.dumps(analyze_paired_observations(manifest, observations), indent=2))
+            return 0
+        raise PairedExperimentError(f"Unsupported paired command: {args.paired_command}")
+    except (EventLogError, OSError, PairedExperimentError, ReplayError, ValueError) as exc:
+        print(f"Paired experiment failed: {exc}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":
