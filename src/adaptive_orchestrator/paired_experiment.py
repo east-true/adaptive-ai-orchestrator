@@ -170,8 +170,11 @@ class PairedAttemptObservation:
     output_tokens: int | None = None
     cached_input_tokens: int | None = None
     workspace_modified_files: tuple[str, ...] | None = None
+    attempt_materialized: bool = True
 
     def __post_init__(self) -> None:
+        if not isinstance(self.attempt_materialized, bool):
+            raise PairedExperimentError("attempt_materialized must be boolean.")
         if self.terminal_status not in _TERMINAL_STATUSES:
             raise PairedExperimentError(f"Unsupported terminal status: {self.terminal_status}")
         if self.quality_observed:
@@ -550,7 +553,7 @@ def observations_from_routing_state(
             if execution is None or attempt_id not in execution.attempts:
                 observations.append(PairedAttemptObservation(
                     assignment.task_id, assignment.pair_id, assignment.execution_id, attempt_id,
-                    agent_id, "incomplete", False, None,
+                    agent_id, "incomplete", False, None, attempt_materialized=False,
                 ))
                 continue
             attempt = execution.attempts[attempt_id]
@@ -762,10 +765,13 @@ def _summarize_secondary_metrics(
 ) -> dict[str, Any]:
     expected_count = manifest.maximum_executions
     observations = list(indexed.values())
-    missing_attempts = expected_count - len(observations)
+    materialized_observations = [item for item in observations if item.attempt_materialized]
+    missing_attempts = expected_count - len(materialized_observations)
     terminal_status_counts = {
-        status: sum(observation.terminal_status == status for observation in observations)
-        for status in sorted({observation.terminal_status for observation in observations} | {"incomplete"})
+        status: sum(observation.terminal_status == status for observation in materialized_observations)
+        for status in sorted(
+            {observation.terminal_status for observation in materialized_observations} | {"incomplete"}
+        )
     }
     terminal_status_counts["incomplete"] += missing_attempts
     quality_observed_count = sum(observation.quality_observed for observation in observations)
@@ -808,11 +814,14 @@ def _summarize_secondary_metrics(
     for agent_spec in manifest.agents:
         expected_agent_count = len(manifest.tasks)
         agent_observations = [item for item in observations if item.agent_id == agent_spec.agent_id]
+        materialized_agent_observations = [item for item in agent_observations if item.attempt_materialized]
         by_agent[agent_spec.base_id] = {
             "agent_id": agent_spec.agent_id,
             "expected_attempt_count": expected_agent_count,
-            "materialized_attempt_count": len(agent_observations),
-            "completed_attempt_count": sum(item.terminal_status == "completed" for item in agent_observations),
+            "materialized_attempt_count": len(materialized_agent_observations),
+            "completed_attempt_count": sum(
+                item.terminal_status == "completed" for item in materialized_agent_observations
+            ),
             "quality_observed_count": sum(item.quality_observed for item in agent_observations),
             "agent_duration_observed_count": sum(item.agent_duration_ms is not None for item in agent_observations),
             "agent_duration_sum_ms": sum(item.agent_duration_ms or 0 for item in agent_observations),
@@ -829,8 +838,10 @@ def _summarize_secondary_metrics(
     return {
         "reliability": {
             "expected_attempt_count": expected_count,
-            "materialized_attempt_count": len(observations),
-            "completed_attempt_count": sum(item.terminal_status == "completed" for item in observations),
+            "materialized_attempt_count": len(materialized_observations),
+            "completed_attempt_count": sum(
+                item.terminal_status == "completed" for item in materialized_observations
+            ),
             "terminal_status_counts": terminal_status_counts,
         },
         "evaluator_coverage": {
