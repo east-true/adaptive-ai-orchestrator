@@ -1,7 +1,7 @@
 # Adaptive Routing 평가 프로토콜
 
-> 버전: draft-1
-> 기준일: 2026-07-17
+> 버전: draft-2
+> 기준일: 2026-07-18
 > 대상: Claude Code와 Codex CLI를 고르는 routing 정책
 
 ## 1. 목적과 estimand
@@ -107,6 +107,18 @@ estimated time/resource bucket
 ```
 
 개인 식별정보나 추론된 사용자 국적·문화권은 저장하지 않는다.
+
+### 4.4 Target workload intake
+
+paired quota는 agent 차이를 비교하기 위한 실험분포이며 실제 target workload의
+빈도를 나타내지 않는다. Phase 0부터 agent 선택과 독립적인 intake에서 4.3의
+metadata를 같은 schema/version으로 집계한다. raw prompt나 사용자 문화권을
+저장하지 않고 unknown 비율과 관측 기간을 함께 보고한다.
+
+이 intake는 Phase -1이나 stratum별 paired effect의 선행조건이 아니다. 다만
+target-workload-weighted policy value, aggregate best-single, overall 개선 주장을
+하려면 대표성 검토를 통과한 intake 빈도와 확증 시작 전에 고정한 weighting rule이
+필요하다. 충분한 표본이 없으면 해당 aggregate를 계산하지 않는다.
 
 ## 5. Paired experiment 실행
 
@@ -221,8 +233,13 @@ environment manifest에 고정한다.
   않는다.
 - always-Claude/always-Codex처럼 overlap 밖의 action을 요구하는 정책은 prospective
   IPS로 전체 workload 성능을 추정하지 않는다. 대표 paired cohort에서만 비교한다.
-- DR는 별도의 objective-quality sample과 time-ordered 검증을 통과한 outcome model이
-  있을 때만 계산한다. propensity support만으로 DR가 가능해지지 않는다.
+- overlap/positivity는 IPS와 DR의 식별 조건이다. prospective randomized cohort에서는
+  실제 propensity를 선택 전에 기록하므로 logging policy model은 알려져 있다.
+  이론적으로 DR의 일관성은 propensity 또는 outcome model 중 하나의 정확성으로
+  성립할 수 있지만, 이 프로젝트는 분산 감소와 추가 robustness를 확인하기 위해
+  별도의 objective-quality sample과 time-ordered 검증을 통과한 outcome model이
+  있을 때만 DR를 보고한다. 이는 이론적 필요조건이 아니라 사전 등록한 운영
+  admission rule이다.
 
 ### 8.3 Time과 drift
 
@@ -280,7 +297,8 @@ task 자체 fixture가 깨졌거나 양쪽 모두 실행 전 infrastructure fail
 
 | 항목 | Baseline | Candidate | Difference/CI | 통과 여부 |
 |---|---:|---:|---:|---|
-| overall objective quality | | | | |
+| pooled/quota objective quality (not workload value) | | | | |
+| target-workload-weighted objective quality (weights available only) | | | | |
 | Korean | | | | |
 | English | | | | |
 | mixed | | | | |
@@ -293,6 +311,8 @@ task 자체 fixture가 깨졌거나 양쪽 모두 실행 전 infrastructure fail
 
 policy는 point estimate 하나로 승격하지 않는다. 사전 정의한 비열등성/개선 기준,
 safety, strata, data integrity를 모두 통과해야 한다.
+target workload weight가 없거나 대표성 검토를 통과하지 못하면 weighted row는
+`not estimable`로 두며 pooled/quota 결과를 대신 policy value라고 부르지 않는다.
 
 ## 12. 구현 전 dry run
 

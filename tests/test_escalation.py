@@ -26,6 +26,7 @@ class EscalationPolicyTests(unittest.TestCase):
         decision = EscalationPolicy().decide(None, ExecutionStatus.FAILED, VerificationStatus.SKIPPED)
         self.assertTrue(decision.should_escalate)
         self.assertIn("execution_failed", decision.reasons)
+        self.assertEqual(decision.trigger_classes, ("outcome",))
 
     def test_verification_failure_escalates(self) -> None:
         decision = EscalationPolicy().decide({}, ExecutionStatus.COMPLETED, VerificationStatus.FAILED)
@@ -36,6 +37,7 @@ class EscalationPolicyTests(unittest.TestCase):
         decision = EscalationPolicy(risk_threshold=3).decide({"risk": 4, "uncertainty": 0}, ExecutionStatus.COMPLETED, VerificationStatus.PASSED)
         self.assertTrue(decision.should_escalate)
         self.assertEqual(decision.reasons, ("high_risk",))
+        self.assertEqual(decision.trigger_classes, ("task_analysis",))
 
     def test_below_threshold_does_not_escalate(self) -> None:
         decision = EscalationPolicy(risk_threshold=3, uncertainty_threshold=3, difficulty_threshold=4).decide(
@@ -47,6 +49,15 @@ class EscalationPolicyTests(unittest.TestCase):
         decision = EscalationPolicy(difficulty_threshold=4).decide({"risk": 0, "uncertainty": 0, "difficulty": 5}, ExecutionStatus.COMPLETED, VerificationStatus.PASSED)
         self.assertTrue(decision.should_escalate)
         self.assertEqual(decision.reasons, ("high_difficulty",))
+
+    def test_mixed_reasons_preserve_both_trigger_classes(self) -> None:
+        decision = EscalationPolicy(risk_threshold=3).decide(
+            {"risk": 4, "uncertainty": 0, "difficulty": 0},
+            ExecutionStatus.FAILED,
+            VerificationStatus.SKIPPED,
+        )
+        self.assertEqual(decision.reasons, ("execution_failed", "high_risk"))
+        self.assertEqual(decision.trigger_classes, ("outcome", "task_analysis"))
 
 
 class AgentSwitchingRunner:
@@ -83,6 +94,14 @@ class WorkflowEscalationTests(unittest.TestCase):
             self.assertEqual(record.escalation.agent_id, "claude-code")
             self.assertIn("execution_failed", record.escalation.reasons)
             self.assertEqual(record.escalation.record.status, ExecutionStatus.COMPLETED)
+            self.assertEqual(record.escalation.trigger_classes, ("outcome",))
+            self.assertEqual(record.trigger_classes, ("outcome",))
+            self.assertEqual(record.escalation.record.trigger_classes, ("outcome",))
+            self.assertEqual(record.execution_id, record.escalation.record.execution_id)
+            self.assertNotEqual(record.attempt_id, record.escalation.record.attempt_id)
+            self.assertEqual(record.escalation.record.parent_attempt_id, record.attempt_id)
+            self.assertEqual(record.escalation.record.selection_mode, "escalation")
+            self.assertEqual(record.escalation.record.cohort, "escalation")
             self.assertEqual(len(runner.calls), 2)
 
     def test_successful_run_does_not_escalate(self) -> None:
@@ -107,6 +126,8 @@ class WorkflowEscalationTests(unittest.TestCase):
             self.assertEqual(record.status, ExecutionStatus.FAILED)
             self.assertIsNone(record.escalation)
             self.assertEqual(len(runner.calls), 1)
+            self.assertEqual(record.selection_mode, "manual")
+            self.assertEqual(record.cohort, "manual")
 
     def test_no_other_capable_agent_leaves_escalation_unset(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -118,6 +139,8 @@ class WorkflowEscalationTests(unittest.TestCase):
 
             self.assertEqual(record.status, ExecutionStatus.FAILED)
             self.assertIsNone(record.escalation)
+            self.assertEqual(record.escalation_reasons, ("execution_failed",))
+            self.assertEqual(record.trigger_classes, ("outcome",))
 
     def test_escalation_disabled_when_no_policy_configured(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
