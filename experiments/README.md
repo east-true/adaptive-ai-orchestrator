@@ -30,3 +30,6 @@ files. The manifest passed `paired validate`, an agent-free eight-checkout
 `paired dry-run`, and the explicitly approved eight-execution smoke on
 2026-07-18. The observed result and evaluator-validity finding are recorded in
 `results/phase2a-smoke-v1.md`; they are pipeline evidence, not an agent ranking.
+The historical v1 manifest is intentionally unchanged. Tooling also accepts a
+v2 schema for a future preregistered run; v2 requires evaluator assertion/task
+wording coverage attestations and exact per-task modified-file allowlists.

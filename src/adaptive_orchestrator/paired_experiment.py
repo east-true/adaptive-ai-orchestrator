@@ -9,7 +9,7 @@ import shutil
 import subprocess
 import tempfile
 from dataclasses import asdict, dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Iterable, Mapping, Sequence
 from uuid import NAMESPACE_URL, uuid5
 
@@ -18,6 +18,8 @@ from .routing_state import RoutingState
 from .verification import evaluator_content_version, hash_evaluator_artifacts, validate_evaluator_artifacts
 
 PAIRED_MANIFEST_SCHEMA = "paired-smoke-manifest-v1"
+PAIRED_MANIFEST_SCHEMA_V2 = "paired-smoke-manifest-v2"
+SUPPORTED_PAIRED_MANIFEST_SCHEMAS = frozenset({PAIRED_MANIFEST_SCHEMA, PAIRED_MANIFEST_SCHEMA_V2})
 PAIRED_PLAN_SCHEMA = "paired-workspace-plan-v1"
 PAIRED_ANALYSIS_SCHEMA = "paired-analysis-v1"
 ORDER_ASSIGNMENT_RULE = "seeded-balanced-sha256-v1"
@@ -48,6 +50,14 @@ class PairedAgentSpec:
 
 
 @dataclass(frozen=True, slots=True)
+class PairedEvaluatorAssertionContract:
+    assertion_id: str
+    evaluator_requirement: str
+    task_contract_field: str
+    task_contract_text: str
+
+
+@dataclass(frozen=True, slots=True)
 class PairedEvaluatorSpec:
     evaluator_id: str
     version: str
@@ -57,6 +67,8 @@ class PairedEvaluatorSpec:
     artifact_paths: tuple[str, ...]
     artifact_hash: str
     timeout_seconds: float
+    assertion_contracts: tuple[PairedEvaluatorAssertionContract, ...] = ()
+    assertion_inventory_complete: bool | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,6 +91,7 @@ class PairedTaskSpec:
     fixture_hash: str
     estimated_resource_bucket: str
     evaluator: PairedEvaluatorSpec
+    modified_file_allowlist: tuple[str, ...] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -188,7 +201,7 @@ def load_paired_manifest(path: Path) -> PairedManifest:
 
 def paired_manifest_from_dict(raw: Mapping[str, Any]) -> PairedManifest:
     schema_version = _required_string(raw, "schema_version")
-    if schema_version != PAIRED_MANIFEST_SCHEMA:
+    if schema_version not in SUPPORTED_PAIRED_MANIFEST_SCHEMAS:
         raise PairedExperimentError(f"Unsupported paired manifest schema: {schema_version}")
     task_set_version = _required_string(raw, "task_set_version")
     agents_raw = _required_list(raw, "agents")
@@ -206,7 +219,10 @@ def paired_manifest_from_dict(raw: Mapping[str, Any]) -> PairedManifest:
     tasks_raw = _required_list(raw, "tasks")
     if len(tasks_raw) != 4:
         raise PairedExperimentError("Phase 2a paired smoke requires exactly four tasks.")
-    tasks = tuple(_task_from_dict(_mapping(item, "task"), task_set_version) for item in tasks_raw)
+    tasks = tuple(
+        _task_from_dict(_mapping(item, "task"), task_set_version, schema_version)
+        for item in tasks_raw
+    )
     if len({task.task_id for task in tasks}) != len(tasks):
         raise PairedExperimentError("Paired task IDs must be unique.")
     if len({task.evaluator.evaluator_id for task in tasks}) != len(tasks):
@@ -328,8 +344,48 @@ def plan_paired_workspaces(manifest: PairedManifest, workspace_root: Path) -> di
         "base_tree_hash": manifest.base_tree_hash,
         "workspace_root": str(root),
         "assignment_rule": manifest.order_assignment_rule,
+        "contract_coverage": paired_contract_coverage(manifest),
         "assignments": [assignment.as_dict() for assignment in assignments],
         "workspaces": workspaces,
+    }
+
+
+def paired_contract_coverage(manifest: PairedManifest) -> dict[str, Any]:
+    task_reports: dict[str, dict[str, Any]] = {}
+    for task in manifest.tasks:
+        contracts = task.evaluator.assertion_contracts
+        task_reports[task.task_id] = {
+            "evaluator_id": task.evaluator.evaluator_id,
+            "assertion_inventory_attested_complete": task.evaluator.assertion_inventory_complete is True,
+            "declared_assertion_count": len(contracts),
+            "assertion_mappings": [asdict(contract) for contract in contracts],
+            "modified_file_allowlist": (
+                list(task.modified_file_allowlist)
+                if task.modified_file_allowlist is not None
+                else None
+            ),
+        }
+    task_count = len(manifest.tasks)
+    assertion_mapped_task_count = sum(
+        bool(task.evaluator.assertion_contracts)
+        and task.evaluator.assertion_inventory_complete is True
+        for task in manifest.tasks
+    )
+    allowlist_task_count = sum(task.modified_file_allowlist is not None for task in manifest.tasks)
+    return {
+        "manifest_schema_version": manifest.schema_version,
+        "task_count": task_count,
+        "assertion_mapped_task_count": assertion_mapped_task_count,
+        "modified_file_allowlist_task_count": allowlist_task_count,
+        "preflight_contract_coverage_complete": (
+            assertion_mapped_task_count == task_count and allowlist_task_count == task_count
+        ),
+        "review_scope": (
+            "The validator proves each declared task_contract_text occurs in its named task field. "
+            "assertion_inventory_complete is the preregistering reviewer's attestation that the "
+            "declared inventory covers every evaluator assertion; evaluator code is not inferred."
+        ),
+        "tasks": task_reports,
     }
 
 
@@ -377,6 +433,7 @@ def validate_paired_environment(manifest: PairedManifest, manifest_path: Path, s
         "tree_hash": tree_hash,
         "artifact_hashes": artifact_hashes,
         "fixture_hashes": fixture_hashes,
+        "contract_coverage": paired_contract_coverage(manifest),
     }
 
 
@@ -452,13 +509,14 @@ def prepare_paired_workspaces(
         raise
 
     return {
-        "schema_version": PAIRED_MANIFEST_SCHEMA,
+        "schema_version": manifest.schema_version,
         "experiment_id": manifest.experiment_id,
         "agent_execution_started": False,
         "source_commit_hash": environment["commit_hash"],
         "source_tree_hash": environment["tree_hash"],
         "base_hashes_identical": len({workspace.tree_hash for workspace in prepared}) == 1,
         "assignment_rule": manifest.order_assignment_rule,
+        "contract_coverage": environment["contract_coverage"],
         "assignments": [assignment.as_dict() for assignment in assignments],
         "workspaces": [asdict(workspace) for workspace in prepared],
     }
@@ -728,6 +786,23 @@ def _summarize_secondary_metrics(
         for item in observations
         if item.workspace_modified_files is not None
     ]
+    allowlist_by_task = {
+        task.task_id: task.modified_file_allowlist
+        for task in manifest.tasks
+    }
+    allowlist_complete = all(paths is not None for paths in allowlist_by_task.values())
+    scoped_modified_observations = [
+        (item, item.workspace_modified_files, allowlist_by_task[item.task_id])
+        for item in observations
+        if item.workspace_modified_files is not None
+        and allowlist_by_task[item.task_id] is not None
+    ]
+    unexpected_occurrences = [
+        path
+        for _, modified_paths, allowed_paths in scoped_modified_observations
+        for path in modified_paths
+        if path not in allowed_paths
+    ]
 
     by_agent: dict[str, dict[str, Any]] = {}
     for agent_spec in manifest.agents:
@@ -784,8 +859,30 @@ def _summarize_secondary_metrics(
             "observed_attempt_count": len(modified_observations),
             "missing_attempt_count": expected_count - len(modified_observations),
             "observed_paths": sorted({path for paths in modified_observations for path in paths}),
-            "unexpected_modified_file_count": None,
-            "not_estimable_reason": "manifest-v1-has-no-task-specific-modified-file-allowlist",
+            "modified_file_allowlist_task_count": sum(
+                paths is not None for paths in allowlist_by_task.values()
+            ),
+            "allowed_paths_by_task": {
+                task_id: list(paths)
+                for task_id, paths in sorted(allowlist_by_task.items())
+                if paths is not None
+            },
+            "observed_unexpected_modified_file_count": (
+                len(unexpected_occurrences) if allowlist_complete else None
+            ),
+            "unexpected_modified_file_count": (
+                len(unexpected_occurrences)
+                if allowlist_complete and len(modified_observations) == expected_count
+                else None
+            ),
+            "unexpected_paths": sorted(set(unexpected_occurrences)) if allowlist_complete else [],
+            "not_estimable_reason": (
+                "manifest-does-not-declare-task-specific-modified-file-allowlists"
+                if not allowlist_complete
+                else "modified-file-observation-missing"
+                if len(modified_observations) != expected_count
+                else None
+            ),
         },
     }
 
@@ -848,7 +945,11 @@ def _agent_from_dict(raw: Mapping[str, Any]) -> PairedAgentSpec:
     )
 
 
-def _task_from_dict(raw: Mapping[str, Any], expected_task_set_version: str) -> PairedTaskSpec:
+def _task_from_dict(
+    raw: Mapping[str, Any],
+    expected_task_set_version: str,
+    schema_version: str,
+) -> PairedTaskSpec:
     task_set_version = _required_string(raw, "task_set_version")
     if task_set_version != expected_task_set_version:
         raise PairedExperimentError("Task task_set_version must match the manifest.")
@@ -871,13 +972,27 @@ def _task_from_dict(raw: Mapping[str, Any], expected_task_set_version: str) -> P
     read_only = raw.get("read_only")
     if not isinstance(read_only, bool):
         raise PairedExperimentError("Task read_only must be boolean.")
+    description = _required_string(raw, "description")
+    objective = _required_string(raw, "objective")
+    constraints = _string_tuple(raw, "constraints")
+    contract_fields: dict[str, tuple[str, ...]] = {
+        "description": (description,),
+        "objective": (objective,),
+        "constraints": constraints,
+    }
+    requires_audit_contract = schema_version == PAIRED_MANIFEST_SCHEMA_V2
+    modified_file_allowlist = (
+        _repository_relative_path_tuple(raw, "modified_file_allowlist")
+        if requires_audit_contract
+        else None
+    )
     return PairedTaskSpec(
         task_id=_safe_identifier(raw, "task_id"),
         task_set_version=task_set_version,
         source=_required_string(raw, "source"),
-        description=_required_string(raw, "description"),
-        objective=_required_string(raw, "objective"),
-        constraints=_string_tuple(raw, "constraints"),
+        description=description,
+        objective=objective,
+        constraints=constraints,
         instruction_language=language,
         repository_code_language=_required_string(raw, "repository_code_language"),
         repository_doc_language=_required_string(raw, "repository_doc_language"),
@@ -889,11 +1004,21 @@ def _task_from_dict(raw: Mapping[str, Any], expected_task_set_version: str) -> P
         fixture_paths=fixture_paths,
         fixture_hash=_required_hash(raw, "fixture_hash"),
         estimated_resource_bucket=_required_string(raw, "estimated_resource_bucket"),
-        evaluator=_evaluator_from_dict(_mapping(raw.get("evaluator"), "evaluator")),
+        evaluator=_evaluator_from_dict(
+            _mapping(raw.get("evaluator"), "evaluator"),
+            contract_fields=contract_fields,
+            require_assertion_contracts=requires_audit_contract,
+        ),
+        modified_file_allowlist=modified_file_allowlist,
     )
 
 
-def _evaluator_from_dict(raw: Mapping[str, Any]) -> PairedEvaluatorSpec:
+def _evaluator_from_dict(
+    raw: Mapping[str, Any],
+    *,
+    contract_fields: Mapping[str, tuple[str, ...]],
+    require_assertion_contracts: bool,
+) -> PairedEvaluatorSpec:
     role = _required_string(raw, "role")
     if role != "quality":
         raise PairedExperimentError("Paired primary evaluators must have role 'quality'.")
@@ -903,6 +1028,18 @@ def _evaluator_from_dict(raw: Mapping[str, Any]) -> PairedEvaluatorSpec:
     timeout = _required_number(raw, "timeout_seconds")
     if timeout <= 0:
         raise PairedExperimentError("Evaluator timeout_seconds must be positive.")
+    assertion_contracts = _assertion_contracts_from_dict(
+        raw,
+        contract_fields=contract_fields,
+        required=require_assertion_contracts,
+    )
+    assertion_inventory_complete = raw.get("assertion_inventory_complete")
+    if require_assertion_contracts and assertion_inventory_complete is not True:
+        raise PairedExperimentError(
+            "paired-smoke-manifest-v2 requires assertion_inventory_complete=true for each evaluator."
+        )
+    if not require_assertion_contracts:
+        assertion_inventory_complete = None
     return PairedEvaluatorSpec(
         evaluator_id=_safe_identifier(raw, "evaluator_id"),
         version=_required_string(raw, "version"),
@@ -912,6 +1049,8 @@ def _evaluator_from_dict(raw: Mapping[str, Any]) -> PairedEvaluatorSpec:
         artifact_paths=_string_tuple(raw, "artifact_paths", nonempty=True),
         artifact_hash=_required_hash(raw, "artifact_hash"),
         timeout_seconds=timeout,
+        assertion_contracts=assertion_contracts,
+        assertion_inventory_complete=assertion_inventory_complete,
     )
 
 
@@ -1043,6 +1182,65 @@ def _optional_string(value: Any, label: str) -> str | None:
     if not isinstance(value, str) or not value.strip():
         raise PairedExperimentError(f"{label} must be null or a non-empty string.")
     return value
+
+
+def _assertion_contracts_from_dict(
+    raw: Mapping[str, Any],
+    *,
+    contract_fields: Mapping[str, tuple[str, ...]],
+    required: bool,
+) -> tuple[PairedEvaluatorAssertionContract, ...]:
+    value = raw.get("assertion_contracts")
+    if value is None and not required:
+        return ()
+    if not isinstance(value, list) or not value:
+        raise PairedExperimentError("assertion_contracts must be a non-empty list.")
+    contracts: list[PairedEvaluatorAssertionContract] = []
+    for item in value:
+        contract = _mapping(item, "assertion_contract")
+        assertion_id = _safe_identifier(contract, "assertion_id")
+        field = _required_string(contract, "task_contract_field")
+        if field not in contract_fields:
+            raise PairedExperimentError(
+                f"Unsupported task_contract_field for assertion {assertion_id}: {field}"
+            )
+        text = _required_string(contract, "task_contract_text")
+        if not any(text in candidate for candidate in contract_fields[field]):
+            raise PairedExperimentError(
+                f"task_contract_text for assertion {assertion_id} is not present in task {field}."
+            )
+        contracts.append(PairedEvaluatorAssertionContract(
+            assertion_id=assertion_id,
+            evaluator_requirement=_required_string(contract, "evaluator_requirement"),
+            task_contract_field=field,
+            task_contract_text=text,
+        ))
+    if len({contract.assertion_id for contract in contracts}) != len(contracts):
+        raise PairedExperimentError("Evaluator assertion_contract assertion IDs must be unique per task.")
+    return tuple(contracts)
+
+
+def _repository_relative_path_tuple(raw: Mapping[str, Any], key: str) -> tuple[str, ...]:
+    value = raw.get(key)
+    if not isinstance(value, list) or any(not isinstance(item, str) or not item for item in value):
+        raise PairedExperimentError(f"{key} must be a list of repository-relative path strings.")
+    paths: list[str] = []
+    for item in value:
+        path = PurePosixPath(item)
+        if (
+            "\\" in item
+            or path.is_absolute()
+            or item in {".", ".."}
+            or ".." in path.parts
+            or path.as_posix() != item
+        ):
+            raise PairedExperimentError(
+                f"{key} entries must be normalized repository-relative exact paths: {item}"
+            )
+        paths.append(item)
+    if len(set(paths)) != len(paths):
+        raise PairedExperimentError(f"{key} must not contain duplicate paths.")
+    return tuple(paths)
 
 
 def _resource_budget(value: Any) -> dict[str, float]:

@@ -1,6 +1,6 @@
 # Adaptive Routing v2: Evidence-First Stratified Temporal Routing
 
-> 상태: Phase -1/0/1과 Phase 2a 실제 paired smoke 및 post-run reporting 반영
+> 상태: Phase -1/0/1과 Phase 2a 실제 paired smoke, post-run reporting/v2 preflight 반영
 > 기준일: 2026-07-18
 > 관련 문서: [연구 검토](routing-research-review.md),
 > [평가 프로토콜](routing-evaluation-protocol.md),
@@ -541,6 +541,11 @@ smoke task의 네 변경은 현재 코드에 독립 통합했고, 분석기는 o
 coverage와 reliability·wall-time·resource missingness·수정 파일 관측을 보고한다. 새 paired
 run은 이 자원/수정 파일 정보를 protected finalized event에 기록하지만, 첫 smoke의 기존
 log에 없던 값은 사후 추정하지 않는다.
+차기 `paired-smoke-manifest-v2`는 각 evaluator assertion의 requirement를 실제
+description/objective/constraints 문구에 매핑하고 assertion inventory가 완전하다는
+reviewer attestation을 요구한다. validator는 문구 포함과 ID/경로 형식을 검증하지만
+evaluator code에서 assertion을 추론하지 않는다. task별 exact modified-file allowlist와
+모든 attempt의 수정 파일 관측이 있을 때만 전체 unexpected-file count를 확정한다.
 
 - 독립 task-specific evaluator가 있는 4개 low-risk task를 같은 base revision의
   격리 workspace에서 양쪽 agent로 실행한다.

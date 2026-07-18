@@ -1,7 +1,7 @@
 # Adaptive Routing 개선 작업 진행상황
 
 > 마지막 갱신: 2026-07-18
-> 상태: Phase -1/0/1과 Phase 2a 8-run smoke 완료, post-run reporting 보강 구현
+> 상태: Phase -1/0/1과 Phase 2a 8-run smoke 완료, post-run v2 preflight contract 구현
 > 목적: 다른 세션이 결정 근거와 다음 순서를 잃지 않고 작업을 이어간다.
 
 ## 1. 목표
@@ -154,6 +154,9 @@ additive identity + policy/cohort labels
 - [x] replay exact status count와 plan JSON `cost_limit_usd` 입력 경로 추가
 - [x] evaluator coverage의 사전 등록 pair 분모 및 secondary metric 결측 보고 추가
 - [x] future paired lifecycle에 resource observation과 수정 파일 목록 기록
+- [x] v1 historical replay를 유지하는 `paired-smoke-manifest-v2` parser
+- [x] evaluator assertion inventory attestation과 task wording exact mapping preflight
+- [x] task별 exact modified-file allowlist와 결측 보존 unexpected-file 집계
 
 Phase -1은 routing score의 corrected L0를 임의로 만들지 않고 기존 legacy evidence는
 그대로 유지했다. 대신 모든 새 workflow row를 `routing_evidence_eligible=false`로
@@ -296,8 +299,10 @@ manifest로 사전 등록했고, evaluator negative control, `paired validate`, 
 `paired dry-run` 뒤 실제 smoke를 완료했다. 결과는 pass/pass 3쌍과 Claude fail/Codex
 pass 1쌍이지만, 후자는 task에 명시되지 않은 JSON key를 evaluator가 요구한 contract
 불일치가 있어 agent 비교 근거로 쓰지 않는다. smoke가 찾은 4개 유지보수 변경과
-secondary metric reporting은 통합했다. 다음 gate는 evaluator assertion/task wording의
-사전 coverage review와 modified-file allowlist가 있는 다음 manifest schema다.
+secondary metric reporting을 통합했고, 다음 v2 schema에는 evaluator assertion/task
+wording의 사전 coverage review와 modified-file allowlist를 필수화했다. 이 schema도
+Phase 2a의 4-task smoke 전용이다. 다음 gate는 v2 4-task 계약 rehearsal을 agent 실행 전에
+독립 검토하고, 그 교훈을 반영해 60-task pilot용 일반 schema를 별도로 설계하는 일이다.
 
 ### Phase 2b 이후
 

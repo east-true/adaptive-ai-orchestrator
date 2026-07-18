@@ -74,9 +74,10 @@ semantically equivalent declared shapes.
 1. Controller-level evaluator coverage, reliability, wall time, resource
    missingness, and modified-file observation are now implemented. The first
    smoke predates enriched finalized events, so its absent cost/token/runner
-   elapsed/modified-file fields remain explicit missing values. A task-specific
-   modified-file allowlist still requires a future manifest schema.
-2. Add a preflight contract-coverage review that maps every evaluator assertion
-   to explicit task wording.
+   elapsed/modified-file fields remain explicit missing values. Manifest v2 now
+   requires task-specific exact modified-file allowlists.
+2. Manifest v2 now requires a preflight contract-coverage map from every
+   evaluator assertion to explicit task wording plus an assertion-inventory
+   completeness attestation. The first v1 smoke remains unchanged.
 3. Keep the smoke result as pipeline evidence only; do not use it for routing
    policy promotion or an agent ranking.
