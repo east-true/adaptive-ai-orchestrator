@@ -30,9 +30,12 @@ src/adaptive_orchestrator/
   workflow.py     # wires selection + execution + verification + escalation; run() and run_plan()
   cli.py          # `run`, `run-plan`, `plan`, and `memory` subcommands
   configuration.py # local project config loading, validation, initialization, and command detection
+  control.py      # single-worker local queue, cancellation, and redacted job journal
   diagnostics.py  # `doctor` checks for config, agent login, and runtime prerequisites
   notifications.py # opt-in terminal and desktop completion notifications
   reporting.py    # execution lookup, summaries, Markdown reports, and retry task extraction
+  tui.py          # stdlib curses dashboard and shell-free background task launcher
+  web_ui.py       # loopback-only stdlib HTTP dashboard over the local queue
   shell.py        # interactive session UX over the existing CLI dispatch
   usage.py        # reads locally available Codex/Claude account information
   tools.py        # workspace-bounded file/shell/git tool runtime
@@ -433,6 +436,34 @@ running.
 The TUI is intentionally a client of existing CLI and telemetry contracts. It
 does not duplicate routing, verification, escalation, configuration, or report
 logic.
+
+## Local Web UI and background queue
+
+Start the loopback-only local dashboard and its single-worker queue with:
+
+```bash
+PYTHONPATH=src python3 -m adaptive_orchestrator.web_ui \
+  --workspace . --host 127.0.0.1 --port 8765
+```
+
+The workspace is fixed when the server starts; HTTP clients cannot choose an
+arbitrary filesystem path. The server refuses non-loopback bind addresses and
+generates an ephemeral control token required by every `/api/` request. The
+built-in page uses that token for same-origin requests, inserts job data with
+`textContent`, and receives restrictive no-store, MIME-sniffing, framing, and
+content-security headers.
+
+Submitted jobs run sequentially through the normal CLI in dedicated process
+groups. Cancellation targets only that group. Status snapshots and a bounded
+output tail are appended to `.orchestrator/jobs.jsonl` with the existing
+best-effort redaction. Because redaction can alter request text, queued or
+running snapshots are marked `interrupted` after a daemon restart rather than
+being executed from journal content. Users can deliberately submit them again
+after inspection.
+
+This is a local single-user control surface, not a multi-tenant or remote-access
+server. Task text and CLI output can still contain private repository context;
+the existing telemetry privacy warnings apply to the job journal as well.
 
 ## Watching a long run
 
