@@ -7,6 +7,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
 from adaptive_orchestrator.tui import build_task_command, dashboard_rows
+from adaptive_orchestrator.events import LifecycleEvent, LifecycleEventType
+from adaptive_orchestrator.routing_state import EventProjector
 
 
 class DashboardRowsTests(unittest.TestCase):
@@ -44,6 +46,35 @@ class DashboardRowsTests(unittest.TestCase):
     def test_legacy_rows_remain_individually_addressable(self) -> None:
         rows = dashboard_rows([{"status": "completed"}, {"status": "failed"}])
         self.assertEqual([row.execution_id for row in rows], ["legacy-2", "legacy-1"])
+
+    def test_includes_started_lifecycle_execution_before_terminal_record_exists(self) -> None:
+        selection = LifecycleEvent(
+            LifecycleEventType.SELECTION_MADE,
+            "exec-live",
+            1,
+            "task-live",
+            "attempt-live",
+            payload={
+                "selected_agent": "codex",
+                "eligible_candidates": ["codex"],
+                "ineligible_reasons": {},
+                "candidate_probabilities": {"codex": 1.0},
+                "selected_probability": 1.0,
+            },
+        )
+        started = LifecycleEvent(
+            LifecycleEventType.EXECUTION_STARTED,
+            "exec-live",
+            2,
+            "task-live",
+            "attempt-live",
+            payload={"agent_id": "codex"},
+        )
+        state = EventProjector().replay((selection, started))
+        rows = dashboard_rows((), state, ("exec-live",))
+        self.assertEqual(rows[0].status, "started")
+        self.assertEqual(rows[0].agent, "codex")
+        self.assertIn("task-live", rows[0].description)
 
 
 class BuildTaskCommandTests(unittest.TestCase):

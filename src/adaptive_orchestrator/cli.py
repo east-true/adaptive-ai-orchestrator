@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
-import os
 import shlex
 import sys
 from dataclasses import asdict
@@ -46,6 +44,7 @@ from .paired_runner import PairedSmokeRunner
 from .routing import TaskAnalyzer
 from .routing_policy import RoutingPolicyRouter
 from .routing_state import LifecycleRecorder, ReplayError, RoutingStateStore
+from .state_paths import resolve_control_state_directory
 from .replay import replay_digest, replay_event_log, validate_legacy_execution_log
 from .process_runner import SubprocessRunner
 from .verification import CommandVerifier, evaluator_content_version, validate_evaluator_artifacts
@@ -379,7 +378,7 @@ def _build_workflow(args: argparse.Namespace, workspace: Path) -> EngineeringWor
     agents = _configured_agents(args)
     logger = JsonlExecutionLogger(workspace / ".orchestrator" / "executions.jsonl")
     runner = SubprocessRunner(_verbose_output_callback(f"[{args.command}:{args.agent}]")) if args.verbose else SubprocessRunner()
-    control_dir = _control_state_directory(workspace, getattr(args, "control_state_dir", None))
+    control_dir = resolve_control_state_directory(workspace, getattr(args, "control_state_dir", None))
     lifecycle = LifecycleRecorder(
         JsonlEventStore(control_dir / "events.jsonl"),
         RoutingStateStore(control_dir / "routing-state.json"),
@@ -412,19 +411,6 @@ def _build_workflow(args: argparse.Namespace, workspace: Path) -> EngineeringWor
         args.escalation_risk_threshold, args.escalation_uncertainty_threshold, args.escalation_difficulty_threshold
     )
     return EngineeringWorkflow(kernel, router, verifier, escalation_policy)
-
-
-def _control_state_directory(workspace: Path, configured: Path | None = None) -> Path:
-    resolved_workspace = workspace.resolve()
-    if configured is not None:
-        control_dir = configured.expanduser().resolve()
-    else:
-        xdg_state_home = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local" / "state")).expanduser()
-        workspace_key = hashlib.sha256(str(resolved_workspace).encode("utf-8")).hexdigest()[:20]
-        control_dir = (xdg_state_home / "adaptive-ai-orchestrator" / "workspaces" / workspace_key).resolve()
-    if control_dir == resolved_workspace or control_dir.is_relative_to(resolved_workspace):
-        raise ValueError(f"Control state directory must be outside the agent workspace: {control_dir}")
-    return control_dir
 
 
 def _quality_evaluator_specs(args: argparse.Namespace, workspace: Path) -> tuple[EvaluatorSpec, ...]:
@@ -621,7 +607,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "replay":
         try:
-            control_dir = _control_state_directory(workspace, args.control_state_dir)
+            control_dir = resolve_control_state_directory(workspace, args.control_state_dir)
             event_path = control_dir / "events.jsonl"
             if args.reconcile_incomplete:
                 before_events = JsonlEventStore(event_path).read()
