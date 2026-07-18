@@ -29,6 +29,8 @@ src/adaptive_orchestrator/
   escalation.py   # decides whether a second agent's attempt is warranted
   workflow.py     # wires selection + execution + verification + escalation; run() and run_plan()
   cli.py          # `run`, `run-plan`, `plan`, and `memory` subcommands
+  configuration.py # local project config loading, validation, initialization, and command detection
+  diagnostics.py  # `doctor` checks for config, agent login, and runtime prerequisites
   shell.py        # interactive session UX over the existing CLI dispatch
   usage.py        # reads locally available Codex/Claude account information
   tools.py        # workspace-bounded file/shell/git tool runtime
@@ -56,6 +58,63 @@ corrected static L0, Phase 2a agent-free paired dry-run tooling까지 반영했�
 PYTHONPATH=src python3 -m adaptive_orchestrator.example
 PYTHONPATH=src python3 -m unittest discover -s tests -v
 ```
+
+## Initialize a local project profile
+
+Create `.orchestrator/config.json` to keep repeated routing, model, timeout,
+verification, and escalation options with the workspace:
+
+```bash
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli init --workspace .
+PYTHONPATH=src python3 -m adaptive_orchestrator.cli doctor --workspace .
+```
+
+`init` never runs detected test commands. It only recognizes conservative signals
+for npm, Cargo, Go, pytest, and unittest projects and writes the resulting command
+strings into the profile. It refuses to replace an existing profile unless
+`--force` is explicit. The whole `.orchestrator/` directory is gitignored because
+it also contains local execution telemetry and may contain machine-specific model
+preferences; copy or maintain a shared profile separately if the team wants one.
+
+The generated shape is:
+
+```json
+{
+  "version": 1,
+  "agent": "auto",
+  "models": {
+    "claude": null,
+    "codex": null,
+    "codex_reasoning_effort": null
+  },
+  "execution": {
+    "time_limit_seconds": null,
+    "verbose": false,
+    "include_git_diff": false
+  },
+  "verification": {
+    "commands": ["python3 -m unittest discover -s tests -v"],
+    "time_limit_seconds": null
+  },
+  "escalation": {
+    "enabled": true,
+    "risk_threshold": 3,
+    "uncertainty_threshold": 3,
+    "difficulty_threshold": 4
+  }
+}
+```
+
+The precedence is built-in defaults, then the local project profile, then
+explicit CLI options. Repeatable `--verify-command` options extend the configured
+command list. Boolean profile values can be overridden in either direction with
+`--verbose`/`--no-verbose`, `--include-git-diff`/`--no-include-git-diff`, and
+`--escalation`/`--no-escalation`.
+
+`doctor` validates the profile, checks the Python version, and asks installed
+Claude Code and Codex CLIs for their local login status. Missing optional agents
+are warnings; having no usable agent, selecting an unavailable agent, an invalid
+profile, or an unsupported Python version is a failure.
 
 ## Run a task
 

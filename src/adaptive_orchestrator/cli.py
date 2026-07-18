@@ -11,6 +11,13 @@ from pathlib import Path
 from typing import Sequence
 
 from .agents import Agent, ClaudeCodeAgent, CodexAgent, default_agents
+from .configuration import (
+    ProjectConfig,
+    ProjectConfigError,
+    initialize_project_config,
+    load_project_config,
+)
+from .diagnostics import diagnose_project, diagnostics_succeeded
 from .domain import Capability, EvaluatorRole, EvaluatorSpec, MemoryEntry, MemoryEntryType, Priority, Task
 from .escalation import EscalationPolicy
 from .events import EventLogError, JsonlEventStore
@@ -37,13 +44,21 @@ from .verification import CommandVerifier, evaluator_content_version, validate_e
 from .workflow import EngineeringWorkflow, execution_succeeded
 
 
-def build_parser() -> argparse.ArgumentParser:
+def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser:
+    config = config or ProjectConfig()
     parser = argparse.ArgumentParser(description="Run one coding-agent task through the Orchestrator Kernel.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
+    init = subparsers.add_parser("init", help="create a project config with detected verification commands")
+    init.add_argument("--workspace", type=Path, default=Path.cwd())
+    init.add_argument("--force", action="store_true", help="Replace an existing project config.")
+
+    doctor = subparsers.add_parser("doctor", help="check project config, agent login, and runtime prerequisites")
+    doctor.add_argument("--workspace", type=Path, default=Path.cwd())
+
     run = subparsers.add_parser("run", help="plan, execute, and optionally verify one task")
     run.add_argument("--workspace", type=Path, default=Path.cwd())
-    _add_agent_argument(run)
+    _add_agent_argument(run, config)
     run.add_argument("--description")
     run.add_argument("--description-file", type=Path)
     run.add_argument("--objective")
@@ -51,8 +66,8 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--capability", choices=[item.value for item in Capability], action="append", default=[])
     run.add_argument("--constraint", action="append", default=[])
     run.add_argument("--priority", choices=[item.value for item in Priority], default=Priority.NORMAL.value)
-    run.add_argument("--time-limit", type=float)
-    _add_workflow_arguments(run)
+    run.add_argument("--time-limit", type=float, default=config.time_limit_seconds)
+    _add_workflow_arguments(run, config)
     run.set_defaults(_parser=run)
 
     run_plan = subparsers.add_parser("run-plan", help="run an explicit, ordered sequence of tasks from a JSON plan file")
@@ -63,9 +78,9 @@ def build_parser() -> argparse.ArgumentParser:
         '"capabilities": [...], "priority", "time_limit_seconds"}. Only description/objective are required.',
     )
     run_plan.add_argument("--workspace", type=Path, default=Path.cwd())
-    _add_agent_argument(run_plan)
+    _add_agent_argument(run_plan, config)
     run_plan.add_argument("--continue-on-failure", action="store_true", help="Run every step even if an earlier one failed (default: stop at the first failure).")
-    _add_workflow_arguments(run_plan)
+    _add_workflow_arguments(run_plan, config)
 
     plan = subparsers.add_parser("plan", help="generate or validate a JSON plan file")
     plan_subparsers = plan.add_subparsers(dest="plan_command", required=True)
@@ -77,8 +92,8 @@ def build_parser() -> argparse.ArgumentParser:
     plan_generate.add_argument("request", help="The vague human request to turn into an ordered plan.")
     plan_generate.add_argument("--workspace", type=Path, default=Path.cwd())
     plan_generate.add_argument("--output", type=Path, default=None, help="Plan file to write; defaults to plan.json in the workspace.")
-    _add_agent_argument(plan_generate)
-    _add_workflow_arguments(plan_generate)
+    _add_agent_argument(plan_generate, config)
+    _add_workflow_arguments(plan_generate, config)
 
     memory = subparsers.add_parser("memory", help="record or query engineering memory")
     memory_subparsers = memory.add_subparsers(dest="memory_command", required=True)
@@ -145,23 +160,23 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _add_agent_argument(parser: argparse.ArgumentParser) -> None:
+def _add_agent_argument(parser: argparse.ArgumentParser, config: ProjectConfig) -> None:
     """The --agent flag, shared by every subcommand that routes a task."""
-    parser.add_argument("--agent", default="auto", help="Agent id from the configured registry, or auto.")
-    parser.add_argument("--claude-model")
-    parser.add_argument("--codex-model")
-    parser.add_argument("--codex-reasoning-effort")
+    parser.add_argument("--agent", default=config.agent, help="Agent id from the configured registry, or auto.")
+    parser.add_argument("--claude-model", default=config.claude_model)
+    parser.add_argument("--codex-model", default=config.codex_model)
+    parser.add_argument("--codex-reasoning-effort", default=config.codex_reasoning_effort)
 
 
-def _add_workflow_arguments(parser: argparse.ArgumentParser) -> None:
+def _add_workflow_arguments(parser: argparse.ArgumentParser, config: ProjectConfig) -> None:
     """Verification and escalation flags shared by `run` and `run-plan` (the same policy applies to every step)."""
     parser.add_argument(
         "--verify-command",
         action="append",
-        default=[],
+        default=list(config.verify_commands),
         help="Constraint command parsed into argument tokens; never run through a shell. Repeatable: every check runs and the worst outcome wins. It is not task-quality evidence.",
     )
-    parser.add_argument("--verify-time-limit", type=float)
+    parser.add_argument("--verify-time-limit", type=float, default=config.verify_time_limit_seconds)
     parser.add_argument(
         "--quality-evaluator-command",
         action="append",
@@ -187,12 +202,25 @@ def _add_workflow_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--routing-seed", type=int, default=0, help="Seed used only for deterministic shadow assignments; exploration remains disabled.")
     parser.add_argument("--environment-epoch", default="default-v1", help="Version boundary for model/CLI/permission/cache evidence.")
     parser.add_argument("--control-state-dir", type=Path, help="Protected event/state directory outside the agent workspace.")
-    parser.add_argument("--include-git-diff", action="store_true", help="Log the full workspace diff; use only when it contains no sensitive data.")
-    parser.add_argument("--no-escalation", action="store_true", help="Disable escalating to a second agent on failure, high risk, or high uncertainty.")
-    parser.add_argument("--escalation-risk-threshold", type=int, default=3, help="Minimum analyzed risk (0-5) that triggers escalation.")
-    parser.add_argument("--escalation-uncertainty-threshold", type=int, default=3, help="Minimum analyzed uncertainty (0-5) that triggers escalation.")
-    parser.add_argument("--escalation-difficulty-threshold", type=int, default=4, help="Minimum analyzed difficulty (1-5) that triggers escalation.")
-    parser.add_argument("--verbose", action="store_true", help="Stream subprocess stdout to stderr while the CLI waits for completion.")
+    parser.add_argument(
+        "--include-git-diff",
+        action=argparse.BooleanOptionalAction,
+        default=config.include_git_diff,
+        help="Log the full workspace diff; use only when it contains no sensitive data.",
+    )
+    escalation = parser.add_mutually_exclusive_group()
+    escalation.add_argument("--escalation", dest="no_escalation", action="store_false", help="Enable escalation when warranted.")
+    escalation.add_argument("--no-escalation", dest="no_escalation", action="store_true", help="Disable escalating to a second agent on failure, high risk, or high uncertainty.")
+    parser.set_defaults(no_escalation=not config.escalation_enabled)
+    parser.add_argument("--escalation-risk-threshold", type=int, default=config.escalation_risk_threshold, help="Minimum analyzed risk (0-5) that triggers escalation.")
+    parser.add_argument("--escalation-uncertainty-threshold", type=int, default=config.escalation_uncertainty_threshold, help="Minimum analyzed uncertainty (0-5) that triggers escalation.")
+    parser.add_argument("--escalation-difficulty-threshold", type=int, default=config.escalation_difficulty_threshold, help="Minimum analyzed difficulty (1-5) that triggers escalation.")
+    parser.add_argument(
+        "--verbose",
+        action=argparse.BooleanOptionalAction,
+        default=config.verbose,
+        help="Stream subprocess stdout to stderr while the CLI waits for completion.",
+    )
 
 
 def _task_from_spec(spec: dict) -> Task:
@@ -428,9 +456,51 @@ def _verbose_output_callback(prefix: str):
     return write_line
 
 
+def _workspace_from_argv(argv: Sequence[str]) -> Path:
+    for index, item in enumerate(argv):
+        if item == "--workspace" and index + 1 < len(argv):
+            return Path(argv[index + 1]).expanduser()
+        if item.startswith("--workspace="):
+            return Path(item.partition("=")[2]).expanduser()
+    return Path.cwd()
+
+
+def _config_for_argv(argv: Sequence[str]) -> ProjectConfig:
+    if not argv or argv[0] not in {"run", "run-plan", "plan"}:
+        return ProjectConfig()
+    if len(argv) > 1 and argv[0] == "plan" and argv[1] == "validate":
+        return ProjectConfig()
+    return load_project_config(_workspace_from_argv(argv))
+
+
 def main(argv: list[str] | None = None) -> int:
-    parser = build_parser()
-    args = parser.parse_args(argv)
+    raw_argv = list(sys.argv[1:] if argv is None else argv)
+    try:
+        config = _config_for_argv(raw_argv)
+    except ProjectConfigError as exc:
+        print(f"Invalid project config: {exc}", file=sys.stderr)
+        return 2
+    parser = build_parser(config)
+    args = parser.parse_args(raw_argv)
+
+    if args.command == "init":
+        try:
+            path, commands = initialize_project_config(args.workspace, args.force)
+        except ProjectConfigError as exc:
+            print(f"Init failed: {exc}", file=sys.stderr)
+            return 1
+        print(f"Project config written to {path}")
+        if commands:
+            print(f"Detected verification command(s): {', '.join(commands)}")
+        else:
+            print("No verification command detected; edit the verification.commands list before relying on verification.")
+        return 0
+
+    if args.command == "doctor":
+        checks = diagnose_project(args.workspace)
+        for check in checks:
+            print(f"[{check.status}] {check.name}: {check.detail}")
+        return 0 if diagnostics_succeeded(checks) else 1
 
     # `plan validate` takes an explicit file path and has no --workspace of its own; it must be
     # handled before resolving args.workspace, which does not exist on its subparser's namespace.
