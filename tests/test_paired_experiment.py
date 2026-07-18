@@ -681,6 +681,16 @@ class PairedAnalysisTests(unittest.TestCase):
             self.assertEqual(overall["quality_missing_pair_count"], 4)
             self.assertEqual(overall["evaluator_coverage"], 0.0)
             self.assertIsNone(overall["paired_risk_difference"])
+            self.assertEqual(report["secondary_metrics"]["reliability"], {
+                "expected_attempt_count": 8,
+                "materialized_attempt_count": 2,
+                "completed_attempt_count": 1,
+                "terminal_status_counts": {
+                    "completed": 1,
+                    "failed": 1,
+                    "incomplete": 6,
+                },
+            })
 
     def test_evaluator_coverage_keeps_missing_pairs_in_the_denominator(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -779,6 +789,75 @@ class PairedAnalysisTests(unittest.TestCase):
             self.assertEqual(len(observations), 8)
             self.assertEqual(report["overall_quota_diagnostic_not_workload_value"]["binary_observed_pair_count"], 4)
             self.assertEqual(report["overall_quota_diagnostic_not_workload_value"]["paired_risk_difference"], 0.0)
+
+    def test_projected_missing_attempts_are_not_counted_as_materialized(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            _, manifest_path, _ = build_manifest_fixture(root)
+            manifest = load_paired_manifest(manifest_path)
+            recorder = LifecycleRecorder(JsonlEventStore(root / "control" / "events.jsonl"))
+            assignment = assign_pairs(manifest)[0]
+            agent_id = assignment.agent_order[0]
+            agent = next(item for item in manifest.agents if item.agent_id == agent_id)
+            task = next(item for item in manifest.tasks if item.task_id == assignment.task_id)
+            common = {
+                "execution_id": assignment.execution_id,
+                "task_id": assignment.task_id,
+                "attempt_id": assignment.attempt_ids[agent_id],
+            }
+            recorder.record(LifecycleEventType.SELECTION_MADE, payload={
+                "selected_agent": agent_id,
+                "selected_agent_base_id": agent.base_id,
+                "selection_mode": "paired_eval",
+                "cohort": "paired",
+                "pair_id": assignment.pair_id,
+                "pair_order_index": assignment.order_index,
+                "agent_order_position": 0,
+                "context_features": {"environment_epoch": manifest.environment_epoch},
+                "eligible_candidates": [item.agent_id for item in manifest.agents],
+                "ineligible_reasons": {},
+                "candidate_probabilities": {
+                    item.agent_id: float(item.agent_id == agent_id)
+                    for item in manifest.agents
+                },
+                "selected_probability": 1.0,
+            }, **common)
+            recorder.record(LifecycleEventType.EXECUTION_STARTED, **common)
+            recorder.record(
+                LifecycleEventType.EXECUTION_TERMINAL,
+                payload={"status": "completed"},
+                **common,
+            )
+            recorder.record(LifecycleEventType.EVALUATION_COMPLETED, payload={
+                "evaluator_id": task.evaluator.evaluator_id,
+                "version": task.evaluator.version,
+                "role": "quality",
+                "status": "passed",
+                "observed": True,
+                "score": 1,
+                "artifact_hash_expected": task.evaluator.artifact_hash,
+                "artifact_hash_before": task.evaluator.artifact_hash,
+                "artifact_hash_after": task.evaluator.artifact_hash,
+                "artifact_integrity_verified": True,
+            }, **common)
+            recorder.record(
+                LifecycleEventType.OUTCOME_FINALIZED,
+                payload={"execution_status": "completed"},
+                **common,
+            )
+
+            observations = observations_from_routing_state(manifest, recorder.rebuild_state())
+            report = analyze_paired_observations(manifest, observations)
+            reliability = report["secondary_metrics"]["reliability"]
+
+            self.assertEqual(len(observations), 8)
+            self.assertEqual(sum(item.attempt_materialized for item in observations), 1)
+            self.assertEqual(reliability["materialized_attempt_count"], 1)
+            self.assertEqual(reliability["completed_attempt_count"], 1)
+            self.assertEqual(reliability["terminal_status_counts"], {
+                "completed": 1,
+                "incomplete": 7,
+            })
 
 
 if __name__ == "__main__":
