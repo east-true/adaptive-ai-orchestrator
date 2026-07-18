@@ -11,6 +11,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
 from adaptive_orchestrator import cli
+from adaptive_orchestrator.configuration import ProjectConfig, config_path
 from adaptive_orchestrator.domain import Capability, EvaluatorRole, MemoryEntryType, Priority
 from adaptive_orchestrator.events import JsonlEventStore, LifecycleEventType
 
@@ -105,6 +106,53 @@ class BuildWorkflowTests(unittest.TestCase):
         runner_ctor.assert_called_once()
         self.assertIs(workflow._kernel.runner, runner_instance)
         self.assertTrue(callable(runner_ctor.call_args.args[0]))
+
+
+class ProjectConfigCliTests(unittest.TestCase):
+    def test_project_config_supplies_defaults_and_cli_can_override_them(self) -> None:
+        config = ProjectConfig(
+            agent="claude-code:opus",
+            claude_model="opus",
+            time_limit_seconds=90,
+            verbose=True,
+            verify_commands=("python3 -m unittest",),
+            escalation_enabled=False,
+        )
+        parser = cli.build_parser(config)
+
+        defaults = parser.parse_args(["run", "--description", "Do it", "--objective", "Done"])
+        self.assertEqual(defaults.agent, "claude-code:opus")
+        self.assertEqual(defaults.time_limit, 90)
+        self.assertTrue(defaults.verbose)
+        self.assertEqual(defaults.verify_command, ["python3 -m unittest"])
+        self.assertTrue(defaults.no_escalation)
+
+        overridden = parser.parse_args([
+            "run", "--description", "Do it", "--objective", "Done",
+            "--agent", "codex", "--time-limit", "30", "--no-verbose", "--escalation",
+        ])
+        self.assertEqual(overridden.agent, "codex")
+        self.assertEqual(overridden.time_limit, 30)
+        self.assertFalse(overridden.verbose)
+        self.assertFalse(overridden.no_escalation)
+
+    def test_config_for_argv_uses_explicit_workspace(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            path = config_path(workspace)
+            path.parent.mkdir()
+            path.write_text(json.dumps({"version": 1, "agent": "codex"}), encoding="utf-8")
+            config = cli._config_for_argv(["run", "--workspace", str(workspace)])
+        self.assertEqual(config.agent, "codex")
+
+    def test_init_dispatch_writes_config(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                exit_code = cli.main(["init", "--workspace", directory])
+            self.assertEqual(exit_code, 0)
+            self.assertTrue(config_path(Path(directory)).is_file())
+            self.assertIn("Project config written", stdout.getvalue())
 
     def test_quality_evaluator_specs_are_versioned_and_protected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
