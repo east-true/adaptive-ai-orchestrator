@@ -43983,19 +43983,15 @@
       "source_reference": "https://github.com/joshua-jingu-lee/ante/issues/2349",
       "source_statement_available": true,
       "task_statement_hash": "91f3be7ace797735a3317d2425efe2f6a34afb54c13b867d7863e7956829d4aa",
-      "base_revision": "c02eb07df23460f466263d43a3cd2117e4dcb511",
-      "base_tree_hash": "c02eb07df23460f466263d43a3cd2117e4dcb511",
-      "solution_reference": "https://github.com/joshua-jingu-lee/ante/pull/2355",
+      "base_revision": null,
+      "base_tree_hash": null,
+      "solution_reference": null,
       "solution_revision": null,
       "solution_artifact_hash": null,
       "solution_tree_hash": null,
       "source_evaluator_artifact_hash": null,
-      "changed_files": [
-        "docs/specs/broker-adapter/08-kis-domestic-adapter.md",
-        "src/ante/broker/kis.py",
-        "tests/unit/test_kis_order_tr_id.py"
-      ],
-      "license_or_use_basis": "MIT full text present at the pinned base revision c02eb07df23460f466263d43a3cd2117e4dcb511 as LICENSE, read directly from that revision rather than from the default branch or a metadata classifier.",
+      "changed_files": [],
+      "license_or_use_basis": "GitHub repository metadata did not identify an SPDX license; use basis remains unknown.",
       "provisional_classification": {
         "instruction_language": "ko",
         "task_category": "debugging",
@@ -44003,8 +43999,8 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "pass",
-        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "unknown",
+        "exact_base_resolvable": "unknown",
         "single_bounded_task": "pass",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
@@ -44019,9 +44015,7 @@
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
         "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened.",
-        "Linked merged PR #2355 resolved from the issue timeline, restricted to pull requests in the same repository. Its base commit c02eb07df23460f466263d43a3cd2117e4dcb511 yields tree c02eb07df23460f466263d43a3cd2117e4dcb511 with 960 blobs (recursive listing not truncated).",
-        "License confirmed at that pinned revision: MIT. GitHub's repository metadata classifier reported no SPDX identifier for this repository, so the classifier signal was used only to prioritise work and the terms were read from the revision itself.",
-        "The merged solution touched 3 files; those paths are recorded as construction-only provenance and must stay outside the agent checkout and prompt."
+        "Withdrawn: an earlier resolution recorded a base revision from PR #2355, which was selected by taking the first merged pull request in the issue timeline. 그 PR의 제목은 다른 이슈 #2344를 참조한다. 이 이슈를 실제로 참조하는 merged PR은 #2357이다. Selecting a linked PR requires that the pull request actually reference this issue number and that release automation pull requests be excluded; the base and license basis are unknown again until they are re-derived under that rule."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -49839,19 +49833,15 @@
       "source_reference": "https://github.com/seob717/nunchi/issues/35",
       "source_statement_available": true,
       "task_statement_hash": "05051e3de29dfca913fd37b27c6dd1137c628a8dbd74663557a813c80ab08a33",
-      "base_revision": "98fb6e5889e6650f22d1376f253546215ac635a6",
-      "base_tree_hash": "98fb6e5889e6650f22d1376f253546215ac635a6",
-      "solution_reference": "https://github.com/seob717/nunchi/pull/28",
+      "base_revision": null,
+      "base_tree_hash": null,
+      "solution_reference": null,
       "solution_revision": null,
       "solution_artifact_hash": null,
       "solution_tree_hash": null,
       "source_evaluator_artifact_hash": null,
-      "changed_files": [
-        ".claude-plugin/plugin.json",
-        ".release-please-manifest.json",
-        "CHANGELOG.md"
-      ],
-      "license_or_use_basis": "MIT full text present at the pinned base revision 98fb6e5889e6650f22d1376f253546215ac635a6 as LICENSE, read directly from that revision rather than from the default branch or a metadata classifier.",
+      "changed_files": [],
+      "license_or_use_basis": "GitHub repository metadata did not identify an SPDX license; use basis remains unknown.",
       "provisional_classification": {
         "instruction_language": "ko",
         "task_category": "implementation",
@@ -49859,8 +49849,8 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "pass",
-        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "unknown",
+        "exact_base_resolvable": "unknown",
         "single_bounded_task": "pass",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
@@ -49875,9 +49865,7 @@
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
         "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened.",
-        "Linked merged PR #28 resolved from the issue timeline, restricted to pull requests in the same repository. Its base commit 98fb6e5889e6650f22d1376f253546215ac635a6 yields tree 98fb6e5889e6650f22d1376f253546215ac635a6 with 285 blobs (recursive listing not truncated).",
-        "License confirmed at that pinned revision: MIT. GitHub's repository metadata classifier reported no SPDX identifier for this repository, so the classifier signal was used only to prioritise work and the terms were read from the revision itself.",
-        "The merged solution touched 3 files; those paths are recorded as construction-only provenance and must stay outside the agent checkout and prompt."
+        "Withdrawn: an earlier resolution recorded a base revision from PR #28, which was selected by taking the first merged pull request in the issue timeline. 그 PR은 `chore(main): release 0.7.3` 릴리스 자동화 PR이다. 이 이슈를 구현한 merged PR은 #37이다. Selecting a linked PR requires that the pull request actually reference this issue number and that release automation pull requests be excluded; the base and license basis are unknown again until they are re-derived under that rule."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
