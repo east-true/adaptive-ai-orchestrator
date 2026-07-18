@@ -38019,11 +38019,11 @@
         "license_or_use_basis": "pass",
         "exact_base_resolvable": "pass",
         "single_bounded_task": "pass",
-        "native_language_source": "unknown",
-        "low_risk_isolated_execution": "unknown",
-        "no_network_secret_push_production": "unknown",
-        "objective_evaluator_feasible": "unknown",
-        "gold_and_evaluator_hideable": "unknown",
+        "native_language_source": "pass",
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass",
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
@@ -38034,7 +38034,12 @@
         "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened.",
         "Linked merged PR #1174 resolved from the issue timeline, restricted to pull requests in the same repository. Its base commit 9a91c5869623261762274eaf092d0c6bb6a0c176 yields tree 9a91c5869623261762274eaf092d0c6bb6a0c176 with 769 blobs (recursive listing not truncated).",
         "License confirmed at that pinned revision: MIT. GitHub's repository metadata classifier reported no SPDX identifier for this repository, so the classifier signal was used only to prioritise work and the terms were read from the revision itself.",
-        "The merged solution touched 6 files; those paths are recorded as construction-only provenance and must stay outside the agent checkout and prompt."
+        "The merged solution touched 6 files; those paths are recorded as construction-only provenance and must stay outside the agent checkout and prompt.",
+        "native_language_source(mixed): 요구사항 자체가 두 언어를 실제로 필요로 한다. 한국어로 번역된 markdown 제목이 GitHub 자동 생성 anchor slug를 바꿔 영어 `#fragment` 링크가 깨진 문제이므로, identifier만 영어인 형태가 아니라 두 언어가 동시에 걸린 작업이다.",
+        "low_risk_isolated_execution / no_network_secret_push_production: base revision의 `scripts/check_doc_links.py`에 requests·httpx·urllib·socket 사용 흔적이 없고 링크 대상 파일 존재만 로컬로 검사한다. 변경 범위도 문서 4개와 스크립트·테스트다.",
+        "objective_evaluator_feasible: 이슈가 주장한 근거를 base에서 확인했다 — `normalize_target`이 `t.split(\"#\", 1)[0]`으로 fragment를 떼어내 검증하지 않는다. 깨진 fragment 링크를 탐지하는지 deterministic하게 판정할 수 있고, 이슈가 4개 깨진 대상을 전수 열거해 assertion 매핑도 가능하다.",
+        "gold_and_evaluator_hideable: 정답 PR은 기존 `tests/test_doc_links.py`를 수정한다. 수정 후 버전을 보호 경로에 두면 새 assertion은 노출되지 않는다.",
+        "reproducible_within_budget만 unknown으로 남는다. 고정 버전·artifact digest pin, 오프라인 의존성 복원, agent-free base/negative/positive control 재현, 사전 resource bucket 대비 실측이 끝나기 전에는 pass로 두지 않는다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -38620,11 +38625,11 @@
         "license_or_use_basis": "pass",
         "exact_base_resolvable": "pass",
         "single_bounded_task": "pass",
-        "native_language_source": "unknown",
-        "low_risk_isolated_execution": "unknown",
-        "no_network_secret_push_production": "unknown",
-        "objective_evaluator_feasible": "unknown",
-        "gold_and_evaluator_hideable": "unknown",
+        "native_language_source": "pass",
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass",
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
@@ -38641,7 +38646,12 @@
         "The csproj was read from the repository default branch through the raw endpoint because this row has no resolved base_revision yet. That is a screening signal about project shape, not a pinned-revision fact, and it is not used as license evidence.",
         "Linked merged PR #97 resolved from the issue timeline, restricted to pull requests in the same repository. Its base commit 8ad41b136ecab5c5f2f1f97806cfbfe784004249 yields tree 8ad41b136ecab5c5f2f1f97806cfbfe784004249 with 61 blobs (recursive listing not truncated).",
         "License confirmed at that pinned revision: MIT. GitHub's repository metadata classifier reported no SPDX identifier for this repository, so the classifier signal was used only to prioritise work and the terms were read from the revision itself.",
-        "The merged solution touched 12 files; those paths are recorded as construction-only provenance and must stay outside the agent checkout and prompt."
+        "The merged solution touched 12 files; those paths are recorded as construction-only provenance and must stay outside the agent checkout and prompt.",
+        "native_language_source: 이슈 #62는 native Korean이고, 하드코딩된 한국어 UI 문자열을 리소스로 분리한다는 요구 자체가 한국어 맥락에 묶여 있다.",
+        "low_risk_isolated_execution / no_network_secret_push_production: 변경 대상 12개가 모두 `TimePilot.WinForms/` 아래 소스이며 UI 문자열을 `UiText.cs` 등 리소스 경로로 옮기는 작업이다. 실행 중 네트워크·비밀·push·production 변경이 필요 없다(NuGet 복원은 사전 provisioning 단계이지 task 실행이 아니다).",
+        "objective_evaluator_feasible: UI를 렌더링하지 않고 정적으로 판정할 수 있다. base의 하드코딩 리터럴과 추출된 리소스 값의 문자열 동등성, 리소스 경유 여부, 그리고 Linux 빌드 성공으로 네 완료 기준을 모두 덮는다.",
+        "gold_and_evaluator_hideable: 정답 PR의 12개 변경 파일과 추출된 리소스 값을 agent checkout 밖에 두면 노출되지 않는다.",
+        "reproducible_within_budget만 unknown으로 남는다. 고정 버전·artifact digest pin, 오프라인 의존성 복원, agent-free base/negative/positive control 재현, 사전 resource bucket 대비 실측이 끝나기 전에는 pass로 두지 않는다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -47440,11 +47450,11 @@
         "license_or_use_basis": "pass",
         "exact_base_resolvable": "pass",
         "single_bounded_task": "pass",
-        "native_language_source": "unknown",
-        "low_risk_isolated_execution": "unknown",
-        "no_network_secret_push_production": "unknown",
-        "objective_evaluator_feasible": "unknown",
-        "gold_and_evaluator_hideable": "unknown",
+        "native_language_source": "pass",
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass",
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
@@ -47455,7 +47465,12 @@
         "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened.",
         "Linked merged PR #27 resolved from the issue timeline, restricted to pull requests in the same repository. Its base commit 61d9ad9ed1b77a674499a2d4a281db0164dad730 yields tree 61d9ad9ed1b77a674499a2d4a281db0164dad730 with 58 blobs (recursive listing not truncated).",
         "License confirmed at that pinned revision: Apache-2.0. GitHub's repository metadata classifier reported no SPDX identifier for this repository, so the classifier signal was used only to prioritise work and the terms were read from the revision itself.",
-        "The merged solution touched 2 files; those paths are recorded as construction-only provenance and must stay outside the agent checkout and prompt."
+        "The merged solution touched 2 files; those paths are recorded as construction-only provenance and must stay outside the agent checkout and prompt.",
+        "native_language_source: 이슈 #26은 번역체가 아닌 native Korean 기술 문서이며, 한국어 내용어가 2글자인 경우가 흔하다는 언어 특성 자체가 요구사항의 핵심이라 다른 언어 task의 번역으로 성립하지 않는다.",
+        "low_risk_isolated_execution / no_network_secret_push_production: base revision의 `tools/ask_router.py`는 stdlib과 repo-local `common`만 import하고 네트워크 호출 흔적이 없으며, 탐색 대상도 저장소 안의 `sources/`·`runs/sources/`다. 격리 checkout에서 비파괴적으로 수행된다.",
+        "objective_evaluator_feasible: base에 이슈가 지목한 `len(word) > 2` 필터가 실재함을 확인했다. 2글자 한국어 키워드가 추출되어 검색 결과가 나오는지, NFC-only 무회귀인지를 deterministic하게 판정할 수 있다.",
+        "gold_and_evaluator_hideable: 정답 PR은 기존 `tests/test_ask_router.sh`를 수정한다. 파일 자체는 base에 있지만 새 assertion은 없으므로, 수정 후 버전을 agent checkout 밖의 보호 경로에 두면 정답이 노출되지 않는다. base의 기존 테스트가 checkout에 남는 것은 실제 작업 조건과 같다.",
+        "reproducible_within_budget만 unknown으로 남는다. 고정 버전·artifact digest pin, 오프라인 의존성 복원, agent-free base/negative/positive control 재현, 사전 resource bucket 대비 실측이 끝나기 전에는 pass로 두지 않는다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
