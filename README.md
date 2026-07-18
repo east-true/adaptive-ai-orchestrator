@@ -424,8 +424,11 @@ For a dashboard-oriented local workflow, start the stdlib `curses` TUI:
 PYTHONPATH=src python3 -m adaptive_orchestrator.tui --workspace .
 ```
 
-It groups terminal records by execution, keeps escalated attempts together, and
-shows a compact outcome for the selected run. Press `n` to compose a short task;
+It combines terminal records with the protected lifecycle event projection,
+keeps escalated attempts together, and can show `selected`, `started`,
+`terminal`, `evaluated`, or `finalized` progress before the terminal JSONL row
+exists. Pass the same `--control-state-dir` used by routed CLI commands when a
+non-default protected state directory is configured. Press `n` to compose a short task;
 the TUI launches the normal `cli run` path as a shell-free child process and
 shows its combined live output. Only one task is admitted at a time. `c` sends
 SIGTERM to the dedicated child process group, preventing a cancelled UI child

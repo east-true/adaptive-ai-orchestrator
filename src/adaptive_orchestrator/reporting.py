@@ -157,7 +157,7 @@ def task_spec_for_retry(bundle: ExecutionBundle) -> dict:
     objective = task.get("objective")
     if not isinstance(description, str) or not description.strip() or not isinstance(objective, str) or not objective.strip():
         raise ExecutionLookupError(f"Execution {bundle.execution_id} does not contain a retryable task")
-    return {
+    spec = {
         "description": description,
         "objective": objective,
         "constraints": list(_string_items(task.get("constraints"))),
@@ -165,6 +165,10 @@ def task_spec_for_retry(bundle: ExecutionBundle) -> dict:
         "priority": _text(task.get("priority"), "normal"),
         "time_limit_seconds": task.get("time_limit_seconds"),
     }
+    task_id = task.get("task_id") or bundle.primary.get("task_id")
+    if isinstance(task_id, str) and task_id:
+        spec["task_id"] = task_id
+    return spec
 
 
 def _verification_status(record: dict) -> str:

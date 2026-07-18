@@ -30,6 +30,7 @@ def _record(agent: str, attempt: str, parent: str | None = None) -> dict:
             "required_capabilities": ["debugging", "testing"],
             "priority": "high",
             "time_limit_seconds": 120,
+            "task_id": "task-1",
         },
         "agent_id": agent,
         "status": "completed",
@@ -91,6 +92,7 @@ class ExecutionReportStoreTests(unittest.TestCase):
             spec = task_spec_for_retry(ExecutionReportStore(path).find("exec-1"))
         self.assertEqual(spec["description"], "Fix the failing test")
         self.assertEqual(spec["capabilities"], ["debugging", "testing"])
+        self.assertEqual(spec["task_id"], "task-1")
         self.assertNotIn("result", spec)
 
 

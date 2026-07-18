@@ -12,7 +12,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
+from .events import EventLogError, JsonlEventStore
 from .reporting import ExecutionBundle, ExecutionReportStore, render_text_summary
+from .routing_state import EventProjector, RoutingState
+from .state_paths import resolve_control_state_directory
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,7 +28,11 @@ class DashboardRow:
     attempts: tuple[dict, ...]
 
 
-def dashboard_rows(records: Sequence[dict]) -> tuple[DashboardRow, ...]:
+def dashboard_rows(
+    records: Sequence[dict],
+    lifecycle_state: RoutingState | None = None,
+    lifecycle_order: Sequence[str] = (),
+) -> tuple[DashboardRow, ...]:
     grouped: dict[str, list[dict]] = {}
     order: list[str] = []
     for index, record in enumerate(records, start=1):
@@ -36,17 +43,33 @@ def dashboard_rows(records: Sequence[dict]) -> tuple[DashboardRow, ...]:
             order.append(execution_id)
         grouped[execution_id].append(record)
 
+    display_order = list(order)
+    for execution_id in lifecycle_order:
+        if execution_id not in display_order:
+            display_order.append(execution_id)
+
     rows: list[DashboardRow] = []
-    for execution_id in reversed(order):
-        attempts = tuple(grouped[execution_id])
-        primary = next((item for item in attempts if not item.get("parent_attempt_id")), attempts[0])
+    for execution_id in reversed(display_order):
+        attempts = tuple(grouped.get(execution_id, ()))
+        primary = next((item for item in attempts if not item.get("parent_attempt_id")), attempts[0]) if attempts else {}
         task = primary.get("task") if isinstance(primary.get("task"), dict) else {}
         verification = primary.get("verification") if isinstance(primary.get("verification"), dict) else {}
         description = task.get("description") if isinstance(task.get("description"), str) else ""
+        lifecycle = lifecycle_state.executions.get(execution_id) if lifecycle_state is not None else None
+        latest_attempt = None
+        if lifecycle is not None and lifecycle.attempts:
+            latest_attempt = max(lifecycle.attempts.values(), key=lambda item: item.selection_sequence)
+        status = _text(primary.get("status"), "unknown")
+        agent = _text(primary.get("agent_id"), "unknown")
+        if latest_attempt is not None:
+            status = _lifecycle_status(latest_attempt.status, latest_attempt.outcome, latest_attempt.terminal)
+            agent = _text(latest_attempt.selection.get("selected_agent") or latest_attempt.started.get("agent_id"), agent)
+            if not description:
+                description = f"task {latest_attempt.task_id}"
         rows.append(DashboardRow(
             execution_id=execution_id,
-            status=_text(primary.get("status"), "unknown"),
-            agent=_text(primary.get("agent_id"), "unknown"),
+            status=status,
+            agent=agent,
             verification=_text(verification.get("status"), "not-run"),
             description=" ".join(description.split()),
             attempts=attempts,
@@ -116,8 +139,9 @@ def build_task_command(workspace: Path, request: str) -> tuple[str, ...]:
 
 
 class OrchestratorTui:
-    def __init__(self, workspace: Path) -> None:
+    def __init__(self, workspace: Path, control_state_dir: Path | None = None) -> None:
         self.workspace = workspace.resolve()
+        self.control_state_dir = resolve_control_state_directory(self.workspace, control_state_dir)
         self.store = ExecutionReportStore(self.workspace / ".orchestrator" / "executions.jsonl")
         self.rows: tuple[DashboardRow, ...] = ()
         self.selected = 0
@@ -154,8 +178,12 @@ class OrchestratorTui:
 
     def _refresh(self) -> None:
         try:
-            self.rows = dashboard_rows(self.store.records())
-        except Exception as exc:  # noqa: BLE001 - UI boundary: keep the dashboard usable.
+            event_store = JsonlEventStore(self.control_state_dir / "events.jsonl")
+            events = event_store.read()
+            lifecycle_state = EventProjector().replay(events)
+            event_order = tuple(dict.fromkeys(event.execution_id for event in events))
+            self.rows = dashboard_rows(self.store.records(), lifecycle_state, event_order)
+        except (EventLogError, OSError, UnicodeError, ValueError) as exc:
             self.rows = ()
             self.message = f"Could not read execution history: {exc}"
         self.selected = min(self.selected, max(len(self.rows) - 1, 0))
@@ -228,14 +256,29 @@ def _text(value: object, default: str) -> str:
     return value if isinstance(value, str) and value else default
 
 
+def _lifecycle_status(status: str, outcome: object, terminal: object) -> str:
+    outcome_map = outcome if isinstance(outcome, dict) else {}
+    terminal_map = terminal if isinstance(terminal, dict) else {}
+    if status == "finalized":
+        return _text(outcome_map.get("execution_status") or outcome_map.get("status"), status)
+    if status in {"terminal", "reconciled", "evaluated"}:
+        return _text(terminal_map.get("status"), status)
+    return status
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Full-screen local UI for Adaptive Orchestrator.")
     parser.add_argument("--workspace", type=Path, default=Path.cwd())
+    parser.add_argument("--control-state-dir", type=Path, help="Protected lifecycle event directory.")
     args = parser.parse_args(argv)
     workspace = args.workspace.expanduser().resolve()
     if not workspace.is_dir():
         parser.error(f"workspace is not a directory: {workspace}")
-    curses.wrapper(OrchestratorTui(workspace).run)
+    try:
+        application = OrchestratorTui(workspace, args.control_state_dir)
+    except ValueError as exc:
+        parser.error(str(exc))
+    curses.wrapper(application.run)
     return 0
 
 
