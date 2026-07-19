@@ -244,18 +244,18 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             in candidate["exclusion_rule_ids_triggered"]
         ]
 
-        self.assertEqual(len(rows), 12)
+        self.assertEqual(len(rows), 15)
         for candidate in rows:
             self.assertEqual(candidate["decision"], "excluded")
             self.assertEqual(candidate["screening"]["license_or_use_basis"], "fail")
-            # The judgment must cite the pinned revision, not a default branch.
-            self.assertTrue(candidate["base_revision"])
-            self.assertTrue(
-                any(
-                    candidate["base_revision"] in reason
-                    for reason in candidate["decision_reasons"]
-                )
-            )
+            reasons = " ".join(candidate["decision_reasons"])
+            if candidate["base_revision"]:
+                # Strongest evidence: the terms were read at the candidate's own revision.
+                self.assertIn(candidate["base_revision"], reasons)
+            else:
+                # Weaker evidence is allowed only to exclude, never to pass, and the
+                # default-branch basis has to be stated so it is not mistaken for the above.
+                self.assertIn("default branch", reasons)
 
     def test_exact_base_rows_follow_the_provisioning_principle(self) -> None:
         by_id = {

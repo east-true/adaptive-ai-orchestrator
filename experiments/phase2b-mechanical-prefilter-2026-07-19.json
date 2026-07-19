@@ -437,5 +437,12 @@
     "The predictor was formed from eight candidates whose outcomes were already known; its actual precision is unmeasured until the thirty-six are read.",
     "Rows with no qualifying PR are not excluded by this artifact; they simply cannot have a base resolved from a linked PR and remain screening.",
     "A resolved PR number is not a base revision. The base still has to be read from the PR."
-  ]
+  ],
+  "license_scope_note": "This filter selected rows by 'a licensed repository', not by the permissive-only eligibility that section 4.3 fixes. Reading the LICENSE of the 23 rows whose type was unidentified found one GPL-3.0, one source-available license with a non-commercial restriction, and one all-rights-reserved notice stating that no license is granted. All three were excluded. A license file existing is not the same as a license permitting use.",
+  "post_filter_outcome": {
+    "rows_passing_filter": 36,
+    "already_judged": 3,
+    "excluded_on_license_after_reading": 3,
+    "remaining_for_manual_review": 30
+  }
 }

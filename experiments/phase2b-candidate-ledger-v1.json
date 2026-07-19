@@ -38227,7 +38227,7 @@
       "solution_tree_hash": null,
       "source_evaluator_artifact_hash": null,
       "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "license_or_use_basis": "Not eligible: source-available, 비상업 제한.",
       "provisional_classification": {
         "instruction_language": null,
         "task_category": null,
@@ -38235,7 +38235,7 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "unknown",
+        "license_or_use_basis": "fail",
         "exact_base_resolvable": "unknown",
         "single_bounded_task": "unknown",
         "native_language_source": "unknown",
@@ -38247,11 +38247,16 @@
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "license-or-use-basis-unavailable"
+      ],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #366이 파일 112개를 바꾸며 그중 4개가 테스트다(test/features/auth/presentation/pages/agreement_page_test.dart, test/features/auth/presentation/pages/login_page_test.dart 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #366이 파일 112개를 바꾸며 그중 4개가 테스트다(test/features/auth/presentation/pages/agreement_page_test.dart, test/features/auth/presentation/pages/login_page_test.dart 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "LICENSE가 'Cops and Robbers Source-Available License v1.5'이며 Elastic License 2.0을 참조하되 비상업 제한을 추가한 custom license다. permissive 7종에 해당하지 않고, 불명확한 custom license를 임의 SPDX로 분류하지 않는다는 규칙에 따라 그대로 기록한다.",
+        "기계적 사전필터가 이 행을 통과시킨 것은 정답 PR이 테스트를 건드리기 때문이며 license와 무관하다. license 파일이 존재한다는 사실만으로 통과시키지 않고 내용을 직접 읽어 판정했다.",
+        "증거 등급: 이 판정은 저장소의 default branch(HEAD)에서 읽은 LICENSE에 근거한다. 이 행은 아직 base revision을 확정하지 않아 pinned revision 증거가 아니다. default branch 증거는 제외에만 쓰고 통과 근거로는 쓰지 않는다 — 나중 license를 과거 revision에 소급 적용해 사용을 정당화하는 방향은 금지되지만, 사용 권한이 없다는 신호로는 보수적으로 작용한다. 이 행을 되살리려면 base revision을 확정하고 그 시점 artifact를 다시 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -44197,7 +44202,7 @@
       "solution_tree_hash": null,
       "source_evaluator_artifact_hash": null,
       "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "license_or_use_basis": "Not eligible: all rights reserved.",
       "provisional_classification": {
         "instruction_language": null,
         "task_category": null,
@@ -44205,7 +44210,7 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "unknown",
+        "license_or_use_basis": "fail",
         "exact_base_resolvable": "unknown",
         "single_bounded_task": "unknown",
         "native_language_source": "unknown",
@@ -44217,11 +44222,16 @@
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "license-or-use-basis-unavailable"
+      ],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #63이 파일 8개를 바꾸며 그중 3개가 테스트다(ml/tests/test_classifier_module.py, ml/tests/test_demo_classifier_module.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #63이 파일 8개를 바꾸며 그중 3개가 테스트다(ml/tests/test_classifier_module.py, ml/tests/test_demo_classifier_module.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "LICENSE가 'All rights reserved'이며 본문이 'publicly viewable for reference and transparency, but it is not open-source software. No license is granted to use, copy, modify...'라고 명시한다. 사용 권한 자체가 부여되지 않으므로 license 파일의 존재가 use basis가 되지 않는다.",
+        "기계적 사전필터가 이 행을 통과시킨 것은 정답 PR이 테스트를 건드리기 때문이며 license와 무관하다. license 파일이 존재한다는 사실만으로 통과시키지 않고 내용을 직접 읽어 판정했다.",
+        "증거 등급: 이 판정은 저장소의 default branch(HEAD)에서 읽은 LICENSE에 근거한다. 이 행은 아직 base revision을 확정하지 않아 pinned revision 증거가 아니다. default branch 증거는 제외에만 쓰고 통과 근거로는 쓰지 않는다 — 나중 license를 과거 revision에 소급 적용해 사용을 정당화하는 방향은 금지되지만, 사용 권한이 없다는 신호로는 보수적으로 작용한다. 이 행을 되살리려면 base revision을 확정하고 그 시점 artifact를 다시 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -46866,7 +46876,7 @@
       "solution_tree_hash": null,
       "source_evaluator_artifact_hash": null,
       "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "license_or_use_basis": "Not eligible: GPL-3.0.",
       "provisional_classification": {
         "instruction_language": null,
         "task_category": null,
@@ -46874,7 +46884,7 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "unknown",
+        "license_or_use_basis": "fail",
         "exact_base_resolvable": "unknown",
         "single_bounded_task": "unknown",
         "native_language_source": "unknown",
@@ -46886,11 +46896,16 @@
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "license-or-use-basis-unavailable"
+      ],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #391이 파일 13개를 바꾸며 그중 2개가 테스트다(kor-travel-geo-ui/tests/e2e/ops-perf-summary.spec.ts, kor-travel-geo-ui/tests/unit/error-recovery.test.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #391이 파일 13개를 바꾸며 그중 2개가 테스트다(kor-travel-geo-ui/tests/e2e/ops-perf-summary.spec.ts, kor-travel-geo-ui/tests/unit/error-recovery.test.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "pinned repository의 LICENSE가 GNU General Public License v3.0이다. §4.3이 eligible을 permissive 7종으로 한정하므로 copyleft는 대상이 아니다. 재배포 조건이 발동할 여지를 미리 없애기 위한 사전등록 기준이며 license 자체의 문제가 아니다.",
+        "기계적 사전필터가 이 행을 통과시킨 것은 정답 PR이 테스트를 건드리기 때문이며 license와 무관하다. license 파일이 존재한다는 사실만으로 통과시키지 않고 내용을 직접 읽어 판정했다.",
+        "증거 등급: 이 판정은 저장소의 default branch(HEAD)에서 읽은 LICENSE에 근거한다. 이 행은 아직 base revision을 확정하지 않아 pinned revision 증거가 아니다. default branch 증거는 제외에만 쓰고 통과 근거로는 쓰지 않는다 — 나중 license를 과거 revision에 소급 적용해 사용을 정당화하는 방향은 금지되지만, 사용 권한이 없다는 신호로는 보수적으로 작용한다. 이 행을 되살리려면 base revision을 확정하고 그 시점 artifact를 다시 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -52773,8 +52788,8 @@
   ],
   "summary": {
     "candidate_count": 1130,
-    "screening_count": 1066,
-    "excluded_count": 62,
+    "screening_count": 1063,
+    "excluded_count": 65,
     "selected_for_task_authoring_count": 2,
     "language_assignment_counts": {
       "ko": 56,
