@@ -22001,17 +22001,21 @@
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
-        "objective_evaluator_feasible": "unknown",
+        "objective_evaluator_feasible": "fail",
         "gold_and_evaluator_hideable": "unknown",
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "task-source-unavailable-or-underspecified"
+      ],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #5이 파일 7개를 바꾸며 그중 1개가 테스트다(tests/test_in_ida.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #5이 파일 7개를 바꾸며 그중 1개가 테스트다(tests/test_in_ida.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "이슈 제목이 'open findings (decisions pending + cleanups)'이고 본문이 '결정 대기 (고칠지 수용할지)' 항목을 나열한다. 무엇을 고쳐야 하는지가 아직 정해지지 않았으므로 bounded task가 아니고, evaluator author가 문구에서 assertion을 유도할 수 없다.",
+        "문구만으로 판정했다. 기계적 사전필터가 이 행을 통과시킨 것은 정답 PR이 테스트를 건드리기 때문이며, 테스트 동반이 과제의 평가 가능성을 보장하지 않는다는 반례다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -22043,7 +22047,7 @@
       "screening": {
         "license_or_use_basis": "unknown",
         "exact_base_resolvable": "unknown",
-        "single_bounded_task": "unknown",
+        "single_bounded_task": "fail",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
@@ -22053,11 +22057,17 @@
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "multiple-coupled-issues",
+        "gold-or-evaluator-leakage"
+      ],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #5이 파일 7개를 바꾸며 그중 1개가 테스트다(tests/test_in_ida.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #5이 파일 7개를 바꾸며 그중 1개가 테스트다(tests/test_in_ida.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "파일 5개에 걸친 서로 다른 버그 수정 8건을 한 이슈로 묶었다. 임베드 확장, 호버 툴팁, 슬라이스 문법 등 독립적으로 평가해야 할 항목들이다.",
+        "더 결정적으로 이슈 본문이 '아래 패치를 git apply로 재적용'이라며 **정답 패치를 첨부**한다. 정답이 과제 문구에 딸려 있으므로 agent에게 숨길 수 없다.",
+        "문구만으로 판정했다. 기계적 사전필터가 이 행을 통과시킨 것은 정답 PR이 테스트를 건드리기 때문이며, 테스트 동반이 과제의 평가 가능성을 보장하지 않는다는 반례다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -22360,7 +22370,7 @@
       "screening": {
         "license_or_use_basis": "unknown",
         "exact_base_resolvable": "unknown",
-        "single_bounded_task": "unknown",
+        "single_bounded_task": "fail",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
@@ -22370,11 +22380,16 @@
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "multiple-coupled-issues"
+      ],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #39이 파일 6개를 바꾸며 그중 1개가 테스트다(test/site_output_test.rb 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #39이 파일 6개를 바꾸며 그중 1개가 테스트다(test/site_output_test.rb 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "'레이아웃·템플릿 피드백 6종 반영'으로 헤더 정렬, 와이드 여백, 티저 길이, 다크 모드 등 독립 항목 6개를 한 브랜치에 쌓는다고 이슈가 스스로 밝힌다.",
+        "판정 기준도 '1920폭에서 305px 어긋남' 같은 시각적 측정이라 결정적 acceptance test로 옮기기 어렵다.",
+        "문구만으로 판정했다. 기계적 사전필터가 이 행을 통과시킨 것은 정답 PR이 테스트를 건드리기 때문이며, 테스트 동반이 과제의 평가 가능성을 보장하지 않는다는 반례다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -24246,17 +24261,21 @@
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
-        "objective_evaluator_feasible": "unknown",
+        "objective_evaluator_feasible": "fail",
         "gold_and_evaluator_hideable": "unknown",
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "task-source-unavailable-or-underspecified"
+      ],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #86이 파일 11개를 바꾸며 그중 2개가 테스트다(tests/test_command_surface.py, tests/test_invincible_stats_wiki.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #86이 파일 11개를 바꾸며 그중 2개가 테스트다(tests/test_command_surface.py, tests/test_invincible_stats_wiki.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "본문이 '통계 버그 있음'과 스크린샷, 그리고 사망·처치 수치가 모두 203으로 같다는 화면 캡처뿐이다. 기대 동작도 재현 절차도 없어 문구만으로 assertion을 유도할 수 없다.",
+        "문구만으로 판정했다. 기계적 사전필터가 이 행을 통과시킨 것은 정답 PR이 테스트를 건드리기 때문이며, 테스트 동반이 과제의 평가 가능성을 보장하지 않는다는 반례다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -31748,7 +31767,7 @@
       "screening": {
         "license_or_use_basis": "unknown",
         "exact_base_resolvable": "unknown",
-        "single_bounded_task": "unknown",
+        "single_bounded_task": "fail",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
@@ -31758,11 +31777,16 @@
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "multiple-coupled-issues"
+      ],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #646이 파일 67개를 바꾸며 그중 27개가 테스트다(apps/api/src/auth/application/auth-application-boundary.spec.ts, apps/api/src/auth/application/facades/account.facade.spec.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #646이 파일 67개를 바꾸며 그중 27개가 테스트다(apps/api/src/auth/application/auth-application-boundary.spec.ts, apps/api/src/auth/application/facades/account.facade.spec.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "인증 모듈 전체를 클린 아키텍처로 재구성하는 작업으로 정답 PR이 파일 67개를 바꾸고 이슈가 예상 작업량을 'M (1~2일)'로 적는다. facade 도입, 포트로 의존성 역전, 서비스 내부 재배치가 한 번에 묶여 있어 한 checkout의 단일 작업 범위를 넘는다.",
+        "행위 보존 리팩터링이라 관측 가능한 수용 기준도 '기존 계약 유지'뿐이다.",
+        "문구만으로 판정했다. 기계적 사전필터가 이 행을 통과시킨 것은 정답 PR이 테스트를 건드리기 때문이며, 테스트 동반이 과제의 평가 가능성을 보장하지 않는다는 반례다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -32068,17 +32092,21 @@
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
-        "objective_evaluator_feasible": "unknown",
+        "objective_evaluator_feasible": "fail",
         "gold_and_evaluator_hideable": "unknown",
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "task-source-unavailable-or-underspecified"
+      ],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #72이 파일 10개를 바꾸며 그중 2개가 테스트다(plugins/raspi-mc-ops/src/test/java/io/github/pachir1su/raspimcops/EnchantServiceTest.java, tests/test_quick_commands.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #72이 파일 10개를 바꾸며 그중 2개가 테스트다(plugins/raspi-mc-ops/src/test/java/io/github/pachir1su/raspimcops/EnchantServiceTest.java, tests/test_quick_commands.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "본문 전체가 '곡괭이에 날카로움 붙인다던가 / 검에 날카로움 20 붙인다던가 / 그런 거 안 됨?'이다. 요구사항이 아니라 질문이며 수용 기준이 없다.",
+        "문구만으로 판정했다. 기계적 사전필터가 이 행을 통과시킨 것은 정답 PR이 테스트를 건드리기 때문이며, 테스트 동반이 과제의 평가 가능성을 보장하지 않는다는 반례다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -40038,17 +40066,23 @@
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
-        "objective_evaluator_feasible": "unknown",
+        "objective_evaluator_feasible": "fail",
         "gold_and_evaluator_hideable": "unknown",
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "subjective-only-evaluation",
+        "multiple-coupled-issues"
+      ],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #427이 파일 9개를 바꾸며 그중 4개가 테스트다(__tests__/barcodeCode128.test.tsx, __tests__/filmStripBandFontFallback.test.tsx 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #427이 파일 9개를 바꾸며 그중 4개가 테스트다(__tests__/barcodeCode128.test.tsx, __tests__/filmStripBandFontFallback.test.tsx 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "'무드 시각 디테일 정리'로 서명 폰트 통일, 한줄평 폰트 교체 등 시각적 다듬기 항목을 묶었고 이슈 스스로 우선순위를 'P3 (다듬기)'로 적는다.",
+        "판정이 폰트 선택과 시각적 조화에 달려 있어 deterministic test·golden invariant·property check 중 어느 것으로도 핵심 요구를 결정할 수 없다.",
+        "문구만으로 판정했다. 기계적 사전필터가 이 행을 통과시킨 것은 정답 PR이 테스트를 건드리기 때문이며, 테스트 동반이 과제의 평가 가능성을 보장하지 않는다는 반례다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -45172,17 +45206,22 @@
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
-        "objective_evaluator_feasible": "unknown",
+        "objective_evaluator_feasible": "fail",
         "gold_and_evaluator_hideable": "unknown",
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "subjective-only-evaluation"
+      ],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #2714이 파일 15개를 바꾸며 그중 2개가 테스트다(packages/microservices/src/transports/grpc-transport.test.ts, tooling/governance/microservices-safety-guidance.test.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #2714이 파일 15개를 바꾸며 그중 2개가 테스트다(packages/microservices/src/transports/grpc-transport.test.ts, tooling/governance/microservices-safety-guidance.test.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "산출물이 EN/KO 문서의 safety 서술 균형을 맞추는 산문이다. '구체성이 다르다'가 문제 정의이므로 어느 정도가 충분한지가 판정자의 재량에 달려 있다.",
+        "동일하게 유효한 문구가 다수이므로 병합된 산문을 exact golden으로 강제할 수 없다.",
+        "문구만으로 판정했다. 기계적 사전필터가 이 행을 통과시킨 것은 정답 PR이 테스트를 건드리기 때문이며, 테스트 동반이 과제의 평가 가능성을 보장하지 않는다는 반례다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -47726,7 +47765,7 @@
       "screening": {
         "license_or_use_basis": "unknown",
         "exact_base_resolvable": "unknown",
-        "single_bounded_task": "unknown",
+        "single_bounded_task": "fail",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
@@ -47736,11 +47775,17 @@
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "multiple-coupled-issues",
+        "task-source-unavailable-or-underspecified"
+      ],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #19이 파일 24개를 바꾸며 그중 5개가 테스트다(tests/test_app_settings.py, tests/test_apply_update.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #19이 파일 24개를 바꾸며 그중 5개가 테스트다(tests/test_app_settings.py, tests/test_apply_update.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "'명령어 10개 이하로 줄이기'와 '번역도 이상함'이라는 별개 작업을 한 이슈에 담았다.",
+        "어느 명령어를 어떻게 통합할지, 번역의 무엇이 이상한지가 없어 결정적 판정 기준을 세울 수 없다.",
+        "문구만으로 판정했다. 기계적 사전필터가 이 행을 통과시킨 것은 정답 PR이 테스트를 건드리기 때문이며, 테스트 동반이 과제의 평가 가능성을 보장하지 않는다는 반례다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -52788,8 +52833,8 @@
   ],
   "summary": {
     "candidate_count": 1130,
-    "screening_count": 1063,
-    "excluded_count": 65,
+    "screening_count": 1054,
+    "excluded_count": 74,
     "selected_for_task_authoring_count": 2,
     "language_assignment_counts": {
       "ko": 56,
