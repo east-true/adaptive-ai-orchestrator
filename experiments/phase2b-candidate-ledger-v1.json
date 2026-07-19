@@ -18411,7 +18411,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #4565이 파일 4개를 바꾸며 그중 1개가 테스트다(tests/integration/tests/split-runtime-smoke.test.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -19775,7 +19776,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #656이 파일 13개를 바꾸며 그중 6개가 테스트다(apps/api/src/ai-suggestion/infrastructure/jobs/suggestion-analysis.job.spec.ts, apps/api/src/ai-suggestion/infrastructure/queue/ai-suggestion-queue-maintenance.service.spec.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -22008,7 +22010,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #5이 파일 7개를 바꾸며 그중 1개가 테스트다(tests/test_in_ida.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -22053,7 +22056,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #5이 파일 7개를 바꾸며 그중 1개가 테스트다(tests/test_in_ida.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -22323,7 +22327,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #4567이 파일 3개를 바꾸며 그중 1개가 테스트다(tests/integration/tests/split-runtime-smoke.test.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -22368,7 +22373,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #39이 파일 6개를 바꾸며 그중 1개가 테스트다(test/site_output_test.rb 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -23470,7 +23476,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #55이 파일 19개를 바꾸며 그중 3개가 테스트다(src/context/RoomParticipantsContext.test.tsx, src/hooks/__tests__/useRemotePositions.test.tsx 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -23920,7 +23927,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #352이 파일 10개를 바꾸며 그중 6개가 테스트다(tests/golden/logic_report.txt, tests/test_count_check.sh 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -24201,7 +24209,8 @@
         "tools/value_audit.py imports only the standard library and repository-local modules, so the task itself needs no network, secret, push, or production mutation.",
         "reproducible_within_budget stays unknown: pyproject.toml declares requires-python >= 3.11 and depends on pyrewire>=1.0.3,<2.0, and neither an interpreter >= 3.11 nor that dependency has been reproduced in an isolated provisioned environment yet.",
         "Provisioning is permitted under the recorded environment principle, but this row may not pass reproducible_within_budget until all of the following are demonstrated: an exact Python 3.11 patch-version pin; version and artifact-hash pins for pyrewire and its transitive dependencies; byte-equivalent immutable environments for both agents; no network during agent or evaluator execution; agent-free reproduction of the base and of the negative and positive controls; installation and execution inside the preregistered resource bucket; and a recorded environment epoch and fixture provenance.",
-        "AGENTS.md (1047 bytes) and CLAUDE.md (11 bytes, containing only the import line '@AGENTS.md') exist in the base tree and must not be deleted or edited. Before environment parity or reproducibility may be marked pass, the effective instruction each CLI actually receives must be shown to be equivalent."
+        "AGENTS.md (1047 bytes) and CLAUDE.md (11 bytes, containing only the import line '@AGENTS.md') exist in the base tree and must not be deleted or edited. Before environment parity or reproducibility may be marked pass, the effective instruction each CLI actually receives must be shown to be equivalent.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #318이 파일 2개를 바꾸며 그중 1개가 테스트다(tests/unit/test_value_audit_owners_nfc.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -24246,7 +24255,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #86이 파일 11개를 바꾸며 그중 2개가 테스트다(tests/test_command_surface.py, tests/test_invincible_stats_wiki.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -24394,7 +24404,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #4609이 파일 11개를 바꾸며 그중 1개가 테스트다(src/services/discord/router/message_handler/intake_turn/race_loss/mailbox_reaction_tests.rs 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -24664,7 +24675,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #4554이 파일 5개를 바꾸며 그중 2개가 테스트다(src/bundler/chunk_test.zig, tests/integration/tests/manual-chunks.test.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -25903,7 +25915,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #433이 파일 1개를 바꾸며 그중 1개가 테스트다(__tests__/floatingToolbar.test.tsx 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -29927,7 +29940,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #16이 파일 5개를 바꾸며 그중 2개가 테스트다(Tests/SwiftTUIEssentialsTests/Layout/ProgrammaticScrollingTests.swift, Tests/SwiftTUIEssentialsTests/Layout/ScrollViewPositionAndFlexibleLayoutTests.swift 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -31296,7 +31310,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #408이 파일 7개를 바꾸며 그중 2개가 테스트다(tests/test_s3_blobstore.py, tests/test_web.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -31746,7 +31761,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #646이 파일 67개를 바꾸며 그중 27개가 테스트다(apps/api/src/auth/application/auth-application-boundary.spec.ts, apps/api/src/auth/application/facades/account.facade.spec.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -32061,7 +32077,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #72이 파일 10개를 바꾸며 그중 2개가 테스트다(plugins/raspi-mc-ops/src/test/java/io/github/pachir1su/raspimcops/EnchantServiceTest.java, tests/test_quick_commands.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -34950,7 +34967,8 @@
         "상류 테스트를 held-out evaluator로 재사용할 수 있는지 실측했다. PR #19의 테스트 파일 hunk 13개만 base에 적용해 `swift build --build-tests`를 돌리니 **compile error 171개**로 실패했다. assertion 실패가 아니라 base에 없는 심볼을 참조해서다.",
         "실패 심볼에는 `RenderedTextInputAnchor`, `RenderedBlock.textInputAnchor`처럼 이슈 #18이 명명하지 않은 내부 렌더링 타입이 포함된다. 이슈가 명시한 것은 `EditableText.InputPolicy` 추가와 `LineMode` 제거 같은 공개 API 수준이다. 따라서 이 테스트를 그대로 쓰면 agent가 동작을 올바르게 구현해도 내부 심볼 이름이 다르면 실패하는 over-specification이 된다.",
         "objective_evaluator_feasible은 여전히 unknown이다. 이슈가 진술한 관측 가능한 동작(Return이 newline을 삽입, 유한 열 너비에서 visual line 줄바꿈, clipping·wheel·caret reveal을 ScrollView가 담당)을 공개 API 수준에서 검사하는 evaluator는 원리상 가능하지만, 상류 테스트 재사용으로는 얻을 수 없고 독립 저술이 필요하다. 그 비용은 아직 산정하지 않았다.",
-        "negative control은 성립하지 않았다. compile 단계에서 멈추면 '구현하지 않음'과 '다르게 구현함'을 구별할 수 없다."
+        "negative control은 성립하지 않았다. compile 단계에서 멈추면 '구현하지 않음'과 '다르게 구현함'을 구별할 수 없다.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #19이 파일 30개를 바꾸며 그중 13개가 테스트다(Tests/SwiftTUIControlsTests/Text/TextEditorEditingTests.swift, Tests/SwiftTUIControlsTests/Text/TextFieldRenderingTests.swift 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -35220,7 +35238,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #28이 파일 26개를 바꾸며 그중 4개가 테스트다(soku/internal/cli/command_test.go, soku/internal/manifest/manifest_test.go 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -36217,7 +36236,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #270이 파일 5개를 바꾸며 그중 2개가 테스트다(tests/test_output_lang.sh, tests/unit/test_factlog_config.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -36624,7 +36644,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #15이 파일 33개를 바꾸며 그중 4개가 테스트다(web/analyze.test.js, web/ui_kits/dashboard/i18n.test.js 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -38048,7 +38069,8 @@
         "objective_evaluator_feasible: 이슈가 주장한 근거를 base에서 확인했다 — `normalize_target`이 `t.split(\"#\", 1)[0]`으로 fragment를 떼어내 검증하지 않는다. 깨진 fragment 링크를 탐지하는지 deterministic하게 판정할 수 있고, 이슈가 4개 깨진 대상을 전수 열거해 assertion 매핑도 가능하다.",
         "gold_and_evaluator_hideable: 정답 PR은 기존 `tests/test_doc_links.py`를 수정한다. 수정 후 버전을 보호 경로에 두면 새 assertion은 노출되지 않는다.",
         "reproducible_within_budget만 unknown으로 남는다. 고정 버전·artifact digest pin, 오프라인 의존성 복원, agent-free base/negative/positive control 재현, 사전 resource bucket 대비 실측이 끝나기 전에는 pass로 두지 않는다.",
-        "base_tree_hash 정정: 이전 값 9a91c5869623261762274eaf092d0c6bb6a0c176는 commit SHA였다. `GET /git/trees/{commit_sha}`가 입력 SHA를 그대로 되돌려준 것을 tree hash로 받아 기록한 오류이며, base를 실제로 materialize해 `git rev-parse HEAD^{tree}`로 확인한 값 40c93b2720fa97c94f479f0c5e13f6c4950df64b로 교체했다."
+        "base_tree_hash 정정: 이전 값 9a91c5869623261762274eaf092d0c6bb6a0c176는 commit SHA였다. `GET /git/trees/{commit_sha}`가 입력 SHA를 그대로 되돌려준 것을 tree hash로 받아 기록한 오류이며, base를 실제로 materialize해 `git rev-parse HEAD^{tree}`로 확인한 값 40c93b2720fa97c94f479f0c5e13f6c4950df64b로 교체했다.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #1174이 파일 6개를 바꾸며 그중 1개가 테스트다(tests/test_doc_links.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -38228,7 +38250,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #366이 파일 112개를 바꾸며 그중 4개가 테스트다(test/features/auth/presentation/pages/agreement_page_test.dart, test/features/auth/presentation/pages/login_page_test.dart 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -39973,7 +39996,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #13이 파일 6개를 바꾸며 그중 2개가 테스트다(test/search_test.js, test/site_output_test.rb 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -40018,7 +40042,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #427이 파일 9개를 바꾸며 그중 4개가 테스트다(__tests__/barcodeCode128.test.tsx, __tests__/filmStripBandFontFallback.test.tsx 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -40198,7 +40223,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #407이 파일 11개를 바꾸며 그중 2개가 테스트다(__tests__/launcherFieldGating.test.tsx, __tests__/moodCriterionQuote.test.tsx 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -42317,7 +42343,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #925이 파일 3개를 바꾸며 그중 2개가 테스트다(tests/shell-script-tests.sh, tests/suites/fragile-hardcoding-guard.sh 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -42456,7 +42483,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #304이 파일 16개를 바꾸며 그중 2개가 테스트다(genon/preprocessor/tests/unit/test_parser_processor_unit.py, genon/preprocessor/tests/unit/test_xlsx_processor.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -44192,7 +44220,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #63이 파일 8개를 바꾸며 그중 3개가 테스트다(ml/tests/test_classifier_module.py, ml/tests/test_demo_classifier_module.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -44867,7 +44896,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #351이 파일 9개를 바꾸며 그중 1개가 테스트다(__tests__/ocrUndoRestore.test.tsx 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -45141,7 +45171,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #2714이 파일 15개를 바꾸며 그중 2개가 테스트다(packages/microservices/src/transports/grpc-transport.test.ts, tooling/governance/microservices-safety-guidance.test.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -46812,7 +46843,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #35이 파일 4개를 바꾸며 그중 1개가 테스트다(bridge/tests/test_tg_readable.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -46857,7 +46889,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #391이 파일 13개를 바꾸며 그중 2개가 테스트다(kor-travel-geo-ui/tests/e2e/ops-perf-summary.spec.ts, kor-travel-geo-ui/tests/unit/error-recovery.test.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -47691,7 +47724,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #19이 파일 24개를 바꾸며 그중 5개가 테스트다(tests/test_app_settings.py, tests/test_apply_update.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -50782,7 +50816,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #513이 파일 4개를 바꾸며 그중 1개가 테스트다(packages/cluster/frontend/src/lib/datetime.test.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -51641,7 +51676,8 @@
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
-        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening."
+        "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #34이 파일 9개를 바꾸며 그중 2개가 테스트다(tests/test_optimizer.py, tests/test_pattern_library.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false

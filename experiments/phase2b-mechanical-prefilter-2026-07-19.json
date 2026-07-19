@@ -1,0 +1,441 @@
+{
+  "artifact_id": "phase2b-mechanical-prefilter-2026-07-19",
+  "protocol_version": "phase2b-pilot-prereg-v1",
+  "created_at": "2026-07-19T01:16:05.212838+00:00",
+  "purpose": "Order manual review by a mechanically checkable predictor. Reading every candidate statement is the expensive step; whether the merged pull request touches a test file is cheap and was observed to separate the candidates that reached selected from those that did not.",
+  "terminal_status": false,
+  "terminal_status_note": "This filter orders work; it settles no inclusion rule. A PR touching tests does not make an evaluator feasible — one candidate carries 13 test files yet fails because they assert internal API the task never names.",
+  "method": {
+    "pr_resolution": "issue HTML page, then .diff and title of each candidate PR",
+    "selection_rule": "same repository, references this issue number, not release automation",
+    "test_path_pattern": "(^|/)(tests?|spec|__tests__)/ or filename containing _test, test_, .test., .spec.",
+    "rate_limit_bucket": "none; the issue page and .diff endpoint sit outside the API limit"
+  },
+  "validation": {
+    "known_answers_checked": 5,
+    "known_answers_recovered": 5,
+    "note": "Five candidates whose linked PR had already been resolved through the API were re-resolved from HTML; all five correct PRs appeared among the HTML candidates."
+  },
+  "input_rows": 141,
+  "resolved": 61,
+  "touches_tests": 36,
+  "manual_review_before": 141,
+  "manual_review_after": 36,
+  "unresolved_reason": "no linked PR, only release automation PRs, or no PR referencing this issue",
+  "candidates": {
+    "ghko-ohah--zntc-issue-4564": {
+      "repo": "ohah/zntc",
+      "issue": 4564,
+      "pr": 4565,
+      "changed_files": 4,
+      "test_files": 1,
+      "test_paths": [
+        "tests/integration/tests/split-runtime-smoke.test.ts"
+      ]
+    },
+    "ghko-Aiddoo--Aido-platform-issue-655": {
+      "repo": "Aiddoo/Aido-platform",
+      "issue": 655,
+      "pr": 656,
+      "changed_files": 13,
+      "test_files": 6,
+      "test_paths": [
+        "apps/api/src/ai-suggestion/infrastructure/jobs/suggestion-analysis.job.spec.ts",
+        "apps/api/src/ai-suggestion/infrastructure/queue/ai-suggestion-queue-maintenance.service.spec.ts",
+        "apps/api/src/health/indicators/bull.health.spec.ts",
+        "apps/api/src/health/indicators/redis-eviction-policy.probe.spec.ts",
+        "apps/api/test/e2e/health-queue-policy.e2e-spec.ts"
+      ]
+    },
+    "ghko-hyuunnn--ida-slides-issue-3": {
+      "repo": "hyuunnn/ida-slides",
+      "issue": 3,
+      "pr": 5,
+      "changed_files": 7,
+      "test_files": 1,
+      "test_paths": [
+        "tests/test_in_ida.py"
+      ]
+    },
+    "ghko-hyuunnn--ida-slides-issue-2": {
+      "repo": "hyuunnn/ida-slides",
+      "issue": 2,
+      "pr": 5,
+      "changed_files": 7,
+      "test_files": 1,
+      "test_paths": [
+        "tests/test_in_ida.py"
+      ]
+    },
+    "ghko-ohah--zntc-issue-4563": {
+      "repo": "ohah/zntc",
+      "issue": 4563,
+      "pr": 4567,
+      "changed_files": 3,
+      "test_files": 1,
+      "test_paths": [
+        "tests/integration/tests/split-runtime-smoke.test.ts"
+      ]
+    },
+    "ghko-SeokRae--blog-issue-38": {
+      "repo": "SeokRae/blog",
+      "issue": 38,
+      "pr": 39,
+      "changed_files": 6,
+      "test_files": 1,
+      "test_paths": [
+        "test/site_output_test.rb"
+      ]
+    },
+    "ghko-hissinger--small-village-issue-51": {
+      "repo": "hissinger/small-village",
+      "issue": 51,
+      "pr": 55,
+      "changed_files": 19,
+      "test_files": 3,
+      "test_paths": [
+        "src/context/RoomParticipantsContext.test.tsx",
+        "src/hooks/__tests__/useRemotePositions.test.tsx",
+        "src/lib/positionChannel.test.ts"
+      ]
+    },
+    "ghko-SeoyunL--factlog-academic-issue-342": {
+      "repo": "SeoyunL/factlog-academic",
+      "issue": 342,
+      "pr": 352,
+      "changed_files": 10,
+      "test_files": 6,
+      "test_paths": [
+        "tests/golden/logic_report.txt",
+        "tests/test_count_check.sh",
+        "tests/unit/test_malformed_query_report.py",
+        "tests/unit/test_policy_result_entity_filter.py",
+        "tests/unit/test_query_dispatch_exact.py"
+      ]
+    },
+    "ghko-SeoyunL--factlog-academic-issue-314": {
+      "repo": "SeoyunL/factlog-academic",
+      "issue": 314,
+      "pr": 318,
+      "changed_files": 2,
+      "test_files": 1,
+      "test_paths": [
+        "tests/unit/test_value_audit_owners_nfc.py"
+      ]
+    },
+    "ghko-pachir1su--raspi-mc-server-issue-84": {
+      "repo": "pachir1su/raspi-mc-server",
+      "issue": 84,
+      "pr": 86,
+      "changed_files": 11,
+      "test_files": 2,
+      "test_paths": [
+        "tests/test_command_surface.py",
+        "tests/test_invincible_stats_wiki.py"
+      ]
+    },
+    "ghko-itismyfield--AgentDesk-issue-4606": {
+      "repo": "itismyfield/AgentDesk",
+      "issue": 4606,
+      "pr": 4609,
+      "changed_files": 11,
+      "test_files": 1,
+      "test_paths": [
+        "src/services/discord/router/message_handler/intake_turn/race_loss/mailbox_reaction_tests.rs"
+      ]
+    },
+    "ghko-ohah--zntc-issue-4553": {
+      "repo": "ohah/zntc",
+      "issue": 4553,
+      "pr": 4554,
+      "changed_files": 5,
+      "test_files": 2,
+      "test_paths": [
+        "src/bundler/chunk_test.zig",
+        "tests/integration/tests/manual-chunks.test.ts"
+      ]
+    },
+    "ghko-Lyainc--filme-issue-432": {
+      "repo": "Lyainc/filme",
+      "issue": 432,
+      "pr": 433,
+      "changed_files": 1,
+      "test_files": 1,
+      "test_paths": [
+        "__tests__/floatingToolbar.test.tsx"
+      ]
+    },
+    "ghko-minacle--swift-tui-issue-15": {
+      "repo": "minacle/swift-tui",
+      "issue": 15,
+      "pr": 16,
+      "changed_files": 5,
+      "test_files": 2,
+      "test_paths": [
+        "Tests/SwiftTUIEssentialsTests/Layout/ProgrammaticScrollingTests.swift",
+        "Tests/SwiftTUIEssentialsTests/Layout/ScrollViewPositionAndFlexibleLayoutTests.swift"
+      ]
+    },
+    "ghko-yvshdjcsldhdjt--ChunChuGwan-issue-406": {
+      "repo": "yvshdjcsldhdjt/ChunChuGwan",
+      "issue": 406,
+      "pr": 408,
+      "changed_files": 7,
+      "test_files": 2,
+      "test_paths": [
+        "tests/test_s3_blobstore.py",
+        "tests/test_web.py"
+      ]
+    },
+    "ghko-Aiddoo--Aido-platform-issue-645": {
+      "repo": "Aiddoo/Aido-platform",
+      "issue": 645,
+      "pr": 646,
+      "changed_files": 67,
+      "test_files": 27,
+      "test_paths": [
+        "apps/api/src/auth/application/auth-application-boundary.spec.ts",
+        "apps/api/src/auth/application/facades/account.facade.spec.ts",
+        "apps/api/src/auth/application/facades/auth.facade.spec.ts",
+        "apps/api/src/auth/application/facades/oauth.facade.spec.ts",
+        "apps/api/src/auth/application/facades/session.facade.spec.ts"
+      ]
+    },
+    "ghko-pachir1su--raspi-mc-server-issue-62": {
+      "repo": "pachir1su/raspi-mc-server",
+      "issue": 62,
+      "pr": 72,
+      "changed_files": 10,
+      "test_files": 2,
+      "test_paths": [
+        "plugins/raspi-mc-ops/src/test/java/io/github/pachir1su/raspimcops/EnchantServiceTest.java",
+        "tests/test_quick_commands.py"
+      ]
+    },
+    "ghko-minacle--swift-tui-issue-18": {
+      "repo": "minacle/swift-tui",
+      "issue": 18,
+      "pr": 19,
+      "changed_files": 30,
+      "test_files": 13,
+      "test_paths": [
+        "Tests/SwiftTUIControlsTests/Text/TextEditorEditingTests.swift",
+        "Tests/SwiftTUIControlsTests/Text/TextFieldRenderingTests.swift",
+        "Tests/SwiftTUIEssentialsTests/Layout/ScrollViewPositionAndFlexibleLayoutTests.swift",
+        "Tests/SwiftTUIEssentialsTests/Layout/TextInputAnchorScrollingTests.swift",
+        "Tests/SwiftTUIEssentialsTests/Text/EditableTextEditingAndNavigationTests.swift"
+      ]
+    },
+    "ghko-Soku-JINSEOK--Soku-Convention-Boilerplate-issue-19": {
+      "repo": "Soku-JINSEOK/Soku-Convention-Boilerplate",
+      "issue": 19,
+      "pr": 28,
+      "changed_files": 26,
+      "test_files": 4,
+      "test_paths": [
+        "soku/internal/cli/command_test.go",
+        "soku/internal/manifest/manifest_test.go",
+        "soku/internal/manifest/store_test.go",
+        "soku/internal/status/status_test.go"
+      ]
+    },
+    "ghmix-semantic-reasoning--factlog-issue-269": {
+      "repo": "semantic-reasoning/factlog",
+      "issue": 269,
+      "pr": 270,
+      "changed_files": 5,
+      "test_files": 2,
+      "test_paths": [
+        "tests/test_output_lang.sh",
+        "tests/unit/test_factlog_config.py"
+      ]
+    },
+    "ghmix-jkas2016--hsr-warp-issue-12": {
+      "repo": "jkas2016/hsr-warp",
+      "issue": 12,
+      "pr": 15,
+      "changed_files": 33,
+      "test_files": 4,
+      "test_paths": [
+        "web/analyze.test.js",
+        "web/ui_kits/dashboard/i18n.test.js",
+        "web/ui_kits/dashboard/items.test.js",
+        "web/ui_kits/dashboard/nohardcode.test.js"
+      ]
+    },
+    "ghmix-hskim-solv--BidMate-DocAgent-issue-1152": {
+      "repo": "hskim-solv/BidMate-DocAgent",
+      "issue": 1152,
+      "pr": 1174,
+      "changed_files": 6,
+      "test_files": 1,
+      "test_paths": [
+        "tests/test_doc_links.py"
+      ]
+    },
+    "ghmix-cops-and-robbers--cops-and-robbers-FE-issue-365": {
+      "repo": "cops-and-robbers/cops-and-robbers-FE",
+      "issue": 365,
+      "pr": 366,
+      "changed_files": 112,
+      "test_files": 4,
+      "test_paths": [
+        "test/features/auth/presentation/pages/agreement_page_test.dart",
+        "test/features/auth/presentation/pages/login_page_test.dart",
+        "test/features/game/presentation/widgets/game_over_result_dialog_test.dart",
+        "test/features/tutorial/presentation/pages/tutorial_catalog_page_test.dart"
+      ]
+    },
+    "ghmix-SeokRae--blog-issue-12": {
+      "repo": "SeokRae/blog",
+      "issue": 12,
+      "pr": 13,
+      "changed_files": 6,
+      "test_files": 2,
+      "test_paths": [
+        "test/search_test.js",
+        "test/site_output_test.rb"
+      ]
+    },
+    "ghmix-Lyainc--filme-issue-423": {
+      "repo": "Lyainc/filme",
+      "issue": 423,
+      "pr": 427,
+      "changed_files": 9,
+      "test_files": 4,
+      "test_paths": [
+        "__tests__/barcodeCode128.test.tsx",
+        "__tests__/filmStripBandFontFallback.test.tsx",
+        "__tests__/moodCriterionQuote.test.tsx",
+        "__tests__/moodEditorialResync.test.tsx"
+      ]
+    },
+    "ghmix-Lyainc--filme-issue-391": {
+      "repo": "Lyainc/filme",
+      "issue": 391,
+      "pr": 407,
+      "changed_files": 11,
+      "test_files": 2,
+      "test_paths": [
+        "__tests__/launcherFieldGating.test.tsx",
+        "__tests__/moodCriterionQuote.test.tsx"
+      ]
+    },
+    "ghmix-greenheadHQ--nixos-config-issue-918": {
+      "repo": "greenheadHQ/nixos-config",
+      "issue": 918,
+      "pr": 925,
+      "changed_files": 3,
+      "test_files": 2,
+      "test_paths": [
+        "tests/shell-script-tests.sh",
+        "tests/suites/fragile-hardcoding-guard.sh"
+      ]
+    },
+    "ghmix-genonai--doc_parser-issue-288": {
+      "repo": "genonai/doc_parser",
+      "issue": 288,
+      "pr": 304,
+      "changed_files": 16,
+      "test_files": 2,
+      "test_paths": [
+        "genon/preprocessor/tests/unit/test_parser_processor_unit.py",
+        "genon/preprocessor/tests/unit/test_xlsx_processor.py"
+      ]
+    },
+    "ghmix-SeniorAILab--eldercare-fall-ai-issue-59": {
+      "repo": "SeniorAILab/eldercare-fall-ai",
+      "issue": 59,
+      "pr": 63,
+      "changed_files": 8,
+      "test_files": 3,
+      "test_paths": [
+        "ml/tests/test_classifier_module.py",
+        "ml/tests/test_demo_classifier_module.py",
+        "ml/tests/test_demo_yolo_overlay.py"
+      ]
+    },
+    "ghmix-Lyainc--filme-issue-348": {
+      "repo": "Lyainc/filme",
+      "issue": 348,
+      "pr": 351,
+      "changed_files": 9,
+      "test_files": 1,
+      "test_paths": [
+        "__tests__/ocrUndoRestore.test.tsx"
+      ]
+    },
+    "ghmix-fluojs--fluo-issue-2580": {
+      "repo": "fluojs/fluo",
+      "issue": 2580,
+      "pr": 2714,
+      "changed_files": 15,
+      "test_files": 2,
+      "test_paths": [
+        "packages/microservices/src/transports/grpc-transport.test.ts",
+        "tooling/governance/microservices-safety-guidance.test.ts"
+      ]
+    },
+    "ghmix-jinwon-int--ccc-node-issue-34": {
+      "repo": "jinwon-int/ccc-node",
+      "issue": 34,
+      "pr": 35,
+      "changed_files": 4,
+      "test_files": 1,
+      "test_paths": [
+        "bridge/tests/test_tg_readable.py"
+      ]
+    },
+    "ghmix-digitie--kor-travel-geo-issue-390": {
+      "repo": "digitie/kor-travel-geo",
+      "issue": 390,
+      "pr": 391,
+      "changed_files": 13,
+      "test_files": 2,
+      "test_paths": [
+        "kor-travel-geo-ui/tests/e2e/ops-perf-summary.spec.ts",
+        "kor-travel-geo-ui/tests/unit/error-recovery.test.ts"
+      ]
+    },
+    "ghmix-pachir1su--raspi-mc-server-issue-17": {
+      "repo": "pachir1su/raspi-mc-server",
+      "issue": 17,
+      "pr": 19,
+      "changed_files": 24,
+      "test_files": 5,
+      "test_paths": [
+        "tests/test_app_settings.py",
+        "tests/test_apply_update.py",
+        "tests/test_backup_scheduling.py",
+        "tests/test_config.py",
+        "tests/test_rcon.py"
+      ]
+    },
+    "ghmix-e7217--anygarden-issue-512": {
+      "repo": "e7217/anygarden",
+      "issue": 512,
+      "pr": 513,
+      "changed_files": 4,
+      "test_files": 1,
+      "test_paths": [
+        "packages/cluster/frontend/src/lib/datetime.test.ts"
+      ]
+    },
+    "ghmix-KoreaNirsa--prompt-booster-issue-10": {
+      "repo": "KoreaNirsa/prompt-booster",
+      "issue": 10,
+      "pr": 34,
+      "changed_files": 9,
+      "test_files": 2,
+      "test_paths": [
+        "tests/test_optimizer.py",
+        "tests/test_pattern_library.py"
+      ]
+    }
+  },
+  "known_limitations": [
+    "The predictor was formed from eight candidates whose outcomes were already known; its actual precision is unmeasured until the thirty-six are read.",
+    "Rows with no qualifying PR are not excluded by this artifact; they simply cannot have a base resolved from a linked PR and remain screening.",
+    "A resolved PR number is not a base revision. The base still has to be read from the PR."
+  ]
+}
