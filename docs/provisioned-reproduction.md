@@ -2,7 +2,7 @@
 
 > 기준일: 2026-07-19
 > 측정 artifact: [`phase2b-provisioning-measurements-2026-07-19.json`](../experiments/phase2b-provisioning-measurements-2026-07-19.json)
-> 관련: [사전등록 계약](paired-pilot-preregistration.md) §4.4, [candidate ledger](paired-pilot-candidate-ledger.md)
+> 관련: [사전등록 계약](paired-pilot-preregistration.md) §4.5, [candidate ledger](paired-pilot-candidate-ledger.md)
 
 후보의 `reproducible_within_budget`을 판정하려면 agent 없이 환경을 실제로 만들고
 base·negative·positive control을 재현해야 한다. 이 문서는 4개 후보에서 실측한 절차와

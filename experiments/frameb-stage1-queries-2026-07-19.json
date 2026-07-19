@@ -524,5 +524,31 @@
     "sort=updated와 pushed cutoff가 activity bias를 중복 도입한다. 이 pool을 Korean OSS 대표표본이나 target workload 분포로 해석하지 않는다.",
     "GitHub Search는 완전 결정적이지 않다. snapshot과 counts로 감사 가능성만 확보된다.",
     "license 매칭은 GitHub 분류기 결과이며 terminal 근거가 아니다. selected 전 exact revision artifact 검사가 항상 필요하다."
-  ]
+  ],
+  "eligibility_narrowed": {
+    "amended_at": "2026-07-19T00:07:29.252522+00:00",
+    "eligible_license_keywords": [
+      "mit",
+      "apache-2.0",
+      "bsd-2-clause",
+      "bsd-3-clause",
+      "bsl-1.0",
+      "unlicense",
+      "cc0-1.0"
+    ],
+    "excluded_license_keywords": [
+      "gpl-2.0",
+      "gpl-3.0",
+      "agpl-3.0",
+      "lgpl-2.1",
+      "mpl-2.0",
+      "epl-2.0"
+    ],
+    "reason": "Narrowed to permissive licenses so that fixtures and agent outputs never sit under redistribution conditions. The experiment's output is routing methodology for this orchestrator, not a published dataset.",
+    "result_blindness": "Decided after observing Stage 1 license counts but before any agent outcome. What was observed is the license distribution, not performance.",
+    "collection_preserved": "Stage 1 results are kept whole; only the eligible subset is marked.",
+    "stage1_unique_repositories": 1855,
+    "eligible_repositories": 1055,
+    "excluded_repositories": 800
+  }
 }
