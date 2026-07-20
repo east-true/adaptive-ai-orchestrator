@@ -54,6 +54,7 @@ Adaptive routing 개선 작업은 다음 문서에서 추적한다.
 - [Phase 2b source candidate ledger 규칙](docs/paired-pilot-candidate-ledger.md)
 - [Claude 독립 검토와 반영 판단](docs/routing-claude-review.md)
 - [진행상황과 이어하기](docs/adaptive-routing-progress.md)
+- [Intra-Vendor Model Tier Routing 설계 탐색 (미구현)](docs/intra-vendor-tier-routing.md)
 
 Phase -1 telemetry baseline, Phase 0 typed evaluator, Phase 1 lifecycle/replay와
 corrected static L0, Phase 2a v1/v2 paired smoke와 pause/resume audit까지 반영했다. 현재의
