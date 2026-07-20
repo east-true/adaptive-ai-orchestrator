@@ -1,0 +1,772 @@
+{
+  "artifact_id": "phase2b-agent-instruction-parity-2026-07-20",
+  "protocol_version": "phase2b-pilot-prereg-v1",
+  "created_at": "2026-07-20T11:57:03.339913+00:00",
+  "purpose": "Measure whether a candidate's base tree gives the two CLI agents different effective instructions. Claude Code discovers CLAUDE.md and Codex discovers AGENTS.md, so a base tree carrying only one of them, or both with differing content, makes the paired comparison unequal in a way unrelated to agent capability.",
+  "terminal_status": false,
+  "terminal_status_note": "Settles no inclusion rule. The prevalence probe reads the default branch, not each candidate's pinned revision, and the Codex half of the discovery measurement was not obtained.",
+  "discovery_measurement": {
+    "method": "Behavioural, not self-report. Four isolated empty directories were given instruction files carrying distinct mandatory output markers; each CLI was asked a trivial greeting requiring no file access. The marker that appears identifies which file was auto-injected. Claude was additionally run with file-reading tools disallowed so a marker cannot arrive via a tool call.",
+    "claude_code": {
+      "cli_version": "2.1.215",
+      "measured": true,
+      "results": {
+        "both_files_present": "CLAUDE.md marker only",
+        "agents_md_only": "no marker — AGENTS.md is not discovered",
+        "claude_md_only": "CLAUDE.md marker",
+        "claude_md_is_import_of_agents_md": "AGENTS.md marker — the @AGENTS.md import is resolved and inlined"
+      },
+      "conclusions": [
+        "Claude Code 2.1.215 does not auto-read AGENTS.md.",
+        "Claude Code 2.1.215 does resolve an @AGENTS.md import inside CLAUDE.md, so that pattern delivers AGENTS.md content."
+      ]
+    },
+    "codex": {
+      "cli_version": "0.144.6",
+      "measured": false,
+      "blocked_reason": "Account usage limit reached; all four invocations failed before any model call.",
+      "blocked_until": "2026-07-25T13:54 (as reported by the CLI)",
+      "invocations_completed": 0,
+      "tokens_consumed": 0,
+      "cost": 0
+    },
+    "known_limitations": [
+      "Installed versions (Claude Code 2.1.215, Codex 0.144.6) drift by one patch release from the Phase 2a v2 pins (2.1.212, 0.144.5). Phase 2b must re-verify against whatever versions its own manifest pins.",
+      "User-level instruction files exist for both agents (~/.claude/CLAUDE.md and ~/.codex/AGENTS.md). They are outside the fixture and were not varied; this probe measures repository-level discovery only.",
+      "Without the Codex half, no row's parity can be settled: the AGENTS.md-only repositories depend entirely on whether Codex discovers that file.",
+      "No projection of how many candidate rows could pass parity is recorded here. Any such number requires assuming what Codex reads, and there is no evidence for that assumption while the Codex measurement is blocked."
+    ]
+  },
+  "prevalence_probe": {
+    "basis": "raw.githubusercontent at default branch HEAD; NOT pinned-revision evidence",
+    "population": "repositories with a license signal, union the mechanical-prefilter repositories",
+    "repositories": 70,
+    "candidate_rows_behind_population": 144,
+    "by_repository": {
+      "asymmetric-one-sided": 30,
+      "clean-neither": 17,
+      "asymmetric-divergent": 13,
+      "symmetric-symlink": 6,
+      "equivalent-by-import": 4
+    },
+    "by_candidate_row": {
+      "asymmetric-one-sided": 66,
+      "clean-neither": 28,
+      "asymmetric-divergent": 24,
+      "symmetric-symlink": 15,
+      "equivalent-by-import": 11
+    },
+    "direction_of_asymmetry": {
+      "one_sided_claude_md_only": 16,
+      "one_sided_agents_md_only": 14,
+      "divergent_claude_md_larger": 7,
+      "divergent_agents_md_larger": 6,
+      "reading": "Close to even in both categories, so the pool carries no systematic advantage for either agent. The hazard is per-task confounding, not pool-level bias."
+    },
+    "entries": [
+      {
+        "repository": "115dkk/Impulcifer-pip313",
+        "claude_bytes": 34748,
+        "agents_bytes": 1162,
+        "claude_sha": "c6b5689883e4",
+        "agents_sha": "4f9d89fb90a8",
+        "parity": "asymmetric-divergent"
+      },
+      {
+        "repository": "Aiddoo/Aido-platform",
+        "claude_bytes": 11,
+        "agents_bytes": 4239,
+        "claude_sha": "336cc4fbf19b",
+        "agents_sha": "afe73f368a0a",
+        "parity": "equivalent-by-import"
+      },
+      {
+        "repository": "B-TING/bu-ting-mobile",
+        "claude_bytes": null,
+        "agents_bytes": null,
+        "claude_sha": null,
+        "agents_sha": null,
+        "parity": "clean-neither"
+      },
+      {
+        "repository": "Chigo55/Docker-Compose",
+        "claude_bytes": 17569,
+        "agents_bytes": null,
+        "claude_sha": "70d229ace1f3",
+        "agents_sha": null,
+        "parity": "asymmetric-one-sided",
+        "present": "CLAUDE.md"
+      },
+      {
+        "repository": "GulSam00/singcode",
+        "claude_bytes": 4893,
+        "agents_bytes": null,
+        "claude_sha": "c1e67908cab7",
+        "agents_sha": null,
+        "parity": "asymmetric-one-sided",
+        "present": "CLAUDE.md"
+      },
+      {
+        "repository": "Hangi-n42/Growme_2026",
+        "claude_bytes": null,
+        "agents_bytes": 9349,
+        "claude_sha": null,
+        "agents_sha": "aac005d44efb",
+        "parity": "asymmetric-one-sided",
+        "present": "AGENTS.md"
+      },
+      {
+        "repository": "JeremyDev87/ddalggak",
+        "claude_bytes": null,
+        "agents_bytes": 1885,
+        "claude_sha": null,
+        "agents_sha": "355a6eba38a4",
+        "parity": "asymmetric-one-sided",
+        "present": "AGENTS.md"
+      },
+      {
+        "repository": "JeremyDev87/kratos",
+        "claude_bytes": null,
+        "agents_bytes": null,
+        "claude_sha": null,
+        "agents_sha": null,
+        "parity": "clean-neither"
+      },
+      {
+        "repository": "JungHoonGhae/tossinvest-cli",
+        "claude_bytes": null,
+        "agents_bytes": 4003,
+        "claude_sha": null,
+        "agents_sha": "0436f74e136c",
+        "parity": "asymmetric-one-sided",
+        "present": "AGENTS.md"
+      },
+      {
+        "repository": "Junghyun99/StockAsset",
+        "claude_bytes": 6797,
+        "agents_bytes": null,
+        "claude_sha": "0d25ca9ef7b9",
+        "agents_sha": null,
+        "parity": "asymmetric-one-sided",
+        "present": "CLAUDE.md"
+      },
+      {
+        "repository": "KoreaNirsa/prompt-booster",
+        "claude_bytes": null,
+        "agents_bytes": null,
+        "claude_sha": null,
+        "agents_sha": null,
+        "parity": "clean-neither"
+      },
+      {
+        "repository": "Lyainc/filme",
+        "claude_bytes": 16100,
+        "agents_bytes": null,
+        "claude_sha": "a53e920b2565",
+        "agents_sha": null,
+        "parity": "asymmetric-one-sided",
+        "present": "CLAUDE.md"
+      },
+      {
+        "repository": "MTGVim/telltale",
+        "claude_bytes": null,
+        "agents_bytes": null,
+        "claude_sha": null,
+        "agents_sha": null,
+        "parity": "clean-neither"
+      },
+      {
+        "repository": "MannaDevelopers/meditation_blossom_frontend",
+        "claude_bytes": 7938,
+        "agents_bytes": null,
+        "claude_sha": "c8297a29edb5",
+        "agents_sha": null,
+        "parity": "asymmetric-one-sided",
+        "present": "CLAUDE.md"
+      },
+      {
+        "repository": "Ootzk/Wor-chain-dle",
+        "claude_bytes": 730,
+        "agents_bytes": 31021,
+        "claude_sha": "b9a91fb354e7",
+        "agents_sha": "1234b6efaca6",
+        "parity": "asymmetric-divergent"
+      },
+      {
+        "repository": "Orchemi/my-resend",
+        "claude_bytes": 11542,
+        "agents_bytes": null,
+        "claude_sha": "fb37f369b6d4",
+        "agents_sha": null,
+        "parity": "asymmetric-one-sided",
+        "present": "CLAUDE.md"
+      },
+      {
+        "repository": "ProudlyOffbeat/ProudlyOffbeat-MVP-iOS",
+        "claude_bytes": null,
+        "agents_bytes": null,
+        "claude_sha": null,
+        "agents_sha": null,
+        "parity": "clean-neither"
+      },
+      {
+        "repository": "RosieOh/ccStory",
+        "claude_bytes": 1453,
+        "agents_bytes": null,
+        "claude_sha": "39a3a965039d",
+        "agents_sha": null,
+        "parity": "asymmetric-one-sided",
+        "present": "CLAUDE.md"
+      },
+      {
+        "repository": "SIDED00R/algo-review",
+        "claude_bytes": null,
+        "agents_bytes": null,
+        "claude_sha": null,
+        "agents_sha": null,
+        "parity": "clean-neither"
+      },
+      {
+        "repository": "SeniorAILab/eldercare-fall-ai",
+        "claude_bytes": null,
+        "agents_bytes": 5692,
+        "claude_sha": null,
+        "agents_sha": "79e00f094c65",
+        "parity": "asymmetric-one-sided",
+        "present": "AGENTS.md"
+      },
+      {
+        "repository": "SeokRae/blog",
+        "claude_bytes": 13897,
+        "agents_bytes": null,
+        "claude_sha": "675768aa0305",
+        "agents_sha": null,
+        "parity": "asymmetric-one-sided",
+        "present": "CLAUDE.md"
+      },
+      {
+        "repository": "SeoyunL/factlog-academic",
+        "claude_bytes": 11,
+        "agents_bytes": 1047,
+        "claude_sha": "336cc4fbf19b",
+        "agents_sha": "8d0b6da6ad8f",
+        "parity": "equivalent-by-import"
+      },
+      {
+        "repository": "Soku-JINSEOK/Soku-Convention-Boilerplate",
+        "claude_bytes": null,
+        "agents_bytes": 5077,
+        "claude_sha": null,
+        "agents_sha": "8ddb70fe462a",
+        "parity": "asymmetric-one-sided",
+        "present": "AGENTS.md"
+      },
+      {
+        "repository": "Sungho-pk42ac/agentguard",
+        "claude_bytes": null,
+        "agents_bytes": null,
+        "claude_sha": null,
+        "agents_sha": null,
+        "parity": "clean-neither"
+      },
+      {
+        "repository": "TangoEnSkai/uber-go-style-guide-kr",
+        "claude_bytes": null,
+        "agents_bytes": null,
+        "claude_sha": null,
+        "agents_sha": null,
+        "parity": "clean-neither"
+      },
+      {
+        "repository": "YSbookcase/TimePilot",
+        "claude_bytes": null,
+        "agents_bytes": 1822,
+        "claude_sha": null,
+        "agents_sha": "6fe0d5b57d63",
+        "parity": "asymmetric-one-sided",
+        "present": "AGENTS.md"
+      },
+      {
+        "repository": "baekenough/oh-my-customcode",
+        "claude_bytes": 13552,
+        "agents_bytes": null,
+        "claude_sha": "c3bf27c34ed8",
+        "agents_sha": null,
+        "parity": "asymmetric-one-sided",
+        "present": "CLAUDE.md"
+      },
+      {
+        "repository": "bongmyung-ye/nexora-corporate-web",
+        "claude_bytes": null,
+        "agents_bytes": null,
+        "claude_sha": null,
+        "agents_sha": null,
+        "parity": "clean-neither"
+      },
+      {
+        "repository": "buildon99x/copy-pet",
+        "claude_bytes": 11,
+        "agents_bytes": 12579,
+        "claude_sha": "336cc4fbf19b",
+        "agents_sha": "d4eddf900e55",
+        "parity": "equivalent-by-import"
+      },
+      {
+        "repository": "cops-and-robbers/cops-and-robbers-FE",
+        "claude_bytes": 5431,
+        "agents_bytes": 2942,
+        "claude_sha": "6e026e61f6a6",
+        "agents_sha": "c13af92750ec",
+        "parity": "asymmetric-divergent"
+      },
+      {
+        "repository": "digitie/kor-travel-geo",
+        "claude_bytes": 6736,
+        "agents_bytes": 17021,
+        "claude_sha": "01bb95df2c0c",
+        "agents_sha": "1000bc54a668",
+        "parity": "asymmetric-divergent"
+      },
+      {
+        "repository": "dungsil-ai/intellij-plugin-egovframe",
+        "claude_bytes": null,
+        "agents_bytes": 10487,
+        "claude_sha": null,
+        "agents_sha": "a26e800ec10e",
+        "parity": "asymmetric-one-sided",
+        "present": "AGENTS.md"
+      },
+      {
+        "repository": "e7217/anygarden",
+        "claude_bytes": null,
+        "agents_bytes": null,
+        "claude_sha": null,
+        "agents_sha": null,
+        "parity": "clean-neither"
+      },
+      {
+        "repository": "fluojs/fluo",
+        "claude_bytes": null,
+        "agents_bytes": 3734,
+        "claude_sha": null,
+        "agents_sha": "a957da3a6050",
+        "parity": "asymmetric-one-sided",
+        "present": "AGENTS.md"
+      },
+      {
+        "repository": "genonai/doc_parser",
+        "claude_bytes": null,
+        "agents_bytes": null,
+        "claude_sha": null,
+        "agents_sha": null,
+        "parity": "clean-neither"
+      },
+      {
+        "repository": "ggqgga/issue-runner",
+        "claude_bytes": 1423,
+        "agents_bytes": null,
+        "claude_sha": "fa72c6f948c8",
+        "agents_sha": null,
+        "parity": "asymmetric-one-sided",
+        "present": "CLAUDE.md"
+      },
+      {
+        "repository": "ginishuh/contextforge",
+        "claude_bytes": null,
+        "agents_bytes": 6062,
+        "claude_sha": null,
+        "agents_sha": "e3a4cd8add74",
+        "parity": "asymmetric-one-sided",
+        "present": "AGENTS.md"
+      },
+      {
+        "repository": "greenheadHQ/nixos-config",
+        "claude_bytes": 7340,
+        "agents_bytes": 9,
+        "claude_sha": "4a796267212e",
+        "agents_sha": "6ebdb617a810",
+        "parity": "symmetric-symlink"
+      },
+      {
+        "repository": "hang-in/tunaRound",
+        "claude_bytes": 60849,
+        "agents_bytes": 1409,
+        "claude_sha": "d8e8965eeef0",
+        "agents_sha": "8d7e40a95d72",
+        "parity": "asymmetric-divergent"
+      },
+      {
+        "repository": "happyduck-git/RetroNote",
+        "claude_bytes": 4635,
+        "agents_bytes": null,
+        "claude_sha": "e759158524a4",
+        "agents_sha": null,
+        "parity": "asymmetric-one-sided",
+        "present": "CLAUDE.md"
+      },
+      {
+        "repository": "hissinger/small-village",
+        "claude_bytes": 9,
+        "agents_bytes": 8232,
+        "claude_sha": "a54ff182c7e8",
+        "agents_sha": "082704edfa55",
+        "parity": "symmetric-symlink"
+      },
+      {
+        "repository": "hoksi/nexusts",
+        "claude_bytes": 2207,
+        "agents_bytes": 31048,
+        "claude_sha": "2729b0bdf8a6",
+        "agents_sha": "8227dbff81bd",
+        "parity": "asymmetric-divergent"
+      },
+      {
+        "repository": "hskim-solv/BidMate-DocAgent",
+        "claude_bytes": 18275,
+        "agents_bytes": 9,
+        "claude_sha": "84f76e3931f4",
+        "agents_sha": "6ebdb617a810",
+        "parity": "symmetric-symlink"
+      },
+      {
+        "repository": "hsu3046/MarkMind",
+        "claude_bytes": null,
+        "agents_bytes": 5417,
+        "claude_sha": null,
+        "agents_sha": "a6372596549c",
+        "parity": "asymmetric-one-sided",
+        "present": "AGENTS.md"
+      },
+      {
+        "repository": "hyuunnn/ida-slides",
+        "claude_bytes": 15760,
+        "agents_bytes": null,
+        "claude_sha": "9646d6ce3533",
+        "agents_sha": null,
+        "parity": "asymmetric-one-sided",
+        "present": "CLAUDE.md"
+      },
+      {
+        "repository": "itismyfield/AgentDesk",
+        "claude_bytes": 2921,
+        "agents_bytes": null,
+        "claude_sha": "69c9d81242c9",
+        "agents_sha": null,
+        "parity": "asymmetric-one-sided",
+        "present": "CLAUDE.md"
+      },
+      {
+        "repository": "jeongsk/daily_stock_analysis",
+        "claude_bytes": 9,
+        "agents_bytes": 18287,
+        "claude_sha": "a54ff182c7e8",
+        "agents_sha": "66ead517519d",
+        "parity": "symmetric-symlink"
+      },
+      {
+        "repository": "jinwon-int/a2a-nexus",
+        "claude_bytes": null,
+        "agents_bytes": null,
+        "claude_sha": null,
+        "agents_sha": null,
+        "parity": "clean-neither"
+      },
+      {
+        "repository": "jinwon-int/ccc-node",
+        "claude_bytes": null,
+        "agents_bytes": null,
+        "claude_sha": null,
+        "agents_sha": null,
+        "parity": "clean-neither"
+      },
+      {
+        "repository": "jkas2016/hsr-warp",
+        "claude_bytes": 2838,
+        "agents_bytes": null,
+        "claude_sha": "8fee82a1dec1",
+        "agents_sha": null,
+        "parity": "asymmetric-one-sided",
+        "present": "CLAUDE.md"
+      },
+      {
+        "repository": "jongfeel/Godot",
+        "claude_bytes": null,
+        "agents_bytes": null,
+        "claude_sha": null,
+        "agents_sha": null,
+        "parity": "clean-neither"
+      },
+      {
+        "repository": "jongwony/epistemic-protocols",
+        "claude_bytes": 9,
+        "agents_bytes": 7702,
+        "claude_sha": "a54ff182c7e8",
+        "agents_sha": "83d0cda477de",
+        "parity": "symmetric-symlink"
+      },
+      {
+        "repository": "joshua-jingu-lee/ante",
+        "claude_bytes": 9,
+        "agents_bytes": 4764,
+        "claude_sha": "a54ff182c7e8",
+        "agents_sha": "97ad1533fcc2",
+        "parity": "symmetric-symlink"
+      },
+      {
+        "repository": "kangkyunghyun/LinKHU",
+        "claude_bytes": null,
+        "agents_bytes": 9582,
+        "claude_sha": null,
+        "agents_sha": "888fd40b3434",
+        "parity": "asymmetric-one-sided",
+        "present": "AGENTS.md"
+      },
+      {
+        "repository": "landfill/secure-doc",
+        "claude_bytes": null,
+        "agents_bytes": 6186,
+        "claude_sha": null,
+        "agents_sha": "e98c1530cab7",
+        "parity": "asymmetric-one-sided",
+        "present": "AGENTS.md"
+      },
+      {
+        "repository": "loopback-social/community-network-banner",
+        "claude_bytes": null,
+        "agents_bytes": 13208,
+        "claude_sha": null,
+        "agents_sha": "1d407777ec7e",
+        "parity": "asymmetric-one-sided",
+        "present": "AGENTS.md"
+      },
+      {
+        "repository": "lvis-project/lvis-app",
+        "claude_bytes": 195,
+        "agents_bytes": 9548,
+        "claude_sha": "cff4740aa88f",
+        "agents_sha": "a1f0c69545df",
+        "parity": "asymmetric-divergent"
+      },
+      {
+        "repository": "minacle/swift-tui",
+        "claude_bytes": null,
+        "agents_bytes": 16687,
+        "claude_sha": null,
+        "agents_sha": "6ef1b29c8234",
+        "parity": "asymmetric-one-sided",
+        "present": "AGENTS.md"
+      },
+      {
+        "repository": "nodease/mbased",
+        "claude_bytes": 261,
+        "agents_bytes": 17410,
+        "claude_sha": "63ee46582d9a",
+        "agents_sha": "ce5f4cebac20",
+        "parity": "asymmetric-divergent"
+      },
+      {
+        "repository": "ohah/zntc",
+        "claude_bytes": 3121,
+        "agents_bytes": 235,
+        "claude_sha": "4980688f3a1a",
+        "agents_sha": "996533c7ba93",
+        "parity": "asymmetric-divergent"
+      },
+      {
+        "repository": "pachir1su/raspi-mc-server",
+        "claude_bytes": 4851,
+        "agents_bytes": 1418,
+        "claude_sha": "5429f9c932b1",
+        "agents_sha": "bb6d213b9548",
+        "parity": "asymmetric-divergent"
+      },
+      {
+        "repository": "pillip/realtime-en2ko-captions",
+        "claude_bytes": 4519,
+        "agents_bytes": null,
+        "claude_sha": "2120f58f5552",
+        "agents_sha": null,
+        "parity": "asymmetric-one-sided",
+        "present": "CLAUDE.md"
+      },
+      {
+        "repository": "prgrms-be-adv-devcourse/beadv6_6_3JMT_BE",
+        "claude_bytes": null,
+        "agents_bytes": null,
+        "claude_sha": null,
+        "agents_sha": null,
+        "parity": "clean-neither"
+      },
+      {
+        "repository": "raymond1203/LangAlpha-KR",
+        "claude_bytes": 9114,
+        "agents_bytes": null,
+        "claude_sha": "f0efdcabdc6e",
+        "agents_sha": null,
+        "parity": "asymmetric-one-sided",
+        "present": "CLAUDE.md"
+      },
+      {
+        "repository": "semantic-reasoning/factlog",
+        "claude_bytes": 11,
+        "agents_bytes": 1047,
+        "claude_sha": "336cc4fbf19b",
+        "agents_sha": "8d0b6da6ad8f",
+        "parity": "equivalent-by-import"
+      },
+      {
+        "repository": "seob717/nunchi",
+        "claude_bytes": null,
+        "agents_bytes": null,
+        "claude_sha": null,
+        "agents_sha": null,
+        "parity": "clean-neither"
+      },
+      {
+        "repository": "woo-in/LoanServicing",
+        "claude_bytes": null,
+        "agents_bytes": null,
+        "claude_sha": null,
+        "agents_sha": null,
+        "parity": "clean-neither"
+      },
+      {
+        "repository": "yhzion/PortBridge",
+        "claude_bytes": 314,
+        "agents_bytes": 5611,
+        "claude_sha": "55cc8ca6d88b",
+        "agents_sha": "2db41e023b8b",
+        "parity": "asymmetric-divergent"
+      },
+      {
+        "repository": "yumyum-corp/yumyum",
+        "claude_bytes": 22611,
+        "agents_bytes": 22575,
+        "claude_sha": "78ba128ca583",
+        "agents_sha": "40047be823b1",
+        "parity": "asymmetric-divergent"
+      },
+      {
+        "repository": "yvshdjcsldhdjt/ChunChuGwan",
+        "claude_bytes": 21035,
+        "agents_bytes": 531,
+        "claude_sha": "32bbb9208b8e",
+        "agents_sha": "ac9f7d93bc80",
+        "parity": "asymmetric-divergent"
+      }
+    ],
+    "probe_scope": "Only CLAUDE.md and AGENTS.md were queried, at the default branch.",
+    "scope_limitations": [
+      "Two files only. Third-party documentation read this session (the using-codex-exec skill inside greenheadHQ/nixos-config) describes Codex discovery as the chain AGENTS.override.md > AGENTS.md > TEAM_GUIDE.md > .agents.md, and that repository's base tree does carry an AGENTS.override.md. Files outside the two queried here were not inventoried.",
+      "Consequently the clean-neither category is not demonstrated symmetric: those repositories lack the two queried files but may carry another file in the chain, which only one agent would read.",
+      "The chain itself comes from third-party documentation, not from vendor documentation or measurement, and has to be confirmed before it is relied on.",
+      "A re-measurement should widen the inventory to the full chain and re-check the Claude side over the same widened set."
+    ]
+  },
+  "candidate_facts_resolved": [
+    {
+      "candidate_id": "ghmix-greenheadHQ--nixos-config-issue-918",
+      "repo": "greenheadHQ/nixos-config",
+      "linked_pr": 925,
+      "base_revision": "f05c23b23355e415ed57b6c52d0b0be1c72345d0",
+      "base_tree_hash": "4a6191c67f86c45309211e751f58d30755dccbe6",
+      "license_at_pinned_revision": "MIT (LICENSE at base tree)",
+      "instruction_files": "AGENTS.md is a symlink to CLAUDE.md (byte-identical); a separate Codex-only AGENTS.override.md (3083B) is present and the repository itself documents it as Codex-discovered"
+    },
+    {
+      "candidate_id": "ghko-SeoyunL--factlog-academic-issue-342",
+      "repo": "SeoyunL/factlog-academic",
+      "linked_pr": 352,
+      "base_revision": "07817b2a0e8bd9095d2f7b68ffc3a7c446c9d00d",
+      "base_tree_hash": "3f20d12afc7b5e7648c7c025c115bdbed434f286",
+      "license_at_pinned_revision": "Apache-2.0 (LICENSE + NOTICE; pyproject.toml declares Apache-2.0)",
+      "instruction_files": "CLAUDE.md is the 11-byte import '@AGENTS.md'; measured to resolve to AGENTS.md content on Claude 2.1.215"
+    },
+    {
+      "candidate_id": "ghmix-SeokRae--blog-issue-12",
+      "repo": "SeokRae/blog",
+      "linked_pr": 13,
+      "base_revision": "9f2c14135813fb56bf6fa561f6e431a77d476aa2",
+      "base_tree_hash": "9d3226c17f0ffd8dd0d55d628ce89acbb7bc7fb4",
+      "license_at_pinned_revision": "MIT (LICENSE at base tree; copyright holder is the upstream Chirpy theme author, not the repository owner)",
+      "instruction_files": "CLAUDE.md (5083B) only; no AGENTS.md"
+    },
+    {
+      "candidate_id": "ghko-ohah--zntc-issue-4564",
+      "repo": "ohah/zntc",
+      "linked_pr": 4565,
+      "base_revision": "8c5b013bdec71c9116580ac9637912dfbcd847ff",
+      "base_tree_hash": "e8f9042f37ac5cac8215eb15842eda6176389296",
+      "license_at_pinned_revision": "MIT (LICENSE + NOTICE at base tree)",
+      "instruction_files": "CLAUDE.md 3121B and AGENTS.md 235B, not identical"
+    }
+  ],
+  "candidate_facts_method": "Base revisions were resolved from the linked pull request's earliest commit parent over the git protocol, then materialized; every tree hash was read with 'git rev-parse HEAD^{tree}' in the materialized checkout, never from GET /git/trees. Licenses were read from the pinned base tree, not the default branch.",
+  "operational_finding_for_run_authorization": "Codex quota exhausted for five days during a four-invocation probe, and the Phase 2a v2 smoke already lost one row to a Claude session-quota failure. A 120-execution paired pilot needs sustained headroom on both accounts, so the run-authorization gate that already requires presenting CLI quota status should treat it as a reserved budget rather than a spot check.",
+  "provisioned_reproduction_2026_07_20": {
+    "procedure_reference": "docs/provisioned-reproduction.md",
+    "toolchain": {
+      "id": "cpython-3.11.15",
+      "source": "python-build-standalone 20260718 install_only",
+      "sha256": "c2082e977138e307e3da4ea2c65421d3cb6b80f4890890b28b96fc6b422d4f0d",
+      "sha256_verified_against": "the digest recorded in phase2b-provisioning-measurements-2026-07-19.json; re-downloaded today and matched",
+      "download_mb": 47,
+      "provision_seconds": 5,
+      "note": "Confirms the prior session's claim that recorded identity, not the ephemeral directory, is what makes an environment reconstructible."
+    },
+    "candidates": [
+      {
+        "candidate_id": "ghko-SeoyunL--factlog-academic-issue-314",
+        "base_revision": "fcdf91e8961a0324a3ac7d5cb1f4e773916f17fa",
+        "base_tree_hash": "47004414a82cbf9d2218cda3661690b15c159ef2",
+        "base_tree_matches_ledger": true,
+        "dependency_install_seconds": 4,
+        "dependency": "pyrewire (the blocker recorded in the ledger; resolved)",
+        "evaluator_origin": "tests/unit/test_value_audit_owners_nfc.py from PR 318; absent from the base tree, so genuinely held out",
+        "evaluator_adaptation": "one line: repository root made injectable via FACTLOG_TOOLS_DIR. Assertion count 13 before and after.",
+        "negative_control": "3 failed / 6 passed",
+        "negative_control_intended": true,
+        "negative_control_failures": [
+          "classification returns duplicate_record where the task requires split",
+          "subjects display lists one subject twice, once per Unicode spelling",
+          "--strict exits 0 on a real leak that the false duplicate_record exempts"
+        ],
+        "positive_control": "9 passed / 0 failed (implementation hunk only: +13/-3)",
+        "evaluator_seconds": 1.2,
+        "bucket": "small",
+        "protected_artifact_hash_unchanged": true,
+        "pristine_base_clean": true,
+        "reproducible_within_budget": "unknown",
+        "remaining_blocker": "Instruction parity only. AGENTS.md 1047B with CLAUDE.md as an 11-byte @AGENTS.md import; Claude 2.1.215 measurably resolves the import, but the Codex side is unmeasured.",
+        "license_evidence_correction": "The ledger records this row's basis as 'Upstream repository metadata at the linked PR declares SPDX Apache-2.0', which is a classifier signal. The pinned base revision was materialized today and carries Apache-2.0 LICENSE plus NOTICE, and pyproject.toml declares Apache-2.0. The basis should be restated as pinned-revision artifact evidence."
+      },
+      {
+        "candidate_id": "ghmix-hskim-solv--BidMate-DocAgent-issue-1152",
+        "base_revision": "9a91c5869623261762274eaf092d0c6bb6a0c176",
+        "base_tree_hash": "40c93b2720fa97c94f479f0c5e13f6c4950df64b",
+        "base_tree_matches_ledger": true,
+        "evaluator_origin": "tests/test_doc_links.py reconstructed at the pull request point by applying only the test hunks (+195) to the base file; both impl and test exist at base, so the default-branch file could not be used",
+        "evaluator_adaptation": "one import plus one line: repository root made injectable via BIDMATE_ROOT_DIR. Assertion count 47 before and after.",
+        "negative_control": "26 failed / 27 passed",
+        "negative_control_intended": true,
+        "negative_control_failures": [
+          "24 AttributeError across four missing functions: split_fragment, slugify_heading, find_broken_fragments, collect_anchors",
+          "2 CLI assertions: --check-fragments does not exist and --check-all omits the fragment check"
+        ],
+        "positive_control": "53 passed / 0 failed (implementation and documentation hunks: 5 files, +261/-12)",
+        "evaluator_seconds": 0.6,
+        "bucket": "small",
+        "protected_artifact_hash_unchanged": true,
+        "pristine_base_clean": true,
+        "reproducible_within_budget": "unknown",
+        "remaining_blocker": "Instruction parity only. CLAUDE.md is 12250 bytes with no AGENTS.md, the largest one-sided asymmetry observed among screened candidates.",
+        "observations": [
+          "Genuinely bilingual requirement: Korean-ization of headings broke English anchor slugs, so both languages are load-bearing in the task rather than incidental.",
+          "The real-repo sentinel test_repo_has_no_broken_fragments_today fails at base with AttributeError before it can report the four broken links, so it does not independently demonstrate that the base documentation was broken.",
+          "single_bounded_task is a judgment call not settled here: the merged change both adds fragment validation and repairs four broken links across four documents."
+        ]
+      }
+    ],
+    "conclusion": "Both candidates now reproduce end to end without an agent: pinned toolchain, held-out or point-in-time evaluator, negative control failing only for the intended missing behaviour, positive control passing, unchanged protected artifact hashes and clean pristine bases, both well inside the small bucket. Neither row can move to selected, because the ledger folds instruction parity into reproducible_within_budget and the Codex half of the discovery measurement is blocked until 2026-07-25. The reason each row is held is now narrow and named, where before it was the whole rule."
+  }
+}
