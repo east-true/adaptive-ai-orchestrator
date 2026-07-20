@@ -188,6 +188,13 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
                 "ghko-SeoyunL--factlog-academic-issue-314",
                 "ghko-ProudlyOffbeat--ProudlyOffbeat-MVP-iOS-issue-93",
                 "ghko-minacle--swift-tui-issue-18",
+                # Resolved 2026-07-20 from the mechanical prefilter's promising rows.
+                # A resolved base is not a selection: all of these stay screening.
+                "ghko-SeoyunL--factlog-academic-issue-342",
+                "ghko-ohah--zntc-issue-4564",
+                "ghko-ohah--zntc-issue-4563",
+                "ghko-ohah--zntc-issue-4553",
+                "ghko-itismyfield--AgentDesk-issue-4606",
             },
         )
 
@@ -299,10 +306,15 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             if candidate["source_pool_id"]
             == "github-explicit-multilingual-issues-2026-07-19"
         ]
+        # The audited sample is the deterministic seeded 50-row probe. Rows carried
+        # in later through the mechanical prefilter reach classification by a
+        # different selection path, so they are scoped out by screening role rather
+        # than being folded into this count.
         reviewed = [
             candidate
             for candidate in candidates
             if candidate["provisional_classification"]["task_category"] is not None
+            and candidate["screened_by_role_id"] != "task-source-construction-2026-07-20"
         ]
 
         self.assertEqual(len(candidates), 383)
@@ -322,6 +334,69 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             ),
             {"ko": 28, "mixed": 21, "en": 1},
         )
+
+    def test_bases_resolved_on_2026_07_20_are_revision_grounded(self) -> None:
+        by_id = {
+            candidate["candidate_id"]: candidate
+            for candidate in self.ledger["candidates"]
+        }
+
+        # Resolving a base and reading a licence settles two of the eleven rules.
+        # It settles none of the others, so a row that got only that far stays
+        # screening. anygarden-512 is deliberately absent: it was carried further
+        # the same day through reproduction and the remaining rule judgements, so
+        # its promotion rests on those, not on having a base.
+        for candidate_id in (
+            "ghmix-greenheadHQ--nixos-config-issue-918",
+            "ghko-SeoyunL--factlog-academic-issue-342",
+            "ghmix-SeokRae--blog-issue-12",
+            "ghko-ohah--zntc-issue-4564",
+            "ghko-ohah--zntc-issue-4563",
+            "ghko-ohah--zntc-issue-4553",
+            "ghko-itismyfield--AgentDesk-issue-4606",
+        ):
+            candidate = by_id[candidate_id]
+            self.assertEqual(candidate["decision"], "screening")
+            self.assertEqual(candidate["exclusion_rule_ids_triggered"], [])
+            self.assertTrue(candidate["base_revision"])
+            self.assertTrue(candidate["base_tree_hash"])
+            self.assertTrue(candidate["changed_files"])
+            self.assertEqual(candidate["screening"]["exact_base_resolvable"], "pass")
+            self.assertEqual(candidate["screening"]["license_or_use_basis"], "pass")
+            # The basis has to name the pinned revision it was read from, so a
+            # classifier signal can never be mistaken for artifact evidence.
+            self.assertIn(candidate["base_revision"], candidate["license_or_use_basis"])
+            self.assertNotIn("classifier", candidate["screening"].values())
+
+    def test_reproduced_rows_are_held_only_by_instruction_parity(self) -> None:
+        by_id = {
+            candidate["candidate_id"]: candidate
+            for candidate in self.ledger["candidates"]
+        }
+
+        # Both reproduced end to end without an agent on 2026-07-20: pinned toolchain,
+        # negative control failing only for the intended missing behaviour, passing
+        # positive control. Neither may pass reproducible_within_budget while the
+        # equivalence of what each CLI reads from the base tree is unproven.
+        for candidate_id in (
+            "ghko-SeoyunL--factlog-academic-issue-314",
+            "ghmix-hskim-solv--BidMate-DocAgent-issue-1152",
+        ):
+            candidate = by_id[candidate_id]
+            self.assertEqual(candidate["decision"], "screening")
+            self.assertEqual(
+                candidate["screening"]["reproducible_within_budget"], "unknown"
+            )
+            reasons = " ".join(candidate["decision_reasons"])
+            self.assertIn("negative control", reasons.lower())
+            self.assertIn("positive control", reasons.lower())
+            self.assertIn("Codex", reasons)
+
+        # The licence basis that cited repository metadata was replaced by evidence
+        # read from the pinned revision; the judgement itself did not change.
+        factlog = by_id["ghko-SeoyunL--factlog-academic-issue-314"]
+        self.assertEqual(factlog["screening"]["license_or_use_basis"], "pass")
+        self.assertIn(factlog["base_revision"], factlog["license_or_use_basis"])
 
 
 if __name__ == "__main__":

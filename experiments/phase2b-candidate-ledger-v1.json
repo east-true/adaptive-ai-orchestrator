@@ -18380,15 +18380,20 @@
       "source_reference": "https://github.com/ohah/zntc/issues/4564",
       "source_statement_available": true,
       "task_statement_hash": "5c1f1de3453d5aff40959a9e742b51a0a1f8e945c5503dfc8e5233073c8f57be",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
+      "base_revision": "8c5b013bdec71c9116580ac9637912dfbcd847ff",
+      "base_tree_hash": "e8f9042f37ac5cac8215eb15842eda6176389296",
+      "solution_reference": "https://github.com/ohah/zntc/pull/4565",
       "solution_revision": null,
-      "solution_artifact_hash": null,
+      "solution_artifact_hash": "4eae74f737d563dbd440742facf1acbccd838a2ccde6f5af05e9bf9d0a7f9b17",
       "solution_tree_hash": null,
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        ".changeset/splitting-ns-barrel-crosschunk-global.md",
+        "src/bundler/linker.zig",
+        "src/bundler/linker/shared_namespace.zig",
+        "tests/integration/tests/split-runtime-smoke.test.ts"
+      ],
+      "license_or_use_basis": "MIT full text present at the pinned base revision 8c5b013bdec71c9116580ac9637912dfbcd847ff as LICENSE with NOTICE, read from a materialized checkout of that revision rather than from the default branch or a metadata classifier.",
       "provisional_classification": {
         "instruction_language": null,
         "task_category": null,
@@ -18396,8 +18401,8 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
+        "license_or_use_basis": "pass",
+        "exact_base_resolvable": "pass",
         "single_bounded_task": "unknown",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
@@ -18412,9 +18417,10 @@
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #4565이 파일 4개를 바꾸며 그중 1개가 테스트다(tests/integration/tests/split-runtime-smoke.test.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #4565이 파일 4개를 바꾸며 그중 1개가 테스트다(tests/integration/tests/split-runtime-smoke.test.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "2026-07-20: linked merged pull request #4565 confirmed to reference this issue and not be release automation. Base 8c5b013bdec71c9116580ac9637912dfbcd847ff materialized; tree e8f9042f37ac5cac8215eb15842eda6176389296. Base resolved over the git protocol from the linked pull request's earliest commit parent, then materialized; the tree hash was read with 'git rev-parse HEAD^{tree}' in that checkout, never from GET /git/trees. License read from the pinned base tree, not the default branch or a metadata classifier. solution_artifact_hash is the SHA-256 of the fetched pull request .diff. Remaining inclusion rules stay unknown, so the row stays screening. Instruction-file observation at the pinned base: CLAUDE.md 3121 bytes and AGENTS.md 235 bytes, not identical, so the two agents would receive materially different project instructions."
       ],
-      "screened_by_role_id": "task-source-construction-2026-07-19",
+      "screened_by_role_id": "task-source-construction-2026-07-20",
       "confirmatory_reuse_allowed": false
     },
     {
@@ -22306,15 +22312,19 @@
       "source_reference": "https://github.com/ohah/zntc/issues/4563",
       "source_statement_available": true,
       "task_statement_hash": "4f23c83038fec9d36e255707f832cc15098be7cbb87ada7a292580a819c1fd9d",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
+      "base_revision": "e2026d63dc49d7bf85c0e94332592285d455cba4",
+      "base_tree_hash": "7944edc025e1d26c08ba352b0847a668de20c086",
+      "solution_reference": "https://github.com/ohah/zntc/pull/4567",
       "solution_revision": null,
-      "solution_artifact_hash": null,
+      "solution_artifact_hash": "62f2c77219172128d3706c5905ee9b6dd4239bff1ef279670058b45e0fe5ba66",
       "solution_tree_hash": null,
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        ".changeset/splitting-nested-shadow-conflicts.md",
+        "src/bundler/linker.zig",
+        "tests/integration/tests/split-runtime-smoke.test.ts"
+      ],
+      "license_or_use_basis": "MIT full text present at the pinned base revision e2026d63dc49d7bf85c0e94332592285d455cba4 as LICENSE with NOTICE, read from a materialized checkout of that revision rather than from the default branch or a metadata classifier.",
       "provisional_classification": {
         "instruction_language": null,
         "task_category": null,
@@ -22322,8 +22332,8 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
+        "license_or_use_basis": "pass",
+        "exact_base_resolvable": "pass",
         "single_bounded_task": "unknown",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
@@ -22338,9 +22348,10 @@
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #4567이 파일 3개를 바꾸며 그중 1개가 테스트다(tests/integration/tests/split-runtime-smoke.test.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #4567이 파일 3개를 바꾸며 그중 1개가 테스트다(tests/integration/tests/split-runtime-smoke.test.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "2026-07-20: linked merged pull request #4567 confirmed to reference this issue and not be release automation. Base e2026d63dc49d7bf85c0e94332592285d455cba4 materialized; tree 7944edc025e1d26c08ba352b0847a668de20c086. Base resolved over the git protocol from the linked pull request's earliest commit parent, then materialized; the tree hash was read with 'git rev-parse HEAD^{tree}' in that checkout, never from GET /git/trees. License read from the pinned base tree. solution_artifact_hash is the SHA-256 of the fetched pull request .diff. Instruction files were inventoried over a widened set (CLAUDE.md, AGENTS.md, AGENTS.override.md, TEAM_GUIDE.md, .agents.md, .cursorrules, GEMINI.md) rather than the two-file set used earlier the same day. Remaining inclusion rules stay unknown, so the row stays screening. Instruction files at the pinned base: CLAUDE.md 3121 bytes and AGENTS.md 235 bytes, not identical, so the two agents would receive materially different project instructions. No other file in the widened set is present."
       ],
-      "screened_by_role_id": "task-source-construction-2026-07-19",
+      "screened_by_role_id": "task-source-construction-2026-07-20",
       "confirmatory_reuse_allowed": false
     },
     {
@@ -23911,15 +23922,26 @@
       "source_reference": "https://github.com/SeoyunL/factlog-academic/issues/342",
       "source_statement_available": true,
       "task_statement_hash": "644b376abb2e2431faa490bbb1cbd645d20decda4077aed08aa092b1598ebfce",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
+      "base_revision": "07817b2a0e8bd9095d2f7b68ffc3a7c446c9d00d",
+      "base_tree_hash": "3f20d12afc7b5e7648c7c025c115bdbed434f286",
+      "solution_reference": "https://github.com/SeoyunL/factlog-academic/pull/352",
       "solution_revision": null,
-      "solution_artifact_hash": null,
+      "solution_artifact_hash": "fd643442bef80ace1bda153bdafda6469cec259041fa4cf398bf8863ae54bede",
       "solution_tree_hash": null,
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        "examples/sample-kb/README.md",
+        "examples/sample-kb/facts/logic_report.txt",
+        "factlog/common.py",
+        "tests/golden/logic_report.txt",
+        "tests/test_count_check.sh",
+        "tests/unit/test_malformed_query_report.py",
+        "tests/unit/test_policy_result_entity_filter.py",
+        "tests/unit/test_query_dispatch_exact.py",
+        "tests/unit/test_run_logic_check.py",
+        "tools/run_logic_check.py"
+      ],
+      "license_or_use_basis": "Apache-2.0 full text present at the pinned base revision 07817b2a0e8bd9095d2f7b68ffc3a7c446c9d00d as LICENSE with NOTICE, and pyproject.toml declares license = \"Apache-2.0\"; read from a materialized checkout of that revision.",
       "provisional_classification": {
         "instruction_language": null,
         "task_category": null,
@@ -23927,8 +23949,8 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
+        "license_or_use_basis": "pass",
+        "exact_base_resolvable": "pass",
         "single_bounded_task": "unknown",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
@@ -23943,9 +23965,10 @@
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #352이 파일 10개를 바꾸며 그중 6개가 테스트다(tests/golden/logic_report.txt, tests/test_count_check.sh 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #352이 파일 10개를 바꾸며 그중 6개가 테스트다(tests/golden/logic_report.txt, tests/test_count_check.sh 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "2026-07-20: linked merged pull request #352 confirmed to reference this issue and not be release automation. Base 07817b2a0e8bd9095d2f7b68ffc3a7c446c9d00d materialized; tree 3f20d12afc7b5e7648c7c025c115bdbed434f286. Base resolved over the git protocol from the linked pull request's earliest commit parent, then materialized; the tree hash was read with 'git rev-parse HEAD^{tree}' in that checkout, never from GET /git/trees. License read from the pinned base tree, not the default branch or a metadata classifier. solution_artifact_hash is the SHA-256 of the fetched pull request .diff. Remaining inclusion rules stay unknown, so the row stays screening. Instruction-file observation at the pinned base: AGENTS.md 1047 bytes with CLAUDE.md an 11-byte '@AGENTS.md' import. Claude Code 2.1.215 was measured to resolve that import, so the Claude side receives AGENTS.md content; the Codex side is unmeasured. The merged pull request spans 10 files including four test files, so single_bounded_task is not settled by this row's resolution."
       ],
-      "screened_by_role_id": "task-source-construction-2026-07-19",
+      "screened_by_role_id": "task-source-construction-2026-07-20",
       "confirmatory_reuse_allowed": false
     },
     {
@@ -24196,7 +24219,7 @@
         "tests/unit/test_value_audit_owners_nfc.py",
         "tools/value_audit.py"
       ],
-      "license_or_use_basis": "Upstream repository metadata at the linked PR declares SPDX Apache-2.0.",
+      "license_or_use_basis": "Apache-2.0 full text present at the pinned base revision fcdf91e8961a0324a3ac7d5cb1f4e773916f17fa as LICENSE with NOTICE, and pyproject.toml declares license = \"Apache-2.0\"; read from a materialized checkout of that revision.",
       "provisional_classification": {
         "instruction_language": "ko",
         "task_category": "debugging",
@@ -24225,7 +24248,9 @@
         "reproducible_within_budget stays unknown: pyproject.toml declares requires-python >= 3.11 and depends on pyrewire>=1.0.3,<2.0, and neither an interpreter >= 3.11 nor that dependency has been reproduced in an isolated provisioned environment yet.",
         "Provisioning is permitted under the recorded environment principle, but this row may not pass reproducible_within_budget until all of the following are demonstrated: an exact Python 3.11 patch-version pin; version and artifact-hash pins for pyrewire and its transitive dependencies; byte-equivalent immutable environments for both agents; no network during agent or evaluator execution; agent-free reproduction of the base and of the negative and positive controls; installation and execution inside the preregistered resource bucket; and a recorded environment epoch and fixture provenance.",
         "AGENTS.md (1047 bytes) and CLAUDE.md (11 bytes, containing only the import line '@AGENTS.md') exist in the base tree and must not be deleted or edited. Before environment parity or reproducibility may be marked pass, the effective instruction each CLI actually receives must be shown to be equivalent.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #318이 파일 2개를 바꾸며 그중 1개가 테스트다(tests/unit/test_value_audit_owners_nfc.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #318이 파일 2개를 바꾸며 그중 1개가 테스트다(tests/unit/test_value_audit_owners_nfc.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "2026-07-20 license basis corrected. The previous basis on this row cited upstream repository metadata declaring SPDX Apache-2.0, which is a classifier signal and not terminal evidence under the rule fixed on 2026-07-19. The pinned base revision was materialized and carries Apache-2.0 LICENSE with NOTICE, with pyproject.toml declaring the same. The judgement is unchanged; only the evidence grade is raised.",
+        "2026-07-20 provisioned reproduction performed without any agent. CPython 3.11.15 pinned by SHA-256 matching the digest recorded in phase2b-provisioning-measurements-2026-07-19.json; the pyrewire dependency recorded as the blocker installed in 4 seconds. The evaluator is the PR 318 test file, absent from the base tree and therefore genuinely held out; one line was adapted to make the repository root injectable and the assertion count was 13 before and after. Negative control 3 failed / 6 passed with every failure the intended missing behaviour (duplicate_record where split is required, the subjects display listing one subject twice, and --strict exiting 0 on a real leak). Positive control 9 passed with the implementation hunk alone. Evaluator wall time 1.2 seconds, small bucket. Protected artifact hash unchanged before and after; the pristine base stayed clean with its tree hash intact. reproducible_within_budget stays unknown for one remaining reason only: instruction-parity equivalence is unproven while the Codex side of the discovery measurement is blocked."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -24392,15 +24417,27 @@
       "source_reference": "https://github.com/itismyfield/AgentDesk/issues/4606",
       "source_statement_available": true,
       "task_statement_hash": "7852a6965d3ae733b79124eca4f3a4f2d63bad074582d74b58e0d9551e02567f",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
+      "base_revision": "5976708d40d9fa35aa91543eb8d8a61c4f23f3b4",
+      "base_tree_hash": "64cc2b883f9852a2cc4fa66390efe3ec1e82a63c",
+      "solution_reference": "https://github.com/itismyfield/AgentDesk/pull/4609",
       "solution_revision": null,
-      "solution_artifact_hash": null,
+      "solution_artifact_hash": "126fbc81af7804f242d3311fa5a62025a497a3307873caf4bd2b75f4c65c1ec3",
       "solution_tree_hash": null,
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        "docs/agent-maintenance/change-surfaces.md",
+        "docs/generated/giant-file-registry.md",
+        "docs/generated/module-inventory.md",
+        "src/services/discord/queue_marker.rs",
+        "src/services/discord/queue_reactions.rs",
+        "src/services/discord/router/message_handler/intake_turn/race_loss.rs",
+        "src/services/discord/router/message_handler/intake_turn/race_loss/mailbox_reaction_tests.rs",
+        "src/services/discord/turn_bridge/followup_requeue.rs",
+        "src/services/discord/turn_view_reconciler.rs",
+        "src/services/discord/turn_view_reconciler/reaction_set.rs",
+        "src/services/discord/turn_view_reconciler/tests.rs"
+      ],
+      "license_or_use_basis": "MIT full text present at the pinned base revision 5976708d40d9fa35aa91543eb8d8a61c4f23f3b4 as LICENSE with NOTICE, read from a materialized checkout of that revision rather than from the default branch or a metadata classifier.",
       "provisional_classification": {
         "instruction_language": null,
         "task_category": null,
@@ -24408,8 +24445,8 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
+        "license_or_use_basis": "pass",
+        "exact_base_resolvable": "pass",
         "single_bounded_task": "unknown",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
@@ -24424,9 +24461,10 @@
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #4609이 파일 11개를 바꾸며 그중 1개가 테스트다(src/services/discord/router/message_handler/intake_turn/race_loss/mailbox_reaction_tests.rs 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #4609이 파일 11개를 바꾸며 그중 1개가 테스트다(src/services/discord/router/message_handler/intake_turn/race_loss/mailbox_reaction_tests.rs 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "2026-07-20: linked merged pull request #4609 confirmed to reference this issue and not be release automation. Base 5976708d40d9fa35aa91543eb8d8a61c4f23f3b4 materialized; tree 64cc2b883f9852a2cc4fa66390efe3ec1e82a63c. Base resolved over the git protocol from the linked pull request's earliest commit parent, then materialized; the tree hash was read with 'git rev-parse HEAD^{tree}' in that checkout, never from GET /git/trees. License read from the pinned base tree. solution_artifact_hash is the SHA-256 of the fetched pull request .diff. Instruction files were inventoried over a widened set (CLAUDE.md, AGENTS.md, AGENTS.override.md, TEAM_GUIDE.md, .agents.md, .cursorrules, GEMINI.md) rather than the two-file set used earlier the same day. Remaining inclusion rules stay unknown, so the row stays screening. Instruction files at the pinned base: CLAUDE.md 2921 bytes with no AGENTS.md and nothing else from the widened set. Two observations recorded rather than decided: the merged change spans 11 files including generated documentation registries, and the statement itself notes that its surface overlaps another open issue and needs sequencing."
       ],
-      "screened_by_role_id": "task-source-construction-2026-07-19",
+      "screened_by_role_id": "task-source-construction-2026-07-20",
       "confirmatory_reuse_allowed": false
     },
     {
@@ -24663,15 +24701,21 @@
       "source_reference": "https://github.com/ohah/zntc/issues/4553",
       "source_statement_available": true,
       "task_statement_hash": "d1cf951d70321bbc273e2cb37016ad89df281513ec33fdf871cd8a0ad5e9266f",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
+      "base_revision": "8f0a320b102176140c1b88ded697e9be7c9e2ff6",
+      "base_tree_hash": "2addf621e5cdf9a6882b0fd6a92b3d26b6a1966f",
+      "solution_reference": "https://github.com/ohah/zntc/pull/4554",
       "solution_revision": null,
-      "solution_artifact_hash": null,
+      "solution_artifact_hash": "1964a70d89dd2352408114f21d4de95ef3aa6bcf65a457a8c74b457f5223d7ac",
       "solution_tree_hash": null,
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        ".changeset/no-entry-relocation.md",
+        "src/bundler/chunk.zig",
+        "src/bundler/chunk_test.zig",
+        "src/bundler/emitter/chunks.zig",
+        "tests/integration/tests/manual-chunks.test.ts"
+      ],
+      "license_or_use_basis": "MIT full text present at the pinned base revision 8f0a320b102176140c1b88ded697e9be7c9e2ff6 as LICENSE with NOTICE, read from a materialized checkout of that revision rather than from the default branch or a metadata classifier.",
       "provisional_classification": {
         "instruction_language": null,
         "task_category": null,
@@ -24679,8 +24723,8 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
+        "license_or_use_basis": "pass",
+        "exact_base_resolvable": "pass",
         "single_bounded_task": "unknown",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
@@ -24695,9 +24739,10 @@
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #4554이 파일 5개를 바꾸며 그중 2개가 테스트다(src/bundler/chunk_test.zig, tests/integration/tests/manual-chunks.test.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #4554이 파일 5개를 바꾸며 그중 2개가 테스트다(src/bundler/chunk_test.zig, tests/integration/tests/manual-chunks.test.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "2026-07-20: linked merged pull request #4554 confirmed to reference this issue and not be release automation. Base 8f0a320b102176140c1b88ded697e9be7c9e2ff6 materialized; tree 2addf621e5cdf9a6882b0fd6a92b3d26b6a1966f. Base resolved over the git protocol from the linked pull request's earliest commit parent, then materialized; the tree hash was read with 'git rev-parse HEAD^{tree}' in that checkout, never from GET /git/trees. License read from the pinned base tree. solution_artifact_hash is the SHA-256 of the fetched pull request .diff. Instruction files were inventoried over a widened set (CLAUDE.md, AGENTS.md, AGENTS.override.md, TEAM_GUIDE.md, .agents.md, .cursorrules, GEMINI.md) rather than the two-file set used earlier the same day. Remaining inclusion rules stay unknown, so the row stays screening. Instruction files at the pinned base: CLAUDE.md 3121 bytes and AGENTS.md 235 bytes, not identical. single_bounded_task carries a specific risk here and is left unknown: the statement presents the change as removing a bug class and says it resolves #4548, #4549 and #4551 together, referencing #4542, #4552 and #1027 as well."
       ],
-      "screened_by_role_id": "task-source-construction-2026-07-19",
+      "screened_by_role_id": "task-source-construction-2026-07-20",
       "confirmatory_reuse_allowed": false
     },
     {
@@ -38098,7 +38143,8 @@
         "gold_and_evaluator_hideable: 정답 PR은 기존 `tests/test_doc_links.py`를 수정한다. 수정 후 버전을 보호 경로에 두면 새 assertion은 노출되지 않는다.",
         "reproducible_within_budget만 unknown으로 남는다. 고정 버전·artifact digest pin, 오프라인 의존성 복원, agent-free base/negative/positive control 재현, 사전 resource bucket 대비 실측이 끝나기 전에는 pass로 두지 않는다.",
         "base_tree_hash 정정: 이전 값 9a91c5869623261762274eaf092d0c6bb6a0c176는 commit SHA였다. `GET /git/trees/{commit_sha}`가 입력 SHA를 그대로 되돌려준 것을 tree hash로 받아 기록한 오류이며, base를 실제로 materialize해 `git rev-parse HEAD^{tree}`로 확인한 값 40c93b2720fa97c94f479f0c5e13f6c4950df64b로 교체했다.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #1174이 파일 6개를 바꾸며 그중 1개가 테스트다(tests/test_doc_links.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #1174이 파일 6개를 바꾸며 그중 1개가 테스트다(tests/test_doc_links.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "2026-07-20 provisioned reproduction performed without any agent. Both the implementation and the test exist at the base, so the evaluator was reconstructed at the pull request point by applying only the test hunks (+195) to the base file rather than using the default-branch version; one import and one line were adapted to make the repository root injectable and the assertion count was 47 before and after. Negative control 26 failed / 27 passed with every failure caused by the missing feature: 24 AttributeError across split_fragment, slugify_heading, find_broken_fragments and collect_anchors, plus two CLI assertions for the absent --check-fragments argument. Positive control 53 passed with the implementation and documentation hunks. Evaluator wall time 0.6 seconds, small bucket. Protected artifact hash unchanged; pristine base clean. Two observations recorded rather than decided: the real-repo sentinel fails at base with AttributeError before it can report the four broken links, so it does not independently prove the base documentation was broken; and the merged change both adds fragment validation and repairs four documents, so single_bounded_task remains a judgement for task authoring. reproducible_within_budget stays unknown for one remaining reason only: the base carries CLAUDE.md at 12250 bytes with no AGENTS.md, the largest one-sided instruction asymmetry observed, and the Codex side of discovery is unmeasured."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -39998,15 +40044,22 @@
       "source_reference": "https://github.com/SeokRae/blog/issues/12",
       "source_statement_available": true,
       "task_statement_hash": "282e8f507dcb2f31018debec301dc81ac59d11882682e2bed56473762da110de",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
+      "base_revision": "9f2c14135813fb56bf6fa561f6e431a77d476aa2",
+      "base_tree_hash": "9d3226c17f0ffd8dd0d55d628ce89acbb7bc7fb4",
+      "solution_reference": "https://github.com/SeokRae/blog/pull/13",
       "solution_revision": null,
-      "solution_artifact_hash": null,
+      "solution_artifact_hash": "6b331a967af17a679e215d0d36a336638039aa9ebf5f49ad11df5379a09187e9",
       "solution_tree_hash": null,
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        ".github/workflows/site-check.yml",
+        "CLAUDE.md",
+        "assets/js/search.js",
+        "search.html",
+        "test/search_test.js",
+        "test/site_output_test.rb"
+      ],
+      "license_or_use_basis": "MIT full text present at the pinned base revision 9f2c14135813fb56bf6fa561f6e431a77d476aa2 as LICENSE, read from a materialized checkout of that revision. The copyright holder named in that file is the upstream Chirpy theme author rather than the repository owner, so the permissive grant covers the theme-derived code the task touches; it is recorded rather than generalised to the site content.",
       "provisional_classification": {
         "instruction_language": null,
         "task_category": null,
@@ -40014,8 +40067,8 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
+        "license_or_use_basis": "pass",
+        "exact_base_resolvable": "pass",
         "single_bounded_task": "unknown",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
@@ -40030,9 +40083,10 @@
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #13이 파일 6개를 바꾸며 그중 2개가 테스트다(test/search_test.js, test/site_output_test.rb 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #13이 파일 6개를 바꾸며 그중 2개가 테스트다(test/search_test.js, test/site_output_test.rb 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "2026-07-20: linked merged pull request #13 confirmed to reference this issue and not be release automation. Base 9f2c14135813fb56bf6fa561f6e431a77d476aa2 materialized; tree 9d3226c17f0ffd8dd0d55d628ce89acbb7bc7fb4. Base resolved over the git protocol from the linked pull request's earliest commit parent, then materialized; the tree hash was read with 'git rev-parse HEAD^{tree}' in that checkout, never from GET /git/trees. License read from the pinned base tree, not the default branch or a metadata classifier. solution_artifact_hash is the SHA-256 of the fetched pull request .diff. Remaining inclusion rules stay unknown, so the row stays screening. Instruction-file observation at the pinned base: CLAUDE.md 5083 bytes with no AGENTS.md. Claude Code 2.1.215 was measured not to read AGENTS.md, so this base gives the two agents unequal instructions unless the Codex side is measured to read nothing either."
       ],
-      "screened_by_role_id": "task-source-construction-2026-07-19",
+      "screened_by_role_id": "task-source-construction-2026-07-20",
       "confirmatory_reuse_allowed": false
     },
     {
@@ -42351,15 +42405,19 @@
       "source_reference": "https://github.com/greenheadHQ/nixos-config/issues/918",
       "source_statement_available": true,
       "task_statement_hash": "4bc99353580526b8a9beef43e2d1023b933f847acf1d9128a66e5eff8abdda84",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
+      "base_revision": "f05c23b23355e415ed57b6c52d0b0be1c72345d0",
+      "base_tree_hash": "4a6191c67f86c45309211e751f58d30755dccbe6",
+      "solution_reference": "https://github.com/greenheadHQ/nixos-config/pull/925",
       "solution_revision": null,
-      "solution_artifact_hash": null,
+      "solution_artifact_hash": "82325eea39be1963b8e3c797822bb75036df3fe14ee82cd19d5ae3777c6abc46",
       "solution_tree_hash": null,
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        "modules/shared/programs/claude/files/hooks/fragile-hardcoding-guard.sh",
+        "tests/shell-script-tests.sh",
+        "tests/suites/fragile-hardcoding-guard.sh"
+      ],
+      "license_or_use_basis": "MIT full text present at the pinned base revision f05c23b23355e415ed57b6c52d0b0be1c72345d0 as LICENSE, read from a materialized checkout of that revision rather than from the default branch or a metadata classifier.",
       "provisional_classification": {
         "instruction_language": null,
         "task_category": null,
@@ -42367,8 +42425,8 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
+        "license_or_use_basis": "pass",
+        "exact_base_resolvable": "pass",
         "single_bounded_task": "unknown",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
@@ -42383,9 +42441,10 @@
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #925이 파일 3개를 바꾸며 그중 2개가 테스트다(tests/shell-script-tests.sh, tests/suites/fragile-hardcoding-guard.sh 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #925이 파일 3개를 바꾸며 그중 2개가 테스트다(tests/shell-script-tests.sh, tests/suites/fragile-hardcoding-guard.sh 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "2026-07-20: linked merged pull request #925 confirmed to reference this issue and not be release automation. Base f05c23b23355e415ed57b6c52d0b0be1c72345d0 materialized; tree 4a6191c67f86c45309211e751f58d30755dccbe6. Base resolved over the git protocol from the linked pull request's earliest commit parent, then materialized; the tree hash was read with 'git rev-parse HEAD^{tree}' in that checkout, never from GET /git/trees. License read from the pinned base tree, not the default branch or a metadata classifier. solution_artifact_hash is the SHA-256 of the fetched pull request .diff. Remaining inclusion rules stay unknown, so the row stays screening. Instruction-file observation at the pinned base: AGENTS.md is a symlink to CLAUDE.md so the two are byte-identical, but a separate AGENTS.override.md (3083 bytes) is present and the repository itself documents it as Codex-discovered (modules/shared/programs/git/default.nix). Effective-instruction equivalence is therefore not established."
       ],
-      "screened_by_role_id": "task-source-construction-2026-07-19",
+      "screened_by_role_id": "task-source-construction-2026-07-20",
       "confirmatory_reuse_allowed": false
     },
     {
@@ -50845,41 +50904,50 @@
       "source_reference": "https://github.com/e7217/anygarden/issues/512",
       "source_statement_available": true,
       "task_statement_hash": "0dc09930eca87fe9182d68b394e458b310fbc688efd93e08e816717a70e4a740",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
+      "base_revision": "c636c8fce8dd9f09583da1c000d80280df370466",
+      "base_tree_hash": "14d7dfb7bbeb011ae1d9949430d3499f834d05ea",
+      "solution_reference": "https://github.com/e7217/anygarden/pull/513",
       "solution_revision": null,
-      "solution_artifact_hash": null,
+      "solution_artifact_hash": "6d45b5c81257c267db26a770501e1eb7b32fbdf49734412ce1a47c0f3495b62f",
       "solution_tree_hash": null,
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        "packages/cluster/frontend/src/components/MessageBubble.tsx",
+        "packages/cluster/frontend/src/lib/datetime.test.ts",
+        "packages/cluster/frontend/src/lib/datetime.ts",
+        "worklogs/512-message-timestamp-date.md"
+      ],
+      "license_or_use_basis": "Apache-2.0 full text present at the pinned base revision c636c8fce8dd9f09583da1c000d80280df370466 as LICENSE, and packages/cluster/frontend/package.json declares \"license\": \"Apache-2.0\"; read from a materialized checkout of that revision.",
       "provisional_classification": {
-        "instruction_language": null,
-        "task_category": null,
+        "instruction_language": "ko",
+        "task_category": "implementation",
         "repository_code_language": null,
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
-        "single_bounded_task": "unknown",
-        "native_language_source": "unknown",
-        "low_risk_isolated_execution": "unknown",
-        "no_network_secret_push_production": "unknown",
-        "objective_evaluator_feasible": "unknown",
-        "gold_and_evaluator_hideable": "unknown",
-        "reproducible_within_budget": "unknown",
+        "license_or_use_basis": "pass",
+        "exact_base_resolvable": "pass",
+        "single_bounded_task": "pass",
+        "native_language_source": "pass",
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass",
+        "reproducible_within_budget": "pass",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass"
       },
-      "decision": "screening",
+      "decision": "selected-for-task-authoring",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #513이 파일 4개를 바꾸며 그중 1개가 테스트다(packages/cluster/frontend/src/lib/datetime.test.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #513이 파일 4개를 바꾸며 그중 1개가 테스트다(packages/cluster/frontend/src/lib/datetime.test.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "2026-07-20: linked merged pull request #513 confirmed to reference this issue and not be release automation. Base c636c8fce8dd9f09583da1c000d80280df370466 materialized; tree 14d7dfb7bbeb011ae1d9949430d3499f834d05ea. Base resolved over the git protocol from the linked pull request's earliest commit parent, then materialized; the tree hash was read with 'git rev-parse HEAD^{tree}' in that checkout, never from GET /git/trees. License read from the pinned base tree. solution_artifact_hash is the SHA-256 of the fetched pull request .diff. Instruction files were inventoried over a widened set (CLAUDE.md, AGENTS.md, AGENTS.override.md, TEAM_GUIDE.md, .agents.md, .cursorrules, GEMINI.md) rather than the two-file set used earlier the same day. Remaining inclusion rules stay unknown, so the row stays screening. Instruction files at the pinned base: none of the widened set is present, the cleanest instruction-parity profile observed so far. The merged change matches the statement's declared scope exactly: the shared formatter, the pure logic extracted to a testable module, its unit test, and a worklog note. The statement fixes three output cases and an explicit local-calendar-day comparison, and the Korean date format is intrinsic to the requirement rather than incidental.",
+        "2026-07-20 instruction-file sweep widened past the seven-name set: the full 941-entry base tree was listed and no file on any auto-discovered path for either CLI is present. The only convention document is .design-sync/conventions.md, which sits in a non-discovered dotdir, and there is no .github/copilot-instructions.md. Recorded as an observation: the repository is itself an agent-orchestration project and carries claude_code, codex_cli and gemini_cli integration source, but those are implementation files and the task itself is a date formatter in two frontend files, orthogonal to that subject matter.",
+        "2026-07-20 provisioned reproduction performed without any agent. Node v22.14.0 pinned and its archive digest verified against the publisher's SHASUMS256.txt; transitive dependencies pinned by the repository's own package-lock.json via npm ci (1036 packages, 35 s). Both the subject module and its test exist at the base, so the evaluator was reconstructed at the pull request point by applying only the test hunks. Two adaptations, neither touching an assertion: the import specifier was made injectable so the evaluator can live outside the agent-writable checkout, and the protected vitest config exports a plain object instead of importing defineConfig because it cannot resolve workspace packages from outside. Assertion count 11 before and after. Negative control 4 failed / 6 passed, every failure the intended missing behaviour: formatMessageTimestamp does not exist at the base, where the module exports only parseServerDate. Positive control 10 passed with the implementation hunks alone (2 files, +39/-9). Evaluator wall time 0.9 s, small bucket. Protected artifact hash unchanged before and after; the pristine base stayed clean with its tree hash intact. Recorded rather than decided: the negative control fails because the symbol is absent rather than because output is wrong, so it demonstrates the evaluator detects absence while the three format cases are exercised only by the positive control. reproducible_within_budget is set to pass because instruction parity holds here independently of the blocked Codex measurement: the 941-entry base tree carries no file on any auto-discovered path for either CLI, so both agents receive nothing from the fixture. objective_evaluator_feasible and gold_and_evaluator_hideable are set to pass because today's controls demonstrate both directly. single_bounded_task, low_risk_isolated_execution, no_network_secret_push_production and native_language_source remain unknown: they are screening-review judgements that these measurements do not settle, and native_language_source in particular assigns quota.",
+        "2026-07-20 remaining screening rules judged from the statement and today's controls. single_bounded_task: the statement scopes the change to the shared formatter in MessageBubble.tsx plus extraction of the pure logic into datetime.ts, and explicitly places divider rows, relative labels and i18n out of scope; the merged change is two implementation files, one test and a worklog, all inside one checkout. low_risk_isolated_execution: a pure date formatter in a frontend library, non-destructive in an isolated checkout. no_network_secret_push_production: the task needs none of these; dependencies are installed from the repository lockfile before execution and the evaluator itself needs no network. native_language_source: classified native Korean, not mixed. Preregistration section 4.1 states that mixed does not mean English identifiers alone but that both languages are genuinely required by the instruction, documentation or acceptance criteria. Here the statement, the acceptance criteria and the required output format are Korean, and English appears only in identifiers and paths. The Korean calendar format is intrinsic to the requirement. The candidate id carries the ghmix prefix of its discovery pool, which records where the row was found and not how it is classified. All eleven inclusion rules now pass, so the decision moves to selected-for-task-authoring. Task authoring, evaluator authoring and validity review remain separate roles and are not performed here."
       ],
-      "screened_by_role_id": "task-source-construction-2026-07-19",
+      "screened_by_role_id": "task-source-construction-2026-07-20",
       "confirmatory_reuse_allowed": false
     },
     {
@@ -52833,22 +52901,22 @@
   ],
   "summary": {
     "candidate_count": 1130,
-    "screening_count": 1054,
+    "screening_count": 1053,
     "excluded_count": 74,
-    "selected_for_task_authoring_count": 2,
+    "selected_for_task_authoring_count": 3,
     "language_assignment_counts": {
-      "ko": 56,
+      "ko": 57,
       "en": 301,
       "mixed": 22,
-      "unassigned": 751
+      "unassigned": 750
     },
     "category_assignment_counts": {
-      "implementation": 34,
+      "implementation": 35,
       "debugging": 15,
       "testing": 7,
       "refactoring": 15,
       "repository-analysis-planning": 8,
-      "unassigned": 1051
+      "unassigned": 1050
     },
     "known_gaps": [
       "No selected task-authoring candidate exists; every non-excluded row still has at least one unknown inclusion check.",
