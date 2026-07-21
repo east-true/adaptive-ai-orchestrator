@@ -7,11 +7,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from adaptive_orchestrator.agents import ClaudeCodeAgent, CodexAgent
-from adaptive_orchestrator.domain import Capability, ExecutionStatus, Task
-from adaptive_orchestrator.kernel import OrchestratorKernel
-from adaptive_orchestrator.logging import JsonlExecutionLogger
-from adaptive_orchestrator.process_runner import ProcessResult
+from adaptive_orchestrator.execution.agents import ClaudeCodeAgent, CodexAgent
+from adaptive_orchestrator.core.domain import Capability, ExecutionStatus, Task
+from adaptive_orchestrator.orchestration.kernel import OrchestratorKernel
+from adaptive_orchestrator.infrastructure.logging import JsonlExecutionLogger
+from adaptive_orchestrator.execution.process_runner import ProcessResult
 
 
 class FakeRunner:

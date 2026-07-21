@@ -7,8 +7,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Mapping
 
-from .events import JsonlEventStore, LifecycleEvent
-from .routing_state import EventProjector, RoutingState
+from adaptive_orchestrator.infrastructure.events import JsonlEventStore, LifecycleEvent
+from adaptive_orchestrator.routing.state import EventProjector, RoutingState
 
 
 @dataclass(frozen=True, slots=True)

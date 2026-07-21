@@ -8,7 +8,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from .events import JsonlEventStore, LifecycleEvent, LifecycleEventType
+from adaptive_orchestrator.infrastructure.events import JsonlEventStore, LifecycleEvent, LifecycleEventType
 
 
 class ReplayError(ValueError):

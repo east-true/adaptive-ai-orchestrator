@@ -6,8 +6,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from adaptive_orchestrator.domain import MemoryEntry, MemoryEntryType
-from adaptive_orchestrator.memory import EngineeringMemoryStore
+from adaptive_orchestrator.core.domain import MemoryEntry, MemoryEntryType
+from adaptive_orchestrator.infrastructure.memory import EngineeringMemoryStore
 
 
 class EngineeringMemoryStoreTests(unittest.TestCase):

@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from adaptive_orchestrator.tools import ToolPermission, ToolRuntime
+from adaptive_orchestrator.execution.tools import ToolPermission, ToolRuntime
 
 
 class ToolRuntimeTests(unittest.TestCase):

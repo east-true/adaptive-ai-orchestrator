@@ -8,7 +8,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Mapping, Sequence
 
-from .domain import (
+from adaptive_orchestrator.core.domain import (
     EvaluatorResult,
     EvaluatorRole,
     EvaluatorSpec,
@@ -18,7 +18,7 @@ from .domain import (
     VerificationResult,
     VerificationStatus,
 )
-from .process_runner import ProcessRunner
+from adaptive_orchestrator.execution.process_runner import ProcessRunner
 
 _STATUS_FOR_EXECUTION = {
     ExecutionStatus.COMPLETED: EvaluatorStatus.PASSED,

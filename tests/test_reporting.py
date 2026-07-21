@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from adaptive_orchestrator.reporting import (
+from adaptive_orchestrator.operations.reporting import (
     ExecutionLookupError,
     ExecutionReportStore,
     render_markdown_report,

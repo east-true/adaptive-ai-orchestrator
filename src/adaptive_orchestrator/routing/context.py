@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 
-from .domain import Capability, Task
+from adaptive_orchestrator.core.domain import Capability, Task
 
 ROUTING_CONTEXT_SCHEMA = "routing-context-v1"
 

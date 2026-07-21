@@ -8,8 +8,8 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from adaptive_orchestrator.domain import ExecutionStatus
-from adaptive_orchestrator.process_runner import SubprocessRunner
+from adaptive_orchestrator.core.domain import ExecutionStatus
+from adaptive_orchestrator.execution.process_runner import SubprocessRunner
 
 
 class SubprocessRunnerTests(unittest.TestCase):
@@ -95,7 +95,7 @@ class SubprocessRunnerTests(unittest.TestCase):
                 self.killed = True
 
         process = InterruptingProcess()
-        with tempfile.TemporaryDirectory() as directory, patch("adaptive_orchestrator.process_runner.subprocess.Popen", return_value=process):
+        with tempfile.TemporaryDirectory() as directory, patch("adaptive_orchestrator.execution.process_runner.subprocess.Popen", return_value=process):
             with self.assertRaises(KeyboardInterrupt):
                 SubprocessRunner().run(("agent",), Path(directory), None)
 

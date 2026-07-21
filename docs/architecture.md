@@ -11,6 +11,26 @@ Task -> Task analysis -> Adaptive Router -> CLI Agent (capabilities + command bu
 
 `Task` describes required capabilities rather than a model or job title. `Agent` is a CLI adapter plus capabilities and an execution policy. The Kernel coordinates one selected agent per execution. This preserves the **single-agent-first** policy and makes escalation a measurable, deliberate decision rather than a default.
 
+## Package boundaries
+
+The Python package is organized by responsibility instead of keeping every
+feature module in `adaptive_orchestrator/`:
+
+- `core`: dependency-light domain contracts;
+- `execution`: agent adapters, subprocess execution, workspace inspection,
+  tools, and evaluator execution;
+- `orchestration`: planning, kernel coordination, escalation, and workflows;
+- `routing`: task analysis, versioned context, policies, and projected state;
+- `infrastructure`: configuration and local append-only persistence;
+- `experiments`: paired-pilot validation, analysis, and execution;
+- `operations`: diagnostics, reports, replay, notifications, and usage views;
+- `interfaces`: CLI, shell, TUI, and example entry-point implementations.
+
+Dependencies are imported through these canonical package paths. The root
+`cli.py`, `shell.py`, `tui.py`, and `example.py` files contain compatibility
+entry points only, preserving the existing `python -m adaptive_orchestrator.*`
+commands. The root `adaptive_orchestrator` exports remain the stable Python API.
+
 ## Structured plans and richer verification
 
 `EngineeringWorkflow.run_plan(tasks)` runs an explicit, caller-supplied ordered list of `Task`s through the unchanged single-task `run()` pipeline, one at a time, stopping at the first non-succeeding step by default (`stop_on_failure`, overridable). There is deliberately no inference of steps from a single task's free-text description: a regex/heuristic decomposition of prose (e.g. numbered lists) risks misfiring on ordinary text ("the bug in section 2.1") that only looks structured — the same category of risk as guessing at an unverified CLI output schema instead of confirming it live (see evolution #1). Structure comes only from what the caller explicitly supplied (a JSON plan file via the `run-plan` CLI subcommand, or a list of `Task` objects programmatically).
@@ -61,7 +81,7 @@ environment, task, and language backoff.
 
 ## Paired experiment boundary
 
-`paired_experiment.py` keeps Phase 2a experiment tooling separate from the
+`experiments/paired_experiment.py` keeps Phase 2a experiment tooling separate from the
 runtime router. Its versioned manifest validator pins the clean Git base,
 fixtures, exact agent environments, protected task-specific evaluators,
 metrics, budget, and stopping rules before results exist. A SHA-256-ranked,
@@ -124,7 +144,7 @@ The historical paired manifest v1 remains replayable. Manifest v2 adds a preflig
 
 `TaskAnalyzer`'s risk keyword list grew to include explicitly irreversible operations (force push, `rm -rf`, drop table, overwrite, no backup, and Korean equivalents) — an extension of the existing text-matching heuristic, not a new inference technique.
 
-Historical evidence (success rate, verification pass rate) is now confidence-weighted by sample count (`_MIN_SAMPLES_FOR_FULL_CONFIDENCE = 5` in `routing.py`): below that many logged executions, evidence blends toward the same neutral prior a candidate with zero history gets, rather than fully trusting a single run. This fixed a real bug in the process — the old `metrics.success_rate or 0.5` treated a genuine 0.0 success rate (an agent that has always failed) as indistinguishable from "no history yet," since `0.0` is falsy in Python.
+Historical evidence (success rate, verification pass rate) is now confidence-weighted by sample count (`_MIN_SAMPLES_FOR_FULL_CONFIDENCE = 5` in `routing/analysis.py`): below that many logged executions, evidence blends toward the same neutral prior a candidate with zero history gets, rather than fully trusting a single run. This fixed a real bug in the process — the old `metrics.success_rate or 0.5` treated a genuine 0.0 success rate (an agent that has always failed) as indistinguishable from "no history yet," since `0.0` is falsy in Python.
 
 That fix did not make the resulting router unbiased. With deterministic argmax,
 selection-count confidence can pull a good but less-exposed candidate down to
@@ -150,7 +170,7 @@ Found via dogfooding (using the orchestrator to delegate its own feature work to
 
 `--verbose` (available on `run`, `run-plan`, and `plan generate`) streams the running agent's stdout to stderr line-by-line as it arrives, prefixed with the command and requested agent, while stdout still only carries the final result. For `run`/`run-plan` that result is JSON; successful `plan generate` instead prints its existing plan summary. This is purely additive: `SubprocessRunner` now takes an optional `on_output_line` callback and reads stdout/stderr concurrently via two threads instead of blocking on `subprocess.run`, but when no callback is given (the default), behavior is unchanged. It only echoes raw lines — it does not attempt to parse or pretty-print an agent's structured output, since that already happens after the process exits via `Agent.parse_result`.
 
-The interactive shell in `adaptive_orchestrator.shell` remains deliberately thinner than the CLI itself. It stores session-only workspace, agent, and repeated workflow defaults; `task`/`compose` and the routed commands translate those values back into argv and call `cli.main` directly. Detailed help delegates to the same argparse definitions. Shell-native behavior is limited to input/session ergonomics and read-only local views (`history`, `recent`, `usage`); execution, planning, verification, escalation, JSON output, and parser validation remain owned by the existing CLI and core layers.
+The interactive shell in `adaptive_orchestrator.interfaces.shell` remains deliberately thinner than the CLI itself. It stores session-only workspace, agent, and repeated workflow defaults; `task`/`compose` and the routed commands translate those values back into argv and call `interfaces.cli.main` directly. Detailed help delegates to the same argparse definitions. Shell-native behavior is limited to input/session ergonomics and read-only local views (`history`, `recent`, `usage`); execution, planning, verification, escalation, JSON output, and parser validation remain owned by the existing CLI and core layers.
 
 ## Deliberate boundaries
 

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
-from .configuration import ProjectConfigError, config_path, load_project_config
+from adaptive_orchestrator.infrastructure.configuration import ProjectConfigError, config_path, load_project_config
 
 
 @dataclass(frozen=True, slots=True)

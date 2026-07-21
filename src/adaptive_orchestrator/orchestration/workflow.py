@@ -6,12 +6,12 @@ from dataclasses import asdict, dataclass, replace
 from typing import Sequence
 from uuid import uuid4
 
-from .domain import EscalationRecord, ExecutionRecord, ExecutionStatus, Task, VerificationStatus
-from .events import LifecycleEventType
-from .escalation import EscalationPolicy
-from .kernel import OrchestratorKernel
-from .planning import CapabilitySelector, ExecutionPlan
-from .verification import CommandVerifier, evaluation_projection
+from adaptive_orchestrator.core.domain import EscalationRecord, ExecutionRecord, ExecutionStatus, Task, VerificationStatus
+from adaptive_orchestrator.execution.verification import CommandVerifier, evaluation_projection
+from adaptive_orchestrator.infrastructure.events import LifecycleEventType
+from adaptive_orchestrator.orchestration.escalation import EscalationPolicy
+from adaptive_orchestrator.orchestration.kernel import OrchestratorKernel
+from adaptive_orchestrator.orchestration.planning import CapabilitySelector, ExecutionPlan
 
 
 def execution_succeeded(record: ExecutionRecord) -> bool:

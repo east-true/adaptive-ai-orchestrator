@@ -9,12 +9,11 @@ from pathlib import Path
 from time import monotonic
 from typing import Callable
 
-from .agents import Agent, ClaudeCodeAgent, CodexAgent
-from .domain import Capability, EvaluatorRole, EvaluatorSpec, EvaluatorStatus, ExecutionStatus, Task
-from .events import JsonlEventStore, LifecycleEventType
-from .kernel import OrchestratorKernel
-from .logging import JsonlExecutionLogger
-from .paired_experiment import (
+from adaptive_orchestrator.core.domain import Capability, EvaluatorRole, EvaluatorSpec, EvaluatorStatus, ExecutionStatus, Task
+from adaptive_orchestrator.execution.agents import Agent, ClaudeCodeAgent, CodexAgent
+from adaptive_orchestrator.execution.process_runner import ProcessRunner, SubprocessRunner
+from adaptive_orchestrator.execution.verification import CommandVerifier, evaluation_projection
+from adaptive_orchestrator.experiments.paired_experiment import (
     PairAssignment,
     PairedAgentSpec,
     PairedExperimentError,
@@ -26,9 +25,10 @@ from .paired_experiment import (
     prepare_paired_workspaces,
     validate_paired_resume_workspaces,
 )
-from .process_runner import ProcessRunner, SubprocessRunner
-from .routing_state import EventProjector, LifecycleRecorder, RoutingState
-from .verification import CommandVerifier, evaluation_projection
+from adaptive_orchestrator.infrastructure.events import JsonlEventStore, LifecycleEventType
+from adaptive_orchestrator.infrastructure.logging import JsonlExecutionLogger
+from adaptive_orchestrator.orchestration.kernel import OrchestratorKernel
+from adaptive_orchestrator.routing.state import EventProjector, LifecycleRecorder, RoutingState
 
 
 class PairedExecutionError(PairedExperimentError):

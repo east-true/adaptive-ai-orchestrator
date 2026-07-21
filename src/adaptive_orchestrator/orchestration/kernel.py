@@ -8,12 +8,12 @@ from pathlib import Path
 from typing import Protocol
 from uuid import uuid4
 
-from .agents import Agent
-from .domain import ExecutionRecord, ExecutionStatus, Task
-from .events import JsonlEventStore, LifecycleEvent, LifecycleEventType
-from .git_snapshot import GitSnapshot
-from .process_runner import ProcessRunner, SubprocessRunner
-from .routing_state import LifecycleRecorder
+from adaptive_orchestrator.core.domain import ExecutionRecord, ExecutionStatus, Task
+from adaptive_orchestrator.execution.agents import Agent
+from adaptive_orchestrator.execution.git_snapshot import GitSnapshot
+from adaptive_orchestrator.execution.process_runner import ProcessRunner, SubprocessRunner
+from adaptive_orchestrator.infrastructure.events import JsonlEventStore, LifecycleEvent, LifecycleEventType
+from adaptive_orchestrator.routing.state import LifecycleRecorder
 
 
 class ExecutionLogger(Protocol):

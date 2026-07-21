@@ -9,9 +9,9 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from adaptive_orchestrator.agents import default_agent_ids
-from adaptive_orchestrator.shell import OrchestratorShell
-from adaptive_orchestrator.usage import CodexUsage
+from adaptive_orchestrator.execution.agents import default_agent_ids
+from adaptive_orchestrator.interfaces.shell import OrchestratorShell
+from adaptive_orchestrator.operations.usage import CodexUsage
 
 
 class ShellStateTests(unittest.TestCase):
@@ -95,7 +95,7 @@ class ShellStateTests(unittest.TestCase):
 
     def test_empty_line_does_not_repeat_last_command(self) -> None:
         shell = OrchestratorShell()
-        with patch("adaptive_orchestrator.shell.cli.main") as main:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
             shell.onecmd("task Run tests")
             shell.onecmd("")
         self.assertEqual(main.call_count, 1)
@@ -133,7 +133,7 @@ class ShellCliDispatchTests(unittest.TestCase):
         self.shell.agent = "claude-code"
 
     def test_run_builds_expected_argv(self) -> None:
-        with patch("adaptive_orchestrator.shell.cli.main") as main:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
             self.shell.onecmd('run --workspace /override --agent codex --description "Build it" --objective "Ship it"')
         main.assert_called_once_with([
             "run",
@@ -152,7 +152,7 @@ class ShellCliDispatchTests(unittest.TestCase):
         ])
 
     def test_task_uses_request_as_description_and_objective(self) -> None:
-        with patch("adaptive_orchestrator.shell.cli.main") as main:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
             self.shell.onecmd("task Run the unit tests and fix failures")
         main.assert_called_once_with([
             "run",
@@ -168,7 +168,7 @@ class ShellCliDispatchTests(unittest.TestCase):
 
     def test_task_without_request_prints_usage_error(self) -> None:
         stdout = io.StringIO()
-        with patch("adaptive_orchestrator.shell.cli.main") as main:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
             with contextlib.redirect_stdout(stdout):
                 self.shell.onecmd("task")
         main.assert_not_called()
@@ -177,7 +177,7 @@ class ShellCliDispatchTests(unittest.TestCase):
     def test_compose_runs_a_multiline_request(self) -> None:
         with (
             patch("builtins.input", side_effect=["Run all tests.", "Fix any failures.", "."]),
-            patch("adaptive_orchestrator.shell.cli.main") as main,
+            patch("adaptive_orchestrator.interfaces.shell.cli.main") as main,
             contextlib.redirect_stdout(io.StringIO()),
         ):
             self.shell.onecmd("compose")
@@ -198,7 +198,7 @@ class ShellCliDispatchTests(unittest.TestCase):
         stdout = io.StringIO()
         with (
             patch("builtins.input", side_effect=["."]),
-            patch("adaptive_orchestrator.shell.cli.main") as main,
+            patch("adaptive_orchestrator.interfaces.shell.cli.main") as main,
             contextlib.redirect_stdout(stdout),
         ):
             self.shell.onecmd("compose")
@@ -211,7 +211,7 @@ class ShellCliDispatchTests(unittest.TestCase):
             self.shell.onecmd("set no_escalation on")
             self.shell.onecmd("set time_limit 30")
             self.shell.onecmd("set verify python3 -m unittest")
-        with patch("adaptive_orchestrator.shell.cli.main") as main:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
             self.shell.onecmd("task Run tests")
         main.assert_called_once_with([
             "run",
@@ -235,7 +235,7 @@ class ShellCliDispatchTests(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):
             self.shell.onecmd("set verbose on")
             self.shell.onecmd("set time_limit 30")
-        with patch("adaptive_orchestrator.shell.cli.main") as main:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
             self.shell.onecmd("run_plan plan.json")
         main.assert_called_once_with([
             "run-plan",
@@ -274,7 +274,7 @@ class ShellCliDispatchTests(unittest.TestCase):
         self.assertIn("unknown setting", stdout.getvalue())
 
     def test_run_plan_builds_expected_argv(self) -> None:
-        with patch("adaptive_orchestrator.shell.cli.main") as main:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
             self.shell.onecmd('run_plan plan.json --workspace /override --agent auto --continue-on-failure')
         main.assert_called_once_with([
             "run-plan",
@@ -291,7 +291,7 @@ class ShellCliDispatchTests(unittest.TestCase):
         ])
 
     def test_plan_generate_builds_expected_argv(self) -> None:
-        with patch("adaptive_orchestrator.shell.cli.main") as main:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
             self.shell.onecmd('plan_generate "Add a dark mode toggle" --output x.json --agent codex')
         main.assert_called_once_with([
             "plan",
@@ -308,12 +308,12 @@ class ShellCliDispatchTests(unittest.TestCase):
         ])
 
     def test_plan_validate_builds_expected_argv(self) -> None:
-        with patch("adaptive_orchestrator.shell.cli.main") as main:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
             self.shell.onecmd("plan_validate plan.json")
         main.assert_called_once_with(["plan", "validate", "plan.json"])
 
     def test_memory_record_builds_expected_argv(self) -> None:
-        with patch("adaptive_orchestrator.shell.cli.main") as main:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
             self.shell.onecmd(
                 'memory_record --type architecture_decision --title "Use JSONL" --summary "Store memory"'
             )
@@ -331,7 +331,7 @@ class ShellCliDispatchTests(unittest.TestCase):
         ])
 
     def test_memory_search_builds_expected_argv(self) -> None:
-        with patch("adaptive_orchestrator.shell.cli.main") as main:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
             self.shell.onecmd('memory_search --keyword cache --tag memory')
         main.assert_called_once_with([
             "memory",
@@ -346,7 +346,7 @@ class ShellCliDispatchTests(unittest.TestCase):
 
     def test_system_exit_from_cli_does_not_escape_shell(self) -> None:
         stderr = io.StringIO()
-        with patch("adaptive_orchestrator.shell.cli.main", side_effect=[SystemExit(2), None]) as main:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main", side_effect=[SystemExit(2), None]) as main:
             with contextlib.redirect_stderr(stderr):
                 self.shell.onecmd('run --description "Build it" --objective "Ship it"')
                 self.shell.onecmd('memory_search --keyword cache')
@@ -355,21 +355,21 @@ class ShellCliDispatchTests(unittest.TestCase):
 
     def test_successful_system_exit_from_cli_help_is_not_reported_as_an_error(self) -> None:
         stderr = io.StringIO()
-        with patch("adaptive_orchestrator.shell.cli.main", side_effect=SystemExit(0)):
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main", side_effect=SystemExit(0)):
             with contextlib.redirect_stderr(stderr):
                 self.shell.onecmd("run --help")
         self.assertEqual(stderr.getvalue(), "")
 
     def test_help_run_delegates_to_existing_cli_help(self) -> None:
         original_program = sys.argv[0]
-        with patch("adaptive_orchestrator.shell.cli.main", side_effect=SystemExit(0)) as main:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main", side_effect=SystemExit(0)) as main:
             self.shell.onecmd("help run")
         main.assert_called_once_with(["run", "--help"])
         self.assertEqual(sys.argv[0], original_program)
 
     def test_run_plan_without_plan_file_prints_usage_error(self) -> None:
         stdout = io.StringIO()
-        with patch("adaptive_orchestrator.shell.cli.main") as main:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
             with contextlib.redirect_stdout(stdout):
                 self.shell.onecmd("run_plan")
         main.assert_not_called()
@@ -377,7 +377,7 @@ class ShellCliDispatchTests(unittest.TestCase):
 
     def test_plan_generate_without_request_prints_usage_error(self) -> None:
         stdout = io.StringIO()
-        with patch("adaptive_orchestrator.shell.cli.main") as main:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
             with contextlib.redirect_stdout(stdout):
                 self.shell.onecmd("plan_generate")
         main.assert_not_called()
@@ -473,9 +473,9 @@ class ShellUsageTests(unittest.TestCase):
                 log.write_text("\n".join(json.dumps(line) for line in execution_lines), encoding="utf-8")
             stdout = io.StringIO()
             with (
-                patch("adaptive_orchestrator.shell.read_codex_usage", return_value=codex_usage),
-                patch("adaptive_orchestrator.shell.read_claude_subscription", return_value=subscription),
-                patch("adaptive_orchestrator.shell.time.time", return_value=1_700_000_000),
+                patch("adaptive_orchestrator.interfaces.shell.read_codex_usage", return_value=codex_usage),
+                patch("adaptive_orchestrator.interfaces.shell.read_claude_subscription", return_value=subscription),
+                patch("adaptive_orchestrator.interfaces.shell.time.time", return_value=1_700_000_000),
                 contextlib.redirect_stdout(stdout),
             ):
                 shell.onecmd("usage")

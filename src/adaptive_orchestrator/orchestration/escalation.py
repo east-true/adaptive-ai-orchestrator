@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable, Mapping
 
-from .domain import ExecutionStatus, VerificationStatus
+from adaptive_orchestrator.core.domain import ExecutionStatus, VerificationStatus
 
 
 @dataclass(frozen=True, slots=True)

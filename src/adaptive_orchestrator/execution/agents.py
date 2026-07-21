@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import ClassVar, Iterable, Sequence
 
-from .domain import Capability, ExecutionMetadata, Task
-from .process_runner import ProcessResult, ProcessRunner
+from adaptive_orchestrator.core.domain import Capability, ExecutionMetadata, Task
+from adaptive_orchestrator.execution.process_runner import ProcessResult, ProcessRunner
 
 
 @dataclass(frozen=True, slots=True)

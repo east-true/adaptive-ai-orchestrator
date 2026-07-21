@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-from .domain import EvaluatorRole
-from .escalation import trigger_classes_for
+from adaptive_orchestrator.core.domain import EvaluatorRole
+from adaptive_orchestrator.orchestration.escalation import trigger_classes_for
 
 _EVALUATOR_ROLES = tuple(role.value for role in EvaluatorRole)
 

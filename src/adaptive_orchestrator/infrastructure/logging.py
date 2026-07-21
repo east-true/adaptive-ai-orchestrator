@@ -5,7 +5,7 @@ import re
 from dataclasses import asdict
 from pathlib import Path
 
-from .domain import ExecutionRecord
+from adaptive_orchestrator.core.domain import ExecutionRecord
 
 
 class JsonlExecutionLogger:

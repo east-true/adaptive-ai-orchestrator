@@ -10,10 +10,10 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from adaptive_orchestrator import cli
-from adaptive_orchestrator.configuration import ProjectConfig, config_path
-from adaptive_orchestrator.domain import Capability, EvaluatorRole, MemoryEntryType, Priority
-from adaptive_orchestrator.events import JsonlEventStore, LifecycleEventType
+from adaptive_orchestrator.interfaces import cli
+from adaptive_orchestrator.infrastructure.configuration import ProjectConfig, config_path
+from adaptive_orchestrator.core.domain import Capability, EvaluatorRole, MemoryEntryType, Priority
+from adaptive_orchestrator.infrastructure.events import JsonlEventStore, LifecycleEventType
 
 
 class BuildWorkflowTests(unittest.TestCase):

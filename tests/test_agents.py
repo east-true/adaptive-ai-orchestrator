@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from adaptive_orchestrator.agents import ClaudeCodeAgent, CodexAgent
+from adaptive_orchestrator.execution.agents import ClaudeCodeAgent, CodexAgent
 
 
 class ClaudeCodeAgentTests(unittest.TestCase):

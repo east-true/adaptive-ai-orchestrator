@@ -6,11 +6,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from adaptive_orchestrator.agents import ClaudeCodeAgent, CodexAgent
-from adaptive_orchestrator.domain import Capability, EvaluatorRole, Task
-from adaptive_orchestrator.history import ExecutionHistory
-from adaptive_orchestrator.routing import _MIN_SAMPLES_FOR_FULL_CONFIDENCE as _MIN_SAMPLES
-from adaptive_orchestrator.routing import AdaptiveRouter, AgentRoutingProfile, TaskAnalyzer
+from adaptive_orchestrator.execution.agents import ClaudeCodeAgent, CodexAgent
+from adaptive_orchestrator.core.domain import Capability, EvaluatorRole, Task
+from adaptive_orchestrator.infrastructure.history import ExecutionHistory
+from adaptive_orchestrator.routing.analysis import _MIN_SAMPLES_FOR_FULL_CONFIDENCE as _MIN_SAMPLES
+from adaptive_orchestrator.routing.analysis import AdaptiveRouter, AgentRoutingProfile, TaskAnalyzer
 
 
 class AdaptiveRouterTests(unittest.TestCase):

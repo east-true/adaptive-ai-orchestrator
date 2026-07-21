@@ -14,33 +14,26 @@ Starting with a web framework and provider SDKs would make an early API wrapper,
 
 ```
 src/adaptive_orchestrator/
-  __init__.py     # public re-exports (Agent, Task, OrchestratorKernel, EngineeringMemoryStore, ...)
-  domain.py       # vendor-neutral task, execution, and verification contracts
-  agents.py       # CLI adapters: Claude Code and Codex + declared capabilities
-  process_runner.py # timeout, output, and process-status collection
-  git_snapshot.py # best-effort changed-file and diff collection
-  logging.py      # append-only execution telemetry
-  kernel.py       # single-agent-first coordinator
-  history.py      # reads JSONL telemetry into per-agent metrics
-  memory.py       # append-only engineering memory store
-  routing.py      # task analysis (capabilities/difficulty/risk/uncertainty) + adaptive agent scoring
-  planning.py      # deterministic single-step capability-only selector
-  verification.py # runs one or more shell-free verification commands, worst-of aggregation
-  escalation.py   # decides whether a second agent's attempt is warranted
-  workflow.py     # wires selection + execution + verification + escalation; run() and run_plan()
-  cli.py          # `run`, `run-plan`, `plan`, and `memory` subcommands
-  configuration.py # local project config loading, validation, initialization, and command detection
-  diagnostics.py  # `doctor` checks for config, agent login, and runtime prerequisites
-  notifications.py # opt-in terminal and desktop completion notifications
-  reporting.py    # execution lookup, summaries, Markdown reports, and retry task extraction
-  tui.py          # stdlib curses dashboard and shell-free background task launcher
-  shell.py        # interactive session UX over the existing CLI dispatch
-  usage.py        # reads locally available Codex/Claude account information
-  tools.py        # workspace-bounded file/shell/git tool runtime
-  example.py      # minimal end-to-end usage without a real CLI agent
+  __init__.py       # stable public re-exports
+  core/             # vendor-neutral task, execution, and verification contracts
+  execution/        # CLI agents, process runner, verification, Git snapshot, local tools
+  orchestration/    # kernel, planning, workflow, and escalation policy
+  routing/          # task analysis, context, policies, and replayable routing state
+  infrastructure/   # configuration, event/log stores, history, memory, and state paths
+  experiments/      # paired experiment contracts, analysis, workspace prep, and runner
+  operations/       # diagnostics, reporting, replay, notifications, and usage inspection
+  interfaces/       # CLI implementation, interactive shell, curses TUI, and example
+  cli.py            # compatibility entry point; delegates to interfaces/cli.py
+  shell.py          # compatibility entry point; delegates to interfaces/shell.py
+  tui.py            # compatibility entry point; delegates to interfaces/tui.py
+  example.py        # compatibility entry point; delegates to interfaces/example.py
 tests/            # unit and end-to-end prototype tests
 docs/             # architecture and roadmap decisions
 ```
+
+Implementation modules use the responsibility-specific package paths above.
+The four root entry-point modules remain intentionally thin so existing
+`python -m adaptive_orchestrator.<command>` invocations continue to work.
 
 Adaptive routing 개선 작업은 다음 문서에서 추적한다.
 
@@ -438,7 +431,7 @@ The defaults are translated back into normal CLI argv. A time limit applies only
 
 Command names, `agent` values, workspace directories, and plan-file paths support tab completion. Invalid workspace paths are rejected without losing the current session state, command typos suggest a close match, and a blank line is a no-op rather than `cmd.Cmd`'s default behavior of repeating the previous command.
 
-Most commands still only build an argv list and call the existing `adaptive_orchestrator.cli.main` dispatch, so they stay aligned with normal CLI flags and output conventions. Shell-native convenience commands include session views (`status`, `settings`) and read-only local-data views (`history`, `recent`, `usage`). `history` currently exposes legacy operational metrics, not objective task-quality or unbiased policy estimates; do not use its percentages to rank agents.
+Most commands still only build an argv list and call the canonical `adaptive_orchestrator.interfaces.cli.main` dispatch, so they stay aligned with normal CLI flags and output conventions. Shell-native convenience commands include session views (`status`, `settings`) and read-only local-data views (`history`, `recent`, `usage`). `history` currently exposes legacy operational metrics, not objective task-quality or unbiased policy estimates; do not use its percentages to rank agents.
 
 ## Full-screen terminal UI
 
