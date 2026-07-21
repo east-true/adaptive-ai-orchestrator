@@ -1,6 +1,6 @@
 # Adaptive Routing 개선 작업 진행상황
 
-> 마지막 갱신: 2026-07-20
+> 마지막 갱신: 2026-07-22
 > 상태: Phase -1/0/1과 Phase 2a v1/v2 paired smoke 완료, Phase 2b source screening 진행 중
 > 목적: 다른 세션이 결정 근거와 다음 순서를 잃지 않고 작업을 이어간다.
 
@@ -186,13 +186,19 @@ additive identity + policy/cohort labels
 - [x] resource bucket(`small`/`medium`) 정의와 첫 selected 2건
 - [x] LLMRouterBench 원문 대조로 §3.3 "단순 baseline 우선" 근거 검증
 - [x] base tree의 agent instruction 파일 비대칭 발견과 70개 저장소 prevalence 측정
-- [x] Claude Code instruction discovery 실측(Codex 측 미측정 — quota 차단)
+- [x] Claude Code discovery 실측과 Codex 0.144.6 root `AGENTS.md` behavioral probe
 - [x] 사전필터 유망 8건 원문 판독과 base·tree·license 확정
 - [x] `factlog #314`·`BidMate #1152`·`anygarden #512` provisioned 재현(negative/positive control 완료)
-- [x] `anygarden #512` 11/11 판정과 세 번째 `selected` 승격
+- [x] `anygarden #512` 당시 11/11 판정과 세 번째 `selected-for-task-authoring` 승격
 - [x] `factlog #314` license 근거를 classifier 신호에서 pinned revision artifact로 정정
 - [x] 위 판정을 고정하는 회귀 테스트 2개 추가(focused 12 tests, 전체 270 tests)
-- [ ] Codex instruction discovery 측정(2026-07-25 이후) 및 parity 기준 확정
+- [x] official Codex discovery rule 확인, exact-base parity 12행 판정, protocol `v1.1` amendment
+- [x] `factlog #314` 네 번째 `selected-for-task-authoring`, mismatch 7행 terminal 제외
+- [x] `v1.1` candidate/manifest schema와 1,130-row ledger 정식 Draft 2020-12 검증, focused 15 / 전체 273 tests 통과
+- [x] 수동 agent 선택 방식의 3-row contextual screening, exact-base materialization 2건과 terminal 제외 3건(focused 16 / 전체 274 tests)
+- [x] 의도된 동작을 하지 않던 Web UI와 전용 background queue 범위 제거(전용 테스트 7개 포함, 전체 267 tests)
+- [x] 수동 Claude 자문을 교차검증한 2차 3-row contextual screening(2 제외, 1 exact-base materialization)
+- [ ] global instruction을 의미상 동등화하거나 양쪽 isolated empty agent home으로 격리한 뒤 manifest hash pin
 - [ ] explicit-language reviewed screening 28개 판정
 - [ ] native Korean 20/English 20/mixed 20 task 후보 screening과 provenance ledger 동결
 - [ ] 독립 evaluator 제작·validity review, assertion inventory와 negative control 완료
@@ -492,8 +498,7 @@ native Korean task다. quota 관점에서 가치가 크다.
    파일을 구분한다.
 2. 아래 focused test를 다시 실행한다(현재 7개).
    `PYTHONPATH=src python3 -m unittest discover -s tests -p 'test_phase2b_candidate_ledger.py' -v`
-3. localhost socket을 쓰는 기존 `test_web_ui` 3개가 허용되는 환경에서 아래 전체
-   suite를 실행한다(현재 265개).
+3. 2026-07-22 제거된 Web UI/socket 테스트는 더 이상 없다. 아래 전체 suite를 실행한다.
    `PYTHONPATH=src python3 -m unittest discover -s tests -v`
 4. `/tmp` source artifact가 사라졌다면 ledger의 고정 query·cutoff·dataset revision으로
    snapshot을 다시 받아 source/hash 의미 검증을 재실행한다. 임시 artifact 자체를
@@ -786,6 +791,181 @@ evaluator를 agent-writable checkout 밖으로 옮기면 repo-local 컨텍스트
    결정하지 않았다.**
 4. classifier 기반 license 근거가 남은 다른 행 점검.
 5. 제공자 데이터 취급 확인 — 60-task 실행 승인 전 필수(§4.3에 미확인으로 기록됨).
+
+### 2026-07-22 6차 handoff — Codex discovery와 instruction parity v1.1
+
+이번 handoff는 2026-07-20 blocker의 **evidence와 candidate decision만** 갱신했다. candidate
+agent output은 보지 않았고, task/evaluator를 저술하거나 agent를 실행하지 않았다.
+`selected-for-task-authoring`은 final pilot task가 아니라 다음 역할 분리 construction으로
+넘길 수 있는 queue 상태다.
+
+| 항목 | 값 |
+|---|---:|
+| 전체 inventory | 1,130 (변경 없음) |
+| `screening` | 1,045 |
+| `excluded` | 81 |
+| `selected-for-task-authoring` | **4** |
+| exact-base parity 판정 | pass 5 / fail 7 / 그 밖은 unknown |
+| focused candidate-ledger tests | **15 passed** |
+| 전체 unit tests | **273 passed** |
+
+construction queue의 marginal은 ko 4 / en 0 / mixed 0, category는 debugging 3 /
+implementation 1이다. 60-task quota는 여전히 충족되지 않았고 pilot은 승인되지 않았다.
+
+#### 세 evidence 층을 분리했다
+
+**Behavioral evidence.** 설치된 Codex CLI는 0.144.6이다. 격리된 임시 Git 저장소 root의
+`AGENTS.md`에 `PROJECT_AGENTS_MARKER_7F31` exact-output 지시를 두고 다음을 실행했다.
+
+```text
+codex exec --ephemeral --json -s read-only -C <repo> -c model_reasoning_effort=none
+```
+
+trivial no-tool prompt의 final answer가 marker와 byte-for-byte 같았다. usage는 input 12,706 /
+output 13 / reasoning 0 tokens다. 이 결과가 행동으로 입증하는 것은 **0.144.6이 non-empty
+root `AGENTS.md`를 load한다는 한 case뿐**이다.
+
+**Official-document evidence.** [Codex 공식 문서](https://developers.openai.com/codex/guides/agents-md)는
+global에서 첫 non-empty `AGENTS.override.md` else `AGENTS.md`, project에서 root→cwd를 걸으며
+디렉터리마다 `AGENTS.override.md`, `AGENTS.md`, configured fallback 순으로 최대 하나를
+읽는다고 설명한다. 로컬 `/home/leo/.codex/config.toml`에는
+`project_doc_fallback_filenames`가 없어 effective fallback은 empty다. 따라서
+`TEAM_GUIDE.md`와 `.agents.md`는 이 환경에서 자동 instruction이 아니다.
+
+override precedence, root-to-cwd merge, configured fallback selection은 이 handoff에서
+behaviorally probe하지 않았다. 이 세 claim은 공식 문서 근거이며 marker 실측이라고 쓰지
+않는다.
+
+**Unmeasured or non-terminal evidence.** 70-repository prevalence는 여전히 default branch의
+두 파일만 본 자료다. 16:14, 7:6이라는 file-presence 균형은 effective directional bias가
+없다는 증거가 아니다. Codex 측정 전에는 방향이 unknown이었고, 지금도 pinned candidate와
+global instruction을 대신하지 못한다. 따라서 prevalence row로 candidate를 승격·제외하지
+않았다.
+
+#### `v1.1` protocol amendment
+
+project instruction parity가 material eligibility인데 `reproducible-within-budget` 안에 묻혀
+clean terminal path가 없었다. `phase2b-pilot-prereg-v1.1`은 다음 최소 변경만 한다.
+
+- inclusion rule `instruction-parity` 추가;
+- terminal exclusion `instruction-parity-mismatch` 추가;
+- resource reproduction과 project instruction parity 분리;
+- future manifest의 `environment.global_instruction_context`에 resolution, inventory hash,
+  두 effective-instruction hash, empty Codex fallback 배열, 검증 시각 요구.
+
+candidate base instruction 파일이나 양쪽 global 파일은 수정하지 않았다. manifest schema
+이름은 아직 instance가 없는 `paired-pilot-manifest-v1`을 유지하고 protocol version만 1.1로
+올렸다.
+
+#### pinned-base decision
+
+판정은 recorded exact-base tree inventory가 있는 12행에만 적용했다. 초기 기록이 두 파일
+확인에 그쳤던 `factlog #26`, `ante #2349`, `factlog #314`, `BidMate #1152`는 exact base의
+recursive GitHub tree를 재조회했다. 77/1,057/373/845 entries 모두 `truncated=false`였고
+Git Commit API의 `tree.sha`도 ledger hash와 일치했다.
+
+| profile | candidate | parity | decision effect |
+|---|---|---|---|
+| `AGENTS.md` + `CLAUDE.md`가 `@AGENTS.md` import | `factlog-academic #314`, `#342` | pass | `#314` selected-for-task-authoring, `#342` screening 유지 |
+| byte-equivalent symlink | `ante #2349` | pass | selected 유지 |
+| discovered path 없음 | `factlog #26`, full-tree `anygarden #512` | pass | selected 유지 |
+| `CLAUDE.md` only | `BidMate #1152`, `blog #12`, `AgentDesk #4606` | fail | terminal 제외 |
+| 서로 다른 `CLAUDE.md` / `AGENTS.md` | `zntc #4564/#4563/#4553` | fail | terminal 제외 |
+| 동일 symlink 외 별도 `AGENTS.override.md` | `nixos-config #918` | fail | terminal 제외; override는 official-document 근거 |
+
+`factlog #314`와 `BidMate #1152`의 agent-free reproduction은 모두 이미 끝났으므로 양쪽
+`reproducible-within-budget`은 `pass`다. 전자는 parity도 pass라 12/12 construction queue로
+가고, 후자는 parity fail이라 제외된다. 이 분리가 amendment의 목적이다.
+
+`Docker-Compose #38`은 default-branch prevalence에만 instruction 신호가 있어 parity를
+`unknown`으로 유지했다. 기존 `subjective-only-evaluation` 제외만 유지하며, candidate
+ledger 문서의 중복 문단 하나를 제거했다.
+
+#### global instruction gate는 아직 열려 있다
+
+environment inventory에서 `/home/leo/.claude/CLAUDE.md`는 KB/Wiki와 Claude-only `RTK.md`를
+import하고, `/home/leo/.codex/AGENTS.md`는 KB/Wiki 대응 지침은 있지만 RTK 등가물이 없다.
+양쪽 global instruction은 존재하지만 의미상 같지 않다. project-level candidate pass가 이
+confounder를 없애지 않는다.
+
+실행 전에는 의미상 동등화 또는 양쪽 isolated empty agent home이 필요하고, 그 결과의
+effective instruction을 manifest에 hash로 pin해야 한다. 알려진 비대칭 상태의 hash만 남기는
+것은 confounder를 문서화할 뿐 gate를 닫지 않는다. 현재 `gate_status=unresolved`다. global
+파일은 이 repository 밖이며 이번 handoff에서 수정하지 않았다.
+
+#### 다음 gate
+
+1. 미판정 후보의 exact-base active instruction path inventory와 나머지 inclusion screening;
+2. global instruction context를 동등화/격리한 뒤 manifest instance에 hash pin;
+3. 60개 candidate quota가 채워진 뒤에만 역할 분리 task/evaluator construction;
+4. 별도 validity review와 agent-free controls 후 manifest freeze;
+5. 그 뒤에도 사용자 별도 승인 전에는 120-run pilot을 실행하지 않음.
+
+### 2026-07-22 7차 handoff — 수동 agent 선택 contextual screening
+
+오케스트레이터 운영은 `--agent auto` 호출에서 **주 검토자가 작업물을 먼저 보고 적합한
+agent를 수동 선택하는 방식**으로 바꿨다. 이번 3-row batch는 issue/PR 내용의 구조 비교가
+핵심이라 Claude를 명시했으며, 주 검토자가 primary snapshot을 준비하고 결과를 독립
+재검증했다. Claude 결과 자체는 candidate 판정 근거도 routing evidence도 아니다.
+
+`ccc-node #34`는 issue 한 건에 다섯 제안과 여덟 acceptance item이 결합됐고 원문과 linked
+PR #35가 네 단계 중 첫 slice만 구현됐음을 함께 보여 `multiple-coupled-issues`로 terminal
+제외했다. 이어서 `filme #432`와 `swift-tui #15`의 linked PR base/head를 실제 Git object로
+materialize해 parent 관계, tree hash, changed-file scope, PR diff hash를 확인했다. pinned
+base license는 각각 MIT와 Unlicense로 통과했지만 exact tree가 각각 root `CLAUDE.md` only와
+root `AGENTS.md` only여서 v1.1 `instruction-parity-mismatch`로 terminal 제외했다. `filme`의
+nested skill `AGENTS.md`는 repository-root working directory의 Codex discovery chain 밖이다.
+candidate agent, task authoring, evaluator 저술·실행은 하지 않았다.
+
+| 항목 | 값 |
+|---|---:|
+| 전체 inventory | 1,130 (변경 없음) |
+| `screening` | 1,042 |
+| `excluded` | 84 |
+| `selected-for-task-authoring` | **4** |
+| exact-base parity 판정 | pass 5 / fail 9 / 그 밖은 unknown |
+| focused candidate-ledger tests | **16 passed** |
+| 전체 unit tests | **267 passed** |
+
+#### Web UI scope removal
+
+현재 프로젝트에서 의도한 제어 동작을 하지 않으며 핵심 routing/experiment 범위를 넓히던
+stdlib Web UI를 제거했다. `web_ui.py`와 그 UI만 소비하던 `control.py` single-worker queue,
+전용 테스트 7개, README 실행 안내를 함께 삭제했다. CLI, interactive shell, curses TUI는
+이 모듈을 import하지 않아 유지된다. `.orchestrator/jobs.jsonl`의 기존 로컬 데이터는
+삭제하지 않았다.
+
+### 2026-07-22 8차 handoff — 2차 contextual screening
+
+mechanical-prefilter를 통과하고 아직 terminal 판정이 없던 `factlog #269`,
+`ChunChuGwan #406`, `filme #348`의 issue/PR/files primary snapshot 9개를 `/tmp` 격리
+workspace에 준비했다. 원문 의미와 evaluator derivability 비교가 핵심이라 Claude를 수동
+지정했다. 첫 호출은 non-Bash file enumeration 도구가 없어 내용 분석 전에 중단됐고, exact
+filenames를 명시한 재호출만 자문으로 사용했다. 두 호출 모두 manual cohort이고 objective
+quality evaluator가 없으므로 routing evidence에는 들어가지 않는다.
+
+주 검토자가 원문을 다시 대조해 다음처럼 확정했다.
+
+- `factlog #269`: 설정 저장은 deterministic하게 검사할 수 있지만 candidate 핵심인 LLM
+  narration·summary·gloss 적절성은 objective mode로 판정할 수 없다.
+  `subjective-only-evaluation`으로 제외했다.
+- `filme #348`: 이슈 자체가 gitignored private ticket/ground truth와 API key가 필요한 live
+  Gemini STRICT 검증을 definition of done으로 요구한다. Offline label/undo test만 채점하면
+  핵심 OCR extraction을 사후 축소하므로 `unsafe-or-external-side-effect`로 제외했다.
+- `ChunChuGwan #406`: cache bypass, Range byte semantics, attachment/CSP header, auth gate,
+  local-mode invariant를 원문에서 독립 도출할 수 있다. linked PR base/head를 materialize해
+  616-entry base tree, 7-file scope와 pinned MIT를 확인했다. Root `AGENTS.md`가
+  `CLAUDE.md`를 SSOT로 읽으라고 지시하지만 별도 Codex 안내와 Claude path rules가 있어
+  semantic instruction parity는 `unknown`으로 유지했다.
+
+| 항목 | 값 |
+|---|---:|
+| 전체 inventory | 1,130 (변경 없음) |
+| `screening` | 1,040 |
+| `excluded` | 86 |
+| `selected-for-task-authoring` | **4** |
+| focused candidate-ledger tests | **16 passed** |
+| 전체 unit tests | **267 passed** |
 
 ## 5. 다음 구현 작업
 

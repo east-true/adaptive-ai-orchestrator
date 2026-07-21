@@ -29,7 +29,7 @@
       "const": "paired-pilot-manifest-v1"
     },
     "protocol_version": {
-      "const": "phase2b-pilot-prereg-v1"
+      "const": "phase2b-pilot-prereg-v1.1"
     },
     "study_phase": {
       "const": "phase2b-variance-pilot"
@@ -333,6 +333,7 @@
       "additionalProperties": false,
       "required": [
         "environment_epoch",
+        "global_instruction_context",
         "workspace_isolation",
         "protected_control_state",
         "protected_evaluators",
@@ -345,6 +346,9 @@
       "properties": {
         "environment_epoch": {
           "$ref": "#/$defs/nonEmptyString"
+        },
+        "global_instruction_context": {
+          "$ref": "#/$defs/globalInstructionContext"
         },
         "workspace_isolation": {
           "const": "independent-exact-base-checkouts"
@@ -369,6 +373,42 @@
         },
         "production_mutation": {
           "const": "forbidden"
+        }
+      }
+    },
+    "globalInstructionContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resolution",
+        "inventory_artifact_hash",
+        "claude_effective_instruction_hash",
+        "codex_effective_instruction_hash",
+        "codex_project_doc_fallback_filenames",
+        "verified_at"
+      ],
+      "properties": {
+        "resolution": {
+          "enum": [
+            "semantically-equivalent",
+            "isolated-empty-agent-homes"
+          ]
+        },
+        "inventory_artifact_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "claude_effective_instruction_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "codex_effective_instruction_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "codex_project_doc_fallback_filenames": {
+          "const": []
+        },
+        "verified_at": {
+          "type": "string",
+          "format": "date-time"
         }
       }
     },

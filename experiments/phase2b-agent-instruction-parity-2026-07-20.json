@@ -1,12 +1,14 @@
 {
   "artifact_id": "phase2b-agent-instruction-parity-2026-07-20",
-  "protocol_version": "phase2b-pilot-prereg-v1",
+  "protocol_version": "phase2b-pilot-prereg-v1.1",
   "created_at": "2026-07-20T11:57:03.339913+00:00",
+  "amended_on": "2026-07-22",
+  "amendment_id": "phase2b-instruction-parity-v1.1",
   "purpose": "Measure whether a candidate's base tree gives the two CLI agents different effective instructions. Claude Code discovers CLAUDE.md and Codex discovers AGENTS.md, so a base tree carrying only one of them, or both with differing content, makes the paired comparison unequal in a way unrelated to agent capability.",
   "terminal_status": false,
-  "terminal_status_note": "Settles no inclusion rule. The prevalence probe reads the default branch, not each candidate's pinned revision, and the Codex half of the discovery measurement was not obtained.",
+  "terminal_status_note": "The artifact as a whole is non-terminal: its 70-repository prevalence probe is default-branch evidence and the global-instruction gate remains unresolved. The separately enumerated pinned_candidate_parity_2026_07_22 assessments do settle instruction-parity for only those named candidate revisions.",
   "discovery_measurement": {
-    "method": "Behavioural, not self-report. Four isolated empty directories were given instruction files carrying distinct mandatory output markers; each CLI was asked a trivial greeting requiring no file access. The marker that appears identifies which file was auto-injected. Claude was additionally run with file-reading tools disallowed so a marker cannot arrive via a tool call.",
+    "method": "Behavioural, not self-report. On 2026-07-20 four isolated directories carried distinct marker cases: Claude completed that matrix with file-reading tools disallowed, while all Codex calls failed before a model call. On 2026-07-22 a separate isolated temporary Git repository measured only the Codex root-AGENTS.md case. Official precedence rules below are documentary evidence, not extensions of that behavioral probe.",
     "claude_code": {
       "cli_version": "2.1.215",
       "measured": true,
@@ -23,19 +25,91 @@
     },
     "codex": {
       "cli_version": "0.144.6",
-      "measured": false,
-      "blocked_reason": "Account usage limit reached; all four invocations failed before any model call.",
-      "blocked_until": "2026-07-25T13:54 (as reported by the CLI)",
-      "invocations_completed": 0,
-      "tokens_consumed": 0,
-      "cost": 0
+      "behaviorally_measured": true,
+      "full_original_matrix_measured": false,
+      "behaviorally_measured_cases": [
+        "root AGENTS.md only"
+      ],
+      "result": "The required PROJECT_AGENTS_MARKER_7F31 was the exact final answer.",
+      "prior_blocked_probe": {
+        "blocked_reason": "Account usage limit reached; the earlier four invocations failed before any model call.",
+        "blocked_until": "2026-07-25T13:54 (as reported by the CLI)",
+        "invocations_completed": 0,
+        "tokens_consumed": 0,
+        "cost": 0
+      }
     },
     "known_limitations": [
       "Installed versions (Claude Code 2.1.215, Codex 0.144.6) drift by one patch release from the Phase 2a v2 pins (2.1.212, 0.144.5). Phase 2b must re-verify against whatever versions its own manifest pins.",
-      "User-level instruction files exist for both agents (~/.claude/CLAUDE.md and ~/.codex/AGENTS.md). They are outside the fixture and were not varied; this probe measures repository-level discovery only.",
-      "Without the Codex half, no row's parity can be settled: the AGENTS.md-only repositories depend entirely on whether Codex discovers that file.",
-      "No projection of how many candidate rows could pass parity is recorded here. Any such number requires assuming what Codex reads, and there is no evidence for that assumption while the Codex measurement is blocked."
+      "User-level instruction files exist for both agents and are not semantically equivalent. They are outside the fixture and were not varied; project-level parity does not resolve that environment-level confounder.",
+      "Only root AGENTS.md loading was measured behaviorally for Codex 0.144.6. Override precedence, root-to-cwd traversal, and configured fallback selection are official-document evidence, not behavioral measurements in this artifact.",
+      "No projection from default-branch prevalence to candidate eligibility is recorded. Candidate decisions require an inventory at the candidate's exact pinned base."
     ]
+  },
+  "codex_measurement_update_2026_07_22": {
+    "behavioral_evidence": {
+      "evidence_type": "behavioral",
+      "measured_at": "2026-07-22",
+      "cli_version": "0.144.6",
+      "fixture": "isolated temporary Git repository with a non-empty root AGENTS.md",
+      "instruction": "For the final answer, output exactly: PROJECT_AGENTS_MARKER_7F31",
+      "command": "codex exec --ephemeral --json -s read-only -C <repo> -c model_reasoning_effort=none",
+      "prompt_scope": "trivial no-tool prompt",
+      "observed_final_answer": "PROJECT_AGENTS_MARKER_7F31",
+      "usage": {
+        "input_tokens": 12706,
+        "output_tokens": 13,
+        "reasoning_tokens": 0
+      },
+      "conclusion": "Installed Codex 0.144.6 loads a non-empty root AGENTS.md. This single case does not behaviorally establish any precedence rule."
+    },
+    "official_document_evidence": {
+      "evidence_type": "official-document",
+      "checked_at": "2026-07-22",
+      "source": "https://developers.openai.com/codex/guides/agents-md",
+      "config_reference": "https://learn.chatgpt.com/docs/config-file/config-reference",
+      "claims": [
+        "Global scope loads the first non-empty AGENTS.override.md, otherwise AGENTS.md, from the Codex home directory.",
+        "Project scope walks from project root to cwd and checks AGENTS.override.md, then AGENTS.md, then configured project_doc_fallback_filenames, including at most one file per directory.",
+        "Files are merged root to cwd; closer guidance appears later.",
+        "Fallback filenames are additional configured names, not built-in TEAM_GUIDE.md or .agents.md conventions."
+      ]
+    },
+    "local_configuration_observation": {
+      "evidence_type": "local-config-inventory",
+      "path": "/home/leo/.codex/config.toml",
+      "project_doc_fallback_filenames_present": false,
+      "effective_project_doc_fallback_filenames": [],
+      "conclusion": "TEAM_GUIDE.md and .agents.md are not active Codex fallback names in this environment."
+    },
+    "not_behaviorally_measured": [
+      "AGENTS.override.md precedence over AGENTS.md",
+      "root-to-cwd multi-directory merge order",
+      "configured project_doc_fallback_filenames selection"
+    ]
+  },
+  "global_instruction_confounder_2026_07_22": {
+    "evidence_type": "environment-inventory",
+    "inventory_scope": "active user-level instruction sources; files were not edited by this handoff",
+    "claude_code": {
+      "root": "/home/leo/.claude/CLAUDE.md",
+      "imports": [
+        "knowledge-base.md",
+        "personal-wiki.md",
+        "RTK.md"
+      ]
+    },
+    "codex": {
+      "root": "/home/leo/.codex/AGENTS.md",
+      "semantic_coverage": [
+        "knowledge-base guidance",
+        "personal-wiki guidance"
+      ],
+      "no_rtk_equivalent_observed": true
+    },
+    "semantically_equivalent": false,
+    "gate_status": "unresolved",
+    "required_resolution": "Before Phase 2b execution, either provide semantically equivalent global guidance or run both agents with isolated empty instruction homes, then pin the resulting effective instruction inventory and hashes in the Phase 2b manifest. Pinning a known asymmetric state documents the confounder but does not close the gate. Do not edit candidate base-tree instruction files to compensate."
   },
   "prevalence_probe": {
     "basis": "raw.githubusercontent at default branch HEAD; NOT pinned-revision evidence",
@@ -61,7 +135,7 @@
       "one_sided_agents_md_only": 14,
       "divergent_claude_md_larger": 7,
       "divergent_agents_md_larger": 6,
-      "reading": "Close to even in both categories, so the pool carries no systematic advantage for either agent. The hazard is per-task confounding, not pool-level bias."
+      "reading": "The file-presence counts are roughly balanced, but they do not establish balanced effective instructions or absence of systematic agent advantage. Effective directional bias was unknown before the Codex measurement, and this default-branch probe still cannot settle pinned-candidate bias; global instruction asymmetry also remains."
     },
     "entries": [
       {
@@ -657,11 +731,331 @@
     ],
     "probe_scope": "Only CLAUDE.md and AGENTS.md were queried, at the default branch.",
     "scope_limitations": [
-      "Two files only. Third-party documentation read this session (the using-codex-exec skill inside greenheadHQ/nixos-config) describes Codex discovery as the chain AGENTS.override.md > AGENTS.md > TEAM_GUIDE.md > .agents.md, and that repository's base tree does carry an AGENTS.override.md. Files outside the two queried here were not inventoried.",
-      "Consequently the clean-neither category is not demonstrated symmetric: those repositories lack the two queried files but may carry another file in the chain, which only one agent would read.",
-      "The chain itself comes from third-party documentation, not from vendor documentation or measurement, and has to be confirmed before it is relied on.",
-      "A re-measurement should widen the inventory to the full chain and re-check the Claude side over the same widened set."
+      "Two files only. The official Codex manual documents AGENTS.override.md and configured fallback names in addition to AGENTS.md; files outside the two queried here were not inventoried.",
+      "Consequently the default-branch clean-neither category is not demonstrated symmetric. In this environment the configured fallback list is empty, so TEAM_GUIDE.md and .agents.md are not active, but AGENTS.override.md was still outside this probe.",
+      "No default-branch prevalence entry is used to pass or fail a candidate. Only the separately recorded exact-base tree inventories support candidate decisions."
     ]
+  },
+  "pinned_candidate_parity_2026_07_22": {
+    "rule": "Project instruction parity passes only when the exact pinned base and the pinned discovery configuration deliver semantically equivalent project guidance to both agents. A proven mismatch is terminal; unknown inventory stays unknown. Global instructions are evaluated by a separate environment gate.",
+    "method": "Combine only recorded exact-base tree inventories with the Claude Code 2.1.215 behavioral probe, the Codex 0.144.6 root-AGENTS behavioral probe, the official Codex discovery rule, and the observed empty Codex fallback configuration. Default-branch prevalence rows are not candidate evidence.",
+    "codex_project_doc_fallback_filenames": [],
+    "configuration_freeze_note": "All assessments in this amendment assume the Codex default empty project_doc_fallback_filenames list. The Phase 2b manifest schema pins that list to empty; changing it requires a new result-blind amendment and re-screening every instruction-parity decision.",
+    "pinned_tree_inventory_recheck": {
+      "checked_at": "2026-07-22",
+      "method": "GitHub Git Trees API recursive inventory at each exact base revision, with truncated=false. Git Commit API tree.sha was checked against the ledger base_tree_hash; the Trees API response sha for a commit input was not used as the tree identity.",
+      "active_name_set": [
+        "AGENTS.override.md",
+        "AGENTS.md",
+        "CLAUDE.md"
+      ],
+      "candidates": [
+        {
+          "candidate_id": "ghmix-semantic-reasoning--factlog-issue-26",
+          "base_revision": "61d9ad9ed1b77a674499a2d4a281db0164dad730",
+          "base_tree_hash": "12a8b1a18e99c07121bdcef7be87573383e13228",
+          "tree_entry_count": 77,
+          "truncated": false,
+          "matching_paths": []
+        },
+        {
+          "candidate_id": "ghmix-joshua-jingu-lee--ante-issue-2349",
+          "base_revision": "f3ca94a444582934e4893ef24e06e5a6f8d57ac7",
+          "base_tree_hash": "c9df972424265b8a96e39ba06720138b6fe2d58b",
+          "tree_entry_count": 1057,
+          "truncated": false,
+          "matching_paths": [
+            {
+              "path": "AGENTS.md",
+              "mode": "100644"
+            },
+            {
+              "path": "CLAUDE.md",
+              "mode": "120000",
+              "symlink_target": "AGENTS.md"
+            }
+          ]
+        },
+        {
+          "candidate_id": "ghko-SeoyunL--factlog-academic-issue-314",
+          "base_revision": "fcdf91e8961a0324a3ac7d5cb1f4e773916f17fa",
+          "base_tree_hash": "47004414a82cbf9d2218cda3661690b15c159ef2",
+          "tree_entry_count": 373,
+          "truncated": false,
+          "matching_paths": [
+            {
+              "path": "AGENTS.md",
+              "mode": "100644"
+            },
+            {
+              "path": "CLAUDE.md",
+              "mode": "100644",
+              "content": "@AGENTS.md\\n"
+            }
+          ]
+        },
+        {
+          "candidate_id": "ghmix-hskim-solv--BidMate-DocAgent-issue-1152",
+          "base_revision": "9a91c5869623261762274eaf092d0c6bb6a0c176",
+          "base_tree_hash": "40c93b2720fa97c94f479f0c5e13f6c4950df64b",
+          "tree_entry_count": 845,
+          "truncated": false,
+          "matching_paths": [
+            {
+              "path": "CLAUDE.md",
+              "mode": "100644"
+            }
+          ]
+        }
+      ]
+    },
+    "contextual_batch_materialized_inventory": {
+      "checked_at": "2026-07-22",
+      "method": "Partial git clones materialized each linked pull request base and head. Base tree hashes came from git rev-parse <base>^{tree}; all tree paths came from git ls-tree -r; pull-request head parentage and base-to-head changed files were checked locally. The paired agent working directory is the repository root, so nested AGENTS.md paths outside the root-to-cwd chain are recorded but not treated as active.",
+      "candidates": [
+        {
+          "candidate_id": "ghko-Lyainc--filme-issue-432",
+          "base_revision": "e1d717191055d18d6bb7e039ba362e192d139eed",
+          "base_tree_hash": "bda44c3f34b49e97a50d11064f4486ca95a90b3a",
+          "tree_entry_count": 452,
+          "workspace_root_matching_paths": [
+            {
+              "path": "CLAUDE.md",
+              "mode": "100644",
+              "blob_sha": "6c0fa1dd5f4b2ab900f14aeac229ff41da1a7d46",
+              "content_sha256": "c5579de8cb8e695fc810865c2afdef31978f87308c9ef63c22539799bad40c19"
+            }
+          ],
+          "non_active_matching_paths": [
+            {
+              "path": ".claude/skills/react-best-practices/AGENTS.md",
+              "mode": "100644",
+              "blob_sha": "ed2bab4093f41ab6bb017b811fd228047aad5811",
+              "content_sha256": "d317411c6b025561bb47607cf35ad8a00ef130dfb93d16b3bab6a6d157ec26b4",
+              "reason": "The paired agent working directory is the repository root, so this descendant path is outside Codex root-to-cwd discovery."
+            }
+          ]
+        },
+        {
+          "candidate_id": "ghko-minacle--swift-tui-issue-15",
+          "base_revision": "0e2c288a014c4b89d5ec396fdc45e829bf315d35",
+          "base_tree_hash": "ce24efb94cc5f63405daa5fdd6d3feb3811d7bc3",
+          "tree_entry_count": 219,
+          "workspace_root_matching_paths": [
+            {
+              "path": "AGENTS.md",
+              "mode": "100644",
+              "blob_sha": "1d6e381624e8701843aeaa28b9ccd1835a92e4c1",
+              "content_sha256": "6ef1b29c8234b7b78bd6f9980bf7882e9b3bcfc1b36512765feb8e899c87033e"
+            }
+          ],
+          "non_active_matching_paths": []
+        }
+      ]
+    },
+    "second_contextual_batch_materialized_inventory": {
+      "checked_at": "2026-07-22",
+      "method": "A partial git clone materialized the linked pull request base and head. The base tree hash came from git rev-parse <base>^{tree}; the 616-entry path inventory came from git ls-tree -r. Root instruction blobs were read from the pinned base. Inventory alone does not settle whether the Codex wrapper and Claude path-rule delivery are semantically equivalent.",
+      "candidates": [
+        {
+          "candidate_id": "ghko-yvshdjcsldhdjt--ChunChuGwan-issue-406",
+          "base_revision": "793d2a875d159d372254dc02712f0e79831c7ea1",
+          "base_tree_hash": "f94c1a6b9bc764dfaa3549dfac99971bab1f62e2",
+          "tree_entry_count": 616,
+          "workspace_root_matching_paths": [
+            {
+              "path": "AGENTS.md",
+              "mode": "100644",
+              "blob_sha": "0f3bf1a78a60ad0d3b4006530e4330bcd0fca732",
+              "content_sha256": "ac9f7d93bc805f7ad133c9d0e4a241b12c3f55939fb4941cb992e72eb92bdb1d"
+            },
+            {
+              "path": "CLAUDE.md",
+              "mode": "100644",
+              "blob_sha": "df9ba8083f9aa0b394a812fdaea7766af5c272da",
+              "content_sha256": "32bbb9208b8ef45ac396700890e26b2bcfbfae0226b9d20384c213fe5e140784"
+            }
+          ],
+          "claude_path_rule_blobs": [
+            [".claude/rules/api-extension.md", "0359717520dcb6f980b6e05376661dc7b33266ee"],
+            [".claude/rules/authentication.md", "7b2fd4c195224a0df107f9aa3b5f462a88ae47db"],
+            [".claude/rules/capture-crawl.md", "3c8604b3e6b6a29a83e5294037074938295ea5ba"],
+            [".claude/rules/ci-guideline.md", "3c9f19a0800b69c9492c7e1d108c8ea47d756f53"],
+            [".claude/rules/dashboard.md", "0c7d611b9c01bde731592f3e7122acab1d0794af"],
+            [".claude/rules/database.md", "f4264e3a6519ad05869a14a1b80dce70005288ad"],
+            [".claude/rules/release-docker.md", "6c999ae061756c5cd1af67a27a75ef5bb439e899"],
+            [".claude/rules/search.md", "bbd774eda4fdb048790cae791af2af31a9fff43f"],
+            [".claude/rules/storage.md", "0d04f154a5668bd07a4bac77bdb613465fb5d9fa"],
+            [".claude/rules/testing.md", "d4499d0fd24bc4fa68f31431191f7e96bdb38c85"]
+          ],
+          "assessment": "unknown",
+          "reason": "AGENTS.md directs Codex to read CLAUDE.md as the SSOT but adds Codex-specific path guidance; Claude also receives path-scoped .claude/rules. A separate semantic-delivery assessment is required."
+        }
+      ]
+    },
+    "assessments": [
+      {
+        "candidate_id": "ghko-SeoyunL--factlog-academic-issue-314",
+        "base_tree_hash": "47004414a82cbf9d2218cda3661690b15c159ef2",
+        "project_instruction_profile": "full 373-entry tree contains root AGENTS.md plus root CLAUDE.md containing only @AGENTS.md, with no AGENTS.override.md",
+        "result": "pass",
+        "evidence_basis": [
+          "pinned-full-tree-api-inventory",
+          "claude-behavioral-import",
+          "codex-behavioral-root-AGENTS.md"
+        ]
+      },
+      {
+        "candidate_id": "ghmix-hskim-solv--BidMate-DocAgent-issue-1152",
+        "base_tree_hash": "40c93b2720fa97c94f479f0c5e13f6c4950df64b",
+        "project_instruction_profile": "full 845-entry tree contains root CLAUDE.md only, with no AGENTS.md or AGENTS.override.md",
+        "result": "fail",
+        "evidence_basis": [
+          "pinned-full-tree-api-inventory",
+          "claude-behavioral-CLAUDE.md",
+          "codex-official-document",
+          "local-empty-fallback-config"
+        ]
+      },
+      {
+        "candidate_id": "ghko-Lyainc--filme-issue-432",
+        "base_tree_hash": "bda44c3f34b49e97a50d11064f4486ca95a90b3a",
+        "project_instruction_profile": "full 452-entry tree has root CLAUDE.md only for a repository-root working directory; a descendant .claude/skills/react-best-practices/AGENTS.md is outside the root-to-cwd discovery chain",
+        "result": "fail",
+        "evidence_basis": [
+          "materialized-pinned-full-tree-inventory",
+          "claude-behavioral-CLAUDE.md",
+          "codex-official-document",
+          "local-empty-fallback-config"
+        ]
+      },
+      {
+        "candidate_id": "ghko-minacle--swift-tui-issue-15",
+        "base_tree_hash": "ce24efb94cc5f63405daa5fdd6d3feb3811d7bc3",
+        "project_instruction_profile": "full 219-entry tree contains root AGENTS.md only, with no CLAUDE.md or AGENTS.override.md",
+        "result": "fail",
+        "evidence_basis": [
+          "materialized-pinned-full-tree-inventory",
+          "claude-behavioral-discovery",
+          "codex-behavioral-root-AGENTS.md"
+        ]
+      },
+      {
+        "candidate_id": "ghmix-joshua-jingu-lee--ante-issue-2349",
+        "base_tree_hash": "c9df972424265b8a96e39ba06720138b6fe2d58b",
+        "project_instruction_profile": "full 1057-entry tree contains root CLAUDE.md symlink targeting root AGENTS.md, with no AGENTS.override.md",
+        "result": "pass",
+        "evidence_basis": [
+          "pinned-full-tree-api-inventory",
+          "claude-behavioral-CLAUDE.md",
+          "codex-behavioral-root-AGENTS.md"
+        ]
+      },
+      {
+        "candidate_id": "ghmix-semantic-reasoning--factlog-issue-26",
+        "base_tree_hash": "12a8b1a18e99c07121bdcef7be87573383e13228",
+        "project_instruction_profile": "full 77-entry tree contains no AGENTS.override.md, AGENTS.md, or CLAUDE.md path",
+        "result": "pass",
+        "evidence_basis": [
+          "pinned-full-tree-api-inventory",
+          "claude-behavioral-discovery",
+          "codex-official-document",
+          "local-empty-fallback-config"
+        ]
+      },
+      {
+        "candidate_id": "ghmix-e7217--anygarden-issue-512",
+        "base_tree_hash": "14d7dfb7bbeb011ae1d9949430d3499f834d05ea",
+        "project_instruction_profile": "full 941-entry tree has no discovered project instruction path for either CLI",
+        "result": "pass",
+        "evidence_basis": [
+          "pinned-full-tree-inventory",
+          "claude-behavioral-discovery",
+          "codex-official-document",
+          "local-empty-fallback-config"
+        ]
+      },
+      {
+        "candidate_id": "ghko-SeoyunL--factlog-academic-issue-342",
+        "base_tree_hash": "3f20d12afc7b5e7648c7c025c115bdbed434f286",
+        "project_instruction_profile": "root AGENTS.md plus root CLAUDE.md containing only @AGENTS.md",
+        "result": "pass",
+        "evidence_basis": [
+          "pinned-tree-inventory",
+          "claude-behavioral-import",
+          "codex-behavioral-root-AGENTS.md"
+        ]
+      },
+      {
+        "candidate_id": "ghmix-SeokRae--blog-issue-12",
+        "base_tree_hash": "9d3226c17f0ffd8dd0d55d628ce89acbb7bc7fb4",
+        "project_instruction_profile": "root CLAUDE.md only",
+        "result": "fail",
+        "evidence_basis": [
+          "pinned-tree-inventory",
+          "claude-behavioral-CLAUDE.md",
+          "codex-official-document",
+          "local-empty-fallback-config"
+        ]
+      },
+      {
+        "candidate_id": "ghmix-greenheadHQ--nixos-config-issue-918",
+        "base_tree_hash": "4a6191c67f86c45309211e751f58d30755dccbe6",
+        "project_instruction_profile": "byte-equivalent root AGENTS.md/CLAUDE.md plus a distinct root AGENTS.override.md",
+        "result": "fail",
+        "evidence_basis": [
+          "pinned-tree-inventory",
+          "claude-behavioral-CLAUDE.md",
+          "codex-official-override-precedence"
+        ]
+      },
+      {
+        "candidate_id": "ghko-ohah--zntc-issue-4564",
+        "base_tree_hash": "e8f9042f37ac5cac8215eb15842eda6176389296",
+        "project_instruction_profile": "distinct root CLAUDE.md and root AGENTS.md",
+        "result": "fail",
+        "evidence_basis": [
+          "pinned-tree-inventory",
+          "claude-behavioral-CLAUDE.md",
+          "codex-behavioral-root-AGENTS.md"
+        ]
+      },
+      {
+        "candidate_id": "ghko-ohah--zntc-issue-4563",
+        "base_tree_hash": "7944edc025e1d26c08ba352b0847a668de20c086",
+        "project_instruction_profile": "distinct root CLAUDE.md and root AGENTS.md",
+        "result": "fail",
+        "evidence_basis": [
+          "pinned-tree-inventory",
+          "claude-behavioral-CLAUDE.md",
+          "codex-behavioral-root-AGENTS.md"
+        ]
+      },
+      {
+        "candidate_id": "ghko-ohah--zntc-issue-4553",
+        "base_tree_hash": "2addf621e5cdf9a6882b0fd6a92b3d26b6a1966f",
+        "project_instruction_profile": "distinct root CLAUDE.md and root AGENTS.md",
+        "result": "fail",
+        "evidence_basis": [
+          "pinned-tree-inventory",
+          "claude-behavioral-CLAUDE.md",
+          "codex-behavioral-root-AGENTS.md"
+        ]
+      },
+      {
+        "candidate_id": "ghko-itismyfield--AgentDesk-issue-4606",
+        "base_tree_hash": "64cc2b883f9852a2cc4fa66390efe3ec1e82a63c",
+        "project_instruction_profile": "root CLAUDE.md only",
+        "result": "fail",
+        "evidence_basis": [
+          "pinned-tree-inventory",
+          "claude-behavioral-CLAUDE.md",
+          "codex-official-document",
+          "local-empty-fallback-config"
+        ]
+      }
+    ],
+    "explicit_non_inference": "Docker-Compose #38 and every other row represented only in the default-branch prevalence probe remain instruction_parity=unknown. Existing exclusions may remain for independent reasons."
   },
   "candidate_facts_resolved": [
     {
@@ -736,8 +1130,9 @@
         "bucket": "small",
         "protected_artifact_hash_unchanged": true,
         "pristine_base_clean": true,
-        "reproducible_within_budget": "unknown",
-        "remaining_blocker": "Instruction parity only. AGENTS.md 1047B with CLAUDE.md as an 11-byte @AGENTS.md import; Claude 2.1.215 measurably resolves the import, but the Codex side is unmeasured.",
+        "reproducible_within_budget": "pass",
+        "instruction_parity": "pass",
+        "remaining_blocker": null,
         "license_evidence_correction": "The ledger records this row's basis as 'Upstream repository metadata at the linked PR declares SPDX Apache-2.0', which is a classifier signal. The pinned base revision was materialized today and carries Apache-2.0 LICENSE plus NOTICE, and pyproject.toml declares Apache-2.0. The basis should be restated as pinned-revision artifact evidence."
       },
       {
@@ -758,8 +1153,9 @@
         "bucket": "small",
         "protected_artifact_hash_unchanged": true,
         "pristine_base_clean": true,
-        "reproducible_within_budget": "unknown",
-        "remaining_blocker": "Instruction parity only. CLAUDE.md is 12250 bytes with no AGENTS.md, the largest one-sided asymmetry observed among screened candidates.",
+        "reproducible_within_budget": "pass",
+        "instruction_parity": "fail",
+        "remaining_blocker": "Terminal project-instruction mismatch. Claude receives the pinned base's 12250-byte CLAUDE.md; Codex has no AGENTS.md, AGENTS.override.md, or configured fallback path for that content.",
         "observations": [
           "Genuinely bilingual requirement: Korean-ization of headings broke English anchor slugs, so both languages are load-bearing in the task rather than incidental.",
           "The real-repo sentinel test_repo_has_no_broken_fragments_today fails at base with AttributeError before it can report the four broken links, so it does not independently demonstrate that the base documentation was broken.",
@@ -767,6 +1163,6 @@
         ]
       }
     ],
-    "conclusion": "Both candidates now reproduce end to end without an agent: pinned toolchain, held-out or point-in-time evaluator, negative control failing only for the intended missing behaviour, positive control passing, unchanged protected artifact hashes and clean pristine bases, both well inside the small bucket. Neither row can move to selected, because the ledger folds instruction parity into reproducible_within_budget and the Codex half of the discovery measurement is blocked until 2026-07-25. The reason each row is held is now narrow and named, where before it was the whole rule."
+    "conclusion": "Both candidates reproduce end to end without an agent and pass reproducible_within_budget independently of project instruction parity. Under the v1.1 amendment, factlog-academic #314 passes the separate instruction-parity rule and moves to selected-for-task-authoring; BidMate #1152 fails that rule and is terminally excluded. selected-for-task-authoring remains a construction state, not an authored pilot task or execution authorization."
   }
 }

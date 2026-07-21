@@ -25,7 +25,7 @@
       "const": "paired-pilot-candidate-ledger-v1"
     },
     "protocol_version": {
-      "const": "phase2b-pilot-prereg-v1"
+      "const": "phase2b-pilot-prereg-v1.1"
     },
     "ledger_id": {
       "$ref": "#/$defs/safeIdentifier"
@@ -56,6 +56,7 @@
         "no-network-secret-push-production",
         "objective-evaluator-feasible",
         "gold-and-evaluator-hideable",
+        "instruction-parity",
         "reproducible-within-budget",
         "selection-independent-of-agent-results",
         "not-used-for-confirmatory-round"
@@ -72,6 +73,7 @@
         "subjective-only-evaluation",
         "broken-or-flaky-fixture",
         "gold-or-evaluator-leakage",
+        "instruction-parity-mismatch",
         "resource-budget-exceeded",
         "selected-after-agent-result",
         "previous-paired-task-reuse"
@@ -224,6 +226,7 @@
         "no_network_secret_push_production",
         "objective_evaluator_feasible",
         "gold_and_evaluator_hideable",
+        "instruction_parity",
         "reproducible_within_budget",
         "selection_independent_of_agent_results",
         "not_used_for_confirmatory_round"
@@ -237,6 +240,7 @@
         "no_network_secret_push_production": {"$ref": "#/$defs/screenState"},
         "objective_evaluator_feasible": {"$ref": "#/$defs/screenState"},
         "gold_and_evaluator_hideable": {"$ref": "#/$defs/screenState"},
+        "instruction_parity": {"$ref": "#/$defs/screenState"},
         "reproducible_within_budget": {"$ref": "#/$defs/screenState"},
         "selection_independent_of_agent_results": {"$ref": "#/$defs/screenState"},
         "not_used_for_confirmatory_round": {"$ref": "#/$defs/screenState"}
@@ -356,6 +360,7 @@
               "subjective-only-evaluation",
               "broken-or-flaky-fixture",
               "gold-or-evaluator-leakage",
+              "instruction-parity-mismatch",
               "resource-budget-exceeded",
               "selected-after-agent-result",
               "previous-paired-task-reuse"
@@ -433,6 +438,7 @@
                   "no_network_secret_push_production": {"const": "pass"},
                   "objective_evaluator_feasible": {"const": "pass"},
                   "gold_and_evaluator_hideable": {"const": "pass"},
+                  "instruction_parity": {"const": "pass"},
                   "reproducible_within_budget": {"const": "pass"},
                   "selection_independent_of_agent_results": {"const": "pass"},
                   "not_used_for_confirmatory_round": {"const": "pass"}
