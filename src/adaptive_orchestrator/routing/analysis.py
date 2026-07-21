@@ -3,10 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable, Mapping
 
-from .agents import Agent
-from .domain import Capability, Task
-from .history import ExecutionHistory
-from .planning import ExecutionPlan
+from adaptive_orchestrator.core.domain import Capability, Task
+from adaptive_orchestrator.execution.agents import Agent
+from adaptive_orchestrator.infrastructure.history import ExecutionHistory
+from adaptive_orchestrator.orchestration.planning import ExecutionPlan
 
 
 _KEYWORDS: Mapping[Capability, tuple[str, ...]] = {

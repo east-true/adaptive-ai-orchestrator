@@ -8,20 +8,20 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from adaptive_orchestrator.agents import CodexAgent
-from adaptive_orchestrator.domain import ExecutionStatus, Task
-from adaptive_orchestrator.events import JsonlEventStore, LifecycleEvent, LifecycleEventType
-from adaptive_orchestrator.kernel import OrchestratorKernel
-from adaptive_orchestrator.logging import JsonlExecutionLogger
-from adaptive_orchestrator.process_runner import ProcessResult
-from adaptive_orchestrator.replay import (
+from adaptive_orchestrator.execution.agents import CodexAgent
+from adaptive_orchestrator.core.domain import ExecutionStatus, Task
+from adaptive_orchestrator.infrastructure.events import JsonlEventStore, LifecycleEvent, LifecycleEventType
+from adaptive_orchestrator.orchestration.kernel import OrchestratorKernel
+from adaptive_orchestrator.infrastructure.logging import JsonlExecutionLogger
+from adaptive_orchestrator.execution.process_runner import ProcessResult
+from adaptive_orchestrator.operations.replay import (
     replay_digest,
     replay_event_log,
     replay_events,
     summarize_attempts,
     validate_legacy_execution_log,
 )
-from adaptive_orchestrator.routing_state import EventProjector, LifecycleRecorder, ReplayError
+from adaptive_orchestrator.routing.state import EventProjector, LifecycleRecorder, ReplayError
 
 
 def selection_payload(agent_id: str = "codex") -> dict[str, object]:

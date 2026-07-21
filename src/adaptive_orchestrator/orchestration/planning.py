@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable
 
-from .agents import Agent
-from .domain import Task
+from adaptive_orchestrator.core.domain import Task
+from adaptive_orchestrator.execution.agents import Agent
 
 
 @dataclass(frozen=True, slots=True)

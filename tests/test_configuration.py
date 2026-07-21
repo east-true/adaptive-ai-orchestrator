@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from adaptive_orchestrator.configuration import (
+from adaptive_orchestrator.infrastructure.configuration import (
     ProjectConfigError,
     config_path,
     detect_verification_commands,

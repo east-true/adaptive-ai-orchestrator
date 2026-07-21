@@ -9,8 +9,8 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from adaptive_orchestrator.configuration import initialize_project_config
-from adaptive_orchestrator.diagnostics import diagnose_project, diagnostics_succeeded
+from adaptive_orchestrator.infrastructure.configuration import initialize_project_config
+from adaptive_orchestrator.operations.diagnostics import diagnose_project, diagnostics_succeeded
 
 
 class DiagnoseProjectTests(unittest.TestCase):
@@ -19,8 +19,8 @@ class DiagnoseProjectTests(unittest.TestCase):
             workspace = Path(directory)
             initialize_project_config(workspace)
             completed = subprocess.CompletedProcess([], 0, stdout="logged in\n", stderr="")
-            with patch("adaptive_orchestrator.diagnostics.shutil.which", side_effect=lambda name: f"/bin/{name}"), patch(
-                "adaptive_orchestrator.diagnostics.subprocess.run", return_value=completed
+            with patch("adaptive_orchestrator.operations.diagnostics.shutil.which", side_effect=lambda name: f"/bin/{name}"), patch(
+                "adaptive_orchestrator.operations.diagnostics.subprocess.run", return_value=completed
             ):
                 checks = diagnose_project(workspace)
 
@@ -31,7 +31,7 @@ class DiagnoseProjectTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory)
             initialize_project_config(workspace)
-            with patch("adaptive_orchestrator.diagnostics.shutil.which", return_value=None):
+            with patch("adaptive_orchestrator.operations.diagnostics.shutil.which", return_value=None):
                 checks = diagnose_project(workspace)
         statuses = {check.name: check.status for check in checks}
         self.assertEqual(statuses["claude-code"], "WARN")
@@ -45,7 +45,7 @@ class DiagnoseProjectTests(unittest.TestCase):
             path = workspace / ".orchestrator" / "config.json"
             path.parent.mkdir()
             path.write_text("{broken", encoding="utf-8")
-            with patch("adaptive_orchestrator.diagnostics.shutil.which", return_value=None):
+            with patch("adaptive_orchestrator.operations.diagnostics.shutil.which", return_value=None):
                 checks = diagnose_project(workspace)
         self.assertEqual({check.name: check.status for check in checks}["config"], "FAIL")
 

@@ -1,7 +1,7 @@
 """CLI-first orchestration kernel for adaptive AI software engineering."""
 
-from .agents import Agent, ClaudeCodeAgent, CodexAgent
-from .domain import (
+from .execution.agents import Agent, ClaudeCodeAgent, CodexAgent
+from .core.domain import (
     Capability,
     EvaluatorResult,
     EvaluatorRole,
@@ -16,10 +16,10 @@ from .domain import (
     VerificationResult,
     VerificationStatus,
 )
-from .kernel import OrchestratorKernel
-from .memory import EngineeringMemoryStore
-from .events import LifecycleEvent, LifecycleEventType
-from .routing_policy import CorrectedStaticRouter, RoutingPolicyRouter
+from .orchestration.kernel import OrchestratorKernel
+from .infrastructure.memory import EngineeringMemoryStore
+from .infrastructure.events import LifecycleEvent, LifecycleEventType
+from .routing.policy import CorrectedStaticRouter, RoutingPolicyRouter
 
 __all__ = [
     "Agent",

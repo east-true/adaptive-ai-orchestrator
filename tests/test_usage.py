@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from adaptive_orchestrator.usage import CodexUsage, read_claude_subscription, read_codex_usage
+from adaptive_orchestrator.operations.usage import CodexUsage, read_claude_subscription, read_codex_usage
 
 
 def _rate_limit_line(used_percent: float = 1.0) -> str:
@@ -68,7 +68,7 @@ class CodexUsageTests(unittest.TestCase):
 
 
 class ClaudeSubscriptionTests(unittest.TestCase):
-    @patch("adaptive_orchestrator.usage.subprocess.run")
+    @patch("adaptive_orchestrator.operations.usage.subprocess.run")
     def test_valid_json_returns_subscription_type(self, run: Mock) -> None:
         run.return_value = subprocess.CompletedProcess([], 0, json.dumps({"subscriptionType": "pro"}), "")
         self.assertEqual(read_claude_subscription(), "pro")
@@ -76,16 +76,16 @@ class ClaudeSubscriptionTests(unittest.TestCase):
             ["claude", "auth", "status"], capture_output=True, text=True, check=False, timeout=5.0
         )
 
-    @patch("adaptive_orchestrator.usage.subprocess.run")
+    @patch("adaptive_orchestrator.operations.usage.subprocess.run")
     def test_nonzero_exit_returns_none(self, run: Mock) -> None:
         run.return_value = subprocess.CompletedProcess([], 1, "", "failed")
         self.assertIsNone(read_claude_subscription())
 
-    @patch("adaptive_orchestrator.usage.subprocess.run", side_effect=subprocess.TimeoutExpired("claude", 5))
+    @patch("adaptive_orchestrator.operations.usage.subprocess.run", side_effect=subprocess.TimeoutExpired("claude", 5))
     def test_timeout_returns_none(self, run: Mock) -> None:
         self.assertIsNone(read_claude_subscription())
 
-    @patch("adaptive_orchestrator.usage.subprocess.run")
+    @patch("adaptive_orchestrator.operations.usage.subprocess.run")
     def test_malformed_json_returns_none(self, run: Mock) -> None:
         run.return_value = subprocess.CompletedProcess([], 0, "not json", "")
         self.assertIsNone(read_claude_subscription())

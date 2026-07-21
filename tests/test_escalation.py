@@ -5,16 +5,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from adaptive_orchestrator.agents import ClaudeCodeAgent, CodexAgent
-from adaptive_orchestrator.domain import Capability, ExecutionStatus, Task, VerificationStatus
-from adaptive_orchestrator.escalation import EscalationPolicy
-from adaptive_orchestrator.events import JsonlEventStore, LifecycleEventType
-from adaptive_orchestrator.kernel import OrchestratorKernel
-from adaptive_orchestrator.logging import JsonlExecutionLogger
-from adaptive_orchestrator.planning import CapabilitySelector
-from adaptive_orchestrator.process_runner import ProcessResult
-from adaptive_orchestrator.verification import CommandVerifier
-from adaptive_orchestrator.workflow import EngineeringWorkflow
+from adaptive_orchestrator.execution.agents import ClaudeCodeAgent, CodexAgent
+from adaptive_orchestrator.core.domain import Capability, ExecutionStatus, Task, VerificationStatus
+from adaptive_orchestrator.orchestration.escalation import EscalationPolicy
+from adaptive_orchestrator.infrastructure.events import JsonlEventStore, LifecycleEventType
+from adaptive_orchestrator.orchestration.kernel import OrchestratorKernel
+from adaptive_orchestrator.infrastructure.logging import JsonlExecutionLogger
+from adaptive_orchestrator.orchestration.planning import CapabilitySelector
+from adaptive_orchestrator.execution.process_runner import ProcessResult
+from adaptive_orchestrator.execution.verification import CommandVerifier
+from adaptive_orchestrator.orchestration.workflow import EngineeringWorkflow
 
 
 class EscalationPolicyTests(unittest.TestCase):

@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from adaptive_orchestrator.state_paths import resolve_control_state_directory
+from adaptive_orchestrator.infrastructure.state_paths import resolve_control_state_directory
 
 
 class ResolveControlStateDirectoryTests(unittest.TestCase):

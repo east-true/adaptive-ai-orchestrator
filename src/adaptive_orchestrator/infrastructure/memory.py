@@ -4,8 +4,8 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from .domain import MemoryEntry, MemoryEntryType
-from .logging import redact
+from adaptive_orchestrator.core.domain import MemoryEntry, MemoryEntryType
+from adaptive_orchestrator.infrastructure.logging import redact
 
 
 class EngineeringMemoryStore:

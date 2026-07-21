@@ -13,9 +13,9 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Iterable, Mapping, Sequence
 from uuid import NAMESPACE_URL, uuid5
 
-from .domain import Capability
-from .routing_state import RoutingState
-from .verification import evaluator_content_version, hash_evaluator_artifacts, validate_evaluator_artifacts
+from adaptive_orchestrator.core.domain import Capability
+from adaptive_orchestrator.execution.verification import evaluator_content_version, hash_evaluator_artifacts, validate_evaluator_artifacts
+from adaptive_orchestrator.routing.state import RoutingState
 
 PAIRED_MANIFEST_SCHEMA = "paired-smoke-manifest-v1"
 PAIRED_MANIFEST_SCHEMA_V2 = "paired-smoke-manifest-v2"

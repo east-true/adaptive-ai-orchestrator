@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from adaptive_orchestrator.notifications import notify_execution
+from adaptive_orchestrator.operations.notifications import notify_execution
 
 
 class NotifyExecutionTests(unittest.TestCase):
@@ -29,8 +29,8 @@ class NotifyExecutionTests(unittest.TestCase):
             "task": {"description": "private task details"},
         }
         completed = subprocess.CompletedProcess([], 0, stdout="", stderr="")
-        with patch("adaptive_orchestrator.notifications.shutil.which", return_value="/usr/bin/notify-send"), patch(
-            "adaptive_orchestrator.notifications.subprocess.run", return_value=completed
+        with patch("adaptive_orchestrator.operations.notifications.shutil.which", return_value="/usr/bin/notify-send"), patch(
+            "adaptive_orchestrator.operations.notifications.subprocess.run", return_value=completed
         ) as run:
             results = notify_execution(record, desktop=True)
         command = run.call_args.args[0]
@@ -39,7 +39,7 @@ class NotifyExecutionTests(unittest.TestCase):
         self.assertTrue(results[0].delivered)
 
     def test_missing_desktop_notifier_is_a_nonfatal_delivery_failure(self) -> None:
-        with patch("adaptive_orchestrator.notifications.shutil.which", return_value=None):
+        with patch("adaptive_orchestrator.operations.notifications.shutil.which", return_value=None):
             results = notify_execution({"status": "completed"}, desktop=True)
         self.assertFalse(results[0].delivered)
         self.assertIn("not found", results[0].detail)

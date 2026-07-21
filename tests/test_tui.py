@@ -6,9 +6,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from adaptive_orchestrator.tui import build_task_command, dashboard_rows
-from adaptive_orchestrator.events import LifecycleEvent, LifecycleEventType
-from adaptive_orchestrator.routing_state import EventProjector
+from adaptive_orchestrator.interfaces.tui import build_task_command, dashboard_rows
+from adaptive_orchestrator.infrastructure.events import LifecycleEvent, LifecycleEventType
+from adaptive_orchestrator.routing.state import EventProjector
 
 
 class DashboardRowsTests(unittest.TestCase):

@@ -7,7 +7,7 @@ from pathlib import Path
 from time import perf_counter
 from typing import Callable, Protocol, Sequence
 
-from .domain import ExecutionStatus
+from adaptive_orchestrator.core.domain import ExecutionStatus
 
 
 @dataclass(frozen=True, slots=True)

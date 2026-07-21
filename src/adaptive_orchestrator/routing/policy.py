@@ -6,13 +6,13 @@ import random
 from dataclasses import dataclass
 from typing import Callable, Iterable, Mapping
 
-from .agents import Agent
-from .domain import Capability, Task
-from .history import AgentMetrics, ExecutionHistory
-from .planning import ExecutionPlan
-from .routing import AdaptiveRouter, TaskAnalysis, TaskAnalyzer
-from .routing_context import RoutingContext, RoutingContextBuilder
-from .routing_state import RoutingState
+from adaptive_orchestrator.core.domain import Capability, Task
+from adaptive_orchestrator.execution.agents import Agent
+from adaptive_orchestrator.infrastructure.history import AgentMetrics, ExecutionHistory
+from adaptive_orchestrator.orchestration.planning import ExecutionPlan
+from adaptive_orchestrator.routing.analysis import AdaptiveRouter, TaskAnalysis, TaskAnalyzer
+from adaptive_orchestrator.routing.context import RoutingContext, RoutingContextBuilder
+from adaptive_orchestrator.routing.state import RoutingState
 
 
 class CorrectedStaticRouter:

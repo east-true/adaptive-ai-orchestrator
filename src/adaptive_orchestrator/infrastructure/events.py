@@ -11,7 +11,7 @@ from uuid import uuid4
 
 import fcntl
 
-from .logging import redact
+from adaptive_orchestrator.infrastructure.logging import redact
 
 EVENT_SCHEMA_VERSION = 1
 

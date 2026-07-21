@@ -6,14 +6,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from adaptive_orchestrator.agents import ClaudeCodeAgent, CodexAgent
-from adaptive_orchestrator.domain import Capability, Task
-from adaptive_orchestrator.events import JsonlEventStore, LifecycleEventType
-from adaptive_orchestrator.history import ExecutionHistory
-from adaptive_orchestrator.routing import TaskAnalyzer
-from adaptive_orchestrator.routing_context import RoutingContextBuilder
-from adaptive_orchestrator.routing_policy import CorrectedStaticRouter, RoutingPolicyRouter, ShadowBaselineEvaluator
-from adaptive_orchestrator.routing_state import LifecycleRecorder
+from adaptive_orchestrator.execution.agents import ClaudeCodeAgent, CodexAgent
+from adaptive_orchestrator.core.domain import Capability, Task
+from adaptive_orchestrator.infrastructure.events import JsonlEventStore, LifecycleEventType
+from adaptive_orchestrator.infrastructure.history import ExecutionHistory
+from adaptive_orchestrator.routing.analysis import TaskAnalyzer
+from adaptive_orchestrator.routing.context import RoutingContextBuilder
+from adaptive_orchestrator.routing.policy import CorrectedStaticRouter, RoutingPolicyRouter, ShadowBaselineEvaluator
+from adaptive_orchestrator.routing.state import LifecycleRecorder
 
 
 class CorrectedStaticRouterTests(unittest.TestCase):

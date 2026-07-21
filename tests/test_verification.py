@@ -5,9 +5,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from adaptive_orchestrator.domain import EvaluatorRole, EvaluatorSpec, EvaluatorStatus, ExecutionStatus, Task, VerificationStatus
-from adaptive_orchestrator.process_runner import ProcessResult
-from adaptive_orchestrator.verification import CommandVerifier
+from adaptive_orchestrator.core.domain import EvaluatorRole, EvaluatorSpec, EvaluatorStatus, ExecutionStatus, Task, VerificationStatus
+from adaptive_orchestrator.execution.process_runner import ProcessResult
+from adaptive_orchestrator.execution.verification import CommandVerifier
 
 
 class ScriptedRunner:

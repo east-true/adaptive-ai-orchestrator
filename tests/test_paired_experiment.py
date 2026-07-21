@@ -8,9 +8,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from adaptive_orchestrator.events import JsonlEventStore, LifecycleEventType
-from adaptive_orchestrator.domain import ExecutionStatus
-from adaptive_orchestrator.paired_experiment import (
+from adaptive_orchestrator.infrastructure.events import JsonlEventStore, LifecycleEventType
+from adaptive_orchestrator.core.domain import ExecutionStatus
+from adaptive_orchestrator.experiments.paired_experiment import (
     ORDER_ASSIGNMENT_RULE,
     PAIRED_MANIFEST_SCHEMA,
     PAIRED_MANIFEST_SCHEMA_V2,
@@ -28,10 +28,10 @@ from adaptive_orchestrator.paired_experiment import (
     prepare_paired_workspaces,
     validate_paired_environment,
 )
-from adaptive_orchestrator.paired_runner import PairedExecutionError, PairedSmokeRunner
-from adaptive_orchestrator.process_runner import ProcessResult
-from adaptive_orchestrator.routing_state import LifecycleRecorder
-from adaptive_orchestrator.verification import evaluator_content_version, hash_evaluator_artifacts
+from adaptive_orchestrator.experiments.paired_runner import PairedExecutionError, PairedSmokeRunner
+from adaptive_orchestrator.execution.process_runner import ProcessResult
+from adaptive_orchestrator.routing.state import LifecycleRecorder
+from adaptive_orchestrator.execution.verification import evaluator_content_version, hash_evaluator_artifacts
 
 
 def git(repository: Path, *arguments: str) -> str:
