@@ -509,13 +509,21 @@ The current implementation was locally validated against Claude Code `2.1.211` a
 
 ## Next development increment
 
-Use the frozen generalized Phase 2b contract and the
-[source-candidate ledger rules](docs/paired-pilot-candidate-ledger.md) to finish
-and freeze result-blind source screening,
-then construct the 60 native Korean/English/mixed tasks and their protected
-task-specific evaluators through independent author/reviewer roles. Validate the
-completed manifest, evaluator controls, and agent-free dry run before requesting
-separate approval for 120 agent executions. Do not enable prospective exploration
-or promote a learned policy. See the
+Phase 2b currently has 7 of the required 60 `selected-for-task-authoring`
+candidates, and the global-instruction parity gate is unresolved. Continue in
+this order:
+
+1. finish result-blind exact-base/license/instruction-parity source screening;
+2. equalize or isolate global agent instructions and pin effective hashes;
+3. freeze the 60-candidate ledger with Korean/English/mixed and category quotas;
+4. construct tasks and protected evaluators through independent author roles;
+5. complete independent validity review and the Phase 2b semantic validator;
+6. pass the agent-free 120-workspace dry run and freeze the manifest;
+7. request separate approval before any 120-execution run.
+
+Do not relax quotas when the source pool is insufficient, enable prospective
+exploration, or promote a learned policy. The authoritative resume point is
+[Current resume point and fixed work order](docs/adaptive-routing-progress.md#현재-재개-지점과-고정-작업-순서-2026-07-22),
+with detailed gates in the
 [pilot preregistration contract](docs/paired-pilot-preregistration.md) and
-[progress handoff](docs/adaptive-routing-progress.md) for the gates.
+[source-candidate ledger rules](docs/paired-pilot-candidate-ledger.md).
