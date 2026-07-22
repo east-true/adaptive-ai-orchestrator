@@ -20165,15 +20165,29 @@
       "source_reference": "https://github.com/Aiddoo/Aido-platform/issues/655",
       "source_statement_available": true,
       "task_statement_hash": "759eb2e900f1d91d7f2d3a3980ef2e69a216d348356780cf1cd4b2d4f90782b2",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
-      "solution_revision": null,
-      "solution_artifact_hash": null,
-      "solution_tree_hash": null,
+      "base_revision": "f3083d85af3f9c7632448c0f276ac552bd7308cc",
+      "base_tree_hash": "3877f9457c1213cd2bb9ffa66582a4ea34e0494d",
+      "solution_reference": "https://github.com/Aiddoo/Aido-platform/pull/656",
+      "solution_revision": "6fcd167d32bcd29093e625a6c2617b084f1f8b78",
+      "solution_artifact_hash": "baae84b0fe0f1b627dca2633ba287d72aeeb0bb6c0ad6e1fe4bca32a8cd918ce",
+      "solution_tree_hash": "742d5fef0011e7151af41723af311c5a708d8ac0",
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        "apps/api/src/ai-suggestion/ai-suggestion.module.ts",
+        "apps/api/src/ai-suggestion/infrastructure/jobs/suggestion-analysis.job.spec.ts",
+        "apps/api/src/ai-suggestion/infrastructure/jobs/suggestion-analysis.job.ts",
+        "apps/api/src/ai-suggestion/infrastructure/queue/ai-suggestion-queue-maintenance.service.spec.ts",
+        "apps/api/src/ai-suggestion/infrastructure/queue/ai-suggestion-queue-maintenance.service.ts",
+        "apps/api/src/ai-suggestion/infrastructure/queue/ai-suggestion-retention.policy.ts",
+        "apps/api/src/health/health.module.ts",
+        "apps/api/src/health/indicators/bull.health.spec.ts",
+        "apps/api/src/health/indicators/bull.health.ts",
+        "apps/api/src/health/indicators/redis-eviction-policy.probe.spec.ts",
+        "apps/api/src/health/indicators/redis-eviction-policy.probe.ts",
+        "apps/api/test/e2e/health-queue-policy.e2e-spec.ts",
+        "apps/api/test/integration/ai-suggestion-queue-maintenance.integration-spec.ts"
+      ],
+      "license_or_use_basis": "MIT full text is present as LICENSE at pinned base revision f3083d85af3f9c7632448c0f276ac552bd7308cc (Git blob 80a680bd0dbd5fc95dd9b09bdc702104c242e1ba; content SHA-256 9e6e28199ef0645f8f940217d8a9c81ca606c747a7acfa9358e3293a9cc052b7), read from the materialized revision rather than repository metadata or the default branch.",
       "provisional_classification": {
         "instruction_language": null,
         "task_category": null,
@@ -20181,9 +20195,9 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
-        "single_bounded_task": "unknown",
+        "license_or_use_basis": "pass",
+        "exact_base_resolvable": "pass",
+        "single_bounded_task": "fail",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
@@ -20192,13 +20206,17 @@
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass",
-        "instruction_parity": "unknown"
+        "instruction_parity": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "multiple-coupled-issues"
+      ],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #656이 파일 13개를 바꾸며 그중 6개가 테스트다(apps/api/src/ai-suggestion/infrastructure/jobs/suggestion-analysis.job.spec.ts, apps/api/src/ai-suggestion/infrastructure/queue/ai-suggestion-queue-maintenance.service.spec.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #656이 파일 13개를 바꾸며 그중 6개가 테스트다(apps/api/src/ai-suggestion/infrastructure/jobs/suggestion-analysis.job.spec.ts, apps/api/src/ai-suggestion/infrastructure/queue/ai-suggestion-queue-maintenance.service.spec.ts 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "2026-07-22: linked merged PR #656의 API base f3083d85af3f9c7632448c0f276ac552bd7308cc와 head 6fcd167d32bcd29093e625a6c2617b084f1f8b78을 git protocol로 materialize하고 base가 head의 ancestor임을 확인했다. Base tree는 3877f9457c1213cd2bb9ffa66582a4ea34e0494d, head tree는 742d5fef0011e7151af41723af311c5a708d8ac0이며 solution_artifact_hash는 fetched PR .diff의 SHA-256이다. Changed files는 materialized base-to-head diff에서 읽었고 MIT license는 pinned base의 LICENSE에서 직접 확인했다.",
+        "2026-07-22 result-blind source assessment: 원 이슈는 실패 job 보존·정리와 dispatch fail-open 정책 외에, 관측된 실패 원인이 아니라고 명시된 Redis maxmemory eviction health probe를 별도 요구사항으로 둔다. 운영 parameter-group 변경도 PR 밖의 별도 조치다. 서로 다른 원인·수용 기준을 한 paired task로 합치면 단일한 독립 평가 단위를 보존할 수 없어 single_bounded_task=fail, multiple-coupled-issues로 제외한다. Exact base의 root 및 apps/api scope에서 CLAUDE.md가 각각 대응 AGENTS.md를 @import하므로 project instruction parity는 pass다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -23969,15 +23987,35 @@
       "source_reference": "https://github.com/hissinger/small-village/issues/51",
       "source_statement_available": true,
       "task_statement_hash": "81285d64ec63007efaf716bf7a55dc435e610c0a328b6fcbaddf9c1bfcaf7549",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
-      "solution_revision": null,
-      "solution_artifact_hash": null,
-      "solution_tree_hash": null,
+      "base_revision": "a8cb2884be553f91f2bfa50e306b5def1e6fc072",
+      "base_tree_hash": "e191b027d4c1a7d410b10958701b2c3ce9b9967c",
+      "solution_reference": "https://github.com/hissinger/small-village/pull/55",
+      "solution_revision": "7f43eaacf1a89bf14af8e22a69b0bc34d3669541",
+      "solution_artifact_hash": "fb80d4c96c02ec88013ef3bd8f785d0efc580b179a08ed6b56cac2e80f892674",
+      "solution_tree_hash": "7ae34c27e1965da4652537134bfdea6044e44858",
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        "docs/roster-position-split-plan.md",
+        "e2e/README.md",
+        "e2e/position-broadcast.mjs",
+        "src/components/SpatialAudioController.tsx",
+        "src/constants/index.ts",
+        "src/constants/scene.ts",
+        "src/constants/session.ts",
+        "src/context/RoomParticipantsContext.test.tsx",
+        "src/context/RoomParticipantsContext.tsx",
+        "src/hooks/__tests__/useRemotePositions.test.tsx",
+        "src/hooks/useLocalParticipant.tsx",
+        "src/hooks/useRemotePositions.tsx",
+        "src/lib/positionChannel.test.ts",
+        "src/lib/positionChannel.ts",
+        "src/lib/roomSize.ts",
+        "src/lib/supabaseClient.ts",
+        "src/lib/userState.ts",
+        "src/pages/SmallVillageScreen.tsx",
+        "src/scenes/SmallVillageScene.ts"
+      ],
+      "license_or_use_basis": "Apache License 2.0 full text is present as LICENSE at pinned base revision a8cb2884be553f91f2bfa50e306b5def1e6fc072 (Git blob d645695673349e3947e8e5ae42332d0ac3164cd7; content SHA-256 cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30), read from the materialized revision rather than repository metadata or the default branch.",
       "provisional_classification": {
         "instruction_language": null,
         "task_category": null,
@@ -23985,9 +24023,9 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
-        "single_bounded_task": "unknown",
+        "license_or_use_basis": "pass",
+        "exact_base_resolvable": "pass",
+        "single_bounded_task": "fail",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
@@ -23996,13 +24034,17 @@
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass",
-        "instruction_parity": "unknown"
+        "instruction_parity": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "multiple-coupled-issues"
+      ],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #55이 파일 19개를 바꾸며 그중 3개가 테스트다(src/context/RoomParticipantsContext.test.tsx, src/hooks/__tests__/useRemotePositions.test.tsx 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #55이 파일 19개를 바꾸며 그중 3개가 테스트다(src/context/RoomParticipantsContext.test.tsx, src/hooks/__tests__/useRemotePositions.test.tsx 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "2026-07-22: linked merged PR #55의 API base a8cb2884be553f91f2bfa50e306b5def1e6fc072와 head 7f43eaacf1a89bf14af8e22a69b0bc34d3669541을 git protocol로 materialize하고 base가 head의 ancestor임을 확인했다. Base tree는 e191b027d4c1a7d410b10958701b2c3ce9b9967c, head tree는 7ae34c27e1965da4652537134bfdea6044e44858이며 solution_artifact_hash는 fetched PR .diff의 SHA-256이다. Changed files는 materialized base-to-head diff에서 읽었고 Apache-2.0 license는 pinned base의 LICENSE에서 직접 확인했다.",
+        "2026-07-22 result-blind source assessment: 원 이슈는 position/membership 분리와 그 구현 대안 A/B를 우선 과제로 두면서, reconcile의 O(N) full fetch, heartbeat마다 Map 재생성·re-render, naming 정리를 후속 기회로 별도 열거한다. transport·polling·render·naming의 독립된 수용 기준을 한 paired task로 합치지 않기 위해 single_bounded_task=fail, multiple-coupled-issues로 제외한다. Exact base의 root CLAUDE.md symlink가 root AGENTS.md를 가리키므로 project instruction parity는 pass다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -24432,51 +24474,47 @@
       "task_statement_hash": "644b376abb2e2431faa490bbb1cbd645d20decda4077aed08aa092b1598ebfce",
       "base_revision": "07817b2a0e8bd9095d2f7b68ffc3a7c446c9d00d",
       "base_tree_hash": "3f20d12afc7b5e7648c7c025c115bdbed434f286",
-      "solution_reference": "https://github.com/SeoyunL/factlog-academic/pull/352",
-      "solution_revision": null,
-      "solution_artifact_hash": "fd643442bef80ace1bda153bdafda6469cec259041fa4cf398bf8863ae54bede",
-      "solution_tree_hash": null,
+      "solution_reference": "https://github.com/SeoyunL/factlog-academic/commit/6a31ec8c4eb53ec1e1a4a68b3d30a01e89e33440",
+      "solution_revision": "6a31ec8c4eb53ec1e1a4a68b3d30a01e89e33440",
+      "solution_artifact_hash": "6b1dcd453355162eab5208b26fe7c7a590757491f0a625c0b69957dc8abbe420",
+      "solution_tree_hash": "5286d5fa86043b8b61c7b552d955a229dde891b3",
       "source_evaluator_artifact_hash": null,
       "changed_files": [
-        "examples/sample-kb/README.md",
-        "examples/sample-kb/facts/logic_report.txt",
-        "factlog/common.py",
-        "tests/golden/logic_report.txt",
-        "tests/test_count_check.sh",
-        "tests/unit/test_malformed_query_report.py",
-        "tests/unit/test_policy_result_entity_filter.py",
-        "tests/unit/test_query_dispatch_exact.py",
         "tests/unit/test_run_logic_check.py",
         "tools/run_logic_check.py"
       ],
       "license_or_use_basis": "Apache-2.0 full text present at the pinned base revision 07817b2a0e8bd9095d2f7b68ffc3a7c446c9d00d as LICENSE with NOTICE, and pyproject.toml declares license = \"Apache-2.0\"; read from a materialized checkout of that revision.",
       "provisional_classification": {
-        "instruction_language": null,
-        "task_category": null,
-        "repository_code_language": null,
-        "repository_doc_language": null
+        "instruction_language": "ko",
+        "task_category": "debugging",
+        "repository_code_language": "python",
+        "repository_doc_language": "mixed"
       },
       "screening": {
         "license_or_use_basis": "pass",
         "exact_base_resolvable": "pass",
-        "single_bounded_task": "unknown",
-        "native_language_source": "unknown",
-        "low_risk_isolated_execution": "unknown",
-        "no_network_secret_push_production": "unknown",
-        "objective_evaluator_feasible": "unknown",
-        "gold_and_evaluator_hideable": "unknown",
-        "reproducible_within_budget": "unknown",
+        "single_bounded_task": "pass",
+        "native_language_source": "pass",
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass",
+        "reproducible_within_budget": "pass",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass",
         "instruction_parity": "pass"
       },
-      "decision": "screening",
+      "decision": "selected-for-task-authoring",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
         "기계적 사전필터: 이 이슈를 참조하는 merged PR #352이 파일 10개를 바꾸며 그중 6개가 테스트다(tests/golden/logic_report.txt, tests/test_count_check.sh 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
         "2026-07-20: linked merged pull request #352 confirmed to reference this issue and not be release automation. Base 07817b2a0e8bd9095d2f7b68ffc3a7c446c9d00d materialized; tree 3f20d12afc7b5e7648c7c025c115bdbed434f286. Base resolved over the git protocol from the linked pull request's earliest commit parent, then materialized; the tree hash was read with 'git rev-parse HEAD^{tree}' in that checkout, never from GET /git/trees. License read from the pinned base tree, not the default branch or a metadata classifier. solution_artifact_hash is the SHA-256 of the fetched pull request .diff. Remaining inclusion rules stay unknown, so the row stays screening. Instruction-file observation at the pinned base: AGENTS.md 1047 bytes with CLAUDE.md an 11-byte '@AGENTS.md' import. Claude Code 2.1.215 was measured to resolve that import, so the Claude side receives AGENTS.md content; the Codex side is unmeasured. The merged pull request spans 10 files including four test files, so single_bounded_task is not settled by this row's resolution.",
-        "2026-07-22 protocol v1.1 assessment at pinned tree 3f20d12afc7b5e7648c7c025c115bdbed434f286: project instruction parity passes. Claude behaviorally resolves root CLAUDE.md containing only @AGENTS.md, and Codex 0.144.6 behaviorally loaded a root AGENTS.md. Other inclusion rules remain unknown, so the row remains screening."
+        "2026-07-22 protocol v1.1 assessment at pinned tree 3f20d12afc7b5e7648c7c025c115bdbed434f286: project instruction parity passes. Claude behaviorally resolves root CLAUDE.md containing only @AGENTS.md, and Codex 0.144.6 behaviorally loaded a root AGENTS.md. Other inclusion rules remain unknown, so the row remains screening.",
+        "2026-07-22 source boundary review: issue #342 is one native Korean debugging task. A malformed JSON-like quoted token reaches arg_value without the repository's existing is_quoted_string guard and crashes validate_query with JSONDecodeError; the statement names the line, reproducer, intended guard and invariant that no inline copy remains. The behavior is deterministic and isolated, with no network, credentials, push, production mutation or destructive state.",
+        "Merged PR #352 bundles six separately identified issues, so its earlier 10-file whole-PR provenance was too broad for this candidate. The PR's own atomic mapping and commit graph identify first commit 6a31ec8c4eb53ec1e1a4a68b3d30a01e89e33440 as #342 only, with exact base parent 07817b2a0e8bd9095d2f7b68ffc3a7c446c9d00d. The atomic commit changes only tools/run_logic_check.py and tests/unit/test_run_logic_check.py; its tree is 5286d5fa86043b8b61c7b552d955a229dde891b3. solution_artifact_hash is the SHA-256 of the fetched commit .diff, replacing the previous whole-PR hash.",
+        "Agent-free controls used CPython 3.11.15 from python-build-standalone 20260718; the 47 MB archive SHA-256 c2082e977138e307e3da4ea2c65421d3cb6b80f4890890b28b96fc6b422d4f0d matches the publisher value already pinned in phase2b-provisioning-measurements-2026-07-19.json. A 1,076-byte read-only screening probe derived only from the issue checked the malformed-token no-crash result and a valid quoted-entity non-regression. At the exact base it failed in 0.28 s only with the stated JSONDecodeError; at the atomic solution it passed 2/2 in 0.27 s. The probe SHA-256 2fd39d7456a8932b949285aa9fe3b41a1a8891da93e362a9ffb8578a57e42f10 and mode 0444 were unchanged after both runs, and both checkouts remained clean at their recorded trees. No third-party dependency is imported by this evaluator path.",
+        "The screening probe establishes objective feasibility, hideability and small-bucket reproducibility but is not the final pilot evaluator. All twelve rules now pass, so the row moves to selected-for-task-authoring; task authoring, independent final evaluator authoring, validity review, manifest freeze and agent execution remain unperformed."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-20",
       "confirmatory_reuse_allowed": false
@@ -32041,7 +32079,7 @@
       "solution_revision": "a4cc42d9b4a513698d8c391b542c06888df2768e",
       "solution_artifact_hash": "33f4d87856c9a614244aa713048fc82d2d247d9fb01a9a234d804ac4f1b9f186",
       "solution_tree_hash": "270f01d5f6136ab627aea6992af1a6fd92874af9",
-      "source_evaluator_artifact_hash": null,
+      "source_evaluator_artifact_hash": "d79234edccf77e9b1368a29ab929c645cc641e74d7f7cf87e3bedbe268f41c3e",
       "changed_files": [
         ".claude/rules/storage.md",
         "README.md",
@@ -32053,35 +32091,41 @@
       ],
       "license_or_use_basis": "MIT full text is present as LICENSE at pinned base revision 793d2a875d159d372254dc02712f0e79831c7ea1 (Git blob 013b8f22aabd1fc232da4d1f5c13b4118cb9a53c; content SHA-256 4880b5c14880c0e9d479b036735c5a542780c0558a48b563ef40eabd5656ba41), read from the materialized revision rather than repository metadata or the default branch.",
       "provisional_classification": {
-        "instruction_language": null,
-        "task_category": null,
-        "repository_code_language": null,
-        "repository_doc_language": null
+        "instruction_language": "ko",
+        "task_category": "implementation",
+        "repository_code_language": "python",
+        "repository_doc_language": "ko"
       },
       "screening": {
         "license_or_use_basis": "pass",
         "exact_base_resolvable": "pass",
         "single_bounded_task": "pass",
-        "native_language_source": "unknown",
-        "low_risk_isolated_execution": "unknown",
-        "no_network_secret_push_production": "unknown",
+        "native_language_source": "pass",
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
         "objective_evaluator_feasible": "pass",
-        "gold_and_evaluator_hideable": "unknown",
-        "reproducible_within_budget": "unknown",
+        "gold_and_evaluator_hideable": "pass",
+        "reproducible_within_budget": "pass",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass",
-        "instruction_parity": "unknown"
+        "instruction_parity": "pass"
       },
-      "decision": "screening",
+      "decision": "selected-for-task-authoring",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
         "기계적 사전필터: 이 이슈를 참조하는 merged PR #408이 파일 7개를 바꾸며 그중 2개가 테스트다(tests/test_s3_blobstore.py, tests/test_web.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
         "2026-07-22 contextual screening: issue #406의 핵심은 S3 문서 서빙이 단일 대용량 파일을 read-through cache 전체에 materialize하는 문제를 제거하는 하나의 bounded goal이다. 제안 1과 2는 cache gate 또는 direct streaming이라는 대안이고, 제안 3의 설정 경고는 검토 순서에 든 보조 제안이며 원문의 최종 검증 요구는 browser Range와 auth-gate 무회귀에 집중한다. 원문만으로 S3 document serve 뒤 cache 미점유, byte-exact Range와 Content-Range, attachment/CSP header 보존, auth rejection, local-mode 무회귀를 독립 evaluator가 도출할 수 있다. linked PR test는 feasibility 신호일 뿐 세부 416/HEAD 선택을 요구사항으로 소급하지 않는다.",
         "2026-07-22 materialization: issue statement hash를 source snapshot에서 재계산해 일치시켰고, linked merged PR #408의 API base 793d2a875d159d372254dc02712f0e79831c7ea1와 head a4cc42d9b4a513698d8c391b542c06888df2768e를 git protocol로 materialize했다. Head의 단일 parent가 기록된 base와 같고 base tree는 f94c1a6b9bc764dfaa3549dfac99971bab1f62e2, head tree는 270f01d5f6136ab627aea6992af1a6fd92874af9다. solution_artifact_hash는 fetched PR .diff의 SHA-256이며 일곱 changed_files는 materialized base-to-head diff와 GitHub files snapshot 양쪽에서 일치한다. Pinned base의 LICENSE에서 MIT full text를 직접 읽었다.",
-        "Pinned 616-entry base tree에는 서로 다른 root AGENTS.md와 CLAUDE.md, 그리고 .claude/rules 아래 10개 path rule이 있다. AGENTS.md는 Codex에게 CLAUDE.md 전체를 SSOT로 읽으라고 명시하지만 Codex-specific path 안내도 별도로 포함한다. 이 wrapper와 Claude path-rule delivery가 양쪽에 semantically equivalent effective guidance를 주는지는 단순 path inventory만으로 확정하지 않아 instruction_parity를 unknown으로 유지한다. Default-branch prevalence나 파일 존재만으로 pass/fail을 추정하지 않는다."
+        "Pinned 616-entry base tree에는 서로 다른 root AGENTS.md와 CLAUDE.md, 그리고 .claude/rules 아래 10개 path rule이 있다. AGENTS.md는 Codex에게 CLAUDE.md 전체를 SSOT로 읽으라고 명시하지만 Codex-specific path 안내도 별도로 포함한다. 이 wrapper와 Claude path-rule delivery가 양쪽에 semantically equivalent effective guidance를 주는지는 단순 path inventory만으로 확정하지 않아 instruction_parity를 unknown으로 유지한다. Default-branch prevalence나 파일 존재만으로 pass/fail을 추정하지 않는다.",
+        "2026-07-22 semantic instruction review at the exact base settles parity. Codex first receives AGENTS.md, whose opening requirement is to read CLAUDE.md from beginning to end and treat it as the SSOT. Claude receives that same CLAUDE.md. CLAUDE.md's canonical path index maps docs/STORAGE.md, chunchugwan/web/** and tests/** to storage.md, dashboard.md and testing.md; those are the same path-scoped constraints delivered on the Claude side. The extra AGENTS.md entries only name Codex-specific skill, agent, config and hook locations and do not alter issue #406's implementation, auth, attachment/CSP, documentation or test requirements. Therefore project instruction parity passes for the issue-derived scope.",
+        "The statement is natively Korean and its required behavior is intrinsic rather than translated: S3 document serving must avoid blobcache materialization, delegate byte ranges to S3 while retaining byte-accurate response headers, preserve attachment/media-type/CSP and authentication gates, and leave local mode unchanged. These are deterministic offline assertions using a fake S3 backend. Source test hunks can be reconstructed outside the agent checkout, while the one-commit solution remains protected; the task itself requires no live network, secret, push or production mutation.",
+        "A direct read-only Claude CLI cross-review was attempted outside the orchestrator as required by the operational delegation boundary. Two earlier non-interactive calls produced no substantive output and were terminated after prolonged silence; a corrected retry was allowed to run for 176 seconds and returned `API Error: Unable to connect to API (ENOTIMP)` with zero tokens and zero cost. The private local session identifier is intentionally omitted. No Claude judgement, routing observation or quality evidence is used. Future analytical calls wait at least five minutes and poll every 30 seconds; silence alone is not failure.",
+        "2026-07-22 agent-free environment reproduction pinned publisher CPython 3.12.13 archive SHA-256 5854aa6ec71cad00334d5065633c210b2e7feb40956767a59a91791cadcf0b79 and PyPI uv 0.11.30 wheel SHA-256 cc28cb55c2b3c80a26ea374a172fec70b0561ada211e6fb23936ccea3ecb80b2. `uv sync --frozen --no-install-workspace` prepared the repository lockfile's 70 packages in 14.63 seconds and installed them in 0.274 seconds. A source test-hunk storage probe independently failed at the base with the expected unsupported `open_read(start,end)` call in 1.80 seconds and passed 1/1 at the solution in 1.61 seconds.",
+        "The publisher-frozen Starlette TestClient and even a standalone AnyIO `to_thread.run_sync(lambda: 7)` blocked until timeout on this provisioned interpreter, before application behavior was observed. The protected evaluator therefore calls the public `/document/{sha256}/{name}` route endpoint directly and substitutes only Starlette's sync-iterator scheduling with an inline iterator; it does not name or call the solution's private helpers. It checks auth rejection, exact full and `bytes=2-5` S3 bodies and headers, storage range delegation, zero `local_path` calls in S3 mode, and the unchanged local FileResponse path, attachment and CSP boundary.",
+        "The 8,451-byte mode-0444 evaluator SHA-256 d79234edccf77e9b1368a29ab929c645cc641e74d7f7cf87e3bedbe268f41c3e failed on the pristine base in 1.37 seconds only because S3 document serving called `local_path` and attempted read-through materialization. The same protected evaluator passed on the one-commit solution in 1.38 seconds with auth, full/range streaming, cache avoidance and local response all satisfied; both exact trees remained clean and the evaluator hash was unchanged. All twelve inclusion rules pass, so the row advances to selected-for-task-authoring, which is only a construction queue state and not an authored or executed pilot task."
       ],
-      "screened_by_role_id": "task-source-construction-2026-07-19",
+      "screened_by_role_id": "task-source-construction-2026-07-20",
       "confirmatory_reuse_allowed": false
     },
     {
@@ -35750,7 +35794,7 @@
       "solution_reference": "https://github.com/minacle/swift-tui/pull/19.diff",
       "solution_revision": "420da473f919a47149ac45748cfaf9515436ad1c",
       "solution_artifact_hash": "06aee1f8ab32c2f29056f794578d4f0053099926f87c233b8ca60c18dbb7e4d6",
-      "solution_tree_hash": null,
+      "solution_tree_hash": "96259579393cf463fdb6e774d6cfd6846ce90094",
       "source_evaluator_artifact_hash": null,
       "changed_files": [
         "CHANGELOG.md",
@@ -35785,7 +35829,7 @@
         "Tests/SwiftTUIEssentialsTests/Text/EditableTextVerticalViewportTestSupport.swift",
         "Tests/SwiftTUIEssentialsTests/Text/EditableTextVerticalViewportTests.swift"
       ],
-      "license_or_use_basis": "Upstream repository metadata at the linked PR declares SPDX Unlicense.",
+      "license_or_use_basis": "The complete Unlicense text is present as UNLICENSE at pinned base revision 8d63a793c422d760bc9ba37f108f4bbe0d914be3 (Git blob efb98088164f5786b17e83ed384971fc3c74f93c; content SHA-256 b5065838cbac452dfc855ba6e6e031481ad2c68406f70d21ead9321374653e6c), read from the materialized revision rather than repository metadata or the default branch.",
       "provisional_classification": {
         "instruction_language": "ko",
         "task_category": "refactoring",
@@ -35804,10 +35848,12 @@
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass",
-        "instruction_parity": "unknown"
+        "instruction_parity": "fail"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "instruction-parity-mismatch"
+      ],
       "decision_reasons": [
         "Issue #18 is natively authored Korean and states a concrete API consolidation requirement for EditableText.",
         "Linux reproduction is not ruled out. Sources import Glibc alongside Darwin under conditional compilation, all six SwiftPM dependencies are pinned to exact revisions in Package.resolved, and platforms: [.macOS(.v15)] declares a minimum deployment target rather than restricting the supported platform set. Swift 6.3.3 is distributed for Linux and can satisfy the declared swift-tools-version: 6.3.",
@@ -35823,7 +35869,9 @@
         "실패 심볼에는 `RenderedTextInputAnchor`, `RenderedBlock.textInputAnchor`처럼 이슈 #18이 명명하지 않은 내부 렌더링 타입이 포함된다. 이슈가 명시한 것은 `EditableText.InputPolicy` 추가와 `LineMode` 제거 같은 공개 API 수준이다. 따라서 이 테스트를 그대로 쓰면 agent가 동작을 올바르게 구현해도 내부 심볼 이름이 다르면 실패하는 over-specification이 된다.",
         "objective_evaluator_feasible은 여전히 unknown이다. 이슈가 진술한 관측 가능한 동작(Return이 newline을 삽입, 유한 열 너비에서 visual line 줄바꿈, clipping·wheel·caret reveal을 ScrollView가 담당)을 공개 API 수준에서 검사하는 evaluator는 원리상 가능하지만, 상류 테스트 재사용으로는 얻을 수 없고 독립 저술이 필요하다. 그 비용은 아직 산정하지 않았다.",
         "negative control은 성립하지 않았다. compile 단계에서 멈추면 '구현하지 않음'과 '다르게 구현함'을 구별할 수 없다.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #19이 파일 30개를 바꾸며 그중 13개가 테스트다(Tests/SwiftTUIControlsTests/Text/TextEditorEditingTests.swift, Tests/SwiftTUIControlsTests/Text/TextFieldRenderingTests.swift 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #19이 파일 30개를 바꾸며 그중 13개가 테스트다(Tests/SwiftTUIControlsTests/Text/TextEditorEditingTests.swift, Tests/SwiftTUIControlsTests/Text/TextFieldRenderingTests.swift 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "2026-07-22 exact-base completion: a full public git clone materialized base 8d63a793c422d760bc9ba37f108f4bbe0d914be3 at tree 56bf597e58a103217d56530007f9ec30ee9f187e and the one-commit solution 420da473f919a47149ac45748cfaf9515436ad1c at tree 96259579393cf463fdb6e774d6cfd6846ce90094. The solution parent equals the recorded base; the materialized base-to-solution diff contains the recorded 31 files and +1421/-1083 lines. The 1,212-byte exact-base UNLICENSE is Git blob efb98088164f5786b17e83ed384971fc3c74f93c with content SHA-256 b5065838cbac452dfc855ba6e6e031481ad2c68406f70d21ead9321374653e6c.",
+        "The complete 224-entry exact base contains root AGENTS.md only (Git blob 1d6e381624e8701843aeaa28b9ccd1835a92e4c1; content SHA-256 6ef1b29c8234b7b78bd6f9980bf7882e9b3bcfc1b36512765feb8e899c87033e), with no CLAUDE.md, AGENTS.override.md, or equivalent Claude import. The file's access-control restrictions, public-API documentation requirements, test organization and naming rules, and validation commands directly govern issue #18's source, documentation, and test refactor. Codex therefore receives materially different project guidance from Claude, so instruction_parity fails and the row is terminally excluded under instruction-parity-mismatch. The earlier Linux build and 1,064-test measurements remain valid resource evidence, while unresolved evaluator and isolation fields stay unknown because the terminal parity rule makes further construction work unnecessary."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -36067,15 +36115,42 @@
       "source_reference": "https://github.com/Soku-JINSEOK/Soku-Convention-Boilerplate/issues/19",
       "source_statement_available": true,
       "task_statement_hash": "ddc9c5f55c099c6a1628e886573a95f6099c9a8142305da55ec15a06464089e0",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
-      "solution_revision": null,
-      "solution_artifact_hash": null,
-      "solution_tree_hash": null,
+      "base_revision": "404e695304d2e9fd7930a7134fcc2a15c7b5ffc4",
+      "base_tree_hash": "ad9c7296c25e328b5ba120f843b505300caa29d4",
+      "solution_reference": "https://github.com/Soku-JINSEOK/Soku-Convention-Boilerplate/pull/28",
+      "solution_revision": "ba5295b4b6c06054ec6914de7c3ee6175e31f5db",
+      "solution_artifact_hash": "e52e8c0107900e61c0f432ce27b1369bbc13e63ec765f2f9881ae2ec36590b48",
+      "solution_tree_hash": "d62d220c5234fdca51294886b11a4b961d9a834a",
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        ".github/workflows/ci.yml",
+        "docs/issues/issue-19-task-report.md",
+        "docs/standards/SOKU_LIFECYCLE.md",
+        "soku/README.md",
+        "soku/go.mod",
+        "soku/go.sum",
+        "soku/internal/cli/command.go",
+        "soku/internal/cli/command_test.go",
+        "soku/internal/cli/errors.go",
+        "soku/internal/cli/handler.go",
+        "soku/internal/cli/output.go",
+        "soku/internal/manifest/manifest.go",
+        "soku/internal/manifest/manifest_test.go",
+        "soku/internal/manifest/replace_unix.go",
+        "soku/internal/manifest/replace_windows.go",
+        "soku/internal/manifest/store.go",
+        "soku/internal/manifest/store_test.go",
+        "soku/internal/status/status.go",
+        "soku/internal/status/status_test.go",
+        "soku/schema/manifest-v1.schema.json",
+        "soku/testdata/manifest-v1/invalid/credential-source.json",
+        "soku/testdata/manifest-v1/invalid/path-traversal.json",
+        "soku/testdata/manifest-v1/invalid/project-owned-baseline.json",
+        "soku/testdata/manifest-v1/invalid/raw-configuration.json",
+        "soku/testdata/manifest-v1/invalid/token-query.json",
+        "soku/testdata/manifest-v1/valid/complete.json"
+      ],
+      "license_or_use_basis": "MIT full text is present as LICENSE at pinned base revision 404e695304d2e9fd7930a7134fcc2a15c7b5ffc4 (Git blob 32afa7e4a4a42f30c91e634dfd2b4817933a47a8; content SHA-256 7ed2d9bad15c9af9bee5116a030c91be573abf4a06ba8af8a05c9a5323e40701), read from the materialized revision rather than repository metadata or the default branch.",
       "provisional_classification": {
         "instruction_language": null,
         "task_category": null,
@@ -36083,8 +36158,8 @@
         "repository_doc_language": null
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
+        "license_or_use_basis": "pass",
+        "exact_base_resolvable": "pass",
         "single_bounded_task": "unknown",
         "native_language_source": "unknown",
         "low_risk_isolated_execution": "unknown",
@@ -36094,13 +36169,17 @@
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass",
-        "instruction_parity": "unknown"
+        "instruction_parity": "fail"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "instruction-parity-mismatch"
+      ],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; native/mixed language, linked solution, exact base, license, objective evaluation, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #28이 파일 26개를 바꾸며 그중 4개가 테스트다(soku/internal/cli/command_test.go, soku/internal/manifest/manifest_test.go 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #28이 파일 26개를 바꾸며 그중 4개가 테스트다(soku/internal/cli/command_test.go, soku/internal/manifest/manifest_test.go 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "2026-07-22: linked merged PR #28의 API base 404e695304d2e9fd7930a7134fcc2a15c7b5ffc4와 head ba5295b4b6c06054ec6914de7c3ee6175e31f5db을 git protocol로 materialize하고 base가 head의 ancestor임을 확인했다. Base tree는 ad9c7296c25e328b5ba120f843b505300caa29d4, head tree는 d62d220c5234fdca51294886b11a4b961d9a834a이며 solution_artifact_hash는 fetched PR .diff의 SHA-256이다. Changed files는 materialized base-to-head diff에서 읽었고 MIT license는 pinned base의 LICENSE에서 직접 확인했다.",
+        "2026-07-22 protocol v1.1 assessment: materialized 113-entry exact base tree의 workspace root에는 AGENTS.md만 있고 CLAUDE.md나 AGENTS.override.md는 없다. Empty Codex fallback을 고정한 Codex는 root AGENTS.md를 받지만 Claude Code에는 동등한 project guidance가 전달되지 않으므로 instruction-parity-mismatch로 terminal 제외한다. 이 terminal 판정에 불필요한 single_bounded_task 및 나머지 inclusion rule은 unknown으로 남긴다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -36494,14 +36573,14 @@
       "provisional_classification": {
         "instruction_language": "mixed",
         "task_category": "implementation",
-        "repository_code_language": null,
-        "repository_doc_language": null
+        "repository_code_language": "java",
+        "repository_doc_language": "ko"
       },
       "screening": {
         "license_or_use_basis": "unknown",
         "exact_base_resolvable": "unknown",
         "single_bounded_task": "pass",
-        "native_language_source": "unknown",
+        "native_language_source": "pass",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
         "objective_evaluator_feasible": "fail",
@@ -37525,8 +37604,8 @@
       "screening": {
         "license_or_use_basis": "unknown",
         "exact_base_resolvable": "unknown",
-        "single_bounded_task": "unknown",
-        "native_language_source": "unknown",
+        "single_bounded_task": "pass",
+        "native_language_source": "fail",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
         "objective_evaluator_feasible": "unknown",
@@ -37536,11 +37615,14 @@
         "not_used_for_confirmatory_round": "pass",
         "instruction_parity": "unknown"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "translation-only"
+      ],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #15이 파일 33개를 바꾸며 그중 4개가 테스트다(web/analyze.test.js, web/ui_kits/dashboard/i18n.test.js 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #15이 파일 33개를 바꾸며 그중 4개가 테스트다(web/analyze.test.js, web/ui_kits/dashboard/i18n.test.js 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "2026-07-22 result-blind source assessment: issue #12의 주된 산출물은 기존 한국어 dashboard label을 영어·중국어·일본어 사전으로 옮기고 언어권별 공식/커뮤니티 가챠 용어를 조사·선택하는 것이다. Toggle과 persistence라는 구현 요소가 있어도 primary language quota를 채우는 과제의 핵심은 기존 copy의 번역이며, 통용 표현의 자연스러움도 객관 evaluator로 독립 판정할 수 없다. 원 source identity를 축소하지 않고 native_language_source=fail, translation-only로 제외하며 base, license, parity는 이 terminal 판정에 필요하지 않아 unknown으로 남긴다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -41208,22 +41290,25 @@
       "screening": {
         "license_or_use_basis": "unknown",
         "exact_base_resolvable": "unknown",
-        "single_bounded_task": "unknown",
-        "native_language_source": "unknown",
+        "single_bounded_task": "pass",
+        "native_language_source": "pass",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
-        "objective_evaluator_feasible": "unknown",
+        "objective_evaluator_feasible": "fail",
         "gold_and_evaluator_hideable": "unknown",
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass",
         "instruction_parity": "unknown"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "subjective-only-evaluation"
+      ],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #407이 파일 11개를 바꾸며 그중 2개가 테스트다(__tests__/launcherFieldGating.test.tsx, __tests__/moodCriterionQuote.test.tsx 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #407이 파일 11개를 바꾸며 그중 2개가 테스트다(__tests__/launcherFieldGating.test.tsx, __tests__/moodCriterionQuote.test.tsx 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "2026-07-22 result-blind source assessment: issue #391은 fallback 순서와 Criterion-only visibility처럼 deterministic한 일부가 있지만, 필수 산출물인 quote스러운 새 영문 문장, 평점 구간 수와 각 preset 문구, 실제 렌더 대조로 고를 손글씨 font, title 폭 실측으로 정할 글자수 제한을 모두 구현 시 판단에 맡긴다. 이 주관 요소를 빼고 plumbing만 채점하면 원 candidate를 사후 축소하며, merged wording과 font를 exact golden으로 강제하는 것도 공정하지 않다. native Korean source의 단일 기능이지만 핵심 전체를 허용된 objective mode로 판정할 수 없어 objective_evaluator_feasible=fail, subjective-only-evaluation으로 제외한다. Base, license, parity는 terminal 판정에 필요하지 않아 unknown으로 남긴다."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -42985,30 +43070,32 @@
       "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
       "source_cluster_id": "github-ohhalim--MembershipFlow",
       "repository_id": "ohhalim--MembershipFlow",
-      "source_kind": "public-issue-discovery",
+      "source_kind": "public-issue-pr-pair",
       "source_reference": "https://github.com/ohhalim/MembershipFlow/issues/79",
       "source_statement_available": true,
       "task_statement_hash": "941185cbb5996eba2f79cae1dc327ee38e5994ac62403a3c51e4842fb8d89f9f",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
-      "solution_revision": null,
-      "solution_artifact_hash": null,
-      "solution_tree_hash": null,
+      "base_revision": "b2bc8bac41e51b61774b3b98da43e420f4d46df3",
+      "base_tree_hash": "43678ee48b587b4404e944b50deba0c56824ff40",
+      "solution_reference": "https://github.com/ohhalim/MembershipFlow/pull/80.diff",
+      "solution_revision": "b848a7411842952262f195c1eafdd5fd98b16b6e",
+      "solution_artifact_hash": "4eb0a90972347568f256269bad57baca2426b7ca8c7ca2815375253f25e1218e",
+      "solution_tree_hash": "5686d2242fed14e736ed6da3857cbe92e9e413fc",
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        "src/main/java/com/membershipflow/collect/collector/MembershipTypeMapper.java"
+      ],
+      "license_or_use_basis": "No explicit license or recorded use basis at exact base b2bc8bac41e51b61774b3b98da43e420f4d46df3: the complete 155-entry tree has no LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact; README.md and build.gradle contain no license grant or declaration.",
       "provisional_classification": {
         "instruction_language": "ko",
         "task_category": "debugging",
-        "repository_code_language": null,
-        "repository_doc_language": null
+        "repository_code_language": "java",
+        "repository_doc_language": "ko"
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
+        "license_or_use_basis": "fail",
+        "exact_base_resolvable": "pass",
         "single_bounded_task": "pass",
-        "native_language_source": "unknown",
+        "native_language_source": "pass",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
         "objective_evaluator_feasible": "unknown",
@@ -43016,12 +43103,19 @@
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass",
-        "instruction_parity": "unknown"
+        "instruction_parity": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "license-or-use-basis-unavailable"
+      ],
       "decision_reasons": [
-        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened."
+        "The exact public issue statement remains byte-identical to the discovery snapshot: SHA-256 of title, two newlines, and body is 941185cbb5996eba2f79cae1dc327ee38e5994ac62403a3c51e4842fb8d89f9f. Its Korean problem statement and concrete MembershipType mapping cases are a native Korean, single bounded debugging task.",
+        "GitHub issue timeline evidence identifies merged PR #80 as the direct solution that closed #79 at 2026-06-27T06:28:36Z. Its sole commit b848a7411842952262f195c1eafdd5fd98b16b6e has parent b2bc8bac41e51b61774b3b98da43e420f4d46df3, exactly matching the PR base, and changes only MembershipTypeMapper.java. Later release PR #84 repeats Closes #79 after the #80 commit was already on develop and is not treated as a second gold solution.",
+        "A full public git clone materialized exact base b2bc8bac41e51b61774b3b98da43e420f4d46df3 (tree 43678ee48b587b4404e944b50deba0c56824ff40) and solution b848a7411842952262f195c1eafdd5fd98b16b6e (tree 5686d2242fed14e736ed6da3857cbe92e9e413fc). The 155-entry base tree is clean and contains no AGENTS.override.md, AGENTS.md, or CLAUDE.md anywhere, so neither CLI receives candidate-tree project guidance and instruction parity passes.",
+        "License screening at the pinned base inspected the complete tree plus README.md and build.gradle. No LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact exists at any path; README.md (blob 69400e91a7ec0bc932234e3042d4b0e9da01939b, sha256 ea37e1c0156a32fbe7b4760f5536ccfa8ea12dcaca883486df111ea4c7d53fcc) and build.gradle (blob 432ba6856ba396486c7ca7eef6e9a2c197119616, sha256 fdc4114f438d068ca83a2b9313be2c87c598ce02e5bd3fb5ba54f2338cd0561c) contain no license grant or declaration.",
+        "No explicit license or recorded use basis exists for this revision, so license-or-use-basis cannot become pass. Public availability alone is not a use basis, and absent terms are not assigned an SPDX identifier. Excluded as license-or-use-basis-unavailable before evaluator construction.",
+        "This exclusion grants no new use basis. If the copyright holder later declares a license, this row is not edited; a new candidate ID and lineage are added instead."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -43169,30 +43263,39 @@
       "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
       "source_cluster_id": "github-0xkkun--seoul-challenge",
       "repository_id": "0xkkun--seoul-challenge",
-      "source_kind": "public-issue-discovery",
+      "source_kind": "public-issue-pr-pair",
       "source_reference": "https://github.com/0xkkun/seoul-challenge/issues/30",
       "source_statement_available": true,
       "task_statement_hash": "89630da84a4d070dc632744fba91537ccc5aece7775e991919e90fc77772f4eb",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
-      "solution_revision": null,
-      "solution_artifact_hash": null,
-      "solution_tree_hash": null,
+      "base_revision": "075464d7ec5ebf1771cde201e560bdf6fa0bdd2f",
+      "base_tree_hash": "f9058eebeb04463aac357ab037fe4d9449ed9338",
+      "solution_reference": "https://github.com/0xkkun/seoul-challenge/pull/44.diff",
+      "solution_revision": "91cc1b4f9b1215dee9d2381f36caf3b8f9125541",
+      "solution_artifact_hash": "356e1603023d2a87eb2d77cdc0cb15c7174665a7b265d4987929197285d8d35c",
+      "solution_tree_hash": "ff6e4ad243ddcba580c6412eaaf1c67b0294e96f",
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        "scenes/dev/run_flow_demo.tscn",
+        "scripts/dev/run_flow_demo.gd",
+        "scripts/dev/run_flow_demo.gd.uid",
+        "scripts/session/run_controller.gd",
+        "scripts/session/run_controller.gd.uid",
+        "scripts/verify_room_coverage.py",
+        "tests/integration/test_run_flow.gd",
+        "tests/integration/test_run_flow.gd.uid"
+      ],
+      "license_or_use_basis": "No explicit license or recorded use basis at exact base 075464d7ec5ebf1771cde201e560bdf6fa0bdd2f: the complete 146-entry tree has no LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact; README.md, project.godot, and requirements.txt contain no license grant or declaration.",
       "provisional_classification": {
         "instruction_language": "ko",
         "task_category": "implementation",
-        "repository_code_language": null,
-        "repository_doc_language": null
+        "repository_code_language": "other",
+        "repository_doc_language": "ko"
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
+        "license_or_use_basis": "fail",
+        "exact_base_resolvable": "pass",
         "single_bounded_task": "pass",
-        "native_language_source": "unknown",
+        "native_language_source": "pass",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
         "objective_evaluator_feasible": "unknown",
@@ -43200,12 +43303,20 @@
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass",
-        "instruction_parity": "unknown"
+        "instruction_parity": "fail"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "license-or-use-basis-unavailable",
+        "instruction-parity-mismatch"
+      ],
       "decision_reasons": [
-        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened."
+        "The exact public issue statement remains byte-identical to the discovery snapshot: SHA-256 of title, two newlines, and body is 89630da84a4d070dc632744fba91537ccc5aece7775e991919e90fc77772f4eb. Its Korean RunController contract, owned-file allowlist, transition flow, integration test, and completion criteria form one native Korean bounded implementation task.",
+        "GitHub issue timeline evidence identifies merged PR #44 as the direct solution that closed #30 at 2026-06-26T11:55:52Z. Its sole commit 91cc1b4f9b1215dee9d2381f36caf3b8f9125541 has parent 075464d7ec5ebf1771cde201e560bdf6fa0bdd2f, exactly matching the PR base, and the materialized base-to-head diff matches the eight GitHub PR files. Later PR #45 is explicitly a post-review follow-up and is not folded into this gold solution.",
+        "A full public git clone materialized exact base 075464d7ec5ebf1771cde201e560bdf6fa0bdd2f (tree f9058eebeb04463aac357ab037fe4d9449ed9338) and solution 91cc1b4f9b1215dee9d2381f36caf3b8f9125541 (tree ff6e4ad243ddcba580c6412eaaf1c67b0294e96f). The complete base tree has 146 entries and the materialized checkout remained clean.",
+        "License screening at the pinned base found no LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact at any path. README.md (blob 17a53c3aec7a8987f4849afb98f2a92bc662112b, sha256 46cbe97b56985313b66019ecdd19b649dfb8ec75f9a475379cc7567981bf9d7d), project.godot (blob 8dfb318a095a415829f4ca23976ae707afed5997, sha256 60b2aee8e24ebafe306bc337e4dc8ec5084abfb8bc21724c70dcfd151f7ab6e7), and requirements.txt (blob 3b68ce85899e7753b6bc9f4990902c31812b0b2b, sha256 9eab2edc04d4a4b47faf0f9e247b9b2c5b496bd824c8e2eeec2b71c18c12ec19) contain no license grant or declaration. Public availability alone is not a use basis, so license-or-use-basis-unavailable is terminal.",
+        "The exact base contains root AGENTS.md only (blob 01623c43f8326517fb47c708e05d57c92c9aa25f, sha256 86f01955d18dec58dee3f07bb956cd8e1b2a47cc76af19a528d5ff1311aa9d33) and no CLAUDE.md or AGENTS.override.md. It pins Godot 4.6.3, quick/full gates, neutral naming, Godot MCP/runtime checks, Korean PR hygiene, and the worktree/review workflow; issue #30 explicitly incorporates AGENTS.md Worktree and language rules and its source/test/demo work is governed by the same validation constraints. Codex receives materially different candidate-tree guidance from Claude, so instruction-parity-mismatch is independently terminal.",
+        "Because two independent eligibility rules already fail, no evaluator or runtime fixture was authored. This exclusion grants no new use basis; a future license declaration or instruction change requires a new candidate ID and lineage rather than retroactive editing."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -43508,42 +43619,63 @@
       "source_reference": "https://github.com/genonai/doc_parser/issues/288",
       "source_statement_available": true,
       "task_statement_hash": "5658a3d5b4832e2bd4230bd3c34b18bc1fe34167f4b131b9ddfbd01450368d76",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
-      "solution_revision": null,
-      "solution_artifact_hash": null,
-      "solution_tree_hash": null,
+      "base_revision": "3107d9663355fc042faa3c19f8e37e357af8a370",
+      "base_tree_hash": "c7dd7005be6099763960903fd116a02dc29bf9fd",
+      "solution_reference": "https://github.com/genonai/doc_parser/pull/304",
+      "solution_revision": "9bf82283a973b77b7bdc1070cfac96a7f7c4d452",
+      "solution_artifact_hash": "d3863f6475f6a1943b452e76a788a6ed08c16b83a5d9e3398fdba68fe9d76e65",
+      "solution_tree_hash": "3de52e55a7f710d3c4899ea12774f877029367d6",
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        "genon/preprocessor/converters/xlsx_processor.py",
+        "genon/preprocessor/facade/chunking_processor.py",
+        "genon/preprocessor/facade/convert_processor.py",
+        "genon/preprocessor/facade/gitbook_doc/convert_processor.md",
+        "genon/preprocessor/facade/gitbook_doc/intelligent_processor.md",
+        "genon/preprocessor/facade/gitbook_doc/parser_processor.md",
+        "genon/preprocessor/facade/intelligent_processor.py",
+        "genon/preprocessor/facade/parser_processor.py",
+        "genon/preprocessor/resource/convert_processor_config.yaml",
+        "genon/preprocessor/resource/intelligent_processor_config.yaml",
+        "genon/preprocessor/resource/parser_processor_config.yaml",
+        "genon/preprocessor/resource_dev/convert_processor_config.yaml",
+        "genon/preprocessor/resource_dev/intelligent_processor_config.yaml",
+        "genon/preprocessor/resource_dev/parser_processor_config.yaml",
+        "genon/preprocessor/sample_files/xlsx_sample_2.xlsx",
+        "genon/preprocessor/tests/unit/test_parser_processor_unit.py",
+        "genon/preprocessor/tests/unit/test_xlsx_processor.py"
+      ],
+      "license_or_use_basis": "The root pyproject.toml at exact pinned base revision 3107d9663355fc042faa3c19f8e37e357af8a370 declares license = \"MIT\" (Git blob 6213e849c621208e0ffbd0e27d75b41a0d5540da; content SHA-256 1ad3d9778c784ed1a6fb73e1eeccc84ce9a3472206a8d325ba38c626e9f49e71), read from the materialized revision rather than repository metadata or the default branch.",
       "provisional_classification": {
-        "instruction_language": null,
-        "task_category": null,
-        "repository_code_language": null,
-        "repository_doc_language": null
+        "instruction_language": "ko",
+        "task_category": "implementation",
+        "repository_code_language": "python",
+        "repository_doc_language": "mixed"
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
-        "single_bounded_task": "unknown",
-        "native_language_source": "unknown",
-        "low_risk_isolated_execution": "unknown",
-        "no_network_secret_push_production": "unknown",
-        "objective_evaluator_feasible": "unknown",
-        "gold_and_evaluator_hideable": "unknown",
+        "license_or_use_basis": "pass",
+        "exact_base_resolvable": "pass",
+        "single_bounded_task": "pass",
+        "native_language_source": "pass",
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass",
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass",
-        "instruction_parity": "unknown"
+        "instruction_parity": "pass"
       },
       "decision": "screening",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #304이 파일 16개를 바꾸며 그중 2개가 테스트다(genon/preprocessor/tests/unit/test_parser_processor_unit.py, genon/preprocessor/tests/unit/test_xlsx_processor.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #304이 파일 16개를 바꾸며 그중 2개가 테스트다(genon/preprocessor/tests/unit/test_parser_processor_unit.py, genon/preprocessor/tests/unit/test_xlsx_processor.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "2026-07-22 provenance correction: GitHub Pull Request API의 현재 base b4b2b17becf049d77a1cc87526b9ed178635f058는 head의 ancestor가 아니며 이를 그대로 쓰면 40-file tree delta가 된다. Git commit graph에서 PR head 9bf82283a973b77b7bdc1070cfac96a7f7c4d452와 API base의 merge-base이자 earliest solution commit의 parent인 3107d9663355fc042faa3c19f8e37e357af8a370을 exact pre-solution base로 확정했다. 이 base-to-head diff는 GitHub PR의 현재 17-file inventory와 일치한다. Base tree c7dd7005be6099763960903fd116a02dc29bf9fd와 head tree 3de52e55a7f710d3c4899ea12774f877029367d6는 materialized Git object에서 읽었고, solution_artifact_hash는 fetched PR .diff의 SHA-256이다. 사전필터의 16-file 값은 ordering signal로만 보존하고 terminal evidence로 사용하지 않는다.",
+        "2026-07-22 result-blind rule assessment: 원 issue의 요구는 xlsx를 PDF intermediate 없이 직접 처리해 한 logical row가 page layout 때문에 갈라지지 않게 하는 단일 Korean-authored implementation task다. 개인정보 원본 대신 dummy file을 공유한다고 명시해 synthetic XLSX로 row integrity와 LibreOffice/PDF path 비호출을 offline deterministic하게 검사할 수 있으며 production URL, secret, network mutation이 필요하지 않다. PR이 추가한 csv/xlsm, docling/tabular mode, metadata alias와 dispatcher refactor는 solution-only design이므로 task requirement로 소급하지 않는다. 기존 protocol precedent처럼 solution breadth만으로 boundedness를 실패시키지 않되, evaluator가 solution-only API에 overfit하지 않는지 agent-free negative/positive control에서 검증해야 한다.",
+        "2026-07-22 exact-base license/parity assessment: 1,167-entry base tree에 AGENTS.md, AGENTS.override.md, CLAUDE.md가 모두 없어 두 CLI가 candidate tree에서 받는 project instruction은 동일하게 empty이며 instruction_parity=pass다. Root pyproject.toml의 pinned MIT declaration으로 license를 통과시켰다. Solution과 보호 evaluator는 base-only agent workspace 및 visible Git refs 밖에 둘 수 있다. 남은 유일한 unknown은 pinned environment에서 issue-derived evaluator가 base negative/solution positive control을 만족하고 resource budget 안에서 반복되는지 여부이므로 decision은 screening이다."
       ],
-      "screened_by_role_id": "task-source-construction-2026-07-19",
+      "screened_by_role_id": "task-source-construction-2026-07-20",
       "confirmatory_reuse_allowed": false
     },
     {
@@ -43551,30 +43683,45 @@
       "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
       "source_cluster_id": "github-Gn0lee--oat",
       "repository_id": "Gn0lee--oat",
-      "source_kind": "public-issue-discovery",
+      "source_kind": "public-issue-pr-pair",
       "source_reference": "https://github.com/Gn0lee/oat/issues/410",
       "source_statement_available": true,
       "task_statement_hash": "8bc5aa43a58a6960420907ec32ee76e5cc5ad230b329f0a6ffc50a36e73f60b7",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
-      "solution_revision": null,
-      "solution_artifact_hash": null,
-      "solution_tree_hash": null,
+      "base_revision": "b19b34b63d1df554091b165484d78ce9cf2eba1d",
+      "base_tree_hash": "2ea4b5e9cc61d7345734c4d3df483d7bcb0736dd",
+      "solution_reference": "https://github.com/Gn0lee/oat/pull/411.diff",
+      "solution_revision": "15c72d5c9329883f18c5433e1eb13432139ca1dc",
+      "solution_artifact_hash": "6f438103cdc0ef56d03c44338b7631792475b484a57f84e82b012c1784f85111",
+      "solution_tree_hash": "b400c2c744ebfdd907d7a0ebf979db51846d98d4",
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        "components/accounts/AccountList.test.tsx",
+        "components/accounts/AccountList.tsx",
+        "components/accounts/PaymentMethodList.test.tsx",
+        "components/accounts/PaymentMethodList.tsx",
+        "components/ledger/entry-composer/ComposerListStep.test.tsx",
+        "components/ledger/entry-composer/ComposerListStep.tsx",
+        "components/ledger/records/LedgerEntryRow.test.tsx",
+        "components/ledger/records/LedgerEntryRow.tsx",
+        "components/transactions/StockComposerListStep.test.tsx",
+        "components/transactions/StockComposerListStep.tsx",
+        "components/transactions/StockTransactionRow.test.tsx",
+        "components/transactions/StockTransactionRow.tsx",
+        "components/transactions/TransactionTable.test.tsx",
+        "components/transactions/records/StockRecordDayList.test.tsx"
+      ],
+      "license_or_use_basis": "No explicit license or recorded use basis for the root oat application at exact base b19b34b63d1df554091b165484d78ce9cf2eba1d: the 717-entry tree has no root or application-scope LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact; root package.json is private and has no license field, and the only MIT artifact is scoped to packages/mcp-bridge rather than the changed UI paths.",
       "provisional_classification": {
         "instruction_language": "ko",
         "task_category": "refactoring",
-        "repository_code_language": null,
-        "repository_doc_language": null
+        "repository_code_language": "javascript-typescript",
+        "repository_doc_language": "ko"
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
+        "license_or_use_basis": "fail",
+        "exact_base_resolvable": "pass",
         "single_bounded_task": "pass",
-        "native_language_source": "unknown",
+        "native_language_source": "pass",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
         "objective_evaluator_feasible": "unknown",
@@ -43582,12 +43729,20 @@
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass",
-        "instruction_parity": "unknown"
+        "instruction_parity": "fail"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "license-or-use-basis-unavailable",
+        "instruction-parity-mismatch"
+      ],
       "decision_reasons": [
-        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened."
+        "The exact public issue statement remains byte-identical to the discovery snapshot: SHA-256 of title, two newlines, and body is 8bc5aa43a58a6960420907ec32ee76e5cc5ad230b329f0a6ffc50a36e73f60b7. Although the issue notes AI-assisted triage, the fixed Korean contract itself defines one coherent financial-row information-hierarchy refactor with explicit in-scope components, exclusions, UI policies, regression requirements, and native-language examples.",
+        "GitHub issue timeline evidence identifies merged PR #411 as the direct solution that closed #410 at 2026-06-23T08:09:05Z. Its first commit has parent b19b34b63d1df554091b165484d78ce9cf2eba1d, exactly matching the API base; the second commit is issue-specific reviewer feedback. The materialized base-to-head diff matches the fourteen GitHub PR files, so the two-commit head 15c72d5c9329883f18c5433e1eb13432139ca1dc is the bounded gold solution.",
+        "A partial public git clone plus explicit SHA fetch materialized exact base b19b34b63d1df554091b165484d78ce9cf2eba1d (tree 2ea4b5e9cc61d7345734c4d3df483d7bcb0736dd) and solution 15c72d5c9329883f18c5433e1eb13432139ca1dc (tree b400c2c744ebfdd907d7a0ebf979db51846d98d4). The base is an ancestor of the head, its complete tree has 717 entries, and the base checkout remained clean.",
+        "License screening at the pinned base found no root or application-scope LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact. Root README.md (blob f360e8c4813ba8a0a078a1ed4579001fb39aecd0, sha256 8404b7bf2ae353230c0379e980a4b9474e0117293b613a26ce6db12e9168e7e0) has no grant, and root package.json (blob 2e231084622fa6023355b161ea9aa9902bb10159, sha256 07fb87d52bd474be97264bfd68734156b13560fff45c0355d1b14042257c0cf1) declares private=true with no license field. packages/mcp-bridge/LICENSE is MIT and its package.json declares MIT, but those artifacts explicitly scope a separate @oat-app/mcp-bridge package and do not license the changed root UI components. Public availability alone is not a use basis, so license-or-use-basis-unavailable is terminal.",
+        "The exact base contains root CLAUDE.md only (317 lines; blob 0773a2b4a435bcfc2c29b47a1646d66687595d4e, sha256 6b6dac7eaad047e01f2075748d9bf42adb097362547b85d6e6b4accc05e0a817) and no AGENTS.md or AGENTS.override.md. It gives Claude project architecture, UI-work activation, DESIGN.md, CONVENTIONS_FE.md, SCREEN_PRIMITIVES.md, styling, testing, naming, privacy, and command constraints that directly govern issue #410's React UI and tests. Codex receives none of that candidate-tree guidance, so instruction-parity-mismatch is independently terminal.",
+        "Because two independent eligibility rules already fail, no visual or component evaluator was authored. This exclusion grants no new use basis; a future root license or instruction change requires a new candidate ID and lineage rather than retroactive editing."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -44149,30 +44304,36 @@
       "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
       "source_cluster_id": "github-handokei--subway-now",
       "repository_id": "handokei--subway-now",
-      "source_kind": "public-issue-discovery",
+      "source_kind": "public-issue-pr-pair",
       "source_reference": "https://github.com/handokei/subway-now/issues/1465",
       "source_statement_available": true,
       "task_statement_hash": "34c97cb0f6cee625db302e1b4adf227952c758b620e29578d1f92a1d1b2f454a",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
-      "solution_revision": null,
-      "solution_artifact_hash": null,
-      "solution_tree_hash": null,
+      "base_revision": "1c73ae582b535514feb43bbc393b5cec1ba12920",
+      "base_tree_hash": "158cfbad7be784dbd5d7588ca4e3195ab2dfad22",
+      "solution_reference": "https://github.com/handokei/subway-now/pull/1467.diff",
+      "solution_revision": "c53892702dd905265f956027297b870f18046596",
+      "solution_artifact_hash": "04863235be107c887f1d9d88e54b26e8a9eb9da38322ec5a30b5cbd2b7b39185",
+      "solution_tree_hash": "c0fb21b4cde5be012893db2d70551ff8d48568aa",
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        "package.json",
+        "scripts/__tests__/cross-check-line-1-8-environment.test.js",
+        "scripts/cross-check-line-1-8-environment.js",
+        "scripts/fixtures/seoul-station-depth.csv",
+        "src/data/stations.json"
+      ],
+      "license_or_use_basis": "No explicit code or task-fixture license/use basis at exact pre-solution base 1c73ae582b535514feb43bbc393b5cec1ba12920: the complete 985-entry tree has no LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact; root package.json is private with no license field, and README's ODbL attribution is scoped to OpenStreetMap map data rather than repository code or the later station-depth CSV.",
       "provisional_classification": {
         "instruction_language": "ko",
         "task_category": "testing",
-        "repository_code_language": null,
-        "repository_doc_language": null
+        "repository_code_language": "javascript-typescript",
+        "repository_doc_language": "ko"
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
+        "license_or_use_basis": "fail",
+        "exact_base_resolvable": "pass",
         "single_bounded_task": "pass",
-        "native_language_source": "unknown",
+        "native_language_source": "pass",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
         "objective_evaluator_feasible": "unknown",
@@ -44180,12 +44341,20 @@
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass",
-        "instruction_parity": "unknown"
+        "instruction_parity": "fail"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "license-or-use-basis-unavailable",
+        "instruction-parity-mismatch"
+      ],
       "decision_reasons": [
-        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened."
+        "The exact public issue statement remains byte-identical to the discovery snapshot: SHA-256 of title, two newlines, and body is 34c97cb0f6cee625db302e1b4adf227952c758b620e29578d1f92a1d1b2f454a. Its Korean contract defines one bounded static-data cross-check task, deterministic classification/refinement rules, explicit out-of-scope columns and lines, and test/data-validation acceptance criteria.",
+        "GitHub issue timeline evidence identifies merged PR #1467 as the direct solution. The current Pull Request API base b4b467801c8ae68e198a428a96f9fe339b62e94b is not an ancestor of head c53892702dd905265f956027297b870f18046596. Git graph instead resolves 1c73ae582b535514feb43bbc393b5cec1ba12920 as both the merge-base and earliest solution commit's parent; only that base-to-head diff matches the five GitHub PR files. The API base is therefore not used as the pre-solution base.",
+        "A partial public git clone plus explicit SHA fetch materialized exact base 1c73ae582b535514feb43bbc393b5cec1ba12920 (tree 158cfbad7be784dbd5d7588ca4e3195ab2dfad22) and three-commit solution c53892702dd905265f956027297b870f18046596 (tree c0fb21b4cde5be012893db2d70551ff8d48568aa). The base is an ancestor of the head, its complete tree has 985 entries, and the materialized base checkout remained clean.",
+        "License screening at the pinned base found no LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact at any path. Root README.md (blob b5bc11c118e6ec1b7f487282b68e2cd90eb54126, sha256 282c4e7d2ca6a8dd82ccc8712414697ceddcb28aa737ff072b9c7527d73449c7) contains an ODbL attribution only for OpenStreetMap map data, not a grant for repository code or the later user-provided station-depth CSV. Root package.json (blob acdb90274889569fb1caf8a7a694349aaa97eaac, sha256 41f59500ab1c234584c37d955a76ce35560644870eed93ac5d08bd0e2dfa0b03) declares private=true with no license field. Public availability alone is not a use basis, so license-or-use-basis-unavailable is terminal.",
+        "The exact base contains root CLAUDE.md only (287 lines; blob 529d172c873e2f215d1d1dc691a0cbbd00053232, sha256 878665e733a8c04cc87c45a9d0d62f840edf3d8b80db0a3c84df3e3481af7ec5) and no AGENTS.md or AGENTS.override.md. Its dev-branch workflow, static data validation, 100% coverage, station-name normalization, architecture boundaries, test commands, and coding rules directly govern issue #1465's script, fixture, stations.json, and 44-test scope. Claude receives materially different candidate-tree guidance from Codex, so instruction-parity-mismatch is independently terminal.",
+        "The task also depends on a user-provided CSV that first appears in the solution lineage; its independent input provenance and evaluator-fixture treatment would require review if the candidate survived. Because license and parity already fail, no CSV fixture extraction or evaluator was authored, avoiding unnecessary use of solution-only material."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -44287,30 +44456,34 @@
       "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
       "source_cluster_id": "github-prgrms-aibe-devcourse--AIBE5_FinalProject_Team7_JackPot",
       "repository_id": "prgrms-aibe-devcourse--AIBE5_FinalProject_Team7_JackPot",
-      "source_kind": "public-issue-discovery",
+      "source_kind": "public-issue-pr-pair",
       "source_reference": "https://github.com/prgrms-aibe-devcourse/AIBE5_FinalProject_Team7_JackPot/issues/499",
       "source_statement_available": true,
       "task_statement_hash": "0102718b3d166bcd9bc308d01c364bc0a8be6ae3b037952a168e5b960ebc169f",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
-      "solution_revision": null,
-      "solution_artifact_hash": null,
-      "solution_tree_hash": null,
+      "base_revision": "9ae892a4f9074dfea2f93d534977cc3da3a051f8",
+      "base_tree_hash": "6722de4d5709782f1a0a47643a08b36c984f9342",
+      "solution_reference": "https://github.com/prgrms-aibe-devcourse/AIBE5_FinalProject_Team7_JackPot/pull/500.diff",
+      "solution_revision": "e323f65b51321216ab821e50f1b87e358905cb4e",
+      "solution_artifact_hash": "c9e2b6ecdf6c04e1f32e0fbc20965c97e1e9c73d1416c5fa870a4d0daeef97b5",
+      "solution_tree_hash": "2d37ba43ed0b33d2597cf458aa9357db077d6866",
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        "frontend/index.html",
+        "frontend/src/styles/global.css",
+        "frontend/src/styles/wireframe.css"
+      ],
+      "license_or_use_basis": "No explicit code license or other use basis at exact pre-solution base 9ae892a4f9074dfea2f93d534977cc3da3a051f8: the complete 520-entry tree has no LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact; root README.md, frontend/package.json, and backend/build.gradle contain no license grant or declaration.",
       "provisional_classification": {
         "instruction_language": "mixed",
         "task_category": "refactoring",
-        "repository_code_language": null,
-        "repository_doc_language": null
+        "repository_code_language": "javascript-typescript",
+        "repository_doc_language": "ko"
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
+        "license_or_use_basis": "fail",
+        "exact_base_resolvable": "pass",
         "single_bounded_task": "pass",
-        "native_language_source": "unknown",
+        "native_language_source": "pass",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
         "objective_evaluator_feasible": "unknown",
@@ -44318,12 +44491,18 @@
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass",
-        "instruction_parity": "unknown"
+        "instruction_parity": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "license-or-use-basis-unavailable"
+      ],
       "decision_reasons": [
-        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened."
+        "The exact public issue statement remains byte-identical to the discovery snapshot: SHA-256 of title, two newlines, and body is 0102718b3d166bcd9bc308d01c364bc0a8be6ae3b037952a168e5b960ebc169f. Its Korean contract materially distinguishes Latin and Korean glyph behavior while bounding the work to loading Roboto Flex, leading two font stacks with it, preserving Pretendard fallback, and retaining intentional serif wordmarks.",
+        "Issue timeline evidence identifies merged PR #500 as the direct solution. Its one commit e323f65b51321216ab821e50f1b87e358905cb4e has API base 9ae892a4f9074dfea2f93d534977cc3da3a051f8 as its sole parent, and the materialized base is both merge-base and ancestor. The three changed paths exactly match the GitHub Pull Request file inventory.",
+        "A partial public git clone materialized exact base 9ae892a4f9074dfea2f93d534977cc3da3a051f8 (tree 6722de4d5709782f1a0a47643a08b36c984f9342) and one-commit solution e323f65b51321216ab821e50f1b87e358905cb4e (tree 2d37ba43ed0b33d2597cf458aa9357db077d6866). The complete base tree has 520 entries and the detached base checkout remained clean. The public PR diff SHA-256 is c9e2b6ecdf6c04e1f32e0fbc20965c97e1e9c73d1416c5fa870a4d0daeef97b5.",
+        "License screening at the pinned base found no LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact at any path. Root README.md (blob 97b62794f287f5b9ae4d347ab0cf0bbe2a3f62d5, sha256 663352798a727a6e02ed2a0a2722405a73bf61ed7ce97c9ef484cae6372c1040), frontend/package.json (blob 461e004223e941f02a41b4aa029923110d6fd672, sha256 0fd293488a939bf41282c3cc2e69db4af2c3bb72a349509a3fc2444b3664c035), and backend/build.gradle (blob 4737a6b6b4643a4c0ef625ff329457ab9fc71964, sha256 716ac2fe310b770a4a3c0ef1f160303a09c120707165b4fa4dcbaf3090a45020) contain no license grant or declaration. Public availability alone is not a use basis, so license-or-use-basis-unavailable is terminal.",
+        "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, or CLAUDE.md anywhere. Neither CLI receives candidate-tree project guidance, so project instruction parity passes; the separate global-instruction gate remains unresolved. Because license already fails, no evaluator or webfont runtime fixture was authored."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -45029,30 +45208,32 @@
       "source_pool_id": "github-explicit-multilingual-issues-2026-07-19",
       "source_cluster_id": "github-SKALA-TEAM5--frontend",
       "repository_id": "SKALA-TEAM5--frontend",
-      "source_kind": "public-issue-discovery",
+      "source_kind": "public-issue-pr-pair",
       "source_reference": "https://github.com/SKALA-TEAM5/frontend/issues/66",
       "source_statement_available": true,
       "task_statement_hash": "e5f31212adc13dce2a75b5dc15602811101e6e9cd1e62b82dc0a4ae48138bc84",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
-      "solution_revision": null,
-      "solution_artifact_hash": null,
-      "solution_tree_hash": null,
+      "base_revision": "0950a8e281c1dfc5021bb5d05910d3107f899fa4",
+      "base_tree_hash": "55524f7af8c79871fe5a9f8dd1e94a89060506a9",
+      "solution_reference": "https://github.com/SKALA-TEAM5/frontend/commit/7c5dcde28c555e8696f6f222bc8010303c820ba2.diff",
+      "solution_revision": "7c5dcde28c555e8696f6f222bc8010303c820ba2",
+      "solution_artifact_hash": "afab6ba4ecc548d5ffbc13f29a3d82b712e5d1ead737c189b7598fb770acf929",
+      "solution_tree_hash": "1f2a972c683a18e7992eed282f3bbe3d6e30cd69",
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        "src/features/project-tab/UsageStatementDetailScreen.tsx"
+      ],
+      "license_or_use_basis": "No explicit code license or other use basis at exact issue-specific pre-solution base 0950a8e281c1dfc5021bb5d05910d3107f899fa4: the complete 68-entry tree has no LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact; root README.md and package.json contain no license grant or declaration.",
       "provisional_classification": {
         "instruction_language": "mixed",
         "task_category": "implementation",
-        "repository_code_language": null,
-        "repository_doc_language": null
+        "repository_code_language": "javascript-typescript",
+        "repository_doc_language": "ko"
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
+        "license_or_use_basis": "fail",
+        "exact_base_resolvable": "pass",
         "single_bounded_task": "pass",
-        "native_language_source": "unknown",
+        "native_language_source": "pass",
         "low_risk_isolated_execution": "unknown",
         "no_network_secret_push_production": "unknown",
         "objective_evaluator_feasible": "unknown",
@@ -45060,12 +45241,18 @@
         "reproducible_within_budget": "unknown",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass",
-        "instruction_parity": "unknown"
+        "instruction_parity": "pass"
       },
-      "decision": "screening",
-      "exclusion_rule_ids_triggered": [],
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "license-or-use-basis-unavailable"
+      ],
       "decision_reasons": [
-        "Manual source review found a bounded language-related task, but linked solution, exact base, license, objective evaluator, isolation, and reproducibility remain unscreened."
+        "The exact public issue statement remains byte-identical to the discovery snapshot: SHA-256 of title, two newlines, and body is e5f31212adc13dce2a75b5dc15602811101e6e9cd1e62b82dc0a4ae48138bc84. Its Korean contract specifies ten English-code-to-Korean-label mappings, detail-based grouping, collapse state, an unspecified-detail fallback, duplicate preservation, and existing completion behavior for one bounded TODO-sidebar implementation task.",
+        "Issue timeline evidence links merged PR #69, but that pull request closes #66, #67, and #68 together. Its current API base b1f796381490964d267b1018d71f58e7cd1fcad6 is not an ancestor of head 7c5dcde28c555e8696f6f222bc8010303c820ba2, and the first two PR commits implement unrelated login and chatbot changes. The final commit 7c5dcde28c555e8696f6f222bc8010303c820ba2 is independently atomic for #66: its sole parent is 0950a8e281c1dfc5021bb5d05910d3107f899fa4 and it changes only UsageStatementDetailScreen.tsx. The full PR diff is therefore not used as gold.",
+        "A partial public git clone materialized exact issue-specific base 0950a8e281c1dfc5021bb5d05910d3107f899fa4 (tree 55524f7af8c79871fe5a9f8dd1e94a89060506a9) and one-commit solution 7c5dcde28c555e8696f6f222bc8010303c820ba2 (tree 1f2a972c683a18e7992eed282f3bbe3d6e30cd69). The complete base tree has 68 entries and the detached base checkout remained clean. The public isolated commit diff SHA-256 is afab6ba4ecc548d5ffbc13f29a3d82b712e5d1ead737c189b7598fb770acf929.",
+        "License screening at the pinned base found no LICENSE, LICENCE, COPYING, NOTICE, or UNLICENSE artifact at any path. Root README.md (blob da0774204270885a150d5dd08019b3f34999e01f, sha256 87bfb37d9ec3a68eed1098c23614082cf9ed43fe4e2e148f9193f48349f3120e) and package.json (blob fc043d118ab639a30401ae9dd6f572aa77e6b3cb, sha256 97d93bbb2b6fa92b53fce21294d30bd0028df3738c5d62e9c533f37bf460b362) contain no license grant or declaration. Public availability alone is not a use basis, so license-or-use-basis-unavailable is terminal.",
+        "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, or CLAUDE.md anywhere. Neither CLI receives candidate-tree project guidance, so project instruction parity passes; the separate global-instruction gate remains unresolved. Because license already fails, no TODO rendering evaluator was authored."
       ],
       "screened_by_role_id": "task-source-construction-2026-07-19",
       "confirmatory_reuse_allowed": false
@@ -52942,42 +53129,58 @@
       "source_reference": "https://github.com/KoreaNirsa/prompt-booster/issues/10",
       "source_statement_available": true,
       "task_statement_hash": "a00061017fb1f3bc7fb6f98eaad54b7ab50370df5501965ad49a72259ca6f924",
-      "base_revision": null,
-      "base_tree_hash": null,
-      "solution_reference": null,
-      "solution_revision": null,
-      "solution_artifact_hash": null,
-      "solution_tree_hash": null,
+      "base_revision": "5f6a045a7d8fae7fc3b4df6150cf98d3cee8acb2",
+      "base_tree_hash": "7476e28bbd9ff11cd305f755098f9955bfae70bd",
+      "solution_reference": "https://github.com/KoreaNirsa/prompt-booster/pull/34",
+      "solution_revision": "0533e40b06358fc9a8db61298b67904c5b43c271",
+      "solution_artifact_hash": "909b0f92f0e9a92480e9d25890f5aa7c2e0b0f7122fca6f37ed9ba7270678f98",
+      "solution_tree_hash": "978a7844a746567764dd56e8f5755029671592d8",
       "source_evaluator_artifact_hash": null,
-      "changed_files": [],
-      "license_or_use_basis": "Unknown pending upstream repository license verification.",
+      "changed_files": [
+        "docs/prompt-pattern-library.md",
+        "patterns/core.json",
+        "prompt_booster/__init__.py",
+        "prompt_booster/optimizer.py",
+        "prompt_booster/pattern_library.py",
+        "schemas/prompt-pattern.schema.json",
+        "tests/test_optimizer.py",
+        "tests/test_pattern_library.py",
+        "tools/validate_prompt_patterns.py"
+      ],
+      "license_or_use_basis": "Apache-2.0 from LICENSE at exact base 5f6a045a7d8fae7fc3b4df6150cf98d3cee8acb2 (git blob 261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64, content SHA-256 c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4), corroborated by the pinned README (git blob 4e5ef44af0f94cdea3c7d3cf854f9020e450811d, content SHA-256 fa6b2317ebf194369219e2dc79e387d688873d3f0030e5e550aa489cfbb0d441).",
       "provisional_classification": {
-        "instruction_language": null,
-        "task_category": null,
-        "repository_code_language": null,
-        "repository_doc_language": null
+        "instruction_language": "ko",
+        "task_category": "implementation",
+        "repository_code_language": "python",
+        "repository_doc_language": "mixed"
       },
       "screening": {
-        "license_or_use_basis": "unknown",
-        "exact_base_resolvable": "unknown",
-        "single_bounded_task": "unknown",
-        "native_language_source": "unknown",
-        "low_risk_isolated_execution": "unknown",
-        "no_network_secret_push_production": "unknown",
-        "objective_evaluator_feasible": "unknown",
-        "gold_and_evaluator_hideable": "unknown",
-        "reproducible_within_budget": "unknown",
+        "license_or_use_basis": "pass",
+        "exact_base_resolvable": "pass",
+        "single_bounded_task": "pass",
+        "native_language_source": "pass",
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass",
+        "reproducible_within_budget": "pass",
         "selection_independent_of_agent_results": "pass",
         "not_used_for_confirmatory_round": "pass",
-        "instruction_parity": "unknown"
+        "instruction_parity": "pass"
       },
-      "decision": "screening",
+      "decision": "selected-for-task-authoring",
       "exclusion_rule_ids_triggered": [],
       "decision_reasons": [
         "Complete fixed-query discovery inventory; language materiality, solution lineage, exact base, license, evaluator feasibility, isolation, and reproducibility require result-blind screening.",
-        "기계적 사전필터: 이 이슈를 참조하는 merged PR #34이 파일 9개를 바꾸며 그중 2개가 테스트다(tests/test_optimizer.py, tests/test_pattern_library.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다."
+        "기계적 사전필터: 이 이슈를 참조하는 merged PR #34이 파일 9개를 바꾸며 그중 2개가 테스트다(tests/test_optimizer.py, tests/test_pattern_library.py 등). 수동 판정 우선순위 신호일 뿐 어떤 inclusion rule도 결정하지 않으며, PR 번호는 base revision이 아니므로 base는 따로 읽어야 한다.",
+        "2026-07-22 source and lineage review: issue #10 is a native Korean implementation request for one prompt-pattern-library schema, its loader validation, one sample, optimizer integration, and tests. Merged PR #34 explicitly resolves that issue. Its API base 5f6a045a7d8fae7fc3b4df6150cf98d3cee8acb2 is an ancestor of the one-commit head 0533e40b06358fc9a8db61298b67904c5b43c271 and is also the local merge-base. The exact 28-entry base tree is 7476e28bbd9ff11cd305f755098f9955bfae70bd; the 9-file base-to-head inventory matches the pull-request snapshot.",
+        "The statement is bounded and objectively checkable: required categories and fields, de-duplicated locale text references, invalid-definition fail-fast behavior, sample data, optimizer loading, and multilingual/agent rendering extension fields all admit deterministic assertions. The solution tests exercise category/schema coverage, defaults, matching, optimizer integration, missing-keyword and unknown-reference failures; the schema and loader also require supportedLocales and agentProfiles. A final task author must still write an independent held-out evaluator rather than exposing or treating the solution test implementation as the task specification.",
+        "The exact base carries Apache-2.0 LICENSE and a matching README declaration. The task is pure repository-local Python/data/schema work in an isolated checkout; neither implementation nor evaluation requires network, credentials, push, production mutation, or destructive state.",
+        "Agent-free reproducibility controls used the repository's standard-library unittest path without dependency installation. The pristine exact base passed 41 tests in 0.11 s. The solution head passed 47 tests in 0.14 s. Applying only the two source test hunks to the base produced the intended negative control: 5 existing optimizer tests passed, 2 new optimizer assertions failed for the absent match_patterns/patternMatches behavior, and the new pattern-library module failed to import because PatternLibrary is absent. On the head, the targeted pattern-library and optimizer suite passed 13 tests in 0.08 s. These controls fit the small resource bucket and distinguish missing task behavior from a broken base environment.",
+        "Project instruction parity passes at the exact base: the complete 28-entry tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, or other discovered project-instruction path, so neither CLI receives candidate-tree guidance under the measured Claude and documented Codex discovery rules.",
+        "All twelve screening rules pass, so this row moves to selected-for-task-authoring. This is only a construction queue state; prompt authoring, independent evaluator authoring, validity review, manifest freeze, and agent execution have not occurred."
       ],
-      "screened_by_role_id": "task-source-construction-2026-07-19",
+      "screened_by_role_id": "task-source-construction-2026-07-20",
       "confirmatory_reuse_allowed": false
     },
     {
@@ -54095,33 +54298,33 @@
   ],
   "summary": {
     "candidate_count": 1130,
-    "screening_count": 1040,
-    "excluded_count": 86,
-    "selected_for_task_authoring_count": 4,
+    "screening_count": 1025,
+    "excluded_count": 98,
+    "selected_for_task_authoring_count": 7,
     "language_assignment_counts": {
-      "ko": 57,
+      "ko": 61,
       "en": 301,
       "mixed": 22,
-      "unassigned": 750
+      "unassigned": 746
     },
     "category_assignment_counts": {
-      "implementation": 35,
-      "debugging": 15,
+      "implementation": 38,
+      "debugging": 16,
       "testing": 7,
       "refactoring": 15,
       "repository-analysis-planning": 8,
-      "unassigned": 1050
+      "unassigned": 1046
     },
     "known_gaps": [
-      "selected-for-task-authoring is a construction queue state only: four rows satisfy candidate eligibility, but no pilot task, evaluator, validity review, manifest instance, or agent execution has been authored or run.",
-      "Project-level instruction parity is now an explicit rule. It is settled only for the fourteen exact pinned bases enumerated in phase2b-agent-instruction-parity-2026-07-20.json; all other rows remain unknown unless independently excluded.",
+      "selected-for-task-authoring is a construction queue state only: seven rows satisfy candidate eligibility, but no pilot task, final evaluator, validity review, manifest instance, or agent execution has been authored or run.",
+      "Project-level instruction parity is now an explicit rule. It is settled only for the twenty-seven exact pinned bases enumerated in phase2b-agent-instruction-parity-2026-07-20.json; all other rows remain unknown unless independently excluded.",
       "The active Claude and Codex global instruction inventories are not semantically equivalent. Before execution, Phase 2b must make them semantically equivalent or use isolated empty agent homes, then pin the resulting effective instruction state; pinning a known asymmetric state does not resolve the confounder.",
-      "Only 29 of 411 Korean-bearing GitHub rows have manual language/category review; 27 are excluded, swift-tui #18 remains screening, factlog-academic #314 is selected-for-task-authoring, and 382 rows remain unprobed.",
+      "Only 31 of 411 Korean-bearing GitHub rows have manual language/category review; 28 are excluded, factlog-academic #314/#342 and ChunChuGwan #406 are selected-for-task-authoring, and 380 rows remain unprobed.",
       "A second explicit-language pool added 383 nonduplicate rows; a deterministic 50-row review found 21 provisional mixed requirements, but 22 rows failed translation-only, subjectivity, coupling, or external-side-effect rules.",
-      "The reviewed rows now provide 57 provisional Korean, 301 English, and 22 mixed assignments. Four Korean rows are selected-for-task-authoring, but this construction state does not fill the 20/20/20 quota or create a pilot task.",
+      "The reviewed rows now provide 61 provisional Korean, 301 English, and 22 mixed assignments. Seven Korean rows are selected-for-task-authoring, but this construction state does not fill the 20/20/20 quota or create a pilot task.",
       "The 300 externally inventoried statements are provisionally English, but native-source fidelity has not been verified instance by instance.",
       "GitHub linked solution PR, exact base, patch scope, and upstream license remain unresolved for most of the Korean-bearing discovery pool.",
-      "Task category remains unassigned for 1050 of 1130 rows.",
+      "Task category remains unassigned for 1046 of 1130 rows.",
       "Upstream license, exact base/tree, project instruction parity, objective evaluator coverage, protected-fixture leakage, isolation, flakiness, and resource reproducibility remain unscreened for most rows.",
       "Public benchmark exposure may contaminate agent behavior; this pilot cannot turn those instances into confirmatory capability evidence.",
       "Eligibility does not depend on runtimes that happen to be installed on the screening host. A Linux-reproducible runtime or toolchain may be provisioned into an isolated immutable environment before manifest freeze, subject to exact version and artifact-hash pins, byte-equivalent environments for both agents, no network during agent or evaluator execution, agent-free base and control reproduction, the preregistered resource bucket, and a recorded environment epoch and fixture provenance.",

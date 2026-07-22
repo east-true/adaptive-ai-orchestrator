@@ -212,10 +212,10 @@ manifest 포함, agent 실행을 뜻하지 않는다.
 
 #### Global instruction context (`v1.1` amendment)
 
-2026-07-22 환경 inventory에서 `/home/leo/.claude/CLAUDE.md`는 KB/Wiki 지침과 Claude-only
-`RTK.md`를 import하고, `/home/leo/.codex/AGENTS.md`는 대응하는 KB/Wiki 지침은 있지만 RTK
-등가물이 없었다. 따라서 양쪽 global instruction은 존재하지만 의미상 같지 않다. 이 파일은
-후보 fixture 밖의 환경 confounder이며 수정하지 않는다.
+2026-07-22 비공개 user-level instruction inventory를 result-blind하게 비교한 결과, 양쪽
+global instruction은 존재하지만 의미상 같지 않았다. 개인 환경의 경로, 파일명, import와
+내용은 repository에 공개하지 않으며 equivalence 결과만 남긴다. 이 비대칭은 후보 fixture
+밖의 environment confounder이고 candidate 파일을 바꿔 보정하지 않는다.
 
 완성 manifest의 `environment.global_instruction_context`는 실행 전에 다음 중 하나를 고정한다.
 
@@ -489,6 +489,7 @@ construction 단계 완료 조건은 다음과 같다.
 
 - [x] construction/validity workflow와 machine-readable schema 동결;
 - [x] source candidate ledger schema와 inclusion/exclusion rule 작성;
+- [ ] 양쪽 global instruction context 동등화/격리 및 effective hash pin;
 - [ ] source pool screening 완료 및 candidate ledger 동결;
 - [ ] 역할을 분리해 native task 60개 작성;
 - [ ] 보호 evaluator 60개, assertion inventory, negative/positive control 작성;
@@ -499,4 +500,8 @@ construction 단계 완료 조건은 다음과 같다.
 
 따라서 이 문서 다음의 실제 작업은 runner 실행이 아니라
 [source candidate ledger](paired-pilot-candidate-ledger.md)의 pool을 완성·동결하고
-**역할 분리된 task construction package**를 만드는 것이다.
+global instruction gate를 닫은 뒤 **역할 분리된 task construction package**를 만드는
+것이다. 현재 작업 순서와 snapshot은
+[진행상황의 현재 재개 지점](adaptive-routing-progress.md#현재-재개-지점과-고정-작업-순서-2026-07-22)을
+단일 진입점으로 사용한다. 두 construction gate가 닫히기 전에는 task authoring이나
+Phase 2b agent 실행을 시작하지 않는다.

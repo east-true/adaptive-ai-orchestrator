@@ -5,6 +5,7 @@ __pycache__/
 .coverage
 coverage.xml
 htmlcov/
+security_best_practices_report.md
 .venv/
 venv/
 .env

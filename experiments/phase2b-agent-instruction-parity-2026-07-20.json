@@ -77,7 +77,7 @@
     },
     "local_configuration_observation": {
       "evidence_type": "local-config-inventory",
-      "path": "/home/leo/.codex/config.toml",
+      "path": "$HOME/.codex/config.toml",
       "project_doc_fallback_filenames_present": false,
       "effective_project_doc_fallback_filenames": [],
       "conclusion": "TEAM_GUIDE.md and .agents.md are not active Codex fallback names in this environment."
@@ -90,22 +90,13 @@
   },
   "global_instruction_confounder_2026_07_22": {
     "evidence_type": "environment-inventory",
-    "inventory_scope": "active user-level instruction sources; files were not edited by this handoff",
+    "inventory_scope": "active user-level instruction sources; private paths, filenames, imports, and content are intentionally omitted from this public artifact",
+    "privacy_note": "The private instruction inventory is not repository data and must not be published. Only the result-blind equivalence result and required execution gate are retained here.",
     "claude_code": {
-      "root": "/home/leo/.claude/CLAUDE.md",
-      "imports": [
-        "knowledge-base.md",
-        "personal-wiki.md",
-        "RTK.md"
-      ]
+      "private_inventory_disclosed": false
     },
     "codex": {
-      "root": "/home/leo/.codex/AGENTS.md",
-      "semantic_coverage": [
-        "knowledge-base guidance",
-        "personal-wiki guidance"
-      ],
-      "no_rtk_equivalent_observed": true
+      "private_inventory_disclosed": false
     },
     "semantically_equivalent": false,
     "gate_status": "unresolved",
@@ -790,7 +781,7 @@
             {
               "path": "CLAUDE.md",
               "mode": "100644",
-              "content": "@AGENTS.md\\n"
+              "content": "@AGENTS.md\n"
             }
           ]
         },
@@ -855,7 +846,7 @@
     },
     "second_contextual_batch_materialized_inventory": {
       "checked_at": "2026-07-22",
-      "method": "A partial git clone materialized the linked pull request base and head. The base tree hash came from git rev-parse <base>^{tree}; the 616-entry path inventory came from git ls-tree -r. Root instruction blobs were read from the pinned base. Inventory alone does not settle whether the Codex wrapper and Claude path-rule delivery are semantically equivalent.",
+      "method": "A partial git clone materialized the linked pull request base and head. The base tree hash came from git rev-parse <base>^{tree}; the 616-entry path inventory came from git ls-tree -r. Root instruction blobs and the storage, dashboard and testing path-rule files applicable to the issue-derived changed paths were read from the pinned base. Semantic delivery was then compared from the explicit AGENTS.md-to-CLAUDE.md directive and CLAUDE.md's canonical path-rule index.",
       "candidates": [
         {
           "candidate_id": "ghko-yvshdjcsldhdjt--ChunChuGwan-issue-406",
@@ -888,8 +879,265 @@
             [".claude/rules/storage.md", "0d04f154a5668bd07a4bac77bdb613465fb5d9fa"],
             [".claude/rules/testing.md", "d4499d0fd24bc4fa68f31431191f7e96bdb38c85"]
           ],
-          "assessment": "unknown",
-          "reason": "AGENTS.md directs Codex to read CLAUDE.md as the SSOT but adds Codex-specific path guidance; Claude also receives path-scoped .claude/rules. A separate semantic-delivery assessment is required."
+          "assessment": "pass",
+          "reason": "Codex receives AGENTS.md, whose first requirement is to read root CLAUDE.md fully and treat it as the SSOT. Claude receives that same CLAUDE.md. Its canonical path index directs work on docs/STORAGE.md, chunchugwan/web/app.py and tests/** to the same storage.md, dashboard.md and testing.md constraints that Claude loads path-scoped. AGENTS.md's additional Codex-specific tool/config locations do not change issue #406 implementation, security, documentation or test requirements. No task-relevant one-sided instruction remains for the issue-derived scope."
+        }
+      ]
+    },
+    "third_contextual_batch_materialized_inventory": {
+      "checked_at": "2026-07-22",
+      "method": "Partial git clones materialized each linked pull request base and head. Base and head tree hashes came from git rev-parse <revision>^{tree}; the full path inventories came from git ls-tree -r; git merge-base --is-ancestor verified every recorded base-to-head lineage. Instruction blobs and symlink targets were read only from each exact pinned base.",
+      "candidates": [
+        {
+          "candidate_id": "ghko-Aiddoo--Aido-platform-issue-655",
+          "base_revision": "f3083d85af3f9c7632448c0f276ac552bd7308cc",
+          "base_tree_hash": "3877f9457c1213cd2bb9ffa66582a4ea34e0494d",
+          "tree_entry_count": 2344,
+          "workspace_root_matching_paths": [
+            {
+              "path": "AGENTS.md",
+              "mode": "100644",
+              "blob_sha": "f23dfab9752d05b39b135e3a658ba32a8a408e76",
+              "content_sha256": "afe73f368a0a129e589c8e01691d6b6d4a1200d108d70bc55cd9d3c3829e15b2"
+            },
+            {
+              "path": "CLAUDE.md",
+              "mode": "100644",
+              "blob_sha": "43c994c2d3617f947bcb5adf1933e21dabe46bb5",
+              "content_sha256": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
+              "content": "@AGENTS.md\n"
+            }
+          ],
+          "task_scope_matching_paths": [
+            {
+              "path": "apps/api/AGENTS.md",
+              "mode": "100644",
+              "blob_sha": "acf5bd8a464f819813fbf0ea87eb588be3fd84b8",
+              "content_sha256": "65fab034643d6ad38734f59ac7f46ae316368a2e543c752c98e367d468a4fb4a"
+            },
+            {
+              "path": "apps/api/CLAUDE.md",
+              "mode": "100644",
+              "blob_sha": "43c994c2d3617f947bcb5adf1933e21dabe46bb5",
+              "content_sha256": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
+              "content": "@AGENTS.md\\n"
+            }
+          ],
+          "assessment": "pass",
+          "reason": "Both the repository root and the changed apps/api scope give Claude an @import of the AGENTS.md content that Codex discovers on the same root-to-working-directory chain; no AGENTS.override.md or path-scoped .claude/rules are present."
+        },
+        {
+          "candidate_id": "ghko-hissinger--small-village-issue-51",
+          "base_revision": "a8cb2884be553f91f2bfa50e306b5def1e6fc072",
+          "base_tree_hash": "e191b027d4c1a7d410b10958701b2c3ce9b9967c",
+          "tree_entry_count": 173,
+          "workspace_root_matching_paths": [
+            {
+              "path": "AGENTS.md",
+              "mode": "100644",
+              "blob_sha": "f11ef753415041613dcca1812f48811506aabb77",
+              "content_sha256": "bef697ca18278d002a90583244669f40d710e80333bdea97f1d21028ead0e1e9"
+            },
+            {
+              "path": "CLAUDE.md",
+              "mode": "120000",
+              "blob_sha": "47dc3e3d863cfb5727b87d785d09abf9743c0a72",
+              "content_sha256": "a54ff182c7e8acf56acfd6e4b9c3ff41e2c41a31c9b211b2deb9df75d9a478f9",
+              "symlink_target": "AGENTS.md"
+            }
+          ],
+          "assessment": "pass",
+          "reason": "Claude's root CLAUDE.md symlink and Codex's root AGENTS.md resolve to the same project guidance, with no AGENTS.override.md."
+        },
+        {
+          "candidate_id": "ghko-Soku-JINSEOK--Soku-Convention-Boilerplate-issue-19",
+          "base_revision": "404e695304d2e9fd7930a7134fcc2a15c7b5ffc4",
+          "base_tree_hash": "ad9c7296c25e328b5ba120f843b505300caa29d4",
+          "tree_entry_count": 113,
+          "workspace_root_matching_paths": [
+            {
+              "path": "AGENTS.md",
+              "mode": "100644",
+              "blob_sha": "184ff2242db77a95740bc54772123bdfa677a58b",
+              "content_sha256": "8ddb70fe462aa2a247e5452e69b9ff331f2b560216a30a7dfb62e5770f07fcf1"
+            }
+          ],
+          "assessment": "fail",
+          "reason": "Codex discovers root AGENTS.md, while Claude has no root CLAUDE.md or equivalent pinned project instruction path; no AGENTS.override.md is present."
+        }
+      ]
+    },
+    "fourth_contextual_batch_materialized_inventory": {
+      "checked_at": "2026-07-22",
+      "method": "A partial git clone materialized the linked pull request graph. The GitHub Pull Request API base was not an ancestor of the head, so the exact pre-solution base was resolved as the merge-base and earliest solution commit parent. The merge-base-to-head 17-file inventory matched the GitHub PR files and .diff snapshots. The full 1,167-entry base inventory came from git ls-tree -r.",
+      "candidates": [
+        {
+          "candidate_id": "ghmix-genonai--doc_parser-issue-288",
+          "api_base_revision_not_used": "b4b2b17becf049d77a1cc87526b9ed178635f058",
+          "api_base_is_head_ancestor": false,
+          "base_revision": "3107d9663355fc042faa3c19f8e37e357af8a370",
+          "base_tree_hash": "c7dd7005be6099763960903fd116a02dc29bf9fd",
+          "tree_entry_count": 1167,
+          "workspace_root_matching_paths": [],
+          "non_active_matching_paths": [],
+          "assessment": "pass",
+          "reason": "The exact base contains no AGENTS.override.md, AGENTS.md, or CLAUDE.md anywhere in its full tree, so neither CLI receives candidate-tree project guidance."
+        }
+      ]
+    },
+    "fifth_contextual_batch_materialized_inventory": {
+      "checked_at": "2026-07-22",
+      "method": "A partial git clone materialized merged pull request #34. git merge-base --is-ancestor and git merge-base both confirmed the GitHub API base as the exact one-commit pre-solution base. Base and head tree hashes came from git rev-parse <revision>^{tree}; the complete 28-entry base inventory came from git ls-tree -r.",
+      "candidates": [
+        {
+          "candidate_id": "ghmix-KoreaNirsa--prompt-booster-issue-10",
+          "base_revision": "5f6a045a7d8fae7fc3b4df6150cf98d3cee8acb2",
+          "base_tree_hash": "7476e28bbd9ff11cd305f755098f9955bfae70bd",
+          "tree_entry_count": 28,
+          "workspace_root_matching_paths": [],
+          "non_active_matching_paths": [],
+          "assessment": "pass",
+          "reason": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, or other project-instruction path discovered by either CLI, so neither agent receives candidate-tree project guidance."
+        }
+      ]
+    },
+    "sixth_contextual_batch_materialized_inventory": {
+      "checked_at": "2026-07-22",
+      "method": "A full public git clone materialized issue #18's recorded base and its one-commit solution. The solution parent equals the recorded base. Base and solution tree hashes came from git rev-parse HEAD^{tree}; the complete 224-entry base inventory came from git ls-tree -r, and the base remained clean.",
+      "candidates": [
+        {
+          "candidate_id": "ghko-minacle--swift-tui-issue-18",
+          "base_revision": "8d63a793c422d760bc9ba37f108f4bbe0d914be3",
+          "base_tree_hash": "56bf597e58a103217d56530007f9ec30ee9f187e",
+          "tree_entry_count": 224,
+          "workspace_root_matching_paths": [
+            {
+              "path": "AGENTS.md",
+              "mode": "100644",
+              "blob_sha": "1d6e381624e8701843aeaa28b9ccd1835a92e4c1",
+              "content_sha256": "6ef1b29c8234b7b78bd6f9980bf7882e9b3bcfc1b36512765feb8e899c87033e"
+            }
+          ],
+          "non_active_matching_paths": [],
+          "assessment": "fail",
+          "reason": "The exact base contains only root AGENTS.md and no CLAUDE.md, AGENTS.override.md, or equivalent Claude import. Its access-control, public-API documentation, test-organization, test-naming, and validation constraints directly govern issue #18's 31-file source, documentation, and test refactor, so Codex receives materially different project guidance from Claude."
+        }
+      ]
+    },
+    "seventh_contextual_batch_materialized_inventory": {
+      "checked_at": "2026-07-22",
+      "method": "A full public git clone materialized merged pull request #80's exact one-commit base and solution. The solution parent equals the GitHub API base. Base and solution tree hashes came from git rev-parse <revision>^{tree}; the complete 155-entry base inventory came from git ls-tree -r, and the materialized base remained clean.",
+      "candidates": [
+        {
+          "candidate_id": "ghmix-ohhalim--MembershipFlow-issue-79",
+          "base_revision": "b2bc8bac41e51b61774b3b98da43e420f4d46df3",
+          "base_tree_hash": "43678ee48b587b4404e944b50deba0c56824ff40",
+          "tree_entry_count": 155,
+          "workspace_root_matching_paths": [],
+          "non_active_matching_paths": [],
+          "assessment": "pass",
+          "reason": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, or CLAUDE.md anywhere, so neither CLI receives candidate-tree project guidance. The separate global-instruction gate remains unresolved and is not treated as candidate evidence."
+        }
+      ]
+    },
+    "eighth_contextual_batch_materialized_inventory": {
+      "checked_at": "2026-07-22",
+      "method": "A full public git clone materialized merged pull request #44's exact one-commit base and solution. The solution parent equals the GitHub API base. Base and solution tree hashes came from git rev-parse <revision>^{tree}; the complete 146-entry base inventory came from git ls-tree -r, and the materialized base remained clean.",
+      "candidates": [
+        {
+          "candidate_id": "ghmix-0xkkun--seoul-challenge-issue-30",
+          "base_revision": "075464d7ec5ebf1771cde201e560bdf6fa0bdd2f",
+          "base_tree_hash": "f9058eebeb04463aac357ab037fe4d9449ed9338",
+          "tree_entry_count": 146,
+          "workspace_root_matching_paths": [
+            {
+              "path": "AGENTS.md",
+              "mode": "100644",
+              "blob_sha": "01623c43f8326517fb47c708e05d57c92c9aa25f",
+              "content_sha256": "86f01955d18dec58dee3f07bb956cd8e1b2a47cc76af19a528d5ff1311aa9d33"
+            }
+          ],
+          "non_active_matching_paths": [],
+          "assessment": "fail",
+          "reason": "The exact base contains only root AGENTS.md and no CLAUDE.md, AGENTS.override.md, or equivalent Claude import. Its Godot version pin, quick/full validation gates, naming rules, runtime-check requirements, and worktree/review workflow materially govern issue #30, which explicitly invokes AGENTS.md, so Codex receives task-relevant project guidance that Claude does not."
+        }
+      ]
+    },
+    "ninth_contextual_batch_materialized_inventory": {
+      "checked_at": "2026-07-22",
+      "method": "A partial public git clone plus explicit SHA fetch materialized merged pull request #411's exact two-commit base and solution. The API base is the first solution commit's parent and an ancestor of the head. Base and solution tree hashes came from git rev-parse <revision>^{tree}; the complete 717-entry base inventory came from git ls-tree -r, and the materialized base remained clean.",
+      "candidates": [
+        {
+          "candidate_id": "ghmix-Gn0lee--oat-issue-410",
+          "base_revision": "b19b34b63d1df554091b165484d78ce9cf2eba1d",
+          "base_tree_hash": "2ea4b5e9cc61d7345734c4d3df483d7bcb0736dd",
+          "tree_entry_count": 717,
+          "workspace_root_matching_paths": [
+            {
+              "path": "CLAUDE.md",
+              "mode": "100644",
+              "blob_sha": "0773a2b4a435bcfc2c29b47a1646d66687595d4e",
+              "content_sha256": "6b6dac7eaad047e01f2075748d9bf42adb097362547b85d6e6b4accc05e0a817"
+            }
+          ],
+          "non_active_matching_paths": [],
+          "assessment": "fail",
+          "reason": "The exact base contains only a 317-line root CLAUDE.md and no AGENTS.md or AGENTS.override.md. Its project architecture, UI-work activation, DESIGN.md, CONVENTIONS_FE.md, SCREEN_PRIMITIVES.md, styling, testing, naming, privacy, and command constraints directly govern issue #410's React UI and test scope, so Claude receives task-relevant project guidance that Codex does not."
+        }
+      ]
+    },
+    "tenth_contextual_batch_materialized_inventory": {
+      "checked_at": "2026-07-22",
+      "method": "A partial public git clone plus explicit SHA fetch materialized merged pull request #1467's exact three-commit base and solution. The current Pull Request API base is not an ancestor of the head, so the merge-base and earliest solution commit's parent were used as the pre-solution base; only that base-to-head range matches the five-file pull-request inventory. Base and solution tree hashes came from git rev-parse <revision>^{tree}; the complete 985-entry base inventory came from git ls-tree -r, and the materialized base remained clean.",
+      "candidates": [
+        {
+          "candidate_id": "ghmix-handokei--subway-now-issue-1465",
+          "base_revision": "1c73ae582b535514feb43bbc393b5cec1ba12920",
+          "base_tree_hash": "158cfbad7be784dbd5d7588ca4e3195ab2dfad22",
+          "tree_entry_count": 985,
+          "workspace_root_matching_paths": [
+            {
+              "path": "CLAUDE.md",
+              "mode": "100644",
+              "blob_sha": "529d172c873e2f215d1d1dc691a0cbbd00053232",
+              "content_sha256": "878665e733a8c04cc87c45a9d0d62f840edf3d8b80db0a3c84df3e3481af7ec5"
+            }
+          ],
+          "non_active_matching_paths": [],
+          "assessment": "fail",
+          "reason": "The exact base contains only a 287-line root CLAUDE.md and no AGENTS.md or AGENTS.override.md. Its development-branch workflow, static-data validation, 100% coverage, station-name normalization, architecture, test-command, and coding constraints directly govern issue #1465's script, fixture, stations.json, and 44-test scope, so Claude receives task-relevant project guidance that Codex does not."
+        }
+      ]
+    },
+    "eleventh_contextual_batch_materialized_inventory": {
+      "checked_at": "2026-07-22",
+      "method": "A partial public git clone materialized merged pull request #500's exact one-commit base and solution. The solution's sole parent equals the GitHub API base, which is also the merge-base and an ancestor of the head. Base and solution tree hashes came from git rev-parse <revision>^{tree}; the complete 520-entry base inventory came from git ls-tree -r, and the materialized base remained clean.",
+      "candidates": [
+        {
+          "candidate_id": "ghmix-prgrms-aibe-devcourse--AIBE5_FinalProject_Team7_JackPot-issue-499",
+          "base_revision": "9ae892a4f9074dfea2f93d534977cc3da3a051f8",
+          "base_tree_hash": "6722de4d5709782f1a0a47643a08b36c984f9342",
+          "tree_entry_count": 520,
+          "workspace_root_matching_paths": [],
+          "non_active_matching_paths": [],
+          "assessment": "pass",
+          "reason": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, or CLAUDE.md anywhere, so neither CLI receives candidate-tree project guidance. The separate global-instruction gate remains unresolved and is not treated as candidate evidence."
+        }
+      ]
+    },
+    "twelfth_contextual_batch_materialized_inventory": {
+      "checked_at": "2026-07-22",
+      "method": "A partial public git clone materialized the exact parent and one-commit issue-specific solution inside merged pull request #69. The current API base is not an ancestor of the head and the first two pull-request commits belong to other issues, so the sole parent of the final atomic #66 commit is the candidate base. Base and solution tree hashes came from git rev-parse <revision>^{tree}; the complete 68-entry base inventory came from git ls-tree -r, and the materialized base remained clean.",
+      "candidates": [
+        {
+          "candidate_id": "ghmix-SKALA-TEAM5--frontend-issue-66",
+          "base_revision": "0950a8e281c1dfc5021bb5d05910d3107f899fa4",
+          "base_tree_hash": "55524f7af8c79871fe5a9f8dd1e94a89060506a9",
+          "tree_entry_count": 68,
+          "workspace_root_matching_paths": [],
+          "non_active_matching_paths": [],
+          "assessment": "pass",
+          "reason": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, or CLAUDE.md anywhere, so neither CLI receives candidate-tree project guidance. The separate global-instruction gate remains unresolved and is not treated as candidate evidence."
         }
       ]
     },
@@ -987,6 +1235,18 @@
         ]
       },
       {
+        "candidate_id": "ghko-yvshdjcsldhdjt--ChunChuGwan-issue-406",
+        "base_tree_hash": "f94c1a6b9bc764dfaa3549dfac99971bab1f62e2",
+        "project_instruction_profile": "root AGENTS.md directs Codex to the same root CLAUDE.md SSOT and canonical storage/dashboard/testing path-rule index that governs Claude's task scope",
+        "result": "pass",
+        "evidence_basis": [
+          "materialized-pinned-full-tree-inventory",
+          "pinned-semantic-instruction-review",
+          "claude-behavioral-path-rule-discovery",
+          "codex-behavioral-root-AGENTS.md"
+        ]
+      },
+      {
         "candidate_id": "ghmix-SeokRae--blog-issue-12",
         "base_tree_hash": "9d3226c17f0ffd8dd0d55d628ce89acbb7bc7fb4",
         "project_instruction_profile": "root CLAUDE.md only",
@@ -1050,6 +1310,149 @@
         "evidence_basis": [
           "pinned-tree-inventory",
           "claude-behavioral-CLAUDE.md",
+          "codex-official-document",
+          "local-empty-fallback-config"
+        ]
+      },
+      {
+        "candidate_id": "ghko-Aiddoo--Aido-platform-issue-655",
+        "base_tree_hash": "3877f9457c1213cd2bb9ffa66582a4ea34e0494d",
+        "project_instruction_profile": "full 2344-entry tree contains root AGENTS.md with root CLAUDE.md importing it, plus task-scoped apps/api/AGENTS.md with apps/api/CLAUDE.md importing it; no AGENTS.override.md or path-scoped .claude/rules",
+        "result": "pass",
+        "evidence_basis": [
+          "materialized-pinned-full-tree-inventory",
+          "claude-behavioral-import",
+          "codex-behavioral-root-AGENTS.md"
+        ]
+      },
+      {
+        "candidate_id": "ghko-hissinger--small-village-issue-51",
+        "base_tree_hash": "e191b027d4c1a7d410b10958701b2c3ce9b9967c",
+        "project_instruction_profile": "full 173-entry tree contains root CLAUDE.md symlink targeting root AGENTS.md, with no AGENTS.override.md",
+        "result": "pass",
+        "evidence_basis": [
+          "materialized-pinned-full-tree-inventory",
+          "claude-behavioral-CLAUDE.md",
+          "codex-behavioral-root-AGENTS.md"
+        ]
+      },
+      {
+        "candidate_id": "ghko-Soku-JINSEOK--Soku-Convention-Boilerplate-issue-19",
+        "base_tree_hash": "ad9c7296c25e328b5ba120f843b505300caa29d4",
+        "project_instruction_profile": "full 113-entry tree contains root AGENTS.md only, with no CLAUDE.md or AGENTS.override.md",
+        "result": "fail",
+        "evidence_basis": [
+          "materialized-pinned-full-tree-inventory",
+          "claude-behavioral-discovery",
+          "codex-behavioral-root-AGENTS.md"
+        ]
+      },
+      {
+        "candidate_id": "ghmix-genonai--doc_parser-issue-288",
+        "base_tree_hash": "c7dd7005be6099763960903fd116a02dc29bf9fd",
+        "project_instruction_profile": "full 1167-entry exact pre-solution tree contains no AGENTS.override.md, AGENTS.md, or CLAUDE.md path for either CLI",
+        "result": "pass",
+        "evidence_basis": [
+          "materialized-pinned-full-tree-inventory",
+          "claude-behavioral-discovery",
+          "codex-official-document",
+          "local-empty-fallback-config"
+        ]
+      },
+      {
+        "candidate_id": "ghmix-KoreaNirsa--prompt-booster-issue-10",
+        "base_tree_hash": "7476e28bbd9ff11cd305f755098f9955bfae70bd",
+        "project_instruction_profile": "complete 28-entry exact pre-solution tree contains no project-instruction path discovered by either CLI",
+        "result": "pass",
+        "evidence_basis": [
+          "materialized-pinned-full-tree-inventory",
+          "claude-behavioral-discovery",
+          "codex-official-document",
+          "local-empty-fallback-config"
+        ]
+      },
+      {
+        "candidate_id": "ghko-minacle--swift-tui-issue-18",
+        "base_tree_hash": "56bf597e58a103217d56530007f9ec30ee9f187e",
+        "project_instruction_profile": "complete 224-entry exact base contains root AGENTS.md only; its material code, documentation, test-structure, test-naming and validation constraints apply directly to the issue scope",
+        "result": "fail",
+        "evidence_basis": [
+          "materialized-pinned-full-tree-inventory",
+          "claude-behavioral-discovery",
+          "codex-behavioral-root-AGENTS.md",
+          "pinned-semantic-instruction-review"
+        ]
+      },
+      {
+        "candidate_id": "ghmix-ohhalim--MembershipFlow-issue-79",
+        "base_tree_hash": "43678ee48b587b4404e944b50deba0c56824ff40",
+        "project_instruction_profile": "complete 155-entry exact pre-solution tree contains no AGENTS.override.md, AGENTS.md, or CLAUDE.md path for either CLI",
+        "result": "pass",
+        "evidence_basis": [
+          "materialized-pinned-full-tree-inventory",
+          "claude-behavioral-discovery",
+          "codex-official-document",
+          "local-empty-fallback-config"
+        ]
+      },
+      {
+        "candidate_id": "ghmix-0xkkun--seoul-challenge-issue-30",
+        "base_tree_hash": "f9058eebeb04463aac357ab037fe4d9449ed9338",
+        "project_instruction_profile": "complete 146-entry exact pre-solution tree contains root AGENTS.md only; its Godot, naming, runtime validation, worktree and review constraints directly govern the issue scope",
+        "result": "fail",
+        "evidence_basis": [
+          "materialized-pinned-full-tree-inventory",
+          "claude-behavioral-discovery",
+          "codex-behavioral-root-AGENTS.md",
+          "pinned-semantic-instruction-review"
+        ]
+      },
+      {
+        "candidate_id": "ghmix-Gn0lee--oat-issue-410",
+        "base_tree_hash": "2ea4b5e9cc61d7345734c4d3df483d7bcb0736dd",
+        "project_instruction_profile": "complete 717-entry exact pre-solution tree contains a task-relevant 317-line root CLAUDE.md only, with no AGENTS.md or AGENTS.override.md",
+        "result": "fail",
+        "evidence_basis": [
+          "materialized-pinned-full-tree-inventory",
+          "claude-behavioral-CLAUDE.md",
+          "codex-official-document",
+          "local-empty-fallback-config",
+          "pinned-semantic-instruction-review"
+        ]
+      },
+      {
+        "candidate_id": "ghmix-handokei--subway-now-issue-1465",
+        "base_tree_hash": "158cfbad7be784dbd5d7588ca4e3195ab2dfad22",
+        "project_instruction_profile": "complete 985-entry exact pre-solution tree contains a task-relevant 287-line root CLAUDE.md only, with no AGENTS.md or AGENTS.override.md",
+        "result": "fail",
+        "evidence_basis": [
+          "materialized-pinned-full-tree-inventory",
+          "claude-behavioral-CLAUDE.md",
+          "codex-official-document",
+          "local-empty-fallback-config",
+          "pinned-semantic-instruction-review"
+        ]
+      },
+      {
+        "candidate_id": "ghmix-prgrms-aibe-devcourse--AIBE5_FinalProject_Team7_JackPot-issue-499",
+        "base_tree_hash": "6722de4d5709782f1a0a47643a08b36c984f9342",
+        "project_instruction_profile": "complete 520-entry exact pre-solution tree contains no AGENTS.override.md, AGENTS.md, or CLAUDE.md path for either CLI",
+        "result": "pass",
+        "evidence_basis": [
+          "materialized-pinned-full-tree-inventory",
+          "claude-behavioral-discovery",
+          "codex-official-document",
+          "local-empty-fallback-config"
+        ]
+      },
+      {
+        "candidate_id": "ghmix-SKALA-TEAM5--frontend-issue-66",
+        "base_tree_hash": "55524f7af8c79871fe5a9f8dd1e94a89060506a9",
+        "project_instruction_profile": "complete 68-entry exact issue-specific pre-solution tree contains no AGENTS.override.md, AGENTS.md, or CLAUDE.md path for either CLI",
+        "result": "pass",
+        "evidence_basis": [
+          "materialized-pinned-full-tree-inventory",
+          "claude-behavioral-discovery",
           "codex-official-document",
           "local-empty-fallback-config"
         ]
