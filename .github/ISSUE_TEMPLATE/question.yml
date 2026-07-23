@@ -1,0 +1,30 @@
+name: Usage question
+description: Ask a non-sensitive question about documented project behavior
+title: "[Question]: "
+labels:
+  - question
+body:
+  - type: checkboxes
+    attributes:
+      label: Preflight
+      options:
+        - label: I searched the README, support guide, and existing issues first.
+          required: true
+        - label: This question contains no credentials, private prompts, or sensitive report details.
+          required: true
+  - type: textarea
+    attributes:
+      label: Question
+      description: State the outcome you are trying to achieve and where you are blocked.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: What you tried
+      description: Include sanitized commands, documentation sections, and observed results.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Environment
+      description: Python, operating system, project commit, and optional agent CLI versions

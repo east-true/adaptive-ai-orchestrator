@@ -1,0 +1,55 @@
+name: Bug report
+description: Report a reproducible, non-sensitive defect
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Do not include credentials, private prompts,
+        home-directory paths, or vulnerability details. Use the private reporting
+        link in SECURITY.md for sensitive issues.
+  - type: checkboxes
+    attributes:
+      label: Preflight
+      options:
+        - label: I searched existing issues for the same problem.
+          required: true
+        - label: This report contains no secret or private data.
+          required: true
+  - type: input
+    attributes:
+      label: Version or commit
+      description: Package version or full Git commit evaluated
+      placeholder: 0.1.0 or a full commit SHA
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Environment
+      description: Python version, operating system, and relevant Claude Code or Codex CLI version
+      placeholder: Python 3.12, Ubuntu 24.04, Codex CLI ...
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      description: Minimal commands or code that reproduce the problem
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Sanitized logs or additional context
+      description: Redact tokens, prompts, workspace paths, and unrelated output
+      render: shell

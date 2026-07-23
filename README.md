@@ -1,6 +1,13 @@
 # Adaptive AI Software Engineering Orchestrator — Kernel v0.1
 
-This repository contains the first, intentionally small control-plane kernel. It controls logged-in coding-agent CLIs, not LLM SDKs or APIs. Single-agent-first is still the default: the workflow runs one selected agent first and escalates to exactly one more only when execution failure, verification failure, or high analyzed risk/uncertainty/difficulty warrants it (see "Escalation" below). It does not implement full multi-agent orchestration (parallel or collaborating agents) — that remains project-constitution.md's Phase 5.
+[![CI](https://github.com/east-true/adaptive-ai-orchestrator/actions/workflows/ci.yml/badge.svg)](https://github.com/east-true/adaptive-ai-orchestrator/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+This repository contains the first, intentionally small control-plane kernel. It controls logged-in coding-agent CLIs, not LLM SDKs or APIs. Single-agent-first is still the default: the workflow runs one selected agent first and escalates to exactly one more only when execution failure, verification failure, or high analyzed risk/uncertainty/difficulty warrants it (see "Escalation" below). It does not implement full multi-agent orchestration (parallel or collaborating agents) — that remains [Phase 5 of the project constitution](docs/project-constitution.md).
+
+**Status:** pre-release research and engineering software. The CLI kernel is
+usable, but learned routing is not enabled and the Phase 2b comparative pilot
+has not been authorized or run.
 
 ## Architecture decision
 
@@ -35,28 +42,51 @@ Implementation modules use the responsibility-specific package paths above.
 The four root entry-point modules remain intentionally thin so existing
 `python -m adaptive_orchestrator.<command>` invocations continue to work.
 
-Adaptive routing 개선 작업은 다음 문서에서 추적한다.
+## Project documentation
 
-- [설계: Evidence-First Stratified Temporal Routing](docs/adaptive-routing-v2.md)
-- [연구 교차검토](docs/routing-research-review.md)
-- [평가 프로토콜](docs/routing-evaluation-protocol.md)
+- [Architecture](docs/architecture.md) and [project constitution](docs/project-constitution.md)
+- [Evidence-first adaptive-routing design](docs/adaptive-routing-v2.md)
+- [Research review](docs/routing-research-review.md) and [evaluation protocol](docs/routing-evaluation-protocol.md)
 - [Phase 2a paired-smoke tooling](docs/paired-smoke-tooling.md)
-- [Phase 2b pilot 사전등록 계약](docs/paired-pilot-preregistration.md)
-- [Phase 2b source candidate ledger 규칙](docs/paired-pilot-candidate-ledger.md)
-- [Claude 독립 검토와 반영 판단](docs/routing-claude-review.md)
-- [진행상황과 이어하기](docs/adaptive-routing-progress.md)
-- [Intra-Vendor Model Tier Routing 설계 탐색 (미구현)](docs/intra-vendor-tier-routing.md)
+- [Phase 2b pilot preregistration](docs/paired-pilot-preregistration.md) and [candidate-ledger rules](docs/paired-pilot-candidate-ledger.md)
+- [Current research work log and resume point](docs/adaptive-routing-progress.md) (Korean)
+- [Intra-vendor model-tier exploration](docs/intra-vendor-tier-routing.md) (not implemented)
 
-Phase -1 telemetry baseline, Phase 0 typed evaluator, Phase 1 lifecycle/replay와
-corrected static L0, Phase 2a v1/v2 paired smoke와 pause/resume audit까지 반영했다. 현재의
-적은 legacy telemetry로 bandit이나 탐색을 활성화하지 않는다.
+The repository includes the telemetry baseline, typed evaluator, lifecycle and
+replay work, a corrected static L0 baseline, and two Phase 2a paired-smoke
+rehearsals. Those smokes validate tooling, not agent quality. The small legacy
+telemetry set does not justify enabling a bandit or prospective exploration.
 
-## Run the prototype
+## Installation and quick start
+
+Python 3.10 or newer on a POSIX host is required. The current lifecycle store
+uses POSIX file locking, and the optional TUI uses `curses`. Use a current
+`pip`; older PEP 517 frontends can misread the PEP 621 package metadata.
+
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install --upgrade "pip>=24"
+python -m pip install -e .
+
+adaptive-ai-orchestrator --help
+python -m unittest discover -s tests -v
+```
+
+The core and test suite do not require provider credentials. Running routed
+tasks requires a locally installed and authenticated Claude Code or Codex CLI;
+`doctor` reports which optional targets are available.
+
+The module form also works directly from a source checkout without installation:
 
 ```bash
 PYTHONPATH=src python3 -m adaptive_orchestrator.example
 PYTHONPATH=src python3 -m unittest discover -s tests -v
 ```
+
+The remaining examples use that explicit source-checkout form. In an editable
+installation, omit `PYTHONPATH=src` and use either the installed console command
+or `python -m adaptive_orchestrator.cli`.
 
 ## Initialize a local project profile
 
@@ -491,7 +521,10 @@ Execution records may contain task prompts, context, CLI output, and workspace p
 
 The adapters use Claude Code's non-interactive `--print` mode and Codex CLI's non-interactive `exec` mode. Their exact flags are CLI-version dependent; validate `claude --help` and `codex exec --help` after upgrading either CLI.
 
-The current implementation was locally validated against Claude Code `2.1.211` and Codex CLI `0.144.5`.
+The adapter's structured-output fixtures were last validated against Claude Code
+`2.1.211` and Codex CLI `0.144.5`. The later Codex `0.144.6` probe recorded in
+the research work log covered instruction discovery only, not end-to-end adapter
+compatibility.
 
 ## Current limits
 
@@ -507,23 +540,28 @@ The current implementation was locally validated against Claude Code `2.1.211` a
   Phase 2a smokes. Those runs validate the pipeline only: they do not rank agents,
   authorize the 60-task pilot, or provide confirmatory confidence intervals.
 
-## Next development increment
+## Project status and roadmap
 
-Phase 2b currently has 7 of the required 60 `selected-for-task-authoring`
-candidates, and the global-instruction parity gate is unresolved. Continue in
-this order:
+Phase 2b is still constructing and validating its candidate pool. No 60-task
+manifest has been frozen, no 120 candidate-agent executions are authorized, and
+no learned policy should be promoted from the current evidence. The next work is
+the existing low-cost solution-scope queue, followed by instruction-environment
+parity, candidate freeze, independent task/evaluator construction and review,
+and an agent-free full dry run.
 
-1. finish result-blind exact-base/license/instruction-parity source screening;
-2. equalize or isolate global agent instructions and pin effective hashes;
-3. freeze the 60-candidate ledger with Korean/English/mixed and category quotas;
-4. construct tasks and protected evaluators through independent author roles;
-5. complete independent validity review and the Phase 2b semantic validator;
-6. pass the agent-free 120-workspace dry run and freeze the manifest;
-7. request separate approval before any 120-execution run.
+Exact counts, completed screening ranks, unresolved validity seams, and the
+fixed resume order live in the [current research work log](docs/adaptive-routing-progress.md#현재-재개-지점과-고정-작업-순서-2026-07-24).
+Normative gates remain in the [pilot preregistration
+contract](docs/paired-pilot-preregistration.md) and [candidate-ledger
+rules](docs/paired-pilot-candidate-ledger.md). If the source pool is
+insufficient, the protocol calls for reporting that result rather than relaxing
+language or category quotas.
 
-Do not relax quotas when the source pool is insufficient, enable prospective
-exploration, or promote a learned policy. The authoritative resume point is
-[Current resume point and fixed work order](docs/adaptive-routing-progress.md#현재-재개-지점과-고정-작업-순서-2026-07-22),
-with detailed gates in the
-[pilot preregistration contract](docs/paired-pilot-preregistration.md) and
-[source-candidate ledger rules](docs/paired-pilot-candidate-ledger.md).
+## Contributing, support, and security
+
+Contributions are welcome under the [contribution guide](CONTRIBUTING.md) and
+[Code of Conduct](CODE_OF_CONDUCT.md). Use the issue templates for public bug
+reports and feature proposals, [SUPPORT.md](SUPPORT.md) for support boundaries,
+and [SECURITY.md](SECURITY.md) for private vulnerability reporting. Changes are
+released under the [MIT License](LICENSE); research users should cite the exact
+evaluated commit as described in [CITATION.cff](CITATION.cff).

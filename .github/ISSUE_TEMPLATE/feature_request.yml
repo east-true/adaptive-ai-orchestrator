@@ -1,0 +1,46 @@
+name: Feature request
+description: Propose a scoped improvement or new capability
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: checkboxes
+    attributes:
+      label: Preflight
+      options:
+        - label: I searched existing issues and documentation for this request.
+          required: true
+        - label: This request does not contain private or security-sensitive details.
+          required: true
+  - type: textarea
+    attributes:
+      label: Problem or use case
+      description: What concrete problem should the project solve?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Proposed outcome
+      description: Describe observable behavior, not only an implementation choice.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Alternatives considered
+      description: What existing commands or simpler options have you tried?
+  - type: dropdown
+    attributes:
+      label: Area
+      options:
+        - CLI and interfaces
+        - Agent execution
+        - Routing and policy
+        - Evaluation and experiments
+        - Persistence and replay
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Additional context

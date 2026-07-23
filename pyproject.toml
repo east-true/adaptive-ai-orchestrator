@@ -1,12 +1,40 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77.0.3"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "adaptive-orchestrator-kernel"
+name = "adaptive-ai-orchestrator"
 version = "0.1.0"
 description = "CLI-first kernel for adaptive AI software engineering orchestration"
+readme = "README.md"
 requires-python = ">=3.10"
+license = "MIT"
+keywords = ["ai-agents", "cli", "orchestration", "software-engineering"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development",
+]
+
+[project.urls]
+Homepage = "https://github.com/east-true/adaptive-ai-orchestrator"
+Repository = "https://github.com/east-true/adaptive-ai-orchestrator.git"
+Issues = "https://github.com/east-true/adaptive-ai-orchestrator/issues"
+Changelog = "https://github.com/east-true/adaptive-ai-orchestrator/blob/main/CHANGELOG.md"
+Security = "https://github.com/east-true/adaptive-ai-orchestrator/blob/main/SECURITY.md"
+
+[project.scripts]
+adaptive-ai-orchestrator = "adaptive_orchestrator.interfaces.cli:main"
+adaptive-ai-orchestrator-shell = "adaptive_orchestrator.interfaces.shell:main"
+adaptive-ai-orchestrator-tui = "adaptive_orchestrator.interfaces.tui:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
