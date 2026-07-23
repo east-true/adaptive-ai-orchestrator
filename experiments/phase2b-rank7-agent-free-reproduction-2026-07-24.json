@@ -1,0 +1,293 @@
+{
+  "artifact_id": "phase2b-rank7-agent-free-reproduction-2026-07-24",
+  "protocol_version": "phase2b-pilot-prereg-v1.1",
+  "created_at": "2026-07-24",
+  "purpose": "Bind exact base-negative and solution-positive controls for the six source-semantic survivors without running either candidate agent.",
+  "terminal_status": "reproducibility-evidence",
+  "terminal_status_note": "This artifact settles reproducible-within-budget for the six listed candidates. It moves eligible rows only to selected-for-task-authoring, which is not a final pilot task, evaluator approval, manifest, or agent execution authorization.",
+  "agent_results_observed": false,
+  "input_artifacts": [
+    {
+      "path": "experiments/phase2b-candidate-ledger-v1.json",
+      "sha256": "228dbbf05ec46a7f94dde40e780bad9b6d64a32944ace5bddb49839f15a1a0f1",
+      "state": "pre-rank7 Git-tracked working snapshot"
+    },
+    {
+      "path": "experiments/phase2b-rank7-semantic-prefilter-2026-07-24.json",
+      "sha256": "c197ff0e4e7665710e8d16a89e3f5ff865263d766f9e07b525478aa4f4bad0de"
+    }
+  ],
+  "local_environment_snapshot": {
+    "path": ".orchestrator/rank7-reproduction-2026-07-24",
+    "tracked": false,
+    "toolchains": [
+      {
+        "id": "system-cpython-3.10.12",
+        "executable_sha256": "7d51cd6b48b521277f5caa4610a82126e315fa2be4df069823a8b1eeb5bd4a86",
+        "used_by": [
+          "ghmix-KoreaNirsa--prompt-booster-issue-3",
+          "ghmix-genonai--doc_parser-issue-288"
+        ]
+      },
+      {
+        "id": "node-v24.18.0-npm-11.16.0",
+        "node_executable_sha256": "41a74efb34cbde5c7632cdac0cf8bd1a14d0b8d73dc1e82755014d9a9ce70f5c",
+        "agentguard_package_lock_sha256": "64f7f9836493834481b3bbaae1a087afe2c93e3499d5bbeba26f48c380be6b6c",
+        "agentguard_npm_ci": "53 packages installed from the shared exact lock in 4.24 s",
+        "small_village_package_lock_sha256": "2c66ceca38ca8594f263a3312151e3384171ab541b606c6f5cd8a7a05a6a3bfe",
+        "small_village_npm_ci": "1553 packages installed from the exact lock in 39.91 s"
+      },
+      {
+        "id": "uv-0.8.22",
+        "wheel_sha256": "8efec4ef5acddc35f0867998c44e0b15fc4dace1e4c26d01443871a2fbb04bf6"
+      },
+      {
+        "id": "uv-managed-cpython-3.13.7-linux-x86_64-gnu-build-20250918",
+        "python_executable_sha256": "50056e60c8559d1d2927f3474b413d68360e88f532e9937eefa03b1c1b7245d1",
+        "used_by": [
+          "ghmix-joshua-jingu-lee--ante-issue-2398"
+        ]
+      }
+    ],
+    "dependency_locks": [
+      {
+        "path": ".orchestrator/rank7-reproduction-2026-07-24/ante/requirements.lock",
+        "sha256": "f6569682a5421f3e81ab5cb30d60191673dda6ffb0d3d45f2737cabb80769e2e",
+        "format": "uv pip compile --generate-hashes"
+      },
+      {
+        "path": ".orchestrator/rank7-reproduction-2026-07-24/doc-parser/requirements.lock",
+        "sha256": "305ebbf5aa7833b0be820978117e9bf515cb23d9a09cea0d82064333bbc46f72",
+        "format": "uv pip compile --generate-hashes"
+      }
+    ],
+    "note": "Large environments, worktrees, evaluator bodies, and generated hash locks stay in ignored local evidence. The tracked artifact records identities and digests but no private source data, secret, or candidate-agent output."
+  },
+  "method": [
+    "Materialize each exact base and solution from the ignored bare-repository cache and verify commit and tree identities against the frozen ledger.",
+    "Provision dependencies before controls, then run all candidate/evaluator commands without network, credentials, push, or production mutation.",
+    "Run a pristine base health seam, a source-derived base-negative control, and the same solution-positive control. Existing source tests are screening evidence only and do not replace final independent evaluator authoring.",
+    "Keep protected evaluator artifacts outside the candidate checkout, compare their hashes across controls, and verify pristine base and solution tracked trees remain clean.",
+    "Assign the preregistered small bucket at 30 seconds or less and medium above 30 through 120 seconds using the complete requirement-checking evaluator/gate wall time."
+  ],
+  "summary": {
+    "candidate_count": 6,
+    "base_negative_intended_rows": 6,
+    "solution_positive_rows": 6,
+    "reproducible_within_budget_pass_rows": 6,
+    "small_bucket_rows": 4,
+    "medium_bucket_rows": 2,
+    "selected_for_task_authoring_routes": 6,
+    "candidate_agent_executions": 0
+  },
+  "results": [
+    {
+      "candidate_id": "ghko-hissinger--small-village-issue-54",
+      "repository_id": "hissinger--small-village",
+      "base_revision": "081af5d9649f64c9391b422df6891be850bd6044",
+      "base_tree_hash": "51ab035e2a048e35e50ff2a883182b10ff46a5df",
+      "solution_revision": "d9d263e624ec51ee0abbb8b407261abdbca12758",
+      "solution_tree_hash": "e191b027d4c1a7d410b10958701b2c3ce9b9967c",
+      "exact_tree_matches_ledger": true,
+      "environment_id": "node-v24.18.0-small-village-lock",
+      "evaluator_origin": "The solution's new RoomParticipantsContext test was copied byte-for-byte outside the pristine base as a screening control. Its seven assertions exercise one channel, initial roster fetch, insert/update/delete, lost-event reconciliation, removal convergence, and non-destructive stale filtering. It is control evidence, not the final independently-authored Phase 2b evaluator.",
+      "protected_artifacts": [
+        {
+          "path": "src/context/RoomParticipantsContext.test.tsx",
+          "sha256": "c49bcefadbcb76b7983f71d00fd7e4c2b4178516c35e83c44ea5e9694afb3bd4",
+          "assertion_count": 7,
+          "same_bytes_in_base_negative_and_solution": true
+        }
+      ],
+      "pristine_base_control": "10 passed / 0 failed across the existing RemoteParticipantsContext and BottomBar suites in 2.505 s.",
+      "negative_control": "The seven-assertion control fails during collection because the exact base has no RoomParticipantsContext module.",
+      "negative_control_intended": true,
+      "positive_control": "7 passed / 0 failed in 0.906 s; the broader issue-focused solution batch passed 20/20 in 2.305 s.",
+      "evaluator_seconds": 2.305,
+      "bucket": "small",
+      "notes": [
+        "All roster behavior controls use a mocked Supabase client and no network or credentials.",
+        "The hosted three-client Playwright script remains corroborating integration evidence and is not executed by the offline screening control."
+      ],
+      "base_tracked_tree_clean_after_control": true,
+      "solution_tracked_tree_clean_after_control": true,
+      "reproducible_within_budget": "pass",
+      "next_route": "selected_for_task_authoring"
+    },
+    {
+      "candidate_id": "ghmix-genonai--doc_parser-issue-288",
+      "repository_id": "genonai--doc_parser",
+      "base_revision": "3107d9663355fc042faa3c19f8e37e357af8a370",
+      "base_tree_hash": "c7dd7005be6099763960903fd116a02dc29bf9fd",
+      "solution_revision": "9bf82283a973b77b7bdc1070cfac96a7f7c4d452",
+      "solution_tree_hash": "3de52e55a7f710d3c4899ea12774f877029367d6",
+      "exact_tree_matches_ledger": true,
+      "environment_id": "cpython-3.10.12-doc-parser-minimal-hash-lock",
+      "evaluator_origin": "A protected source-derived evaluator creates a synthetic two-sheet XLSX, forbids subprocess use, loads the workbook through the candidate's direct XLSX module, and checks that a logically wide row and sheet boundary remain intact. It neither reads the solution tests nor requires the private original file.",
+      "protected_artifacts": [
+        {
+          "path": ".orchestrator/rank7-reproduction-2026-07-24/evaluators/doc_parser_xlsx_direct.py",
+          "sha256": "aacfe4b37509fa3714271adb32493b3ce1aed8c1fe02f3e6c0fcb421be38cfb6",
+          "assertion_count": 5,
+          "hash_unchanged_across_controls": true
+        }
+      ],
+      "pristine_base_control": "The exact base materializes and imports its existing package tree; the required direct XLSX processor module is absent.",
+      "negative_control": "Evaluator exits 1 in 0.31 s because genon/preprocessor/converters/xlsx_processor.py is absent.",
+      "negative_control_intended": true,
+      "positive_control": "5 assertions passed / 0 failed in 1.07 s.",
+      "evaluator_seconds": 1.07,
+      "bucket": "small",
+      "notes": [
+        "The evaluator uses only the issue-promised synthetic workbook and pydantic/openpyxl; Docling model downloads, LibreOffice, VDB URLs, and private data are not used."
+      ],
+      "base_tracked_tree_clean_after_control": true,
+      "solution_tracked_tree_clean_after_control": true,
+      "reproducible_within_budget": "pass",
+      "next_route": "selected_for_task_authoring"
+    },
+    {
+      "candidate_id": "ghmix-Sungho-pk42ac--agentguard-issue-687",
+      "repository_id": "Sungho-pk42ac--agentguard",
+      "base_revision": "23af7a7717bbe5cfbfb60bee2dc463a215a3d9ed",
+      "base_tree_hash": "0d007a20321c03ae028869ba394bec82e0523df2",
+      "solution_revision": "026ee7c8c90b36397f787c68b54df401a159a3cc",
+      "solution_tree_hash": "20ddf02ff1eb233a5b8f9bee3ae01b426c8692c5",
+      "exact_tree_matches_ledger": true,
+      "environment_id": "node-v24.18.0-agentguard-lock-64f7f983",
+      "evaluator_origin": "A protected TypeScript evaluator invokes runDoctor from each exact tree and verifies the unchanged JSON root contract, github_action_contract pass state, evidence for both root and repository-local action paths, and both Korean and English text paths.",
+      "protected_artifacts": [
+        {
+          "path": ".orchestrator/rank7-reproduction-2026-07-24/evaluators/agentguard_doctor_contract.ts",
+          "sha256": "35da1b603d9332ea23026d4a8a7dc31fb9c40a2bd8d1b7602f64f6cf4b30f391",
+          "assertion_count": 10,
+          "hash_unchanged_across_controls": true
+        }
+      ],
+      "pristine_base_control": "Typecheck and build passed; the full npm test gate passed sequentially in 57.11 s.",
+      "negative_control": "Evaluator exits 1 in 0.44 s because doctor evidence contains only root action.yml.",
+      "negative_control_intended": true,
+      "positive_control": "10 assertions passed / 0 failed in 0.44 s; targeted native doctor/packaging suites passed 8/8.",
+      "evaluator_seconds": 57.74,
+      "bucket": "medium",
+      "notes": [
+        "The solution typecheck and build passed, and the source-required full npm test gate passed sequentially in 57.74 s.",
+        "Earlier concurrent full-suite probes caused tsx socket and duration-test interference and are excluded from timing evidence; the final sequential controls used distinct short TMPDIR values, a writable npm cache, and a non-empty synthetic GitHub ref."
+      ],
+      "base_tracked_tree_clean_after_control": true,
+      "solution_tracked_tree_clean_after_control": true,
+      "reproducible_within_budget": "pass",
+      "next_route": "selected_for_task_authoring"
+    },
+    {
+      "candidate_id": "ghmix-Sungho-pk42ac--agentguard-issue-591",
+      "repository_id": "Sungho-pk42ac--agentguard",
+      "base_revision": "d6877ffc1e60015ba1eda87151a1e88c2352503d",
+      "base_tree_hash": "b3dd1006b5362625d0d74e29d883e7e2681bf5ae",
+      "solution_revision": "f41be1811e7fa903d3cac9935a990702ea0a1d30",
+      "solution_tree_hash": "62d9ff26ac5dacd554eec721e750cc7363119b5e",
+      "exact_tree_matches_ledger": true,
+      "environment_id": "node-v24.18.0-agentguard-lock-64f7f983",
+      "evaluator_origin": "A protected Markdown property evaluator checks the four exact output names, source-of-record semantics, a meaning-plus-approval-route table, branch-protection/artifact/SARIF flow, examples discovery link, and explicit no-fake-claim guards without requiring the merged wording as an exact golden.",
+      "protected_artifacts": [
+        {
+          "path": ".orchestrator/rank7-reproduction-2026-07-24/evaluators/agentguard_action_output_docs.mjs",
+          "sha256": "a39e6d2e15eaf19b60258848bece5924afc28b1eb009804ba711bbd055225c35",
+          "assertion_count": 18,
+          "hash_unchanged_across_controls": true
+        }
+      ],
+      "pristine_base_control": "Typecheck and build passed; the full npm test gate passed sequentially in 66.45 s.",
+      "negative_control": "Evaluator exits 1 in 0.04 s because the exact base has no machine-output documentation contract.",
+      "negative_control_intended": true,
+      "positive_control": "18 assertions passed / 0 failed in 0.04 s; the source docs-contract suite passed 2/2.",
+      "evaluator_seconds": 56.85,
+      "bucket": "medium",
+      "notes": [
+        "The solution typecheck and build passed, and the source-required full npm test gate passed sequentially in 56.85 s.",
+        "This is a property/invariant documentation task, not free-form release-note prose: the evaluator accepts alternative wording that preserves all explicit machine-contract relations."
+      ],
+      "base_tracked_tree_clean_after_control": true,
+      "solution_tracked_tree_clean_after_control": true,
+      "reproducible_within_budget": "pass",
+      "next_route": "selected_for_task_authoring"
+    },
+    {
+      "candidate_id": "ghmix-KoreaNirsa--prompt-booster-issue-3",
+      "repository_id": "KoreaNirsa--prompt-booster",
+      "base_revision": "83150870002d46ff26e80a756bc11d506bad0969",
+      "base_tree_hash": "946e17af634cdce1f373ccf750bf3f1d5fb2b723",
+      "solution_revision": "153d0be0c3091540b0a9e0ab718450828ef73558",
+      "solution_tree_hash": "74b8a8c4be162374b1fdf72e262e788d9337dd17",
+      "exact_tree_matches_ledger": true,
+      "environment_id": "system-cpython-3.10.12-stdlib-only",
+      "evaluator_origin": "A protected evaluator independently checks the complete intent/category enum sets, four Korean trigger mappings, serialized output fields, bounded confidence, and explicit fallback evidence using only Python's standard library.",
+      "protected_artifacts": [
+        {
+          "path": ".orchestrator/rank7-reproduction-2026-07-24/evaluators/prompt_booster_intent.py",
+          "sha256": "9fa8f2090d41b6bf2605c588bf441e22cb1205e6c5b47829a933ae87ebb51987",
+          "assertion_count": 9,
+          "hash_unchanged_across_controls": true
+        }
+      ],
+      "pristine_base_control": "The exact base is a clean seven-file Prompt IR repository with no prompt_booster package.",
+      "negative_control": "Evaluator exits 1 in 0.03 s with ModuleNotFoundError for the required prompt_booster package.",
+      "negative_control_intended": true,
+      "positive_control": "9 assertions passed / 0 failed in 0.05 s.",
+      "evaluator_seconds": 0.05,
+      "bucket": "small",
+      "notes": [
+        "No third-party dependency, network, subprocess, or secret is used."
+      ],
+      "base_tracked_tree_clean_after_control": true,
+      "solution_tracked_tree_clean_after_control": true,
+      "reproducible_within_budget": "pass",
+      "next_route": "selected_for_task_authoring"
+    },
+    {
+      "candidate_id": "ghmix-joshua-jingu-lee--ante-issue-2398",
+      "repository_id": "joshua-jingu-lee--ante",
+      "base_revision": "7f38e853696c9ba77f555c329b0c3da6e55301a0",
+      "base_tree_hash": "c16206011443c56ce74a2d140b76c864176dcb3a",
+      "solution_revision": "ec891bb188ab0fba3a7ceed3e1a3add72cbc8e8d",
+      "solution_tree_hash": "1ff2c8fffee6c864c0080b7dd432b91af8318727",
+      "exact_tree_matches_ledger": true,
+      "environment_id": "cpython-3.13.7-ante-hash-lock",
+      "evaluator_origin": "The solution's issue-specific readiness-gate test and helper were copied byte-for-byte outside the pristine base as a screening control. Sixty-three tests cover the source's G1-G9 layer, reservation-release, fail-closed, suspension, virtual routing, alert, and liveness invariants. They are control evidence, not the final independent evaluator.",
+      "protected_artifacts": [
+        {
+          "path": "tests/unit/_readiness_gate_helpers.py",
+          "sha256": "5ea340450428337066e0332c4d52466696dba61b68d31fae2bda647031bda0ad",
+          "same_bytes_in_base_negative_and_solution": true
+        },
+        {
+          "path": "tests/unit/test_active_order_readiness_gate.py",
+          "sha256": "c2b133030cc7462bfe87ad1b8c99463cccaedc43e290faf1fe080205f15d8d96",
+          "assertion_test_count": 63,
+          "same_bytes_in_base_negative_and_solution": true
+        }
+      ],
+      "pristine_base_control": "55 existing readiness and wiring tests passed / 0 failed in 2.49 s.",
+      "negative_control": "63 failed / 0 passed in 7.85 s, led by missing runtime_readiness injection and gate behavior in the exact base.",
+      "negative_control_intended": true,
+      "positive_control": "63 passed / 0 failed in 6.13 s; the existing 55 readiness/wiring tests also remained green.",
+      "evaluator_seconds": 6.13,
+      "bucket": "small",
+      "notes": [
+        "Exact base inspection confirms the #2397 RuntimeReadinessRegistry prerequisite before this control runs.",
+        "All broker, account, event, and reservation paths use local doubles or temporary SQLite state; no live order or network call occurs."
+      ],
+      "base_tracked_tree_clean_after_control": true,
+      "solution_tracked_tree_clean_after_control": true,
+      "reproducible_within_budget": "pass",
+      "next_route": "selected_for_task_authoring"
+    }
+  ],
+  "known_limitations": [
+    "selected-for-task-authoring remains a construction queue state; final protected evaluators, assertion inventories, validity attestations, allowlists, and the manifest instance are not authored here.",
+    "The small-village final validity reviewer must decide whether offline source-derived roster invariants fully cover the issue's corroborating hosted three-client E2E sentence without silently narrowing the task.",
+    "The managed CPython identity and executable digest are recorded, while a publisher archive checksum was not retained; the generated dependency hash lock is local and must be copied or regenerated and verified before manifest freeze.",
+    "AgentGuard full-suite timing is single-host evidence. Earlier invalid concurrent probes are excluded; only sequential successful runs determine the medium bucket."
+  ],
+  "next_boundary": "Apply the four semantic exclusions and six reproducibility passes to the ledger, then update the cost cascade and documentation. Do not author final tasks, run agents, or treat this construction yield as routing evidence."
+}

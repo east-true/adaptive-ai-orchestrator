@@ -1,0 +1,910 @@
+{
+  "artifact_id": "phase2b-license-file-classification-2026-07-24",
+  "created_at": "2026-07-24",
+  "protocol_version": "phase2b-pilot-prereg-v1.1",
+  "purpose": "Classify the 66 file-only current-HEAD license signals before issue, solution, diff, tree, or evaluator review.",
+  "terminal_status": false,
+  "terminal_status_note": "Every observation is tied to the repository default-branch HEAD seen on 2026-07-24, not the candidate pre-solution revision. These classifications change review priority only and cannot pass or exclude a candidate.",
+  "agent_results_observed": false,
+  "input_artifacts": [
+    {
+      "path": "experiments/phase2b-license-priority-2026-07-24.json",
+      "sha256": "c150a17564159bf2c5a37ca774f0398d1f10908645a5653fdc4e2b3297e0c1dd"
+    }
+  ],
+  "collection_method": {
+    "head_resolution": "git ls-remote <repository>.git HEAD",
+    "license_resolution": "GitHub repository license endpoint with ref set to the observed full HEAD revision",
+    "integrity": "Record Git blob SHA, raw decoded byte count, and SHA-256 for every returned license body.",
+    "content_retention": "Full license bodies are not copied into this tracked artifact; exact public blob URLs and integrity values are retained.",
+    "api_result": {
+      "requested_repositories": 33,
+      "head_revisions_resolved": 33,
+      "license_responses_200": 33
+    }
+  },
+  "classification_contract": {
+    "eligible_permissive_spdx_ids": [
+      "MIT",
+      "Apache-2.0",
+      "BSD-2-Clause",
+      "BSD-3-Clause",
+      "BSL-1.0",
+      "Unlicense",
+      "CC0-1.0"
+    ],
+    "explicitly_ineligible_classifier_ids": [
+      "GPL-2.0",
+      "GPL-3.0",
+      "AGPL-3.0",
+      "LGPL-2.1",
+      "MPL-2.0",
+      "EPL-2.0"
+    ],
+    "noassertion_rule": "Read the complete returned license artifact; do not infer permissiveness from file presence or repository topic metadata.",
+    "noncommercial_rule": "A commercial-use restriction is outside the preregistered permissive set and remains a suspected-ineligible signal until the exact candidate revision is checked."
+  },
+  "review_provenance": {
+    "github_spdx_repository_count": 30,
+    "full_text_repository_count": 3,
+    "full_text_process": "Read-only Claude CLI classification followed by a direct-source Codex cross-check against the recorded content hashes.",
+    "full_text_agreement_count": 3,
+    "pilot_agent_outcomes_used": false
+  },
+  "summary": {
+    "repository_count": 33,
+    "candidate_count": 66,
+    "repository_counts_by_current_head_classification": {
+      "eligible-permissive-current-head": 31,
+      "suspected-ineligible-copyleft-current-head": 1,
+      "suspected-ineligible-noncommercial-current-head": 1
+    },
+    "candidate_counts_by_current_head_classification": {
+      "eligible-permissive-current-head": 64,
+      "suspected-ineligible-copyleft-current-head": 1,
+      "suspected-ineligible-noncommercial-current-head": 1
+    },
+    "newly_eligible_priority_rows": 64,
+    "newly_suspected_ineligible_rows": 2,
+    "github_deep_review_queue_after_current_head_classification": 102,
+    "github_suspected_ineligible_exact_revision_queue": 4,
+    "unknown_rows_after_classification": 0
+  },
+  "repositories": [
+    {
+      "repository_id": "Ootzk--Wor-chain-dle",
+      "repository_url": "https://github.com/Ootzk/Wor-chain-dle",
+      "candidate_count": 2,
+      "candidate_ids": [
+        "ghmix-Ootzk--Wor-chain-dle-issue-173",
+        "ghmix-Ootzk--Wor-chain-dle-issue-130"
+      ],
+      "ledger_indices": [
+        811,
+        824
+      ],
+      "observed_head_revision": "b25c70cf91c0c02b7b428e016dc258255111f59e",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/Ootzk/Wor-chain-dle/blob/b25c70cf91c0c02b7b428e016dc258255111f59e/LICENSE",
+      "license_blob_sha": "e07933db4bf0c2868f1381a795d262e0fb89e271",
+      "license_content_sha256": "a31fedb7ac3825a8a9f0df37cbdb688b05d1fd4ad5d8e9c1c290c230ab4db67a",
+      "license_content_bytes": 1068,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "Orchemi--my-resend",
+      "repository_url": "https://github.com/Orchemi/my-resend",
+      "candidate_count": 1,
+      "candidate_ids": [
+        "ghmix-Orchemi--my-resend-issue-27"
+      ],
+      "ledger_indices": [
+        817
+      ],
+      "observed_head_revision": "0dd5f8308728ba4bb2e4b5f4a54930ecb457e03a",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/Orchemi/my-resend/blob/0dd5f8308728ba4bb2e4b5f4a54930ecb457e03a/LICENSE",
+      "license_blob_sha": "4d427157adbfc5f1150ef3368026b3e885d077df",
+      "license_content_sha256": "b62d378e86e7f4ee8123d063f9ddb9e8e9f5c4d2107d7982013ee2ad22b9e6c4",
+      "license_content_bytes": 1160,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "SIDED00R--algo-review",
+      "repository_url": "https://github.com/SIDED00R/algo-review",
+      "candidate_count": 1,
+      "candidate_ids": [
+        "ghmix-SIDED00R--algo-review-issue-49"
+      ],
+      "ledger_indices": [
+        1056
+      ],
+      "observed_head_revision": "35631590b04c0a43c3fbd109d37d0f4102d2ef49",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/SIDED00R/algo-review/blob/35631590b04c0a43c3fbd109d37d0f4102d2ef49/LICENSE",
+      "license_blob_sha": "a34bdbf614f0ace040c7fd8afef86fe70ca6e213",
+      "license_content_sha256": "d0c2ebc1bb9334f201ba39eb4ae243823e9eb0ae3388c608010a57d67eb5469e",
+      "license_content_bytes": 1065,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "Sungho-pk42ac--agentguard",
+      "repository_url": "https://github.com/Sungho-pk42ac/agentguard",
+      "candidate_count": 2,
+      "candidate_ids": [
+        "ghmix-Sungho-pk42ac--agentguard-issue-687",
+        "ghmix-Sungho-pk42ac--agentguard-issue-591"
+      ],
+      "ledger_indices": [
+        945,
+        951
+      ],
+      "observed_head_revision": "207784fe92c78158874ac6216b64de7b156f3a99",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/Sungho-pk42ac/agentguard/blob/207784fe92c78158874ac6216b64de7b156f3a99/LICENSE",
+      "license_blob_sha": "412862b41df9b5e814282a0667f4215c42a649cf",
+      "license_content_sha256": "82c227141bf309297ff8936762840e2a4782dd174884c2c4a8536a3df4278338",
+      "license_content_bytes": 11320,
+      "github_classifier_spdx_id": "Apache-2.0",
+      "identified_license": "Apache-2.0",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "TangoEnSkai--uber-go-style-guide-kr",
+      "repository_url": "https://github.com/TangoEnSkai/uber-go-style-guide-kr",
+      "candidate_count": 4,
+      "candidate_ids": [
+        "ghmix-TangoEnSkai--uber-go-style-guide-kr-issue-105",
+        "ghmix-TangoEnSkai--uber-go-style-guide-kr-issue-80",
+        "ghmix-TangoEnSkai--uber-go-style-guide-kr-issue-53",
+        "ghmix-TangoEnSkai--uber-go-style-guide-kr-issue-23"
+      ],
+      "ledger_indices": [
+        789,
+        1057,
+        1058,
+        1059
+      ],
+      "observed_head_revision": "5b962fdbc2c932616f8d54c04effa954fe38a1f0",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/TangoEnSkai/uber-go-style-guide-kr/blob/5b962fdbc2c932616f8d54c04effa954fe38a1f0/LICENSE",
+      "license_blob_sha": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64",
+      "license_content_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "license_content_bytes": 11357,
+      "github_classifier_spdx_id": "Apache-2.0",
+      "identified_license": "Apache-2.0",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "YSbookcase--TimePilot",
+      "repository_url": "https://github.com/YSbookcase/TimePilot",
+      "candidate_count": 3,
+      "candidate_ids": [
+        "ghmix-YSbookcase--TimePilot-issue-99",
+        "ghmix-YSbookcase--TimePilot-issue-63",
+        "ghmix-YSbookcase--TimePilot-issue-235"
+      ],
+      "ledger_indices": [
+        816,
+        818,
+        1103
+      ],
+      "observed_head_revision": "a7364589ee1c1061f007b179ec07fba681779098",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/YSbookcase/TimePilot/blob/a7364589ee1c1061f007b179ec07fba681779098/LICENSE",
+      "license_blob_sha": "9ceeb8ad8acc9a1c29a20ff9adf98037e08c2c70",
+      "license_content_sha256": "a7e5dfd3f9c4692e25f862dbd6655050408f38de18d4abe550f40a27e60d940e",
+      "license_content_bytes": 1067,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "baekenough--oh-my-customcode",
+      "repository_url": "https://github.com/baekenough/oh-my-customcode",
+      "candidate_count": 1,
+      "candidate_ids": [
+        "ghmix-baekenough--oh-my-customcode-issue-1415"
+      ],
+      "ledger_indices": [
+        776
+      ],
+      "observed_head_revision": "5245dcbb74ec210ba43a65672e96c8c6b60d4bba",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/baekenough/oh-my-customcode/blob/5245dcbb74ec210ba43a65672e96c8c6b60d4bba/LICENSE",
+      "license_blob_sha": "f41bc0fb19d87a2946b97e9a390fb8169f9afe80",
+      "license_content_sha256": "a2d2462f783381d1d15ed98c8cda74cd7acd387244d8d1086ea30bc08725a8f0",
+      "license_content_bytes": 4537,
+      "github_classifier_spdx_id": "NOASSERTION",
+      "identified_license": "PolyForm-Noncommercial-1.0.0",
+      "review_method": "full-license-text-two-pass-review",
+      "review_facts": [
+        "The license self-identifies as PolyForm Noncommercial 1.0.0.",
+        "Its grants are limited to permitted purposes defined around noncommercial use."
+      ],
+      "current_head_classification": "suspected-ineligible-noncommercial-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "bongmyung-ye--nexora-corporate-web",
+      "repository_url": "https://github.com/bongmyung-ye/nexora-corporate-web",
+      "candidate_count": 2,
+      "candidate_ids": [
+        "ghmix-bongmyung-ye--nexora-corporate-web-issue-14",
+        "ghmix-bongmyung-ye--nexora-corporate-web-issue-12"
+      ],
+      "ledger_indices": [
+        757,
+        758
+      ],
+      "observed_head_revision": "a82d57c895bb520a88a09b91fcce5c1a6936b7c9",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/bongmyung-ye/nexora-corporate-web/blob/a82d57c895bb520a88a09b91fcce5c1a6936b7c9/LICENSE",
+      "license_blob_sha": "c844d0d07a9841995383e09c3b24311d91c628de",
+      "license_content_sha256": "4a43def438e0538f291494a98dfe188b6f4e5d0dc2948f434bac6fee3c345c53",
+      "license_content_bytes": 1069,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "buildon99x--copy-pet",
+      "repository_url": "https://github.com/buildon99x/copy-pet",
+      "candidate_count": 1,
+      "candidate_ids": [
+        "ghmix-buildon99x--copy-pet-issue-45"
+      ],
+      "ledger_indices": [
+        915
+      ],
+      "observed_head_revision": "e52be78c0b7b3f38befbe97a4f39ad863ae63de1",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/buildon99x/copy-pet/blob/e52be78c0b7b3f38befbe97a4f39ad863ae63de1/LICENSE",
+      "license_blob_sha": "4548d0d97bce49d0626077ea04aabe97d286f1f6",
+      "license_content_sha256": "18307d8d16dab7be73ee73afba3c52aaf37d0ad431e0475ac02d977a0b4eef0c",
+      "license_content_bytes": 1067,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "ggqgga--issue-runner",
+      "repository_url": "https://github.com/ggqgga/issue-runner",
+      "candidate_count": 3,
+      "candidate_ids": [
+        "ghmix-ggqgga--issue-runner-issue-103",
+        "ghmix-ggqgga--issue-runner-issue-75",
+        "ghmix-ggqgga--issue-runner-issue-43"
+      ],
+      "ledger_indices": [
+        867,
+        877,
+        902
+      ],
+      "observed_head_revision": "875954b7536008f4a1319070fa2e7b0865295bf1",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/ggqgga/issue-runner/blob/875954b7536008f4a1319070fa2e7b0865295bf1/LICENSE",
+      "license_blob_sha": "2d1e332a0aeb7319f2c13d099bccf4850e9ca341",
+      "license_content_sha256": "c2e38c888aa5dcfe0f0abaad9207ba1e11987e8ca0c5061e01e00fa774da1b63",
+      "license_content_bytes": 1052,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "ginishuh--contextforge",
+      "repository_url": "https://github.com/ginishuh/contextforge",
+      "candidate_count": 1,
+      "candidate_ids": [
+        "ghmix-ginishuh--contextforge-issue-167"
+      ],
+      "ledger_indices": [
+        963
+      ],
+      "observed_head_revision": "7707239a7b57c41f3d72c596e4cde6c62b094eac",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/ginishuh/contextforge/blob/7707239a7b57c41f3d72c596e4cde6c62b094eac/LICENSE",
+      "license_blob_sha": "93e82d02806bee20b18e3f0f79671d76629b308c",
+      "license_content_sha256": "8df8cd225759b63d104e628f8e0ad82f8df8454e732216c72c9f9117c939f8fe",
+      "license_content_bytes": 1065,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "hoksi--nexusts",
+      "repository_url": "https://github.com/hoksi/nexusts",
+      "candidate_count": 1,
+      "candidate_ids": [
+        "ghmix-hoksi--nexusts-issue-15"
+      ],
+      "ledger_indices": [
+        1040
+      ],
+      "observed_head_revision": "e59ad533e2114afa32ede4dc794ededf42ec210a",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/hoksi/nexusts/blob/e59ad533e2114afa32ede4dc794ededf42ec210a/LICENSE",
+      "license_blob_sha": "ab037967f45bbd2df8ca9978b578b05bad119b3e",
+      "license_content_sha256": "035a9aa3191e1b48ef2ad73403c5984eef69ef9595b7050e80635567c38e5f5a",
+      "license_content_bytes": 1077,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "hskim-solv--BidMate-DocAgent",
+      "repository_url": "https://github.com/hskim-solv/BidMate-DocAgent",
+      "candidate_count": 5,
+      "candidate_ids": [
+        "ghmix-hskim-solv--BidMate-DocAgent-issue-1402",
+        "ghmix-hskim-solv--BidMate-DocAgent-issue-1118",
+        "ghmix-hskim-solv--BidMate-DocAgent-issue-919",
+        "ghmix-hskim-solv--BidMate-DocAgent-issue-918",
+        "ghmix-hskim-solv--BidMate-DocAgent-issue-916"
+      ],
+      "ledger_indices": [
+        805,
+        808,
+        812,
+        813,
+        814
+      ],
+      "observed_head_revision": "c9b475b670bb7111eff3f1cec5700d4e5d863be3",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/hskim-solv/BidMate-DocAgent/blob/c9b475b670bb7111eff3f1cec5700d4e5d863be3/LICENSE",
+      "license_blob_sha": "d1fc11242860ad6aba09307f33a89c0fd355ae7e",
+      "license_content_sha256": "e7b399db807ec5ea158cbe9f0d9dd72d63a4e95db0fba7745ab168b6f02cbb1e",
+      "license_content_bytes": 1071,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "hsu3046--MarkMind",
+      "repository_url": "https://github.com/hsu3046/MarkMind",
+      "candidate_count": 1,
+      "candidate_ids": [
+        "ghmix-hsu3046--MarkMind-issue-117"
+      ],
+      "ledger_indices": [
+        949
+      ],
+      "observed_head_revision": "0ebe218ae50dc786cf5736ad4c16c928e3c8b9f4",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/hsu3046/MarkMind/blob/0ebe218ae50dc786cf5736ad4c16c928e3c8b9f4/LICENSE",
+      "license_blob_sha": "ebbe4a5f80a427325be16f133b2c1601ce3fbb26",
+      "license_content_sha256": "85be4f456a60e229d0a9bbc1357f15b40e2ff608ee1b10d4c2456cade67f25ad",
+      "license_content_bytes": 35201,
+      "github_classifier_spdx_id": "GPL-3.0",
+      "identified_license": "GPL-3.0",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "suspected-ineligible-copyleft-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "itismyfield--AgentDesk",
+      "repository_url": "https://github.com/itismyfield/AgentDesk",
+      "candidate_count": 1,
+      "candidate_ids": [
+        "ghko-itismyfield--AgentDesk-issue-4640"
+      ],
+      "ledger_indices": [
+        742
+      ],
+      "observed_head_revision": "5460a6f222bb85219e663fc2ac6dd970c12fc8ba",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/itismyfield/AgentDesk/blob/5460a6f222bb85219e663fc2ac6dd970c12fc8ba/LICENSE",
+      "license_blob_sha": "36b2aafbcea4eff66477c4cfd2d54456b1be4611",
+      "license_content_sha256": "64294780fffa639eb23565d5b1e202c21dbf72f4ba07adb14a216dc9f4c1d0a8",
+      "license_content_bytes": 1068,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "jeongsk--daily_stock_analysis",
+      "repository_url": "https://github.com/jeongsk/daily_stock_analysis",
+      "candidate_count": 1,
+      "candidate_ids": [
+        "ghmix-jeongsk--daily_stock_analysis-issue-3"
+      ],
+      "ledger_indices": [
+        760
+      ],
+      "observed_head_revision": "75603c571503b6c1e3dcf9a4b6a0af95cc36fc6c",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/jeongsk/daily_stock_analysis/blob/75603c571503b6c1e3dcf9a4b6a0af95cc36fc6c/LICENSE",
+      "license_blob_sha": "3f8e14a03bb424b24d0b36f39e396c76d8e30b88",
+      "license_content_sha256": "87915011a44adbd0b2b085dbf931a21bd082f65c4a0824d61c1dec50dc54f2a4",
+      "license_content_bytes": 1066,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "jinwon-int--a2a-nexus",
+      "repository_url": "https://github.com/jinwon-int/a2a-nexus",
+      "candidate_count": 1,
+      "candidate_ids": [
+        "ghmix-jinwon-int--a2a-nexus-issue-1190"
+      ],
+      "ledger_indices": [
+        773
+      ],
+      "observed_head_revision": "2806605d1017e8cb7691e5e0d519bb90a96546ba",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/jinwon-int/a2a-nexus/blob/2806605d1017e8cb7691e5e0d519bb90a96546ba/LICENSE",
+      "license_blob_sha": "94b071fc53b89cbdc0a1253ce3b143fd5acec9b8",
+      "license_content_sha256": "98147a9e96bc47b0e4630d090d37908f5d9494a5592ab873b8cd3f5f5d64720e",
+      "license_content_bytes": 1084,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "jongfeel--Godot",
+      "repository_url": "https://github.com/jongfeel/Godot",
+      "candidate_count": 1,
+      "candidate_ids": [
+        "ghko-jongfeel--Godot-issue-191"
+      ],
+      "ledger_indices": [
+        681
+      ],
+      "observed_head_revision": "795838d9ad6eb928a12a7ea5c7b83138638db34c",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/jongfeel/Godot/blob/795838d9ad6eb928a12a7ea5c7b83138638db34c/LICENSE",
+      "license_blob_sha": "600ae197120326d6181c28e169a888f937307f7e",
+      "license_content_sha256": "4bb0aebb2c1eab7b74865891f545d59feb5b0fa2513d3fd48ee086727468f15c",
+      "license_content_bytes": 1070,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "jongwony--epistemic-protocols",
+      "repository_url": "https://github.com/jongwony/epistemic-protocols",
+      "candidate_count": 1,
+      "candidate_ids": [
+        "ghmix-jongwony--epistemic-protocols-issue-362"
+      ],
+      "ledger_indices": [
+        825
+      ],
+      "observed_head_revision": "ab9aa564eaa1a043eb2302bc73e8d031ce4015b3",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/jongwony/epistemic-protocols/blob/ab9aa564eaa1a043eb2302bc73e8d031ce4015b3/LICENSE",
+      "license_blob_sha": "1b82b2ebe63bf0f062989cf649dbec824c19a170",
+      "license_content_sha256": "96e82ba577326f24402d9e57cae2c35d658e45e83388a69117660c6f31643684",
+      "license_content_bytes": 1069,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "joshua-jingu-lee--ante",
+      "repository_url": "https://github.com/joshua-jingu-lee/ante",
+      "candidate_count": 3,
+      "candidate_ids": [
+        "ghmix-joshua-jingu-lee--ante-issue-2390",
+        "ghmix-joshua-jingu-lee--ante-issue-2353",
+        "ghmix-joshua-jingu-lee--ante-issue-2398"
+      ],
+      "ledger_indices": [
+        924,
+        937,
+        1005
+      ],
+      "observed_head_revision": "027904bd10a09acb5aa60135a584521fb748db45",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/joshua-jingu-lee/ante/blob/027904bd10a09acb5aa60135a584521fb748db45/LICENSE",
+      "license_blob_sha": "bea43136a0cd558a5d22667caf19009508ff858d",
+      "license_content_sha256": "7edffca18dc3fcbb8d1d58ff0e09c5592f82feb9ab33732523ca6b50a5fb9cc4",
+      "license_content_bytes": 1081,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "kangkyunghyun--LinKHU",
+      "repository_url": "https://github.com/kangkyunghyun/LinKHU",
+      "candidate_count": 6,
+      "candidate_ids": [
+        "ghko-kangkyunghyun--LinKHU-issue-67",
+        "ghko-kangkyunghyun--LinKHU-issue-69",
+        "ghko-kangkyunghyun--LinKHU-issue-93",
+        "ghko-kangkyunghyun--LinKHU-issue-89",
+        "ghko-kangkyunghyun--LinKHU-issue-81",
+        "ghko-kangkyunghyun--LinKHU-issue-77"
+      ],
+      "ledger_indices": [
+        390,
+        470,
+        547,
+        550,
+        553,
+        743
+      ],
+      "observed_head_revision": "abdefc2084e69e74d95113c6b05ae0568e819abe",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/kangkyunghyun/LinKHU/blob/abdefc2084e69e74d95113c6b05ae0568e819abe/LICENSE",
+      "license_blob_sha": "a7f29af088f7d93251f187682ce4fc8170f76383",
+      "license_content_sha256": "20a00c20d8c2f66513e259e8a1b6c47b88499330f3d8222fbda7b1e1648385da",
+      "license_content_bytes": 1071,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "landfill--secure-doc",
+      "repository_url": "https://github.com/landfill/secure-doc",
+      "candidate_count": 1,
+      "candidate_ids": [
+        "ghmix-landfill--secure-doc-issue-22"
+      ],
+      "ledger_indices": [
+        809
+      ],
+      "observed_head_revision": "07cc44a6eeb1ef7c238736115f0878164608c404",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/landfill/secure-doc/blob/07cc44a6eeb1ef7c238736115f0878164608c404/LICENSE",
+      "license_blob_sha": "d563fb5b2aae7af52fd42b7063bc8e276e5e110d",
+      "license_content_sha256": "d828f079ded83ca5e4af42081c3a7bf8886d0242b7d8d393f9c8290309e7177d",
+      "license_content_bytes": 1072,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "loopback-social--community-network-banner",
+      "repository_url": "https://github.com/loopback-social/community-network-banner",
+      "candidate_count": 1,
+      "candidate_ids": [
+        "ghmix-loopback-social--community-network-banner-issue-28"
+      ],
+      "ledger_indices": [
+        974
+      ],
+      "observed_head_revision": "8d198ec993e4dde9c15e0e1db2cdcc5054887853",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/loopback-social/community-network-banner/blob/8d198ec993e4dde9c15e0e1db2cdcc5054887853/LICENSE",
+      "license_blob_sha": "7c26cb1156cbe4d5c8df5a1f93ecc25867400168",
+      "license_content_sha256": "b1bfa66bfe6f45fd0e4c8a3d6db1d31e091623e5d3cac167fa29ec94e87acebd",
+      "license_content_bytes": 1065,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "lvis-project--lvis-app",
+      "repository_url": "https://github.com/lvis-project/lvis-app",
+      "candidate_count": 2,
+      "candidate_ids": [
+        "ghmix-lvis-project--lvis-app-issue-1512",
+        "ghmix-lvis-project--lvis-app-issue-1412"
+      ],
+      "ledger_indices": [
+        975,
+        989
+      ],
+      "observed_head_revision": "61f9349cd730f0b4c7c36d03d66cf5d0e5d0b60d",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/lvis-project/lvis-app/blob/61f9349cd730f0b4c7c36d03d66cf5d0e5d0b60d/LICENSE",
+      "license_blob_sha": "9c7d087e8e417249642e79516fab7dad917ea332",
+      "license_content_sha256": "78b276464e7da6368daed7e4afbe28d1a956406e99046d514c7c85883ac5c11e",
+      "license_content_bytes": 1582,
+      "github_classifier_spdx_id": "NOASSERTION",
+      "identified_license": "MIT",
+      "review_method": "full-license-text-two-pass-review",
+      "review_facts": [
+        "The complete MIT permission grant and standard notice condition are present.",
+        "The trailing third-party attribution states an MIT-licensed upstream and adds no use restriction."
+      ],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "nodease--mbased",
+      "repository_url": "https://github.com/nodease/mbased",
+      "candidate_count": 3,
+      "candidate_ids": [
+        "ghko-nodease--mbased-issue-548",
+        "ghko-nodease--mbased-issue-499",
+        "ghko-nodease--mbased-issue-528"
+      ],
+      "ledger_indices": [
+        353,
+        424,
+        645
+      ],
+      "observed_head_revision": "b270c11deabc4b0d4d77b6e59f3637a49d72f82e",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/nodease/mbased/blob/b270c11deabc4b0d4d77b6e59f3637a49d72f82e/LICENSE",
+      "license_blob_sha": "663d845515c9561295e85029ecd3f968c607ad0e",
+      "license_content_sha256": "2f917f847c8d6c5bedcb6ae1c6d4350f83acab14761318a86dfa1f020b15e532",
+      "license_content_bytes": 1063,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "pillip--realtime-en2ko-captions",
+      "repository_url": "https://github.com/pillip/realtime-en2ko-captions",
+      "candidate_count": 5,
+      "candidate_ids": [
+        "ghmix-pillip--realtime-en2ko-captions-issue-53",
+        "ghmix-pillip--realtime-en2ko-captions-issue-52",
+        "ghmix-pillip--realtime-en2ko-captions-issue-16",
+        "ghmix-pillip--realtime-en2ko-captions-issue-15",
+        "ghmix-pillip--realtime-en2ko-captions-issue-13"
+      ],
+      "ledger_indices": [
+        829,
+        835,
+        839,
+        840,
+        841
+      ],
+      "observed_head_revision": "2fb99ddb20b9464844deb283088f91bc60e59e7b",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/pillip/realtime-en2ko-captions/blob/2fb99ddb20b9464844deb283088f91bc60e59e7b/LICENSE",
+      "license_blob_sha": "21ddcc51bae50c5da4ede5590f822be5b488e857",
+      "license_content_sha256": "9e55f1a314f02ff35553769654065cc282ee0416d23a503015b33ae92a66f312",
+      "license_content_bytes": 1068,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "prgrms-be-adv-devcourse--beadv6_6_3JMT_BE",
+      "repository_url": "https://github.com/prgrms-be-adv-devcourse/beadv6_6_3JMT_BE",
+      "candidate_count": 2,
+      "candidate_ids": [
+        "ghko-prgrms-be-adv-devcourse--beadv6_6_3JMT_BE-issue-394",
+        "ghmix-prgrms-be-adv-devcourse--beadv6_6_3JMT_BE-issue-161"
+      ],
+      "ledger_indices": [
+        559,
+        886
+      ],
+      "observed_head_revision": "8d21c549b640d3f25ba46931b9484e6915c0f0ac",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/prgrms-be-adv-devcourse/beadv6_6_3JMT_BE/blob/8d21c549b640d3f25ba46931b9484e6915c0f0ac/LICENSE",
+      "license_blob_sha": "6e806c285f839162060abebc1b233055fa92b6d6",
+      "license_content_sha256": "398b83582d56c09432609fc1a3bafab159b39d78ccee0f28b6611ddbbd66fbcd",
+      "license_content_bytes": 1071,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "raymond1203--LangAlpha-KR",
+      "repository_url": "https://github.com/raymond1203/LangAlpha-KR",
+      "candidate_count": 1,
+      "candidate_ids": [
+        "ghmix-raymond1203--LangAlpha-KR-issue-22"
+      ],
+      "ledger_indices": [
+        845
+      ],
+      "observed_head_revision": "81f12e9284feccacda4e2155f7a187b4a5a0a4fd",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/raymond1203/LangAlpha-KR/blob/81f12e9284feccacda4e2155f7a187b4a5a0a4fd/LICENSE",
+      "license_blob_sha": "49f398b994fc35452798288754a857877555efb2",
+      "license_content_sha256": "fbb860afa9e4143c18770c712ebf41700132bf0e8c9187bbb8ee8d53ec491a78",
+      "license_content_bytes": 10758,
+      "github_classifier_spdx_id": "Apache-2.0",
+      "identified_license": "Apache-2.0",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "seob717--nunchi",
+      "repository_url": "https://github.com/seob717/nunchi",
+      "candidate_count": 3,
+      "candidate_ids": [
+        "ghmix-seob717--nunchi-issue-29",
+        "ghmix-seob717--nunchi-issue-25",
+        "ghmix-seob717--nunchi-issue-38"
+      ],
+      "ledger_indices": [
+        750,
+        751,
+        946
+      ],
+      "observed_head_revision": "f60467b813109291d876cd37a54750d0b90506c0",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/seob717/nunchi/blob/f60467b813109291d876cd37a54750d0b90506c0/LICENSE",
+      "license_blob_sha": "ac30cfac2fc73a712883cc2640200f374fc3ada3",
+      "license_content_sha256": "dd14e577ab06b01aef6b6715a02ccdc8e29ff281331ca71206da7ed32d57fcae",
+      "license_content_bytes": 1067,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "woo-in--LoanServicing",
+      "repository_url": "https://github.com/woo-in/LoanServicing",
+      "candidate_count": 1,
+      "candidate_ids": [
+        "ghmix-woo-in--LoanServicing-issue-61"
+      ],
+      "ledger_indices": [
+        864
+      ],
+      "observed_head_revision": "ee84079ced133f0c9a41277e90e947d2edf6f09c",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/woo-in/LoanServicing/blob/ee84079ced133f0c9a41277e90e947d2edf6f09c/LICENSE",
+      "license_blob_sha": "3a7b62e24e38571e28c7029755f9876593124938",
+      "license_content_sha256": "67cb4c84c9822263422d55c77cf148dfce1ff319b4b8fb08eefdf3a7a37d2c77",
+      "license_content_bytes": 1063,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "yhzion--PortBridge",
+      "repository_url": "https://github.com/yhzion/PortBridge",
+      "candidate_count": 2,
+      "candidate_ids": [
+        "ghmix-yhzion--PortBridge-issue-115",
+        "ghmix-yhzion--PortBridge-issue-157"
+      ],
+      "ledger_indices": [
+        796,
+        1048
+      ],
+      "observed_head_revision": "3190c454eefede7a0667cc7218df62af95138e40",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/yhzion/PortBridge/blob/3190c454eefede7a0667cc7218df62af95138e40/LICENSE",
+      "license_blob_sha": "7f1b75ea8b630843b3830f1707c745afbbbd1830",
+      "license_content_sha256": "d84ce11d5597e73a7e875037361c61f77d72600b4d51fefaeb31e2097f5ed568",
+      "license_content_bytes": 1066,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "yumyum-corp--yumyum",
+      "repository_url": "https://github.com/yumyum-corp/yumyum",
+      "candidate_count": 1,
+      "candidate_ids": [
+        "ghmix-yumyum-corp--yumyum-issue-22"
+      ],
+      "ledger_indices": [
+        1126
+      ],
+      "observed_head_revision": "571afd7b33e8e9398abba72d2cc044b44205833e",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/yumyum-corp/yumyum/blob/571afd7b33e8e9398abba72d2cc044b44205833e/LICENSE",
+      "license_blob_sha": "4e79a7b2cac2bef21b0c0f7784636b30a922b23e",
+      "license_content_sha256": "03905aed3b0958b4fd43a5a5fbe381cd840a39b3266541c2d96f73f4226f104a",
+      "license_content_bytes": 1068,
+      "github_classifier_spdx_id": "MIT",
+      "identified_license": "MIT",
+      "review_method": "github-license-api-spdx",
+      "review_facts": [],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    },
+    {
+      "repository_id": "yvshdjcsldhdjt--ChunChuGwan",
+      "repository_url": "https://github.com/yvshdjcsldhdjt/ChunChuGwan",
+      "candidate_count": 2,
+      "candidate_ids": [
+        "ghko-yvshdjcsldhdjt--ChunChuGwan-issue-403",
+        "ghko-yvshdjcsldhdjt--ChunChuGwan-issue-399"
+      ],
+      "ledger_indices": [
+        515,
+        685
+      ],
+      "observed_head_revision": "e9ddaf301966f6f144dcc59f7d8a8d6fa972b100",
+      "observed_license_path": "LICENSE",
+      "observed_license_url": "https://github.com/yvshdjcsldhdjt/ChunChuGwan/blob/e9ddaf301966f6f144dcc59f7d8a8d6fa972b100/LICENSE",
+      "license_blob_sha": "013b8f22aabd1fc232da4d1f5c13b4118cb9a53c",
+      "license_content_sha256": "4880b5c14880c0e9d479b036735c5a542780c0558a48b563ef40eabd5656ba41",
+      "license_content_bytes": 1067,
+      "github_classifier_spdx_id": "NOASSERTION",
+      "identified_license": "MIT",
+      "review_method": "full-license-text-two-pass-review",
+      "review_facts": [
+        "The complete MIT permission grant and standard notice condition are present.",
+        "No additional use restriction appears in the captured license artifact."
+      ],
+      "current_head_classification": "eligible-permissive-current-head",
+      "terminal_status": false
+    }
+  ],
+  "next_boundary": "Resolve the linked solution and exact pre-solution base for the 102 priority rows. Re-read the license artifact at that exact revision before any terminal decision."
+}

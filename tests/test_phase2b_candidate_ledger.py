@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import unittest
 from collections import Counter
@@ -9,6 +10,60 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 LEDGER_PATH = ROOT / "experiments" / "phase2b-candidate-ledger-v1.json"
 LICENSE_PROBE_PATH = ROOT / "experiments" / "phase2b-license-probe-2026-07-19.json"
+LICENSE_PRIORITY_PATH = (
+    ROOT / "experiments" / "phase2b-license-priority-2026-07-24.json"
+)
+LICENSE_CLASSIFICATION_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-license-file-classification-2026-07-24.json"
+)
+LINKED_SOLUTION_PREFILTER_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-linked-solution-prefilter-2026-07-24.json"
+)
+EXACT_REVISION_LICENSE_PATH = (
+    ROOT / "experiments" / "phase2b-exact-revision-license-2026-07-24.json"
+)
+RANK5_APPLICATION_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-rank5-ledger-application-2026-07-24.json"
+)
+RANK6_PARITY_PATH = (
+    ROOT / "experiments" / "phase2b-rank6-instruction-parity-2026-07-24.json"
+)
+RANK6_APPLICATION_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-rank6-ledger-application-2026-07-24.json"
+)
+RANK7_SEMANTIC_PATH = (
+    ROOT / "experiments" / "phase2b-rank7-semantic-prefilter-2026-07-24.json"
+)
+RANK7_REPRODUCTION_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-rank7-agent-free-reproduction-2026-07-24.json"
+)
+RANK7_APPLICATION_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-rank7-ledger-application-2026-07-24.json"
+)
+PRE_RANK5_LEDGER_SHA256 = (
+    "b59ff7449f5ebd50c182eeffb72abe9c0231b82dacb915a61c2d61e94c8d9bd2"
+)
+PRE_RANK6_LEDGER_SHA256 = (
+    "faf4ee88177adc32e97cd331a6700ce55624f56eb0ec2db886126e086639ce2c"
+)
+PRE_RANK7_LEDGER_SHA256 = (
+    "228dbbf05ec46a7f94dde40e780bad9b6d64a32944ace5bddb49839f15a1a0f1"
+)
+SCREENING_CASCADE_PATH = (
+    ROOT / "experiments" / "phase2b-screening-cascade-2026-07-24.json"
+)
 CANDIDATE_SCHEMA_PATH = (
     ROOT / "experiments" / "schemas" / "paired-pilot-candidate-ledger-v1.schema.json"
 )
@@ -55,6 +110,28 @@ EXPECTED_EXCLUSION_RULES = [
 class Phase2bCandidateLedgerTests(unittest.TestCase):
     def setUp(self) -> None:
         self.ledger = json.loads(LEDGER_PATH.read_text(encoding="utf-8"))
+        rank7_application = json.loads(
+            RANK7_APPLICATION_PATH.read_text(encoding="utf-8")
+        )
+        self.rank7_mutations = {
+            row["candidate_id"]: row for row in rank7_application["mutations"]
+        }
+
+    def _current_decision_after_rank7(
+        self, candidate_id: str, prior_decision: str
+    ) -> str:
+        mutation = self.rank7_mutations.get(candidate_id)
+        return mutation["after_decision"] if mutation else prior_decision
+
+    def _current_exclusions_after_rank7(
+        self, candidate_id: str, prior_exclusions: list[str]
+    ) -> list[str]:
+        mutation = self.rank7_mutations.get(candidate_id)
+        return (
+            mutation["exclusion_rule_ids_triggered"]
+            if mutation
+            else prior_exclusions
+        )
 
     def test_references_unique_source_rows(self) -> None:
         pools = self.ledger["source_pools"]
@@ -172,6 +249,7 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             candidate
             for candidate in candidates
             if candidate["provisional_classification"]["task_category"] is not None
+            and candidate["candidate_id"] not in self.rank7_mutations
         ]
 
         self.assertEqual(len(candidates), 411)
@@ -218,11 +296,29 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
                 "ghko-Aiddoo--Aido-platform-issue-655",
                 "ghko-hissinger--small-village-issue-51",
                 "ghko-Soku-JINSEOK--Soku-Convention-Boilerplate-issue-19",
+                # Rank 5 resolved the exact bases for eleven more Korean-bearing
+                # rows. Four may still be excluded at this or later gates.
+                "ghko-kangkyunghyun--LinKHU-issue-67",
+                "ghko-dungsil-ai--intellij-plugin-egovframe-issue-4",
+                "ghko-hissinger--small-village-issue-54",
+                "ghko-yvshdjcsldhdjt--ChunChuGwan-issue-403",
+                "ghko-kangkyunghyun--LinKHU-issue-89",
+                "ghko-kangkyunghyun--LinKHU-issue-81",
+                "ghko-prgrms-be-adv-devcourse--beadv6_6_3JMT_BE-issue-394",
+                "ghko-happyduck-git--RetroNote-issue-81",
+                "ghko-nodease--mbased-issue-528",
+                "ghko-MannaDevelopers--meditation_blossom_frontend-issue-185",
+                "ghko-hang-in--tunaRound-issue-131",
             },
         )
 
     def test_license_probe_is_never_treated_as_terminal(self) -> None:
         probe = json.loads(LICENSE_PROBE_PATH.read_text(encoding="utf-8"))
+        exact = json.loads(EXACT_REVISION_LICENSE_PATH.read_text(encoding="utf-8"))
+        preexisting_license_by_id = {
+            row["candidate_id"]: row["ledger_preexisting_license_state"]
+            for row in exact["observations"]
+        }
 
         # The probe reads default-branch HEAD, not a candidate's pinned revision,
         # so it may order work but must never settle license-or-use-basis.
@@ -247,6 +343,1278 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
         for candidate in self.ledger["candidates"]:
             if candidate["screening"]["license_or_use_basis"] == "pass":
                 self.assertTrue(candidate["license_or_use_basis"])
+
+    def test_license_priority_recomputes_current_screening_buckets(self) -> None:
+        artifact = json.loads(LICENSE_PRIORITY_PATH.read_text(encoding="utf-8"))
+        probe = json.loads(LICENSE_PROBE_PATH.read_text(encoding="utf-8"))
+        exact = json.loads(EXACT_REVISION_LICENSE_PATH.read_text(encoding="utf-8"))
+        preexisting_license_by_id = {
+            row["candidate_id"]: row["ledger_preexisting_license_state"]
+            for row in exact["observations"]
+        }
+        probe_by_key = {
+            entry["repository"]: entry
+            for entry in probe["entries"]
+        }
+        screening = [
+            candidate
+            for candidate in self.ledger["candidates"]
+            if candidate["decision"] == "screening"
+            or candidate["candidate_id"] in preexisting_license_by_id
+        ]
+        github = [
+            candidate
+            for candidate in screening
+            if candidate["source_pool_id"].startswith("github-")
+        ]
+
+        def signal_for(candidate: dict[str, object]) -> str:
+            repository = str(candidate["repository_id"]).replace("--", "/")
+            entry = probe_by_key.get(repository)
+            return "not-probed" if entry is None else entry["signal"]
+
+        def license_state_at_snapshot(candidate: dict[str, object]) -> str:
+            return preexisting_license_by_id.get(
+                str(candidate["candidate_id"]),
+                candidate["screening"]["license_or_use_basis"],
+            )
+
+        self.assertFalse(artifact["terminal_status"])
+        self.assertEqual(
+            artifact["protocol_version"], "phase2b-pilot-prereg-v1.1"
+        )
+        self.assertEqual(
+            artifact["summary"],
+            {
+                "candidate_count": len(self.ledger["candidates"]),
+                "screening_count": len(screening),
+                "local_screening_pinned_license_pass": sum(
+                    candidate["source_pool_id"]
+                    == "aao-local-history-through-0e32241"
+                    for candidate in screening
+                ),
+                "swebench_screening_exact_base_upstream_license_unverified": sum(
+                    candidate["source_pool_id"]
+                    == "swebench-multilingual-at-2b7aced"
+                    for candidate in screening
+                ),
+                "github_screening_count": len(github),
+                "github_pinned_license_pass": sum(
+                    license_state_at_snapshot(candidate) == "pass"
+                    for candidate in github
+                ),
+                "github_permissive_classifier_awaiting_exact_revision": 36,
+                "github_file_only_awaiting_classification_and_exact_revision": 66,
+                "github_ineligible_classifier_awaiting_exact_revision": 2,
+                "github_none_observed_deferred": sum(
+                    signal_for(candidate) == "none-observed"
+                    for candidate in github
+                ),
+                "github_not_probed": sum(
+                    signal_for(candidate) == "not-probed" for candidate in github
+                ),
+                "github_nonterminal_license_signal_rows": sum(
+                    signal_for(candidate) == "license-artifact-or-spdx-present"
+                    for candidate in github
+                ),
+                "github_deep_review_queue_after_classifier_filter": 104,
+            },
+        )
+
+        expected_hashes = {
+            "experiments/phase2b-candidate-ledger-v1.json": PRE_RANK5_LEDGER_SHA256,
+            "experiments/phase2b-license-probe-2026-07-19.json": hashlib.sha256(
+                LICENSE_PROBE_PATH.read_bytes()
+            ).hexdigest(),
+        }
+        self.assertEqual(
+            {
+                entry["path"]: entry["sha256"]
+                for entry in artifact["input_artifacts"]
+            },
+            expected_hashes,
+        )
+
+    def test_license_priority_never_promotes_unpinned_probe_signals(self) -> None:
+        artifact = json.loads(LICENSE_PRIORITY_PATH.read_text(encoding="utf-8"))
+        exact = json.loads(EXACT_REVISION_LICENSE_PATH.read_text(encoding="utf-8"))
+        parity = json.loads(RANK6_PARITY_PATH.read_text(encoding="utf-8"))
+        exact_by_id = {
+            row["candidate_id"]: row for row in exact["observations"]
+        }
+        parity_by_id = {
+            row["candidate_id"]: row for row in parity["assessments"]
+        }
+        by_id = {
+            candidate["candidate_id"]: candidate
+            for candidate in self.ledger["candidates"]
+        }
+        buckets = artifact["buckets"]
+        explicit_bucket_names = [
+            "pinned_license_pass_ready_for_remaining_rules",
+            "ineligible_classifier_awaiting_exact_revision",
+            "permissive_classifier_awaiting_exact_revision",
+            "file_only_awaiting_classification_and_exact_revision",
+            "not_probed",
+        ]
+        listed = [
+            candidate
+            for bucket_name in explicit_bucket_names
+            for candidate in buckets[bucket_name]["candidates"]
+        ]
+
+        self.assertEqual(len(listed), len({row["candidate_id"] for row in listed}))
+        for bucket_name in explicit_bucket_names:
+            rows = buckets[bucket_name]["candidates"]
+            self.assertEqual(
+                [row["ledger_index"] for row in rows],
+                sorted(row["ledger_index"] for row in rows),
+            )
+            self.assertEqual(buckets[bucket_name]["count"], len(rows))
+
+        pinned = buckets["pinned_license_pass_ready_for_remaining_rules"][
+            "candidates"
+        ]
+        self.assertEqual(len(pinned), 2)
+        for row in pinned:
+            candidate = by_id[row["candidate_id"]]
+            prior_decision = (
+                "excluded"
+                if row["candidate_id"] in parity_by_id
+                and parity_by_id[row["candidate_id"]]["result"] == "fail"
+                else "screening"
+            )
+            self.assertEqual(
+                candidate["decision"],
+                self._current_decision_after_rank7(
+                    row["candidate_id"], prior_decision
+                ),
+            )
+            self.assertEqual(candidate["screening"]["license_or_use_basis"], "pass")
+            self.assertTrue(candidate["base_revision"])
+
+        eligible = set(artifact["eligible_permissive_spdx_ids"])
+        for row in buckets["permissive_classifier_awaiting_exact_revision"][
+            "candidates"
+        ]:
+            candidate = by_id[row["candidate_id"]]
+            self.assertIn(row["classifier_spdx_id"], eligible)
+            evidence = exact_by_id.get(row["candidate_id"])
+            if evidence is None:
+                self.assertEqual(
+                    candidate["screening"]["license_or_use_basis"], "unknown"
+                )
+            else:
+                self.assertEqual(
+                    candidate["screening"]["license_or_use_basis"],
+                    evidence["license_or_use_basis_decision"],
+                )
+                self.assertEqual(candidate["base_revision"], evidence["base_revision"])
+            prior_decision = (
+                "excluded"
+                if evidence is not None
+                and (
+                    evidence["license_or_use_basis_decision"] == "fail"
+                    or (
+                        row["candidate_id"] in parity_by_id
+                        and parity_by_id[row["candidate_id"]]["result"] == "fail"
+                    )
+                )
+                else "screening"
+            )
+            self.assertEqual(
+                candidate["decision"],
+                self._current_decision_after_rank7(
+                    row["candidate_id"], prior_decision
+                ),
+            )
+
+        ineligible = set(artifact["explicitly_ineligible_classifier_ids"])
+
+        def assert_current_state(row: dict[str, object]) -> None:
+            candidate = by_id[row["candidate_id"]]
+            evidence = exact_by_id.get(row["candidate_id"])
+            if evidence is None:
+                self.assertEqual(
+                    candidate["screening"]["license_or_use_basis"], "unknown"
+                )
+                self.assertEqual(candidate["decision"], "screening")
+                return
+            self.assertEqual(
+                candidate["screening"]["license_or_use_basis"],
+                evidence["license_or_use_basis_decision"],
+            )
+            self.assertEqual(candidate["base_revision"], evidence["base_revision"])
+            self.assertEqual(candidate["base_tree_hash"], evidence["base_tree_hash"])
+            prior_decision = (
+                "excluded"
+                if evidence["license_or_use_basis_decision"] == "fail"
+                or (
+                    row["candidate_id"] in parity_by_id
+                    and parity_by_id[row["candidate_id"]]["result"] == "fail"
+                )
+                else "screening"
+            )
+            self.assertEqual(
+                candidate["decision"],
+                self._current_decision_after_rank7(
+                    row["candidate_id"], prior_decision
+                ),
+            )
+
+        for row in buckets["ineligible_classifier_awaiting_exact_revision"][
+            "candidates"
+        ]:
+            self.assertIn(row["classifier_spdx_id"], ineligible)
+            assert_current_state(row)
+
+        for row in buckets["file_only_awaiting_classification_and_exact_revision"][
+            "candidates"
+        ]:
+            self.assertIsNone(row["classifier_spdx_id"])
+            self.assertTrue(row["license_file_at_head"])
+            assert_current_state(row)
+
+        for row in buckets["not_probed"]["candidates"]:
+            candidate = by_id[row["candidate_id"]]
+            self.assertIsNone(row["probe_method"])
+            self.assertEqual(candidate["screening"]["license_or_use_basis"], "unknown")
+            self.assertEqual(candidate["decision"], "screening")
+
+        self.assertEqual(
+            artifact["summary"]["github_deep_review_queue_after_classifier_filter"],
+            len(pinned)
+            + buckets["permissive_classifier_awaiting_exact_revision"]["count"]
+            + buckets["file_only_awaiting_classification_and_exact_revision"]["count"],
+        )
+
+    def test_file_only_license_classification_is_complete_and_nonterminal(self) -> None:
+        artifact = json.loads(
+            LICENSE_CLASSIFICATION_PATH.read_text(encoding="utf-8")
+        )
+        priority = json.loads(LICENSE_PRIORITY_PATH.read_text(encoding="utf-8"))
+        exact = json.loads(EXACT_REVISION_LICENSE_PATH.read_text(encoding="utf-8"))
+        parity = json.loads(RANK6_PARITY_PATH.read_text(encoding="utf-8"))
+        exact_by_id = {
+            row["candidate_id"]: row for row in exact["observations"]
+        }
+        parity_by_id = {
+            row["candidate_id"]: row for row in parity["assessments"]
+        }
+        repositories = artifact["repositories"]
+        classified_ids = {
+            candidate_id
+            for repository in repositories
+            for candidate_id in repository["candidate_ids"]
+        }
+        expected_ids = {
+            row["candidate_id"]
+            for row in priority["buckets"][
+                "file_only_awaiting_classification_and_exact_revision"
+            ]["candidates"]
+        }
+        by_id = {
+            candidate["candidate_id"]: candidate
+            for candidate in self.ledger["candidates"]
+        }
+
+        self.assertFalse(artifact["terminal_status"])
+        self.assertFalse(artifact["agent_results_observed"])
+        self.assertEqual(len(repositories), 33)
+        self.assertEqual(classified_ids, expected_ids)
+        self.assertEqual(len(classified_ids), 66)
+        self.assertEqual(
+            artifact["summary"][
+                "repository_counts_by_current_head_classification"
+            ],
+            {
+                "eligible-permissive-current-head": 31,
+                "suspected-ineligible-copyleft-current-head": 1,
+                "suspected-ineligible-noncommercial-current-head": 1,
+            },
+        )
+        self.assertEqual(
+            artifact["summary"][
+                "candidate_counts_by_current_head_classification"
+            ],
+            {
+                "eligible-permissive-current-head": 64,
+                "suspected-ineligible-copyleft-current-head": 1,
+                "suspected-ineligible-noncommercial-current-head": 1,
+            },
+        )
+        self.assertEqual(
+            artifact["summary"][
+                "github_deep_review_queue_after_current_head_classification"
+            ],
+            102,
+        )
+        self.assertEqual(
+            artifact["summary"][
+                "github_suspected_ineligible_exact_revision_queue"
+            ],
+            4,
+        )
+        self.assertEqual(artifact["summary"]["unknown_rows_after_classification"], 0)
+
+        self.assertEqual(
+            artifact["input_artifacts"],
+            [
+                {
+                    "path": "experiments/phase2b-license-priority-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        LICENSE_PRIORITY_PATH.read_bytes()
+                    ).hexdigest(),
+                }
+            ],
+        )
+        self.assertEqual(
+            sum(
+                repository["review_method"]
+                == "full-license-text-two-pass-review"
+                for repository in repositories
+            ),
+            3,
+        )
+        for repository in repositories:
+            self.assertRegex(repository["observed_head_revision"], r"^[0-9a-f]{40}$")
+            self.assertRegex(repository["license_blob_sha"], r"^[0-9a-f]{40}$")
+            self.assertRegex(
+                repository["license_content_sha256"], r"^[0-9a-f]{64}$"
+            )
+            self.assertFalse(repository["terminal_status"])
+            for candidate_id in repository["candidate_ids"]:
+                candidate = by_id[candidate_id]
+                evidence = exact_by_id.get(candidate_id)
+                if evidence is None:
+                    self.assertEqual(candidate["decision"], "screening")
+                    self.assertEqual(
+                        candidate["screening"]["license_or_use_basis"], "unknown"
+                    )
+                    continue
+                self.assertEqual(
+                    candidate["screening"]["license_or_use_basis"],
+                    evidence["license_or_use_basis_decision"],
+                )
+                self.assertEqual(candidate["base_revision"], evidence["base_revision"])
+                self.assertEqual(candidate["base_tree_hash"], evidence["base_tree_hash"])
+                prior_decision = (
+                    "excluded"
+                    if evidence["license_or_use_basis_decision"] == "fail"
+                    or (
+                        candidate_id in parity_by_id
+                        and parity_by_id[candidate_id]["result"] == "fail"
+                    )
+                    else "screening"
+                )
+                self.assertEqual(
+                    candidate["decision"],
+                    self._current_decision_after_rank7(
+                        candidate_id, prior_decision
+                    ),
+                )
+
+    def test_linked_solution_prefilter_is_complete_and_nonterminal(self) -> None:
+        artifact = json.loads(
+            LINKED_SOLUTION_PREFILTER_PATH.read_text(encoding="utf-8")
+        )
+        priority = json.loads(LICENSE_PRIORITY_PATH.read_text(encoding="utf-8"))
+        exact = json.loads(EXACT_REVISION_LICENSE_PATH.read_text(encoding="utf-8"))
+        parity = json.loads(RANK6_PARITY_PATH.read_text(encoding="utf-8"))
+        exact_by_id = {
+            row["candidate_id"]: row for row in exact["observations"]
+        }
+        parity_by_id = {
+            row["candidate_id"]: row for row in parity["assessments"]
+        }
+        expected_ids = {
+            row["candidate_id"]
+            for bucket in (
+                "pinned_license_pass_ready_for_remaining_rules",
+                "permissive_classifier_awaiting_exact_revision",
+                "ineligible_classifier_awaiting_exact_revision",
+                "file_only_awaiting_classification_and_exact_revision",
+            )
+            for row in priority["buckets"][bucket]["candidates"]
+        }
+        candidate_rows = artifact["candidate_rows"]
+        pull_requests = artifact["pull_requests"]
+        queues = artifact["priority_queues"]
+        listed_ids = {
+            candidate_id
+            for queue in queues.values()
+            for candidate_id in queue
+        }
+        by_id = {
+            candidate["candidate_id"]: candidate
+            for candidate in self.ledger["candidates"]
+        }
+
+        self.assertFalse(artifact["terminal_status"])
+        self.assertFalse(artifact["agent_results_observed"])
+        self.assertEqual(len(candidate_rows), 106)
+        self.assertEqual(listed_ids, expected_ids)
+        self.assertEqual(
+            sum(len(queue) for queue in queues.values()), len(listed_ids)
+        )
+        self.assertEqual(
+            {
+                name: len(candidate_ids)
+                for name, candidate_ids in queues.items()
+            },
+            {
+                "advance_exact_base_and_pinned_license": 27,
+                "advance_suspected_ineligible_exact_revision_confirmation": 4,
+                "needs_solution_segmentation_or_multi_issue_review": 18,
+                "deferred_no_test_touch_single_scope": 57,
+            },
+        )
+        self.assertEqual(len(pull_requests), 107)
+        self.assertEqual(len({row["url"] for row in pull_requests}), 107)
+        self.assertTrue(
+            artifact["collection_integrity"][
+                "all_required_observations_complete"
+            ]
+        )
+        for row in candidate_rows:
+            self.assertEqual(row["issue_html_status"], 200)
+            self.assertRegex(row["issue_html_sha256"], r"^[0-9a-f]{64}$")
+            self.assertFalse(row["terminal_status"])
+            candidate = by_id[row["candidate_id"]]
+            evidence = exact_by_id.get(row["candidate_id"])
+            if evidence is None:
+                self.assertEqual(candidate["decision"], "screening")
+                continue
+            self.assertEqual(candidate["base_revision"], evidence["base_revision"])
+            self.assertEqual(candidate["base_tree_hash"], evidence["base_tree_hash"])
+            prior_decision = (
+                "excluded"
+                if evidence["license_or_use_basis_decision"] == "fail"
+                or (
+                    row["candidate_id"] in parity_by_id
+                    and parity_by_id[row["candidate_id"]]["result"] == "fail"
+                )
+                else "screening"
+            )
+            self.assertEqual(
+                candidate["decision"],
+                self._current_decision_after_rank7(
+                    row["candidate_id"], prior_decision
+                ),
+            )
+        for pull_request in pull_requests:
+            self.assertEqual(pull_request["html_status"], 200)
+            self.assertEqual(pull_request["diff_status"], 200)
+            self.assertRegex(pull_request["html_sha256"], r"^[0-9a-f]{64}$")
+            self.assertRegex(pull_request["diff_sha256"], r"^[0-9a-f]{64}$")
+            self.assertRegex(pull_request["head_revision"], r"^[0-9a-f]{40}$")
+            self.assertFalse(pull_request["terminal_status"])
+
+        # Documentation paths named specs/test_cases are not executable test touch.
+        no_test_ids = set(queues["deferred_no_test_touch_single_scope"])
+        self.assertIn("ghmix-joshua-jingu-lee--ante-issue-2353", no_test_ids)
+        self.assertIn("ghmix-joshua-jingu-lee--ante-issue-2390", no_test_ids)
+        mbased_509 = next(
+            row
+            for row in pull_requests
+            if row["url"] == "https://github.com/nodease/mbased/pull/509"
+        )
+        self.assertFalse(mbased_509["test_touch"])
+
+        # A later stacked superset is scope-review, while the smaller complete
+        # prefix PR remains eligible for its own issue.
+        self.assertIn(
+            "ghko-dungsil-ai--intellij-plugin-egovframe-issue-4",
+            queues["advance_exact_base_and_pinned_license"],
+        )
+        self.assertIn(
+            "ghko-dungsil-ai--intellij-plugin-egovframe-issue-5",
+            queues["needs_solution_segmentation_or_multi_issue_review"],
+        )
+
+    def test_exact_revision_license_results_and_ledger_application_are_bound(self) -> None:
+        exact = json.loads(EXACT_REVISION_LICENSE_PATH.read_text(encoding="utf-8"))
+        application = json.loads(RANK5_APPLICATION_PATH.read_text(encoding="utf-8"))
+        observations = exact["observations"]
+        by_id = {
+            candidate["candidate_id"]: candidate
+            for candidate in self.ledger["candidates"]
+        }
+
+        self.assertTrue(exact["terminal_status"])
+        self.assertIn(
+            "terminal only for exact-base-resolvable and license-or-use-basis",
+            exact["terminal_status_note"],
+        )
+        self.assertFalse(exact["agent_results_observed"])
+        self.assertEqual(len(observations), 31)
+        self.assertEqual(
+            exact["collection_integrity"],
+            {
+                "source_observation_sha256": exact["collection_integrity"][
+                    "source_observation_sha256"
+                ],
+                "requested_candidates": 31,
+                "observed_candidates": 31,
+                "failures": 0,
+                "head_matches": 31,
+                "commit_sequence_ancestry_ok": 31,
+                "single_parent_first_solution_commit": 31,
+                "github_diff_changed_paths_match": 31,
+                "git_and_github_diff_byte_hash_match": 15,
+            },
+        )
+        self.assertRegex(
+            exact["collection_integrity"]["source_observation_sha256"],
+            r"^[0-9a-f]{64}$",
+        )
+        self.assertEqual(
+            exact["summary"],
+            {
+                "candidate_count": 31,
+                "eligible_priority_input_rows": 27,
+                "suspected_ineligible_confirmation_input_rows": 4,
+                "license_counts_at_exact_base": {
+                    "AGPL-3.0": 1,
+                    "Apache-2.0": 6,
+                    "GPL-3.0": 2,
+                    "MIT": 21,
+                    "absent": 1,
+                },
+                "license_pass_rows": 27,
+                "license_fail_rows": 4,
+                "eligible_priority_license_pass_rows": 26,
+                "eligible_priority_license_fail_rows": 1,
+                "suspected_queue_license_pass_rows": 1,
+                "suspected_queue_license_fail_rows": 3,
+                "comparable_current_head_signal_rows": 30,
+                "current_head_signal_agreement_rows": 28,
+                "current_head_signal_disagreement_rows": 2,
+                "advance_remaining_rule_review_rows": 26,
+                "return_to_solution_scope_review_rows": 1,
+                "terminal_license_exclusion_rows": 4,
+            },
+        )
+        self.assertTrue(
+            all(
+                row["head_matches"]
+                and row["commit_sequence_ancestry_ok"]
+                and row["first_solution_commit_parent_count"] == 1
+                and row["github_diff_changed_paths_match"]
+                for row in observations
+            )
+        )
+        self.assertEqual(
+            {
+                row["candidate_id"]
+                for row in observations
+                if row["next_route"] == "terminal_license_exclusion"
+            },
+            {
+                "ghko-MannaDevelopers--meditation_blossom_frontend-issue-185",
+                "ghko-hang-in--tunaRound-issue-131",
+                "ghmix-landfill--secure-doc-issue-22",
+                "ghmix-hsu3046--MarkMind-issue-117",
+            },
+        )
+        self.assertEqual(
+            exact["current_head_counterexamples"],
+            [
+                {
+                    "candidate_id": "ghmix-baekenough--oh-my-customcode-issue-1415",
+                    "current_head_signal": "PolyForm-Noncommercial-1.0.0",
+                    "exact_base_result": "MIT",
+                    "workflow_effect": "return_to_solution_scope_review",
+                },
+                {
+                    "candidate_id": "ghmix-landfill--secure-doc-issue-22",
+                    "current_head_signal": "MIT",
+                    "exact_base_result": None,
+                    "workflow_effect": "terminal_license_exclusion",
+                },
+            ],
+        )
+        landfill = next(
+            row
+            for row in observations
+            if row["candidate_id"] == "ghmix-landfill--secure-doc-issue-22"
+        )
+        self.assertEqual(landfill["license_artifact_count"], 0)
+        self.assertEqual(
+            {artifact["path"] for artifact in landfill["fallback_basis_artifacts"]},
+            {"README.md", "package.json"},
+        )
+        self.assertTrue(
+            all(
+                artifact["declared_license"] is None
+                and artifact["detected_full_license_text"] is None
+                and not artifact["license_word_present"]
+                for artifact in landfill["fallback_basis_artifacts"]
+            )
+        )
+
+        self.assertFalse(application["agent_results_observed"])
+        self.assertEqual(
+            application["input_artifacts"],
+            [
+                {
+                    "path": "experiments/phase2b-candidate-ledger-v1.json",
+                    "sha256": PRE_RANK5_LEDGER_SHA256,
+                    "state": "pre-rank5 Git-tracked snapshot",
+                },
+                {
+                    "path": "experiments/phase2b-exact-revision-license-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        EXACT_REVISION_LICENSE_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+            ],
+        )
+        self.assertEqual(
+            application["output_artifact"]["sha256"],
+            PRE_RANK6_LEDGER_SHA256,
+        )
+        self.assertEqual(
+            application["output_artifact"]["summary"]["screening_count"], 1021
+        )
+        self.assertEqual(
+            application["output_artifact"]["summary"]["excluded_count"], 102
+        )
+        self.assertEqual(
+            application["output_artifact"]["summary"][
+                "selected_for_task_authoring_count"
+            ],
+            7,
+        )
+        self.assertEqual(
+            application["summary"],
+            {
+                "candidate_rows_updated": 31,
+                "new_exact_base_pass_rows": 30,
+                "exact_license_pass_rows": 27,
+                "new_license_pass_rows": 26,
+                "new_terminal_license_exclusions": 4,
+                "screening_after": 1021,
+                "excluded_after": 102,
+                "selected_after": 7,
+            },
+        )
+        rank6_ids = {
+            row["candidate_id"]
+            for row in json.loads(RANK6_PARITY_PATH.read_text(encoding="utf-8"))[
+                "assessments"
+            ]
+        }
+        later_stage_ids = rank6_ids | set(self.rank7_mutations)
+        for mutation in application["mutations"]:
+            candidate = by_id[mutation["candidate_id"]]
+            for field in (
+                "base_revision",
+                "base_tree_hash",
+                "solution_revision",
+                "solution_tree_hash",
+                "solution_artifact_hash",
+            ):
+                self.assertEqual(candidate[field], mutation[field])
+            if mutation["candidate_id"] not in later_stage_ids:
+                self.assertEqual(candidate["decision"], mutation["decision"])
+                self.assertEqual(
+                    candidate["exclusion_rule_ids_triggered"],
+                    mutation["exclusion_rule_ids_triggered"],
+                )
+            self.assertTrue(candidate["license_or_use_basis"])
+            self.assertEqual(
+                len(candidate["changed_files"]), mutation["changed_file_count"]
+            )
+            self.assertEqual(
+                candidate["screening"]["exact_base_resolvable"],
+                mutation["exact_base_resolvable"],
+            )
+            self.assertEqual(
+                candidate["screening"]["license_or_use_basis"],
+                mutation["license_or_use_basis"],
+            )
+
+    def test_rank6_instruction_parity_and_ledger_application_are_bound(self) -> None:
+        parity = json.loads(RANK6_PARITY_PATH.read_text(encoding="utf-8"))
+        application = json.loads(RANK6_APPLICATION_PATH.read_text(encoding="utf-8"))
+        assessments = parity["assessments"]
+        by_id = {
+            candidate["candidate_id"]: candidate
+            for candidate in self.ledger["candidates"]
+        }
+
+        self.assertTrue(parity["terminal_status"])
+        self.assertFalse(parity["agent_results_observed"])
+        self.assertFalse(parity["design_change_required"])
+        self.assertEqual(
+            parity["collection_integrity"],
+            {
+                "requested_candidates": 25,
+                "observed_candidates": 25,
+                "failures": 0,
+                "exact_tree_hash_matches": 25,
+            },
+        )
+        self.assertEqual(
+            parity["summary"],
+            {
+                "candidate_count": 25,
+                "no_discovered_instruction_rows": 5,
+                "byte_equivalent_symlink_rows": 3,
+                "explicit_semantic_adapter_rows": 1,
+                "instruction_parity_pass_rows": 9,
+                "instruction_parity_fail_rows": 16,
+                "instruction_parity_unknown_rows": 0,
+                "advance_boundedness_evaluator_reproduction_rows": 9,
+                "terminal_instruction_parity_exclusion_rows": 16,
+            },
+        )
+        self.assertEqual(len(assessments), 25)
+        self.assertEqual(
+            Counter(row["result"] for row in assessments), {"pass": 9, "fail": 16}
+        )
+        self.assertTrue(all(row["terminal_evidence"] for row in assessments))
+        self.assertTrue(
+            all(
+                row["base_tree_hash"] == by_id[row["candidate_id"]]["base_tree_hash"]
+                for row in assessments
+            )
+        )
+        self.assertEqual(
+            {
+                row["candidate_id"]
+                for row in assessments
+                if row["result"] == "pass"
+            },
+            {
+                "ghko-hissinger--small-village-issue-54",
+                "ghko-yvshdjcsldhdjt--ChunChuGwan-issue-403",
+                "ghmix-jeongsk--daily_stock_analysis-issue-3",
+                "ghmix-JeremyDev87--kratos-issue-64",
+                "ghmix-Sungho-pk42ac--agentguard-issue-687",
+                "ghmix-Sungho-pk42ac--agentguard-issue-591",
+                "ghmix-KoreaNirsa--prompt-booster-issue-3",
+                "ghmix-MTGVim--telltale-issue-11",
+                "ghmix-joshua-jingu-lee--ante-issue-2398",
+            },
+        )
+        for row in assessments:
+            candidate = by_id[row["candidate_id"]]
+            self.assertEqual(
+                candidate["screening"]["instruction_parity"], row["result"]
+            )
+            prior_decision = "excluded" if row["result"] == "fail" else "screening"
+            prior_exclusions = (
+                ["instruction-parity-mismatch"] if row["result"] == "fail" else []
+            )
+            self.assertEqual(
+                candidate["decision"],
+                self._current_decision_after_rank7(
+                    row["candidate_id"], prior_decision
+                ),
+            )
+            self.assertEqual(
+                candidate["exclusion_rule_ids_triggered"],
+                self._current_exclusions_after_rank7(
+                    row["candidate_id"], prior_exclusions
+                ),
+            )
+            for entry in row["task_active_instruction_entries"]:
+                self.assertRegex(entry["object_sha"], r"^[0-9a-f]{40}$")
+                self.assertRegex(entry["content_sha256"], r"^[0-9a-f]{64}$")
+
+        self.assertFalse(application["agent_results_observed"])
+        self.assertEqual(
+            application["input_artifacts"],
+            [
+                {
+                    "path": "experiments/phase2b-candidate-ledger-v1.json",
+                    "sha256": PRE_RANK6_LEDGER_SHA256,
+                    "state": "pre-rank6 Git-tracked working snapshot",
+                },
+                {
+                    "path": "experiments/phase2b-rank6-instruction-parity-2026-07-24.json",
+                    "sha256": hashlib.sha256(RANK6_PARITY_PATH.read_bytes()).hexdigest(),
+                },
+            ],
+        )
+        self.assertEqual(
+            application["output_artifact"]["sha256"],
+            PRE_RANK7_LEDGER_SHA256,
+        )
+        output_summary = application["output_artifact"]["summary"]
+        self.assertEqual(
+            {
+                key: output_summary[key]
+                for key in (
+                    "candidate_count",
+                    "screening_count",
+                    "excluded_count",
+                    "selected_for_task_authoring_count",
+                )
+            },
+            {
+                "candidate_count": 1130,
+                "screening_count": 1005,
+                "excluded_count": 118,
+                "selected_for_task_authoring_count": 7,
+            },
+        )
+        self.assertEqual(
+            application["summary"],
+            {
+                "candidate_rows_updated": 25,
+                "instruction_parity_pass_rows": 9,
+                "instruction_parity_fail_rows": 16,
+                "new_terminal_instruction_parity_exclusions": 16,
+                "screening_after": 1005,
+                "excluded_after": 118,
+                "selected_after": 7,
+            },
+        )
+        self.assertEqual(len(application["mutations"]), 25)
+        for mutation in application["mutations"]:
+            candidate = by_id[mutation["candidate_id"]]
+            self.assertEqual(
+                candidate["screening"]["instruction_parity"],
+                mutation["instruction_parity"],
+            )
+            self.assertEqual(
+                candidate["decision"],
+                self._current_decision_after_rank7(
+                    mutation["candidate_id"], mutation["decision"]
+                ),
+            )
+
+    def test_rank7_semantics_reproduction_and_application_are_bound(self) -> None:
+        semantic = json.loads(RANK7_SEMANTIC_PATH.read_text(encoding="utf-8"))
+        reproduction = json.loads(
+            RANK7_REPRODUCTION_PATH.read_text(encoding="utf-8")
+        )
+        application = json.loads(
+            RANK7_APPLICATION_PATH.read_text(encoding="utf-8")
+        )
+        by_id = {
+            candidate["candidate_id"]: candidate
+            for candidate in self.ledger["candidates"]
+        }
+        semantic_by_id = {
+            row["candidate_id"]: row for row in semantic["assessments"]
+        }
+        reproduction_by_id = {
+            row["candidate_id"]: row for row in reproduction["results"]
+        }
+
+        self.assertFalse(semantic["agent_results_observed"])
+        self.assertFalse(semantic["design_change_required"])
+        self.assertEqual(
+            semantic["input_artifacts"][0]["sha256"], PRE_RANK7_LEDGER_SHA256
+        )
+        self.assertEqual(
+            semantic["summary"],
+            {
+                "candidate_count": 10,
+                "translation_only_terminal_rows": 3,
+                "multiple_coupled_issues_terminal_rows": 1,
+                "terminal_exclusion_rows": 4,
+                "advance_agent_free_reproduction_rows": 6,
+                "selected_rows_created": 0,
+            },
+        )
+        self.assertEqual(len(semantic_by_id), 10)
+        self.assertEqual(
+            set(semantic["next_queues"]["advance_agent_free_reproduction"]),
+            {
+                "ghko-hissinger--small-village-issue-54",
+                "ghmix-genonai--doc_parser-issue-288",
+                "ghmix-Sungho-pk42ac--agentguard-issue-687",
+                "ghmix-Sungho-pk42ac--agentguard-issue-591",
+                "ghmix-KoreaNirsa--prompt-booster-issue-3",
+                "ghmix-joshua-jingu-lee--ante-issue-2398",
+            },
+        )
+        self.assertEqual(
+            {
+                row["candidate_id"]: row["terminal_exclusion_ids"]
+                for row in semantic["assessments"]
+                if row["terminal_exclusion_ids"]
+            },
+            {
+                "ghko-yvshdjcsldhdjt--ChunChuGwan-issue-403": [
+                    "multiple-coupled-issues"
+                ],
+                "ghmix-jeongsk--daily_stock_analysis-issue-3": [
+                    "translation-only"
+                ],
+                "ghmix-JeremyDev87--kratos-issue-64": ["translation-only"],
+                "ghmix-MTGVim--telltale-issue-11": ["translation-only"],
+            },
+        )
+        for candidate_id, row in semantic_by_id.items():
+            candidate = by_id[candidate_id]
+            self.assertEqual(
+                row["task_statement_sha256"], candidate["task_statement_hash"]
+            )
+            self.assertEqual(
+                row["source_snapshot_task_statement_sha256"],
+                candidate["task_statement_hash"],
+            )
+            self.assertEqual(row["base_revision"], candidate["base_revision"])
+            self.assertEqual(row["base_tree_hash"], candidate["base_tree_hash"])
+            self.assertEqual(row["solution_revision"], candidate["solution_revision"])
+
+        self.assertFalse(reproduction["agent_results_observed"])
+        self.assertEqual(
+            reproduction["input_artifacts"][1],
+            {
+                "path": "experiments/phase2b-rank7-semantic-prefilter-2026-07-24.json",
+                "sha256": hashlib.sha256(RANK7_SEMANTIC_PATH.read_bytes()).hexdigest(),
+            },
+        )
+        self.assertEqual(
+            reproduction["summary"],
+            {
+                "candidate_count": 6,
+                "base_negative_intended_rows": 6,
+                "solution_positive_rows": 6,
+                "reproducible_within_budget_pass_rows": 6,
+                "small_bucket_rows": 4,
+                "medium_bucket_rows": 2,
+                "selected_for_task_authoring_routes": 6,
+                "candidate_agent_executions": 0,
+            },
+        )
+        self.assertEqual(
+            set(reproduction_by_id),
+            set(semantic["next_queues"]["advance_agent_free_reproduction"]),
+        )
+        self.assertEqual(
+            Counter(row["bucket"] for row in reproduction["results"]),
+            {"small": 4, "medium": 2},
+        )
+        for candidate_id, row in reproduction_by_id.items():
+            candidate = by_id[candidate_id]
+            for field in (
+                "base_revision",
+                "base_tree_hash",
+                "solution_revision",
+                "solution_tree_hash",
+            ):
+                self.assertEqual(row[field], candidate[field])
+            self.assertTrue(row["exact_tree_matches_ledger"])
+            self.assertTrue(row["negative_control_intended"])
+            self.assertTrue(row["base_tracked_tree_clean_after_control"])
+            self.assertTrue(row["solution_tracked_tree_clean_after_control"])
+            self.assertEqual(row["reproducible_within_budget"], "pass")
+            self.assertEqual(row["next_route"], "selected_for_task_authoring")
+            for protected in row["protected_artifacts"]:
+                self.assertRegex(protected["sha256"], r"^[0-9a-f]{64}$")
+        self.assertTrue(
+            any(
+                "small-village final validity reviewer" in limitation
+                for limitation in reproduction["known_limitations"]
+            )
+        )
+
+        self.assertFalse(application["agent_results_observed"])
+        self.assertEqual(
+            application["input_artifacts"],
+            [
+                {
+                    "path": "experiments/phase2b-candidate-ledger-v1.json",
+                    "sha256": PRE_RANK7_LEDGER_SHA256,
+                    "state": "pre-rank7 Git-tracked working snapshot",
+                },
+                {
+                    "path": "experiments/phase2b-rank7-semantic-prefilter-2026-07-24.json",
+                    "sha256": hashlib.sha256(RANK7_SEMANTIC_PATH.read_bytes()).hexdigest(),
+                },
+                {
+                    "path": "experiments/phase2b-rank7-agent-free-reproduction-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        RANK7_REPRODUCTION_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+            ],
+        )
+        self.assertEqual(
+            application["summary"],
+            {
+                "candidate_rows_updated": 10,
+                "terminal_source_exclusions": 4,
+                "new_selected_for_task_authoring_rows": 6,
+                "screening_after": 995,
+                "excluded_after": 122,
+                "selected_after": 13,
+            },
+        )
+        self.assertEqual(
+            application["output_artifact"]["sha256"],
+            hashlib.sha256(LEDGER_PATH.read_bytes()).hexdigest(),
+        )
+        self.assertEqual(application["output_artifact"]["summary"], self.ledger["summary"])
+        self.assertEqual(len(application["mutations"]), 10)
+        for mutation in application["mutations"]:
+            candidate = by_id[mutation["candidate_id"]]
+            self.assertEqual(candidate["decision"], mutation["after_decision"])
+            self.assertEqual(
+                candidate["exclusion_rule_ids_triggered"],
+                mutation["exclusion_rule_ids_triggered"],
+            )
+            self.assertEqual(
+                candidate["provisional_classification"],
+                mutation["provisional_classification"],
+            )
+            for field, value in mutation["screening_updates"].items():
+                self.assertEqual(candidate["screening"][field], value)
+            if mutation["after_decision"] == "selected-for-task-authoring":
+                self.assertEqual(Counter(candidate["screening"].values()), {"pass": 12})
+
+    def test_screening_cascade_is_nonterminal_and_cost_ordered(self) -> None:
+        artifact = json.loads(SCREENING_CASCADE_PATH.read_text(encoding="utf-8"))
+        stages = artifact["stage_sequence"]
+
+        self.assertFalse(artifact["terminal_status"])
+        self.assertFalse(artifact["agent_results_observed"])
+        self.assertFalse(artifact["design_change_required"])
+        self.assertEqual(
+            artifact["protocol_version"], "phase2b-pilot-prereg-v1.1"
+        )
+        self.assertEqual([stage["rank"] for stage in stages], list(range(8)))
+        self.assertEqual(
+            [stage["stage_id"] for stage in stages],
+            [
+                "ledger-integrity-and-prior-state",
+                "source-identity-presence",
+                "repository-license-signal",
+                "license-type-classification",
+                "linked-solution-and-test-scope",
+                "exact-base-and-pinned-license",
+                "exact-tree-instruction-inventory",
+                "boundedness-evaluator-and-reproduction",
+            ],
+        )
+        self.assertTrue(all(not stage["terminal"] for stage in stages[:5]))
+        self.assertTrue(all(stage["terminal"] for stage in stages[5:]))
+        self.assertEqual(
+            [stage["rank"] for stage in stages if stage["manual_semantic_review_required"]],
+            [3, 6, 7],
+        )
+
+        expected_hashes = {
+            "experiments/phase2b-candidate-ledger-v1.json": PRE_RANK5_LEDGER_SHA256,
+            "experiments/phase2b-license-probe-2026-07-19.json": hashlib.sha256(
+                LICENSE_PROBE_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-license-priority-2026-07-24.json": hashlib.sha256(
+                LICENSE_PRIORITY_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-license-file-classification-2026-07-24.json": hashlib.sha256(
+                LICENSE_CLASSIFICATION_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-linked-solution-prefilter-2026-07-24.json": hashlib.sha256(
+                LINKED_SOLUTION_PREFILTER_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-exact-revision-license-2026-07-24.json": hashlib.sha256(
+                EXACT_REVISION_LICENSE_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-rank5-ledger-application-2026-07-24.json": hashlib.sha256(
+                RANK5_APPLICATION_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-rank6-instruction-parity-2026-07-24.json": hashlib.sha256(
+                RANK6_PARITY_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-rank6-ledger-application-2026-07-24.json": hashlib.sha256(
+                RANK6_APPLICATION_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-rank7-semantic-prefilter-2026-07-24.json": hashlib.sha256(
+                RANK7_SEMANTIC_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-rank7-agent-free-reproduction-2026-07-24.json": hashlib.sha256(
+                RANK7_REPRODUCTION_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-rank7-ledger-application-2026-07-24.json": hashlib.sha256(
+                RANK7_APPLICATION_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-mechanical-prefilter-2026-07-19.json": hashlib.sha256(
+                (
+                    ROOT
+                    / "experiments"
+                    / "phase2b-mechanical-prefilter-2026-07-19.json"
+                ).read_bytes()
+            ).hexdigest(),
+        }
+        self.assertEqual(
+            {
+                entry["path"]: entry["sha256"]
+                for entry in artifact["input_artifacts"]
+            },
+            expected_hashes,
+        )
+
+    def test_screening_cascade_routes_current_pools_before_deep_review(self) -> None:
+        cascade = json.loads(SCREENING_CASCADE_PATH.read_text(encoding="utf-8"))
+        priority = json.loads(LICENSE_PRIORITY_PATH.read_text(encoding="utf-8"))
+        classification = json.loads(
+            LICENSE_CLASSIFICATION_PATH.read_text(encoding="utf-8")
+        )
+        linked_solution = json.loads(
+            LINKED_SOLUTION_PREFILTER_PATH.read_text(encoding="utf-8")
+        )
+        exact = json.loads(EXACT_REVISION_LICENSE_PATH.read_text(encoding="utf-8"))
+        exact_ids = {row["candidate_id"] for row in exact["observations"]}
+        screening = [
+            candidate
+            for candidate in self.ledger["candidates"]
+            if candidate["decision"] == "screening"
+            or candidate["candidate_id"] in exact_ids
+        ]
+        by_pool = Counter(candidate["source_pool_id"] for candidate in screening)
+        routes = cascade["pool_routes"]
+
+        self.assertEqual(len(screening), 1025)
+        self.assertEqual(
+            routes["aao-local-history-through-0e32241"]["screening_rows"],
+            by_pool["aao-local-history-through-0e32241"],
+        )
+        self.assertEqual(
+            routes["swebench-multilingual-at-2b7aced"]["screening_rows"],
+            by_pool["swebench-multilingual-at-2b7aced"],
+        )
+        github_count = sum(
+            count
+            for pool_id, count in by_pool.items()
+            if pool_id.startswith("github-")
+        )
+        self.assertEqual(routes["github-current-screening"]["screening_rows"], 691)
+        self.assertEqual(routes["github-current-screening"]["screening_rows"], github_count)
+        self.assertEqual(
+            routes["github-current-screening"][
+                "deep_review_queue_after_current_head_classification"
+            ],
+            classification["summary"][
+                "github_deep_review_queue_after_current_head_classification"
+            ],
+        )
+        self.assertEqual(
+            routes["github-current-screening"][
+                "suspected_ineligible_requiring_exact_revision_confirmation"
+            ],
+            classification["summary"][
+                "github_suspected_ineligible_exact_revision_queue"
+            ],
+        )
+        self.assertEqual(
+            routes["github-current-screening"][
+                "exact_revision_queue_after_linked_solution_prefilter"
+            ],
+            linked_solution["summary"][
+                "advance_exact_base_and_pinned_license_rows"
+            ]
+            + linked_solution["summary"][
+                "suspected_ineligible_exact_confirmation_count"
+            ],
+        )
+        self.assertEqual(
+            routes["github-current-screening"]["deferred_none_observed"],
+            priority["summary"]["github_none_observed_deferred"],
+        )
+
+        stages = {stage["stage_id"]: stage for stage in cascade["stage_sequence"]}
+        self.assertEqual(
+            stages["ledger-integrity-and-prior-state"]["observed"],
+            {
+                "screening": 1005,
+                "excluded": 118,
+                "selected_for_task_authoring": 7,
+            },
+        )
+        self.assertEqual(
+            stages["source-identity-presence"]["observed"],
+            {
+                "external_statement_and_hash_present": 991,
+                "local_history_without_native_task_statement": 34,
+            },
+        )
+        self.assertEqual(
+            stages["license-type-classification"]["observed"],
+            {
+                "pinned_permissive_pass": 2,
+                "permissive_classifier_signal": 36,
+                "file_only_repositories_classified": 33,
+                "file_only_candidate_rows_classified": 66,
+                "file_only_eligible_permissive_current_head": 64,
+                "file_only_suspected_ineligible_copyleft_current_head": 1,
+                "file_only_suspected_ineligible_noncommercial_current_head": 1,
+                "existing_ineligible_copyleft_classifier_signal": 2,
+                "unknown_after_current_head_classification": 0,
+            },
+        )
+        self.assertEqual(
+            stages["linked-solution-and-test-scope"]["observed"],
+            {
+                "eligible_current_head_priority_rows": 102,
+                "suspected_ineligible_exact_confirmation_rows": 4,
+                "issue_html_200_and_parsed": 106,
+                "unique_pull_request_html_and_diff_200": 107,
+                "single_merged_closing_pr_rows": 103,
+                "multiple_closing_pr_rows": 3,
+                "eligible_single_pr_test_touch_rows": 37,
+                "advance_exact_base_and_pinned_license_rows": 27,
+                "advance_suspected_ineligible_confirmation_rows": 4,
+                "needs_solution_scope_review_rows": 18,
+                "deferred_no_test_touch_single_scope_rows": 57,
+            },
+        )
+        self.assertEqual(
+            stages["exact-base-and-pinned-license"]["observed"],
+            {
+                "github_exact_base_already_known_before_stage": 1,
+                "github_new_exact_bases_resolved": 30,
+                "github_eligible_priority_rows": 27,
+                "github_suspected_ineligible_confirmation_rows": 4,
+                "exact_license_pass_rows": 27,
+                "exact_license_fail_rows": 4,
+                "advance_remaining_rule_review_rows": 26,
+                "return_to_solution_scope_review_rows": 1,
+                "swebench_rows_with_recorded_base_but_missing_tree_and_upstream_license": 300,
+                "swebench_upstream_repositories": 41,
+            },
+        )
+        self.assertEqual(
+            stages["exact-tree-instruction-inventory"]["observed"],
+            {
+                "instruction_parity_already_passed_before_stage": 1,
+                "new_exact_tree_instruction_inventories_completed": 25,
+                "new_instruction_parity_pass_rows": 9,
+                "new_instruction_parity_fail_rows": 16,
+                "advance_boundedness_evaluator_reproduction_rows": 10,
+            },
+        )
+        self.assertEqual(
+            stages["boundedness-evaluator-and-reproduction"]["observed"],
+            {
+                "source_semantic_rows_completed": 10,
+                "translation_only_terminal_rows": 3,
+                "multiple_coupled_issues_terminal_rows": 1,
+                "advance_agent_free_reproduction_rows": 6,
+                "intended_base_negative_rows": 6,
+                "solution_positive_rows": 6,
+                "reproducible_within_budget_pass_rows": 6,
+                "small_bucket_rows": 4,
+                "medium_bucket_rows": 2,
+                "new_selected_for_task_authoring_rows": 6,
+                "boundedness_evaluator_reproduction_pending": 0,
+            },
+        )
+        self.assertEqual(
+            stages["boundedness-evaluator-and-reproduction"]["input_rows"], 10
+        )
+        self.assertIn(
+            "exact pre-solution revision and tree",
+            cascade["terminal_or_pass_evidence_boundaries"],
+        )
 
     def test_every_inclusion_rule_has_a_terminal_exclusion_path(self) -> None:
         # A required inclusion criterion with no corresponding exclusion reason
@@ -275,7 +1643,7 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             in candidate["exclusion_rule_ids_triggered"]
         ]
 
-        self.assertEqual(len(rows), 21)
+        self.assertEqual(len(rows), 25)
         for candidate in rows:
             self.assertEqual(candidate["decision"], "excluded")
             self.assertEqual(candidate["screening"]["license_or_use_basis"], "fail")
@@ -355,6 +1723,7 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             for candidate in candidates
             if candidate["provisional_classification"]["task_category"] is not None
             and candidate["screened_by_role_id"] != "task-source-construction-2026-07-20"
+            and candidate["candidate_id"] not in self.rank7_mutations
         ]
 
         self.assertEqual(len(candidates), 383)
@@ -640,7 +2009,7 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
         self.assertIsNone(subjective["base_revision"])
 
         advancing = by_id["ghmix-genonai--doc_parser-issue-288"]
-        self.assertEqual(advancing["decision"], "screening")
+        self.assertEqual(advancing["decision"], "selected-for-task-authoring")
         self.assertEqual(advancing["exclusion_rule_ids_triggered"], [])
         self.assertEqual(
             advancing["base_revision"],
@@ -681,10 +2050,10 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             for rule_id, value in advancing["screening"].items()
             if value == "unknown"
         }
-        self.assertEqual(unresolved, {"reproducible_within_budget"})
+        self.assertEqual(unresolved, set())
         self.assertEqual(
             Counter(advancing["screening"].values()),
-            {"pass": 11, "unknown": 1},
+            {"pass": 12},
         )
 
     def test_fifth_contextual_candidate_has_agent_free_reproducibility_controls(self) -> None:
@@ -1098,6 +2467,7 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             candidate["candidate_id"]: candidate
             for candidate in self.ledger["candidates"]
         }
+        rank6 = json.loads(RANK6_PARITY_PATH.read_text(encoding="utf-8"))
         passing = {
             "ghko-SeoyunL--factlog-academic-issue-314",
             "ghmix-joshua-jingu-lee--ante-issue-2349",
@@ -1129,6 +2499,16 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             "ghmix-Gn0lee--oat-issue-410",
             "ghmix-handokei--subway-now-issue-1465",
         }
+        passing.update(
+            row["candidate_id"]
+            for row in rank6["assessments"]
+            if row["result"] == "pass"
+        )
+        failing.update(
+            row["candidate_id"]
+            for row in rank6["assessments"]
+            if row["result"] == "fail"
+        )
 
         self.assertEqual(
             {

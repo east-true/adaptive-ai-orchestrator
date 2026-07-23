@@ -1,0 +1,1265 @@
+{
+  "artifact_id": "phase2b-rank6-instruction-parity-2026-07-24",
+  "created_at": "2026-07-24",
+  "protocol_version": "phase2b-pilot-prereg-v1.1",
+  "purpose": "Resolve exact-tree project-instruction parity for the 25 rank-6 rows newly advanced by rank 5 without observing agent results.",
+  "terminal_status": true,
+  "terminal_status_note": "This artifact is terminal only for instruction-parity. It neither selects candidates nor settles boundedness, evaluator feasibility, isolation, or reproduction.",
+  "agent_results_observed": false,
+  "design_change_required": false,
+  "input_artifacts": [
+    {
+      "path": "experiments/phase2b-exact-revision-license-2026-07-24.json",
+      "sha256": "fabb62de7b5838450d1f7c3c7529543d3238286fa81747bcddd9b2a073db699e"
+    },
+    {
+      "path": "experiments/phase2b-agent-instruction-parity-2026-07-20.json",
+      "sha256": "4d5cdd55c13c9d38c82419b7e159e79eba936ca22ab8a3c7bdfca24b9113ba1d"
+    },
+    {
+      "path": "experiments/phase2b-candidate-ledger-v1.json",
+      "sha256": "faf4ee88177adc32e97cd331a6700ce55624f56eb0ec2db886126e086639ce2c",
+      "state": "pre-rank6 Git-tracked working snapshot"
+    }
+  ],
+  "local_collection_snapshot": {
+    "path": ".orchestrator/rank6-instruction-review-2026-07-24/inventory.json",
+    "sha256": "755a41cf8d83e1e2cba9ca7354943f6b8a142b71e10ed75f47a3c9012778cac3",
+    "tracked": false,
+    "role": "Ignored full-content review cache; every terminal fact needed to resume is reduced to Git blob and content hashes below."
+  },
+  "discovery_contract": {
+    "source_artifact": "experiments/phase2b-agent-instruction-parity-2026-07-20.json",
+    "claude_code": "Claude Code 2.1.215 behavioral discovery/import observations: applicable CLAUDE.md, symlinks/imports, and path rules; no automatic AGENTS.md discovery.",
+    "codex": "Codex 0.144.6 root-AGENTS behavioral observation plus official root-to-task discovery and empty project_doc_fallback_filenames.",
+    "global_instruction_context": "separate unresolved run-authorization gate"
+  },
+  "method": [
+    "Enumerate every exact base with git ls-tree -r from the ignored bare-repository cache and verify revision^{tree} against the rank-5 base_tree_hash.",
+    "Read every AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, and .claude/rules Markdown blob from the exact tree; record Git blob and decoded-content SHA-256 without copying full bodies into the tracked artifact.",
+    "Resolve root-to-changed-path scope, symlinks, explicit imports/adapters, and path-index applicability. Inactive descendant instructions do not affect the result.",
+    "Apply the preregistered semantic-equivalence rule: no guidance on either side and byte-equivalent adapters pass; any material one-sided active instruction fails."
+  ],
+  "review_provenance": {
+    "primary": "Codex exact-content review against the frozen discovery contract",
+    "claude_cli_cross_review": "Two bounded read-only calls were attempted during the documentation and complex-case audits, produced no output, and were terminated without file changes; they contributed no decision evidence."
+  },
+  "collection_integrity": {
+    "requested_candidates": 25,
+    "observed_candidates": 25,
+    "failures": 0,
+    "exact_tree_hash_matches": 25
+  },
+  "summary": {
+    "candidate_count": 25,
+    "no_discovered_instruction_rows": 5,
+    "byte_equivalent_symlink_rows": 3,
+    "explicit_semantic_adapter_rows": 1,
+    "instruction_parity_pass_rows": 9,
+    "instruction_parity_fail_rows": 16,
+    "instruction_parity_unknown_rows": 0,
+    "advance_boundedness_evaluator_reproduction_rows": 9,
+    "terminal_instruction_parity_exclusion_rows": 16
+  },
+  "next_queues": {
+    "advance_boundedness_evaluator_reproduction": [
+      "ghko-hissinger--small-village-issue-54",
+      "ghko-yvshdjcsldhdjt--ChunChuGwan-issue-403",
+      "ghmix-jeongsk--daily_stock_analysis-issue-3",
+      "ghmix-JeremyDev87--kratos-issue-64",
+      "ghmix-Sungho-pk42ac--agentguard-issue-687",
+      "ghmix-Sungho-pk42ac--agentguard-issue-591",
+      "ghmix-KoreaNirsa--prompt-booster-issue-3",
+      "ghmix-MTGVim--telltale-issue-11",
+      "ghmix-joshua-jingu-lee--ante-issue-2398"
+    ],
+    "terminal_instruction_parity_exclusion": [
+      "ghko-kangkyunghyun--LinKHU-issue-67",
+      "ghko-dungsil-ai--intellij-plugin-egovframe-issue-4",
+      "ghko-kangkyunghyun--LinKHU-issue-89",
+      "ghko-kangkyunghyun--LinKHU-issue-81",
+      "ghko-prgrms-be-adv-devcourse--beadv6_6_3JMT_BE-issue-394",
+      "ghko-happyduck-git--RetroNote-issue-81",
+      "ghko-nodease--mbased-issue-528",
+      "ghmix-JungHoonGhae--tossinvest-cli-issue-96",
+      "ghmix-pillip--realtime-en2ko-captions-issue-52",
+      "ghmix-pillip--realtime-en2ko-captions-issue-16",
+      "ghmix-raymond1203--LangAlpha-KR-issue-22",
+      "ghmix-ginishuh--contextforge-issue-167",
+      "ghmix-Aiddoo--Aido-platform-issue-592",
+      "ghmix-lvis-project--lvis-app-issue-1512",
+      "ghmix-lvis-project--lvis-app-issue-1412",
+      "ghmix-yumyum-corp--yumyum-issue-22"
+    ]
+  },
+  "assessments": [
+    {
+      "candidate_id": "ghko-kangkyunghyun--LinKHU-issue-67",
+      "ledger_index": 390,
+      "repository_id": "kangkyunghyun--LinKHU",
+      "base_revision": "0c0def66adb0f6191d0ce5e8cb8de35165287d31",
+      "base_tree_hash": "c72fb43a853b81b07b9c2687dc39639b066c604a",
+      "tree_entry_count": 160,
+      "changed_path_count": 14,
+      "full_tree_instruction_entry_count": 1,
+      "task_active_instruction_entries": [
+        {
+          "path": "AGENTS.md",
+          "mode": "100644",
+          "object_sha": "bd5145efa051f30a7bbaeadff55b25dc7894cb6b",
+          "content_sha256": "ede17d46ee8e11458c2db1319ecd883acc486e44154ee4b2049eba2a1d83f6d0",
+          "content_bytes": 9378,
+          "symlink_target": null,
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [],
+      "effective_codex_chain": [
+        "AGENTS.md"
+      ],
+      "project_instruction_profile": "The task-active exact-tree instruction chain contains AGENTS.md guidance with no CLAUDE.md adapter or equivalent Claude-discovered path.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Codex receives material project, safety, architecture, command, or testing constraints for the changed paths.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "pinned-semantic-instruction-review",
+        "claude-behavioral-discovery",
+        "codex-behavioral-root-AGENTS.md"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghko-dungsil-ai--intellij-plugin-egovframe-issue-4",
+      "ledger_index": 399,
+      "repository_id": "dungsil-ai--intellij-plugin-egovframe",
+      "base_revision": "83d3064d198f8fdcf8ee093d9eb50716abe55525",
+      "base_tree_hash": "5e7b731c020d8a1618acaa26ce84698f45d0e591",
+      "tree_entry_count": 286,
+      "changed_path_count": 21,
+      "full_tree_instruction_entry_count": 1,
+      "task_active_instruction_entries": [
+        {
+          "path": "AGENTS.md",
+          "mode": "100644",
+          "object_sha": "0bddf3597b58b24356449e0e685c182d7401d108",
+          "content_sha256": "d02a7845a9b0fc6dc3d5c8784bce51247ff5330c3760cb68826e3b0d700be9a7",
+          "content_bytes": 10567,
+          "symlink_target": null,
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [],
+      "effective_codex_chain": [
+        "AGENTS.md"
+      ],
+      "project_instruction_profile": "The task-active exact-tree instruction chain contains AGENTS.md guidance with no CLAUDE.md adapter or equivalent Claude-discovered path.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Codex receives material project, safety, architecture, command, or testing constraints for the changed paths.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "pinned-semantic-instruction-review",
+        "claude-behavioral-discovery",
+        "codex-behavioral-root-AGENTS.md"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghko-hissinger--small-village-issue-54",
+      "ledger_index": 489,
+      "repository_id": "hissinger--small-village",
+      "base_revision": "081af5d9649f64c9391b422df6891be850bd6044",
+      "base_tree_hash": "51ab035e2a048e35e50ff2a883182b10ff46a5df",
+      "tree_entry_count": 168,
+      "changed_path_count": 22,
+      "full_tree_instruction_entry_count": 2,
+      "task_active_instruction_entries": [
+        {
+          "path": "AGENTS.md",
+          "mode": "100644",
+          "object_sha": "0d073300e6c49145bd57e2dce0611ada369a3641",
+          "content_sha256": "7ab79026dbfae3793065bb861a8fe9b29569a64780bea44cd3d331785662a3a1",
+          "content_bytes": 7781,
+          "symlink_target": null,
+          "scope_root": ""
+        },
+        {
+          "path": "CLAUDE.md",
+          "mode": "120000",
+          "object_sha": "47dc3e3d863cfb5727b87d785d09abf9743c0a72",
+          "content_sha256": "a54ff182c7e8acf56acfd6e4b9c3ff41e2c41a31c9b211b2deb9df75d9a478f9",
+          "content_bytes": 9,
+          "symlink_target": "AGENTS.md",
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [
+        "CLAUDE.md -> AGENTS.md"
+      ],
+      "effective_codex_chain": [
+        "AGENTS.md"
+      ],
+      "project_instruction_profile": "Root CLAUDE.md is a symlink to root AGENTS.md, with no task-active override that changes either chain.",
+      "result": "pass",
+      "terminal_evidence": true,
+      "reason": "Both agents receive the byte-identical root AGENTS.md content.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "claude-behavioral-CLAUDE.md-symlink",
+        "codex-behavioral-root-AGENTS.md"
+      ],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghko-yvshdjcsldhdjt--ChunChuGwan-issue-403",
+      "ledger_index": 515,
+      "repository_id": "yvshdjcsldhdjt--ChunChuGwan",
+      "base_revision": "d45ebe324674212847a04e4412efa6e1b135fe2f",
+      "base_tree_hash": "5d4d03a72cbefe56680cebab8c0667702e98cce6",
+      "tree_entry_count": 615,
+      "changed_path_count": 19,
+      "full_tree_instruction_entry_count": 12,
+      "task_active_instruction_entries": [
+        {
+          "path": ".claude/rules/dashboard.md",
+          "mode": "100644",
+          "object_sha": "0c7d611b9c01bde731592f3e7122acab1d0794af",
+          "content_sha256": "f5faf831f321db91c49a23d19d35e8fbd47cde693e10300d28966ad0fdc7e7c7",
+          "content_bytes": 13842,
+          "symlink_target": null,
+          "scope_root": ""
+        },
+        {
+          "path": ".claude/rules/database.md",
+          "mode": "100644",
+          "object_sha": "f4264e3a6519ad05869a14a1b80dce70005288ad",
+          "content_sha256": "a2d9b6cc1bca65a43d045716d75834343a891beb340848fb6783451f94e27826",
+          "content_bytes": 14564,
+          "symlink_target": null,
+          "scope_root": ""
+        },
+        {
+          "path": ".claude/rules/storage.md",
+          "mode": "100644",
+          "object_sha": "0d04f154a5668bd07a4bac77bdb613465fb5d9fa",
+          "content_sha256": "e7bc8b4a1677038274583b5b87071b7ae2ad63dafdbcb207a84c6ae8a1220730",
+          "content_bytes": 18276,
+          "symlink_target": null,
+          "scope_root": ""
+        },
+        {
+          "path": ".claude/rules/testing.md",
+          "mode": "100644",
+          "object_sha": "d4499d0fd24bc4fa68f31431191f7e96bdb38c85",
+          "content_sha256": "bd5dbbdb8cd80e28f9cc525cc6a62f2b129dec449bbb017387d860c0607247e2",
+          "content_bytes": 2116,
+          "symlink_target": null,
+          "scope_root": ""
+        },
+        {
+          "path": "AGENTS.md",
+          "mode": "100644",
+          "object_sha": "0f3bf1a78a60ad0d3b4006530e4330bcd0fca732",
+          "content_sha256": "ac9f7d93bc805f7ad133c9d0e4a241b12c3f55939fb4941cb992e72eb92bdb1d",
+          "content_bytes": 531,
+          "symlink_target": null,
+          "scope_root": ""
+        },
+        {
+          "path": "CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "df9ba8083f9aa0b394a812fdaea7766af5c272da",
+          "content_sha256": "32bbb9208b8ef45ac396700890e26b2bcfbfae0226b9d20384c213fe5e140784",
+          "content_bytes": 21035,
+          "symlink_target": null,
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [
+        ".claude/rules/api-extension.md",
+        ".claude/rules/authentication.md",
+        ".claude/rules/capture-crawl.md",
+        ".claude/rules/ci-guideline.md",
+        ".claude/rules/release-docker.md",
+        ".claude/rules/search.md"
+      ],
+      "effective_claude_chain": [
+        "CLAUDE.md",
+        ".claude/rules/database.md",
+        ".claude/rules/storage.md",
+        ".claude/rules/dashboard.md",
+        ".claude/rules/testing.md"
+      ],
+      "effective_codex_chain": [
+        "AGENTS.md -> CLAUDE.md -> same four path rules"
+      ],
+      "project_instruction_profile": "Root AGENTS.md directs Codex to the root CLAUDE.md SSOT; that SSOT indexes the same four path-applicable rule files that Claude loads for the changed database, storage, dashboard, and test paths.",
+      "result": "pass",
+      "terminal_evidence": true,
+      "reason": "The explicit Codex adapter and canonical path-rule index deliver the same task-relevant guidance.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "pinned-semantic-instruction-review",
+        "claude-behavioral-path-rule-discovery",
+        "codex-behavioral-root-AGENTS.md"
+      ],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghko-kangkyunghyun--LinKHU-issue-89",
+      "ledger_index": 550,
+      "repository_id": "kangkyunghyun--LinKHU",
+      "base_revision": "01fcb333bfc5ec0cf486bf3e790bc9ca73d9b9d4",
+      "base_tree_hash": "9d7a6277352acb3a2463e131b6a787adc53bc49e",
+      "tree_entry_count": 296,
+      "changed_path_count": 5,
+      "full_tree_instruction_entry_count": 1,
+      "task_active_instruction_entries": [
+        {
+          "path": "AGENTS.md",
+          "mode": "100644",
+          "object_sha": "bc52ccb90e6b49b46f83a6a954c7e5913eaf477a",
+          "content_sha256": "e65a90aac4be5cbec1c75e798292bf05c4154576a3803d64dbe611cad2192440",
+          "content_bytes": 9507,
+          "symlink_target": null,
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [],
+      "effective_codex_chain": [
+        "AGENTS.md"
+      ],
+      "project_instruction_profile": "The task-active exact-tree instruction chain contains AGENTS.md guidance with no CLAUDE.md adapter or equivalent Claude-discovered path.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Codex receives material project, safety, architecture, command, or testing constraints for the changed paths.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "pinned-semantic-instruction-review",
+        "claude-behavioral-discovery",
+        "codex-behavioral-root-AGENTS.md"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghko-kangkyunghyun--LinKHU-issue-81",
+      "ledger_index": 553,
+      "repository_id": "kangkyunghyun--LinKHU",
+      "base_revision": "14d40730bce85c07d31c208eb574dd6f6fe709f6",
+      "base_tree_hash": "8faefdc8c1d7808059eaa3162c3755ba14396942",
+      "tree_entry_count": 178,
+      "changed_path_count": 9,
+      "full_tree_instruction_entry_count": 1,
+      "task_active_instruction_entries": [
+        {
+          "path": "AGENTS.md",
+          "mode": "100644",
+          "object_sha": "56174ce02e44d2a4afd39732f0792716c8926f5c",
+          "content_sha256": "0dc24d66b60b36f4bf952844a00896de19dd06efd27ff00e34a3d08422e83633",
+          "content_bytes": 9461,
+          "symlink_target": null,
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [],
+      "effective_codex_chain": [
+        "AGENTS.md"
+      ],
+      "project_instruction_profile": "The task-active exact-tree instruction chain contains AGENTS.md guidance with no CLAUDE.md adapter or equivalent Claude-discovered path.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Codex receives material project, safety, architecture, command, or testing constraints for the changed paths.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "pinned-semantic-instruction-review",
+        "claude-behavioral-discovery",
+        "codex-behavioral-root-AGENTS.md"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghko-prgrms-be-adv-devcourse--beadv6_6_3JMT_BE-issue-394",
+      "ledger_index": 559,
+      "repository_id": "prgrms-be-adv-devcourse--beadv6_6_3JMT_BE",
+      "base_revision": "780e61dc00582c0f8673972955c7244b72842f73",
+      "base_tree_hash": "3df3a9cf55e957b36d8e31273d465343654a9b1e",
+      "tree_entry_count": 1151,
+      "changed_path_count": 15,
+      "full_tree_instruction_entry_count": 34,
+      "task_active_instruction_entries": [
+        {
+          "path": "settlement-service/.claude/rules/clean-architecture.md",
+          "mode": "100644",
+          "object_sha": "d2b12ffd3ba6d6496823807466f9f9eeb6781bdc",
+          "content_sha256": "4bf2aeb944aeb5d047bc3efbe1c45bcf784dc4c4bed4de1c7440aa01e9272f72",
+          "content_bytes": 17340,
+          "symlink_target": null,
+          "scope_root": "settlement-service"
+        },
+        {
+          "path": "settlement-service/.claude/rules/code-style.md",
+          "mode": "100644",
+          "object_sha": "562eed295af12f11390445f9ff7f379651657791",
+          "content_sha256": "dfce9eb8b5d8f7461e5df797e9417f832d30a09210d3201ea8e0c15f5646684a",
+          "content_bytes": 1616,
+          "symlink_target": null,
+          "scope_root": "settlement-service"
+        },
+        {
+          "path": "settlement-service/.claude/rules/controller-exception.md",
+          "mode": "100644",
+          "object_sha": "00c5086d957cb49c39366fb3915a547f9d01d604",
+          "content_sha256": "b98cc59f3255ce74928a71e4c0309200c330eba193c2b97bf2ee81731a5095ea",
+          "content_bytes": 8410,
+          "symlink_target": null,
+          "scope_root": "settlement-service"
+        },
+        {
+          "path": "settlement-service/.claude/rules/domain-model.md",
+          "mode": "100644",
+          "object_sha": "ebff5304a6787f6c89797455513875d53dde8de9",
+          "content_sha256": "d369d3059b12a5715117d9ad23802ac0ea60981fe9d3b128aef946e89f457f75",
+          "content_bytes": 8738,
+          "symlink_target": null,
+          "scope_root": "settlement-service"
+        },
+        {
+          "path": "settlement-service/.claude/rules/git-convention.md",
+          "mode": "100644",
+          "object_sha": "339dffff0119bd253522a93a211c4627465236ce",
+          "content_sha256": "4b22859f42dc710e8bd11597a92d50489ebcac8c950fc9133c02176907a64f43",
+          "content_bytes": 1290,
+          "symlink_target": null,
+          "scope_root": "settlement-service"
+        },
+        {
+          "path": "settlement-service/.claude/rules/kafka-event.md",
+          "mode": "100644",
+          "object_sha": "31d754070c73dd5729431ca4c16471bba3d19a83",
+          "content_sha256": "9a5be9a07d477431f57095898c64ef28b954d75006bb382d1aaffd633841e4fc",
+          "content_bytes": 5796,
+          "symlink_target": null,
+          "scope_root": "settlement-service"
+        },
+        {
+          "path": "settlement-service/.claude/rules/security.md",
+          "mode": "100644",
+          "object_sha": "29420686e7dd4d6bfbafbef339d041f9f1c1f8fc",
+          "content_sha256": "9960e5a51b8a909dc0476b2e03afef15d73816cbf1fadb72bb0cbd0a01d5f98c",
+          "content_bytes": 3086,
+          "symlink_target": null,
+          "scope_root": "settlement-service"
+        },
+        {
+          "path": "settlement-service/.claude/rules/swagger.md",
+          "mode": "100644",
+          "object_sha": "653a520bf265871574c3b6fbe63a8d505ad80a07",
+          "content_sha256": "0d1693f0069e01ef5e338050e0cb4db4c387b9b86578487615a56c62d86882bf",
+          "content_bytes": 9718,
+          "symlink_target": null,
+          "scope_root": "settlement-service"
+        },
+        {
+          "path": "settlement-service/AGENTS.md",
+          "mode": "100644",
+          "object_sha": "06f295b5497b920809005b28194d7a671ca54d0e",
+          "content_sha256": "c553a3edd32e17e8c20217ac723713da4c087b3ff6cb87c9957bb8d941fcc7cd",
+          "content_bytes": 6400,
+          "symlink_target": null,
+          "scope_root": "settlement-service"
+        },
+        {
+          "path": "settlement-service/CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "346ed57bf91e393869c61efb2a213c7308a85376",
+          "content_sha256": "9df30ead1a988094be0df985559ec1396b60d9301662f40853ffffdd06492599",
+          "content_bytes": 2103,
+          "symlink_target": null,
+          "scope_root": "settlement-service"
+        }
+      ],
+      "inactive_instruction_paths": [
+        "apigateway/CLAUDE.md",
+        "config/CLAUDE.md",
+        "discovery/CLAUDE.md",
+        "order-service/AGENTS.md",
+        "payment-service/.claude/rules/api-error-handling.md",
+        "payment-service/.claude/rules/architecture.md",
+        "payment-service/.claude/rules/git-conventions.md",
+        "payment-service/.claude/rules/plan-doc-format.md",
+        "payment-service/.claude/rules/superpowers-workflow.md",
+        "payment-service/CLAUDE.md",
+        "product-service/.claude/rules/architecture.md",
+        "product-service/.claude/rules/git-workflow.md",
+        "product-service/.claude/rules/kafka-event.md",
+        "product-service/.claude/rules/product-api.md",
+        "product-service/.claude/rules/testing.md",
+        "product-service/CLAUDE.md",
+        "user-service/.claude/rules/clean-architecture.md",
+        "user-service/.claude/rules/code-style.md",
+        "user-service/.claude/rules/controller-exception.md",
+        "user-service/.claude/rules/domain-model.md",
+        "user-service/.claude/rules/git-convention.md",
+        "user-service/.claude/rules/security.md",
+        "user-service/.claude/rules/swagger.md",
+        "user-service/CLAUDE.md"
+      ],
+      "effective_claude_chain": [
+        "settlement-service/CLAUDE.md -> seven imported .claude/rules files"
+      ],
+      "effective_codex_chain": [
+        "settlement-service/AGENTS.md -> CLAUDE.md and rules",
+        "additional AGENTS.md requirements"
+      ],
+      "project_instruction_profile": "Both chains reach settlement-service/CLAUDE.md and its seven imported rules, but settlement-service/AGENTS.md adds Codex-only scope, communication, skill-routing, and security-rule requirements for this authorization change.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "The exact task changes authorization code, so the additional Codex-only scope and security instructions are material.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "pinned-semantic-instruction-review",
+        "claude-behavioral-CLAUDE.md-import",
+        "codex-official-root-to-task-chain"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghko-happyduck-git--RetroNote-issue-81",
+      "ledger_index": 574,
+      "repository_id": "happyduck-git--RetroNote",
+      "base_revision": "333f59f83372c5fc022fa9b6c43797edfc0ce6ab",
+      "base_tree_hash": "a1a8989f7b4622f0b3c7b4665232846f6233eba4",
+      "tree_entry_count": 177,
+      "changed_path_count": 19,
+      "full_tree_instruction_entry_count": 4,
+      "task_active_instruction_entries": [
+        {
+          "path": "CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "1eaa6d5bb15a26c739b075c06bf0fc412263ffb5",
+          "content_sha256": "e9103067d776e5d673500bbb3ddb90036596a71a5e0ec7f072daa4f9adc6d0a1",
+          "content_bytes": 3450,
+          "symlink_target": null,
+          "scope_root": ""
+        },
+        {
+          "path": "src-tauri/CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "936bb4d2229cb1019339649f52119a433b66cce7",
+          "content_sha256": "81d80d23319b5b20bdecd1845e1a140b5ef17e26d80527109a9fb9512f1b5d02",
+          "content_bytes": 1773,
+          "symlink_target": null,
+          "scope_root": "src-tauri"
+        },
+        {
+          "path": "src/CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "ba70e17a1ec84532e8cbe19f2bd6933e328eb2bf",
+          "content_sha256": "4a536c25da85a65b2e63a4ca022c012185f68a4514d241d7e8b39f3e9439fe7c",
+          "content_bytes": 3291,
+          "symlink_target": null,
+          "scope_root": "src"
+        }
+      ],
+      "inactive_instruction_paths": [
+        "db/CLAUDE.md"
+      ],
+      "effective_claude_chain": [
+        "CLAUDE.md",
+        "src-tauri/CLAUDE.md",
+        "src/CLAUDE.md"
+      ],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "The task-active exact-tree instruction chain contains CLAUDE.md guidance with no applicable AGENTS.md adapter or configured Codex fallback.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Claude receives material project, architecture, command, security, or testing constraints for the changed paths.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "pinned-semantic-instruction-review",
+        "claude-behavioral-CLAUDE.md",
+        "codex-official-document",
+        "local-empty-fallback-config"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghko-nodease--mbased-issue-528",
+      "ledger_index": 645,
+      "repository_id": "nodease--mbased",
+      "base_revision": "1fa35e851485497352dfb70f381fc07975fc8a26",
+      "base_tree_hash": "0099b665923c95a3cf9365aba9bb11b83bf17c23",
+      "tree_entry_count": 2062,
+      "changed_path_count": 42,
+      "full_tree_instruction_entry_count": 4,
+      "task_active_instruction_entries": [
+        {
+          "path": "AGENTS.md",
+          "mode": "100644",
+          "object_sha": "5fa25cb01915f00b7ff93034606dcf36780626f9",
+          "content_sha256": "f0d734193fcf553a76f47558e811531a58239d18f97a08a927c8c9deac8def26",
+          "content_bytes": 13020,
+          "symlink_target": null,
+          "scope_root": ""
+        },
+        {
+          "path": "CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "b2c8d342d0906a11511cdfc6de6166f4468bfed1",
+          "content_sha256": "63ee46582d9a5f32d5633245b60a08bd8cd5d57e7fb16390b38e833e34d03c4b",
+          "content_bytes": 261,
+          "symlink_target": null,
+          "scope_root": ""
+        },
+        {
+          "path": "apps/AGENTS.md",
+          "mode": "100644",
+          "object_sha": "a466079d443cfd2d0cac57fd48df143d327441af",
+          "content_sha256": "2c8f3a17cfcc72b33fa2043125a23f22d62a3e815fc5d308ba0910ba06abdc24",
+          "content_bytes": 1822,
+          "symlink_target": null,
+          "scope_root": "apps"
+        },
+        {
+          "path": "apps/client/AGENTS.md",
+          "mode": "100644",
+          "object_sha": "bc43e9a7251468ba7706a119454a282e291f6ccc",
+          "content_sha256": "ba73f698866a5a71efa653b3d2df4d37f6b3bab24acd7f667298ab46b7065db9",
+          "content_bytes": 1536,
+          "symlink_target": null,
+          "scope_root": "apps/client"
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [
+        "CLAUDE.md -> root AGENTS.md"
+      ],
+      "effective_codex_chain": [
+        "root AGENTS.md",
+        "apps/AGENTS.md",
+        "apps/client/AGENTS.md where applicable"
+      ],
+      "project_instruction_profile": "Root CLAUDE.md imports root AGENTS.md, but the changed apps/client and other apps paths also activate apps/AGENTS.md and apps/client/AGENTS.md for Codex only.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Codex alone receives material service-boundary, security, state, API-contract, and UI review constraints on changed paths.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "pinned-semantic-instruction-review",
+        "claude-behavioral-import",
+        "codex-official-root-to-task-chain"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-JungHoonGhae--tossinvest-cli-issue-96",
+      "ledger_index": 755,
+      "repository_id": "JungHoonGhae--tossinvest-cli",
+      "base_revision": "3887825634ea0fec9cf1ec51c61b2b0f44e77e26",
+      "base_tree_hash": "3ccfdc3e77f35bde66c1e5b649ddc9bd553bd837",
+      "tree_entry_count": 433,
+      "changed_path_count": 6,
+      "full_tree_instruction_entry_count": 1,
+      "task_active_instruction_entries": [
+        {
+          "path": "AGENTS.md",
+          "mode": "100644",
+          "object_sha": "e8eae448f398c6a4e3b189d7ef1dbdd8b7899b2b",
+          "content_sha256": "0436f74e136ca3f65eafa29a4023688632cbb84d3827254fd0a8231713a6238b",
+          "content_bytes": 4003,
+          "symlink_target": null,
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [],
+      "effective_codex_chain": [
+        "AGENTS.md"
+      ],
+      "project_instruction_profile": "The task-active exact-tree instruction chain contains AGENTS.md guidance with no CLAUDE.md adapter or equivalent Claude-discovered path.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Codex receives material project, safety, architecture, command, or testing constraints for the changed paths.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "pinned-semantic-instruction-review",
+        "claude-behavioral-discovery",
+        "codex-behavioral-root-AGENTS.md"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-jeongsk--daily_stock_analysis-issue-3",
+      "ledger_index": 760,
+      "repository_id": "jeongsk--daily_stock_analysis",
+      "base_revision": "990df4eb09556efad4e7f2de6c149498b764c6ee",
+      "base_tree_hash": "ec5f3c79a31e3a044961cb2b632cc0e7b9571c0c",
+      "tree_entry_count": 1072,
+      "changed_path_count": 6,
+      "full_tree_instruction_entry_count": 2,
+      "task_active_instruction_entries": [
+        {
+          "path": "AGENTS.md",
+          "mode": "100644",
+          "object_sha": "48bede26de3cc58007dc1f41040242fc2aa70b31",
+          "content_sha256": "66ead517519df53cabbee3f6ead9da2147771b23acc7aa739892739650457429",
+          "content_bytes": 18287,
+          "symlink_target": null,
+          "scope_root": ""
+        },
+        {
+          "path": "CLAUDE.md",
+          "mode": "120000",
+          "object_sha": "47dc3e3d863cfb5727b87d785d09abf9743c0a72",
+          "content_sha256": "a54ff182c7e8acf56acfd6e4b9c3ff41e2c41a31c9b211b2deb9df75d9a478f9",
+          "content_bytes": 9,
+          "symlink_target": "AGENTS.md",
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [
+        "CLAUDE.md -> AGENTS.md"
+      ],
+      "effective_codex_chain": [
+        "AGENTS.md"
+      ],
+      "project_instruction_profile": "Root CLAUDE.md is a symlink to root AGENTS.md, with no task-active override that changes either chain.",
+      "result": "pass",
+      "terminal_evidence": true,
+      "reason": "Both agents receive the byte-identical root AGENTS.md content.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "claude-behavioral-CLAUDE.md-symlink",
+        "codex-behavioral-root-AGENTS.md"
+      ],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-JeremyDev87--kratos-issue-64",
+      "ledger_index": 833,
+      "repository_id": "JeremyDev87--kratos",
+      "base_revision": "6a5c57f40c54d93ec911131090e997052e922f0c",
+      "base_tree_hash": "dc7cb699a9b407e251e358f2141d468ffa149300",
+      "tree_entry_count": 103,
+      "changed_path_count": 6,
+      "full_tree_instruction_entry_count": 0,
+      "task_active_instruction_entries": [],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "The complete exact tree contains no project-instruction path discovered by either CLI.",
+      "result": "pass",
+      "terminal_evidence": true,
+      "reason": "Neither agent receives project guidance from the exact candidate tree.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "claude-behavioral-discovery",
+        "codex-official-document",
+        "local-empty-fallback-config"
+      ],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-pillip--realtime-en2ko-captions-issue-52",
+      "ledger_index": 835,
+      "repository_id": "pillip--realtime-en2ko-captions",
+      "base_revision": "95e4e6ff86083276beaf93afbe1af2b595acc6e2",
+      "base_tree_hash": "2fc37ce743e62ba96f0af9ca5b4c8f245ac2df7d",
+      "tree_entry_count": 65,
+      "changed_path_count": 3,
+      "full_tree_instruction_entry_count": 1,
+      "task_active_instruction_entries": [
+        {
+          "path": "CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "1f8e94a7e0e08bfd00fa93267ea898a87d310b89",
+          "content_sha256": "5b7c6b2583a529b265eb349cd4d9c4d93e68ac3f593334151fd189ea4e1d5130",
+          "content_bytes": 3978,
+          "symlink_target": null,
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [
+        "CLAUDE.md"
+      ],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "The task-active exact-tree instruction chain contains CLAUDE.md guidance with no applicable AGENTS.md adapter or configured Codex fallback.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Claude receives material project, architecture, command, security, or testing constraints for the changed paths.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "pinned-semantic-instruction-review",
+        "claude-behavioral-CLAUDE.md",
+        "codex-official-document",
+        "local-empty-fallback-config"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-pillip--realtime-en2ko-captions-issue-16",
+      "ledger_index": 839,
+      "repository_id": "pillip--realtime-en2ko-captions",
+      "base_revision": "3166092a82febc7300b633c0d5076036100097b1",
+      "base_tree_hash": "a38c164424d1af484d0756b85213c55bd585b3a3",
+      "tree_entry_count": 63,
+      "changed_path_count": 4,
+      "full_tree_instruction_entry_count": 1,
+      "task_active_instruction_entries": [
+        {
+          "path": "CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "1f8e94a7e0e08bfd00fa93267ea898a87d310b89",
+          "content_sha256": "5b7c6b2583a529b265eb349cd4d9c4d93e68ac3f593334151fd189ea4e1d5130",
+          "content_bytes": 3978,
+          "symlink_target": null,
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [
+        "CLAUDE.md"
+      ],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "The task-active exact-tree instruction chain contains CLAUDE.md guidance with no applicable AGENTS.md adapter or configured Codex fallback.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Claude receives material project, architecture, command, security, or testing constraints for the changed paths.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "pinned-semantic-instruction-review",
+        "claude-behavioral-CLAUDE.md",
+        "codex-official-document",
+        "local-empty-fallback-config"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-raymond1203--LangAlpha-KR-issue-22",
+      "ledger_index": 845,
+      "repository_id": "raymond1203--LangAlpha-KR",
+      "base_revision": "813313dc13e2a0e6eef80fdfab9bb0d32b4565e8",
+      "base_tree_hash": "201c7fb9022993088abb0fa1a7002beaaa655d0b",
+      "tree_entry_count": 1429,
+      "changed_path_count": 6,
+      "full_tree_instruction_entry_count": 2,
+      "task_active_instruction_entries": [
+        {
+          "path": "CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "2b9eeb2d5cb3a88b38681782f7c0d4bf27284aa3",
+          "content_sha256": "3e82336889ca0f2ba1c6bcb4405b8b249b53490579c27b4a7cfad9a836d8df92",
+          "content_bytes": 7234,
+          "symlink_target": null,
+          "scope_root": ""
+        },
+        {
+          "path": "web/CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "3f2fa5ed5b07d36f8e002a76f3cab71e0acc35d9",
+          "content_sha256": "b33b5bd686dafcde4c3af44e01779a6196560a4a51c28403cbe9a49e2f5d92ab",
+          "content_bytes": 5357,
+          "symlink_target": null,
+          "scope_root": "web"
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [
+        "CLAUDE.md",
+        "web/CLAUDE.md"
+      ],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "The task-active exact-tree instruction chain contains CLAUDE.md guidance with no applicable AGENTS.md adapter or configured Codex fallback.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Claude receives material project, architecture, command, security, or testing constraints for the changed paths.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "pinned-semantic-instruction-review",
+        "claude-behavioral-CLAUDE.md",
+        "codex-official-document",
+        "local-empty-fallback-config"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-Sungho-pk42ac--agentguard-issue-687",
+      "ledger_index": 945,
+      "repository_id": "Sungho-pk42ac--agentguard",
+      "base_revision": "23af7a7717bbe5cfbfb60bee2dc463a215a3d9ed",
+      "base_tree_hash": "0d007a20321c03ae028869ba394bec82e0523df2",
+      "tree_entry_count": 547,
+      "changed_path_count": 4,
+      "full_tree_instruction_entry_count": 0,
+      "task_active_instruction_entries": [],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "The complete exact tree contains no project-instruction path discovered by either CLI.",
+      "result": "pass",
+      "terminal_evidence": true,
+      "reason": "Neither agent receives project guidance from the exact candidate tree.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "claude-behavioral-discovery",
+        "codex-official-document",
+        "local-empty-fallback-config"
+      ],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-Sungho-pk42ac--agentguard-issue-591",
+      "ledger_index": 951,
+      "repository_id": "Sungho-pk42ac--agentguard",
+      "base_revision": "d6877ffc1e60015ba1eda87151a1e88c2352503d",
+      "base_tree_hash": "b3dd1006b5362625d0d74e29d883e7e2681bf5ae",
+      "tree_entry_count": 534,
+      "changed_path_count": 3,
+      "full_tree_instruction_entry_count": 0,
+      "task_active_instruction_entries": [],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "The complete exact tree contains no project-instruction path discovered by either CLI.",
+      "result": "pass",
+      "terminal_evidence": true,
+      "reason": "Neither agent receives project guidance from the exact candidate tree.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "claude-behavioral-discovery",
+        "codex-official-document",
+        "local-empty-fallback-config"
+      ],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-ginishuh--contextforge-issue-167",
+      "ledger_index": 963,
+      "repository_id": "ginishuh--contextforge",
+      "base_revision": "f88e1418d66c3ba6b45388e68143ce11a77bc89f",
+      "base_tree_hash": "a823c4985e3338162435c1a03b3ded9cdd966c3d",
+      "tree_entry_count": 62,
+      "changed_path_count": 5,
+      "full_tree_instruction_entry_count": 1,
+      "task_active_instruction_entries": [
+        {
+          "path": "AGENTS.md",
+          "mode": "100644",
+          "object_sha": "2110905015a603190607141ab536eec66ea053c6",
+          "content_sha256": "697a3d8104bdc27e9def89bc6118861648162e0d85aa9e40704f14c69722487c",
+          "content_bytes": 5861,
+          "symlink_target": null,
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [],
+      "effective_codex_chain": [
+        "AGENTS.md"
+      ],
+      "project_instruction_profile": "The task-active exact-tree instruction chain contains AGENTS.md guidance with no CLAUDE.md adapter or equivalent Claude-discovered path.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Codex receives material project, safety, architecture, command, or testing constraints for the changed paths.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "pinned-semantic-instruction-review",
+        "claude-behavioral-discovery",
+        "codex-behavioral-root-AGENTS.md"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-Aiddoo--Aido-platform-issue-592",
+      "ledger_index": 970,
+      "repository_id": "Aiddoo--Aido-platform",
+      "base_revision": "87491eee303a99be0851469c392452a44b7407a6",
+      "base_tree_hash": "f886aec8e5281016faa6291f053de90622c1d22f",
+      "tree_entry_count": 1826,
+      "changed_path_count": 402,
+      "full_tree_instruction_entry_count": 4,
+      "task_active_instruction_entries": [
+        {
+          "path": "CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "144421a0864006f0b64154bb0bc5bc3613c6ac57",
+          "content_sha256": "3b119c21a1bd8420d688016d85264c9f7037810a0498091d979e9d678e890892",
+          "content_bytes": 3688,
+          "symlink_target": null,
+          "scope_root": ""
+        },
+        {
+          "path": "apps/api/CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "fed7b7c796ae96724be6738012c3568f19a0d2fe",
+          "content_sha256": "7961fc3517e24705b4423d868dace721a338564546142a24e1c05418d459803e",
+          "content_bytes": 5563,
+          "symlink_target": null,
+          "scope_root": "apps/api"
+        },
+        {
+          "path": "apps/mobile/.claude/CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "afe455af376493d29066803d3b558d5fa7d07ac4",
+          "content_sha256": "6af168ca962cbe66863e0c501e3bb4cc77c7f9a08f89416c1b10c97f5530fb4e",
+          "content_bytes": 2818,
+          "symlink_target": null,
+          "scope_root": "apps/mobile"
+        },
+        {
+          "path": "apps/mobile/CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "a82923186b0919d7b155d2bf6a3952eab721f92d",
+          "content_sha256": "9a37d79ddd3292cbc10288b8d169239985db3a60d358b2dfda5fb61450379861",
+          "content_bytes": 5367,
+          "symlink_target": null,
+          "scope_root": "apps/mobile"
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [
+        "CLAUDE.md",
+        "apps/api/CLAUDE.md",
+        "apps/mobile/.claude/CLAUDE.md",
+        "apps/mobile/CLAUDE.md"
+      ],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "The task-active exact-tree instruction chain contains CLAUDE.md guidance with no applicable AGENTS.md adapter or configured Codex fallback.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Claude receives material project, architecture, command, security, or testing constraints for the changed paths.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "pinned-semantic-instruction-review",
+        "claude-behavioral-CLAUDE.md",
+        "codex-official-document",
+        "local-empty-fallback-config"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-lvis-project--lvis-app-issue-1512",
+      "ledger_index": 975,
+      "repository_id": "lvis-project--lvis-app",
+      "base_revision": "ff5c06fef0ea31d906c8bb3073e162a61e2e3430",
+      "base_tree_hash": "92b6483dd4381bb7ad909566f698daa95243a306",
+      "tree_entry_count": 2039,
+      "changed_path_count": 17,
+      "full_tree_instruction_entry_count": 2,
+      "task_active_instruction_entries": [
+        {
+          "path": "CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "a7df55860ae51ca83d4489bf7b103d61d037ff34",
+          "content_sha256": "e6a4676963bad73e4eaeb860042a2166418df3125e4f7864d3bc381dc79b2b56",
+          "content_bytes": 47483,
+          "symlink_target": null,
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [
+        "resources/AGENTS.md"
+      ],
+      "effective_claude_chain": [
+        "CLAUDE.md"
+      ],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "The task-active exact-tree instruction chain contains CLAUDE.md guidance with no applicable AGENTS.md adapter or configured Codex fallback.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Claude receives material project, architecture, command, security, or testing constraints for the changed paths.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "pinned-semantic-instruction-review",
+        "claude-behavioral-CLAUDE.md",
+        "codex-official-document",
+        "local-empty-fallback-config"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-lvis-project--lvis-app-issue-1412",
+      "ledger_index": 989,
+      "repository_id": "lvis-project--lvis-app",
+      "base_revision": "007f2f961150330f0a8aa3760f1c5c35118499f4",
+      "base_tree_hash": "a7a7c3edb76db38edd768d5ec28cfcf76b41192c",
+      "tree_entry_count": 1656,
+      "changed_path_count": 13,
+      "full_tree_instruction_entry_count": 2,
+      "task_active_instruction_entries": [
+        {
+          "path": "CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "006324549078a44c4feaec3622a3e84d3a9ae38b",
+          "content_sha256": "16941055452ae5e5d2a7208feecb5b253fd16244dd4b729e7ecac9416ed7b9df",
+          "content_bytes": 42133,
+          "symlink_target": null,
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [
+        "resources/AGENTS.md"
+      ],
+      "effective_claude_chain": [
+        "CLAUDE.md"
+      ],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "The task-active exact-tree instruction chain contains CLAUDE.md guidance with no applicable AGENTS.md adapter or configured Codex fallback.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Claude receives material project, architecture, command, security, or testing constraints for the changed paths.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "pinned-semantic-instruction-review",
+        "claude-behavioral-CLAUDE.md",
+        "codex-official-document",
+        "local-empty-fallback-config"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-KoreaNirsa--prompt-booster-issue-3",
+      "ledger_index": 1002,
+      "repository_id": "KoreaNirsa--prompt-booster",
+      "base_revision": "83150870002d46ff26e80a756bc11d506bad0969",
+      "base_tree_hash": "946e17af634cdce1f373ccf750bf3f1d5fb2b723",
+      "tree_entry_count": 8,
+      "changed_path_count": 3,
+      "full_tree_instruction_entry_count": 0,
+      "task_active_instruction_entries": [],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "The complete exact tree contains no project-instruction path discovered by either CLI.",
+      "result": "pass",
+      "terminal_evidence": true,
+      "reason": "Neither agent receives project guidance from the exact candidate tree.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "claude-behavioral-discovery",
+        "codex-official-document",
+        "local-empty-fallback-config"
+      ],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-MTGVim--telltale-issue-11",
+      "ledger_index": 1003,
+      "repository_id": "MTGVim--telltale",
+      "base_revision": "a9eb28c1222e7aed773d635fe268c97c5329c606",
+      "base_tree_hash": "024135cd1080b8bf86eeda4e42ddc3d36f309e1e",
+      "tree_entry_count": 82,
+      "changed_path_count": 14,
+      "full_tree_instruction_entry_count": 0,
+      "task_active_instruction_entries": [],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "The complete exact tree contains no project-instruction path discovered by either CLI.",
+      "result": "pass",
+      "terminal_evidence": true,
+      "reason": "Neither agent receives project guidance from the exact candidate tree.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "claude-behavioral-discovery",
+        "codex-official-document",
+        "local-empty-fallback-config"
+      ],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-joshua-jingu-lee--ante-issue-2398",
+      "ledger_index": 1005,
+      "repository_id": "joshua-jingu-lee--ante",
+      "base_revision": "7f38e853696c9ba77f555c329b0c3da6e55301a0",
+      "base_tree_hash": "c16206011443c56ce74a2d140b76c864176dcb3a",
+      "tree_entry_count": 970,
+      "changed_path_count": 27,
+      "full_tree_instruction_entry_count": 2,
+      "task_active_instruction_entries": [
+        {
+          "path": "AGENTS.md",
+          "mode": "100644",
+          "object_sha": "a6a8185ed4b46f13cd678e360764759fcfaf4602",
+          "content_sha256": "97ad1533fcc22f5225eae40dfea6b345c6edfa689bc0cd9668072a2dc722bb9a",
+          "content_bytes": 4764,
+          "symlink_target": null,
+          "scope_root": ""
+        },
+        {
+          "path": "CLAUDE.md",
+          "mode": "120000",
+          "object_sha": "47dc3e3d863cfb5727b87d785d09abf9743c0a72",
+          "content_sha256": "a54ff182c7e8acf56acfd6e4b9c3ff41e2c41a31c9b211b2deb9df75d9a478f9",
+          "content_bytes": 9,
+          "symlink_target": "AGENTS.md",
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [
+        "CLAUDE.md -> AGENTS.md"
+      ],
+      "effective_codex_chain": [
+        "AGENTS.md"
+      ],
+      "project_instruction_profile": "Root CLAUDE.md is a symlink to root AGENTS.md, with no task-active override that changes either chain.",
+      "result": "pass",
+      "terminal_evidence": true,
+      "reason": "Both agents receive the byte-identical root AGENTS.md content.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "claude-behavioral-CLAUDE.md-symlink",
+        "codex-behavioral-root-AGENTS.md"
+      ],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-yumyum-corp--yumyum-issue-22",
+      "ledger_index": 1126,
+      "repository_id": "yumyum-corp--yumyum",
+      "base_revision": "40c634cc96ff345d5ea12a2fe1b31decafe0dde5",
+      "base_tree_hash": "d2062e246adf97a3c82d5ca8174fb99270c114a3",
+      "tree_entry_count": 131,
+      "changed_path_count": 12,
+      "full_tree_instruction_entry_count": 1,
+      "task_active_instruction_entries": [
+        {
+          "path": "backend/CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "152f5fa7c748f99a8738c22a20c55601221c0761",
+          "content_sha256": "697300e28762697c27f275844a3c6d950d68b151b8b0d0d1d26b455cb7eb0f37",
+          "content_bytes": 2393,
+          "symlink_target": null,
+          "scope_root": "backend"
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [
+        "backend/CLAUDE.md"
+      ],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "The task-active exact-tree instruction chain contains CLAUDE.md guidance with no applicable AGENTS.md adapter or configured Codex fallback.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Claude receives material project, architecture, command, security, or testing constraints for the changed paths.",
+      "evidence_basis": [
+        "materialized-pinned-full-tree-inventory",
+        "pinned-semantic-instruction-review",
+        "claude-behavioral-CLAUDE.md",
+        "codex-official-document",
+        "local-empty-fallback-config"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    }
+  ],
+  "next_boundary": "Apply these exact-tree parity decisions to the ledger, then advance only the nine pass rows plus previously-passed doc_parser #288 to rank-7 boundedness/evaluator/reproduction review."
+}

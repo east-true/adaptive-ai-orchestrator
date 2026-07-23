@@ -1,0 +1,333 @@
+{
+  "artifact_id": "phase2b-rank6-ledger-application-2026-07-24",
+  "created_at": "2026-07-24",
+  "protocol_version": "phase2b-pilot-prereg-v1.1",
+  "purpose": "Bind the pre-rank-6 ledger, exact-tree instruction-parity evidence, and resulting ledger mutations without observing agent results.",
+  "agent_results_observed": false,
+  "input_artifacts": [
+    {
+      "path": "experiments/phase2b-candidate-ledger-v1.json",
+      "sha256": "faf4ee88177adc32e97cd331a6700ce55624f56eb0ec2db886126e086639ce2c",
+      "state": "pre-rank6 Git-tracked working snapshot"
+    },
+    {
+      "path": "experiments/phase2b-rank6-instruction-parity-2026-07-24.json",
+      "sha256": "c73e3a9d7886f5686f7446f6bc1c08b6111e182fb4b1e62d1b66c78b28c58279"
+    }
+  ],
+  "output_artifact": {
+    "path": "experiments/phase2b-candidate-ledger-v1.json",
+    "sha256": "228dbbf05ec46a7f94dde40e780bad9b6d64a32944ace5bddb49839f15a1a0f1",
+    "summary": {
+      "candidate_count": 1130,
+      "screening_count": 1005,
+      "excluded_count": 118,
+      "selected_for_task_authoring_count": 7,
+      "language_assignment_counts": {
+        "ko": 61,
+        "en": 301,
+        "mixed": 22,
+        "unassigned": 746
+      },
+      "category_assignment_counts": {
+        "implementation": 38,
+        "debugging": 16,
+        "testing": 7,
+        "refactoring": 15,
+        "repository-analysis-planning": 8,
+        "unassigned": 1046
+      },
+      "known_gaps": [
+        "selected-for-task-authoring is a construction queue state only: seven rows satisfy candidate eligibility, but no pilot task, final evaluator, validity review, manifest instance, or agent execution has been authored or run.",
+        "Project-level instruction parity is an explicit rule. It is now settled for 52 exact pinned bases across phase2b-agent-instruction-parity-2026-07-20.json and phase2b-rank6-instruction-parity-2026-07-24.json: 22 pass and 30 fail. All other rows remain unknown unless independently excluded.",
+        "The active Claude and Codex global instruction inventories are not semantically equivalent. Before execution, Phase 2b must make them semantically equivalent or use isolated empty agent homes, then pin the resulting effective instruction state; pinning a known asymmetric state does not resolve the confounder.",
+        "Only 31 of 411 Korean-bearing GitHub rows have manual language/category review; 28 are excluded, factlog-academic #314/#342 and ChunChuGwan #406 are selected-for-task-authoring, and 380 rows remain unprobed.",
+        "A second explicit-language pool added 383 nonduplicate rows; a deterministic 50-row review found 21 provisional mixed requirements, but 22 rows failed translation-only, subjectivity, coupling, or external-side-effect rules.",
+        "The reviewed rows now provide 61 provisional Korean, 301 English, and 22 mixed assignments. Seven Korean rows are selected-for-task-authoring, but this construction state does not fill the 20/20/20 quota or create a pilot task.",
+        "The 300 externally inventoried statements are provisionally English, but native-source fidelity has not been verified instance by instance.",
+        "GitHub linked solution PR, exact base, patch scope, and upstream license remain unresolved for most of the Korean-bearing discovery pool.",
+        "Task category remains unassigned for 1046 of 1130 rows.",
+        "Upstream license, exact base/tree, project instruction parity, objective evaluator coverage, protected-fixture leakage, isolation, flakiness, and resource reproducibility remain unscreened for most rows.",
+        "Public benchmark exposure may contaminate agent behavior; this pilot cannot turn those instances into confirmatory capability evidence.",
+        "Eligibility does not depend on runtimes that happen to be installed on the screening host. A Linux-reproducible runtime or toolchain may be provisioned into an isolated immutable environment before manifest freeze, subject to exact version and artifact-hash pins, byte-equivalent environments for both agents, no network during agent or evaluator execution, agent-free base and control reproduction, the preregistered resource bucket, and a recorded environment epoch and fixture provenance.",
+        "Twelve reviewed Korean-bearing rows were excluded as license-or-use-basis-unavailable: their pinned base revisions carry no license artifact and no manifest license declaration. The reviewed Korean pool that remains in screening is therefore small, and the language and category quotas are marginal targets that this pool alone is not required to satisfy.",
+        "The 2026-07-24 cost cascade resolved exact source lineage and pinned licenses for 31 rows: 27 license passes, three copyleft failures, and one exact-base license absence. Twenty-six pass rows advance to exact-tree instruction or remaining-rule review; one MIT-at-base row returns to solution-scope review.",
+        "The 2026-07-24 rank-6 exact-tree inventory settled 25 newly advanced rows without agent execution: nine parity passes and sixteen terminal instruction-parity mismatches. Together with the previously-passed doc_parser #288 row, ten candidates advance to boundedness, evaluator, isolation, and reproduction review."
+      ]
+    }
+  },
+  "summary": {
+    "candidate_rows_updated": 25,
+    "instruction_parity_pass_rows": 9,
+    "instruction_parity_fail_rows": 16,
+    "new_terminal_instruction_parity_exclusions": 16,
+    "screening_after": 1005,
+    "excluded_after": 118,
+    "selected_after": 7
+  },
+  "mutations": [
+    {
+      "candidate_id": "ghko-kangkyunghyun--LinKHU-issue-67",
+      "base_revision": "0c0def66adb0f6191d0ce5e8cb8de35165287d31",
+      "base_tree_hash": "c72fb43a853b81b07b9c2687dc39639b066c604a",
+      "instruction_parity": "fail",
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "instruction-parity-mismatch"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghko-dungsil-ai--intellij-plugin-egovframe-issue-4",
+      "base_revision": "83d3064d198f8fdcf8ee093d9eb50716abe55525",
+      "base_tree_hash": "5e7b731c020d8a1618acaa26ce84698f45d0e591",
+      "instruction_parity": "fail",
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "instruction-parity-mismatch"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghko-hissinger--small-village-issue-54",
+      "base_revision": "081af5d9649f64c9391b422df6891be850bd6044",
+      "base_tree_hash": "51ab035e2a048e35e50ff2a883182b10ff46a5df",
+      "instruction_parity": "pass",
+      "decision": "screening",
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghko-yvshdjcsldhdjt--ChunChuGwan-issue-403",
+      "base_revision": "d45ebe324674212847a04e4412efa6e1b135fe2f",
+      "base_tree_hash": "5d4d03a72cbefe56680cebab8c0667702e98cce6",
+      "instruction_parity": "pass",
+      "decision": "screening",
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghko-kangkyunghyun--LinKHU-issue-89",
+      "base_revision": "01fcb333bfc5ec0cf486bf3e790bc9ca73d9b9d4",
+      "base_tree_hash": "9d7a6277352acb3a2463e131b6a787adc53bc49e",
+      "instruction_parity": "fail",
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "instruction-parity-mismatch"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghko-kangkyunghyun--LinKHU-issue-81",
+      "base_revision": "14d40730bce85c07d31c208eb574dd6f6fe709f6",
+      "base_tree_hash": "8faefdc8c1d7808059eaa3162c3755ba14396942",
+      "instruction_parity": "fail",
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "instruction-parity-mismatch"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghko-prgrms-be-adv-devcourse--beadv6_6_3JMT_BE-issue-394",
+      "base_revision": "780e61dc00582c0f8673972955c7244b72842f73",
+      "base_tree_hash": "3df3a9cf55e957b36d8e31273d465343654a9b1e",
+      "instruction_parity": "fail",
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "instruction-parity-mismatch"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghko-happyduck-git--RetroNote-issue-81",
+      "base_revision": "333f59f83372c5fc022fa9b6c43797edfc0ce6ab",
+      "base_tree_hash": "a1a8989f7b4622f0b3c7b4665232846f6233eba4",
+      "instruction_parity": "fail",
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "instruction-parity-mismatch"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghko-nodease--mbased-issue-528",
+      "base_revision": "1fa35e851485497352dfb70f381fc07975fc8a26",
+      "base_tree_hash": "0099b665923c95a3cf9365aba9bb11b83bf17c23",
+      "instruction_parity": "fail",
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "instruction-parity-mismatch"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-JungHoonGhae--tossinvest-cli-issue-96",
+      "base_revision": "3887825634ea0fec9cf1ec51c61b2b0f44e77e26",
+      "base_tree_hash": "3ccfdc3e77f35bde66c1e5b649ddc9bd553bd837",
+      "instruction_parity": "fail",
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "instruction-parity-mismatch"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-jeongsk--daily_stock_analysis-issue-3",
+      "base_revision": "990df4eb09556efad4e7f2de6c149498b764c6ee",
+      "base_tree_hash": "ec5f3c79a31e3a044961cb2b632cc0e7b9571c0c",
+      "instruction_parity": "pass",
+      "decision": "screening",
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-JeremyDev87--kratos-issue-64",
+      "base_revision": "6a5c57f40c54d93ec911131090e997052e922f0c",
+      "base_tree_hash": "dc7cb699a9b407e251e358f2141d468ffa149300",
+      "instruction_parity": "pass",
+      "decision": "screening",
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-pillip--realtime-en2ko-captions-issue-52",
+      "base_revision": "95e4e6ff86083276beaf93afbe1af2b595acc6e2",
+      "base_tree_hash": "2fc37ce743e62ba96f0af9ca5b4c8f245ac2df7d",
+      "instruction_parity": "fail",
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "instruction-parity-mismatch"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-pillip--realtime-en2ko-captions-issue-16",
+      "base_revision": "3166092a82febc7300b633c0d5076036100097b1",
+      "base_tree_hash": "a38c164424d1af484d0756b85213c55bd585b3a3",
+      "instruction_parity": "fail",
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "instruction-parity-mismatch"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-raymond1203--LangAlpha-KR-issue-22",
+      "base_revision": "813313dc13e2a0e6eef80fdfab9bb0d32b4565e8",
+      "base_tree_hash": "201c7fb9022993088abb0fa1a7002beaaa655d0b",
+      "instruction_parity": "fail",
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "instruction-parity-mismatch"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-Sungho-pk42ac--agentguard-issue-687",
+      "base_revision": "23af7a7717bbe5cfbfb60bee2dc463a215a3d9ed",
+      "base_tree_hash": "0d007a20321c03ae028869ba394bec82e0523df2",
+      "instruction_parity": "pass",
+      "decision": "screening",
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-Sungho-pk42ac--agentguard-issue-591",
+      "base_revision": "d6877ffc1e60015ba1eda87151a1e88c2352503d",
+      "base_tree_hash": "b3dd1006b5362625d0d74e29d883e7e2681bf5ae",
+      "instruction_parity": "pass",
+      "decision": "screening",
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-ginishuh--contextforge-issue-167",
+      "base_revision": "f88e1418d66c3ba6b45388e68143ce11a77bc89f",
+      "base_tree_hash": "a823c4985e3338162435c1a03b3ded9cdd966c3d",
+      "instruction_parity": "fail",
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "instruction-parity-mismatch"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-Aiddoo--Aido-platform-issue-592",
+      "base_revision": "87491eee303a99be0851469c392452a44b7407a6",
+      "base_tree_hash": "f886aec8e5281016faa6291f053de90622c1d22f",
+      "instruction_parity": "fail",
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "instruction-parity-mismatch"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-lvis-project--lvis-app-issue-1512",
+      "base_revision": "ff5c06fef0ea31d906c8bb3073e162a61e2e3430",
+      "base_tree_hash": "92b6483dd4381bb7ad909566f698daa95243a306",
+      "instruction_parity": "fail",
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "instruction-parity-mismatch"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-lvis-project--lvis-app-issue-1412",
+      "base_revision": "007f2f961150330f0a8aa3760f1c5c35118499f4",
+      "base_tree_hash": "a7a7c3edb76db38edd768d5ec28cfcf76b41192c",
+      "instruction_parity": "fail",
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "instruction-parity-mismatch"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-KoreaNirsa--prompt-booster-issue-3",
+      "base_revision": "83150870002d46ff26e80a756bc11d506bad0969",
+      "base_tree_hash": "946e17af634cdce1f373ccf750bf3f1d5fb2b723",
+      "instruction_parity": "pass",
+      "decision": "screening",
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-MTGVim--telltale-issue-11",
+      "base_revision": "a9eb28c1222e7aed773d635fe268c97c5329c606",
+      "base_tree_hash": "024135cd1080b8bf86eeda4e42ddc3d36f309e1e",
+      "instruction_parity": "pass",
+      "decision": "screening",
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-joshua-jingu-lee--ante-issue-2398",
+      "base_revision": "7f38e853696c9ba77f555c329b0c3da6e55301a0",
+      "base_tree_hash": "c16206011443c56ce74a2d140b76c864176dcb3a",
+      "instruction_parity": "pass",
+      "decision": "screening",
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-yumyum-corp--yumyum-issue-22",
+      "base_revision": "40c634cc96ff345d5ea12a2fe1b31decafe0dde5",
+      "base_tree_hash": "d2062e246adf97a3c82d5ca8174fb99270c114a3",
+      "instruction_parity": "fail",
+      "decision": "excluded",
+      "exclusion_rule_ids_triggered": [
+        "instruction-parity-mismatch"
+      ],
+      "next_route": "terminal_instruction_parity_exclusion"
+    }
+  ],
+  "invariants": [
+    "No selected-for-task-authoring row was created.",
+    "Only instruction_parity changed from unknown for the 25 processed rows.",
+    "All sixteen exact-tree parity failures use the preregistered instruction-parity-mismatch exclusion path.",
+    "Exact-base and license decisions from rank 5 remain unchanged."
+  ]
+}

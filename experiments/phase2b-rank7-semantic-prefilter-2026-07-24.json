@@ -1,0 +1,349 @@
+{
+  "artifact_id": "phase2b-rank7-semantic-prefilter-2026-07-24",
+  "protocol_version": "phase2b-pilot-prereg-v1.1",
+  "created_at": "2026-07-24",
+  "purpose": "Apply the cheapest source-semantic Phase 2b gates to the ten rank-7 rows before provisioning runtimes or running agent-free reproduction controls.",
+  "terminal_status": "mixed-terminal-and-routing-evidence",
+  "terminal_status_note": "This artifact is terminal only for directly proven translation-only and multiple-coupled-issues exclusions. Passes advance rows to agent-free reproduction but do not select candidates or settle reproducible-within-budget.",
+  "agent_results_observed": false,
+  "design_change_required": false,
+  "input_artifacts": [
+    {
+      "path": "experiments/phase2b-candidate-ledger-v1.json",
+      "sha256": "228dbbf05ec46a7f94dde40e780bad9b6d64a32944ace5bddb49839f15a1a0f1",
+      "state": "pre-rank7 Git-tracked working snapshot"
+    },
+    {
+      "path": "experiments/phase2b-rank6-instruction-parity-2026-07-24.json",
+      "sha256": "c73e3a9d7886f5686f7446f6bc1c08b6111e182fb4b1e62d1b66c78b28c58279"
+    },
+    {
+      "path": "experiments/phase2b-linked-solution-prefilter-2026-07-24.json",
+      "sha256": "6fdc6e69bbd0e38795c472bfa457ce496715f36e7d2a57274ea29dfe410abcfa"
+    },
+    {
+      "path": "experiments/phase2b-exact-revision-license-2026-07-24.json",
+      "sha256": "fabb62de7b5838450d1f7c3c7529543d3238286fa81747bcddd9b2a073db699e"
+    }
+  ],
+  "local_collection_snapshot": {
+    "path": ".orchestrator/rank7-source-review-2026-07-24.json",
+    "sha256": "b99957a902e41e9dade88912fc4dae29a417a0f19eed0cdb6e63a6cce58fa381",
+    "tracked": false,
+    "candidate_count": 10,
+    "task_statement_hash_matches": 10,
+    "note": "The ignored snapshot retains source text locally; this tracked artifact stores only hashes and concise evidence."
+  },
+  "method": [
+    "Verify each local issue HTML/source snapshot and title-plus-body SHA-256 against the frozen ledger before reading semantics.",
+    "Apply native-source and translation-only first, then single-task coupling; do not provision a repository after a terminal source exclusion.",
+    "For surviving rows, require an issue-derived deterministic test, invariant, or property seam and offline isolated execution; solution tests may demonstrate a seam but do not become the protected evaluator.",
+    "Treat solution breadth as lineage/control evidence, not as additional task requirements. Preserve reproducible-within-budget as unknown until base-negative and solution-positive controls run agent-free."
+  ],
+  "review_provenance": {
+    "primary": "Codex source, exact-base, and solution-test-seam review against the frozen eligibility contract",
+    "claude_cli_cross_review": "A bounded read-only Claude CLI review independently assessed the seven non-obvious rows. It agreed on the terminal ChunChuGwan decision and the clear reproduction advances, and marked small-village, agentguard #591, and ante as disagreement-sensitive unknowns. Codex then resolved ante's prerequisite from the exact base, the AgentGuard docs property seam from the source-derived contract, and small-village's offline reconcile/roster seams from solution tests; no Claude-authored file or agent quality result was used."
+  },
+  "summary": {
+    "candidate_count": 10,
+    "translation_only_terminal_rows": 3,
+    "multiple_coupled_issues_terminal_rows": 1,
+    "terminal_exclusion_rows": 4,
+    "advance_agent_free_reproduction_rows": 6,
+    "selected_rows_created": 0
+  },
+  "assessments": [
+    {
+      "candidate_id": "ghko-hissinger--small-village-issue-54",
+      "ledger_index": 489,
+      "repository_id": "hissinger--small-village",
+      "source_reference": "https://github.com/hissinger/small-village/issues/54",
+      "task_statement_sha256": "9a757d29fb5ba8ba922d3d32ffb3d64994a4e94455bb8cf45badee4e431c352d",
+      "source_snapshot_task_statement_sha256": "9a757d29fb5ba8ba922d3d32ffb3d64994a4e94455bb8cf45badee4e431c352d",
+      "base_revision": "081af5d9649f64c9391b422df6891be850bd6044",
+      "base_tree_hash": "51ab035e2a048e35e50ff2a883182b10ff46a5df",
+      "solution_revision": "d9d263e624ec51ee0abbb8b407261abdbca12758",
+      "changed_path_count": 22,
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "debugging",
+        "repository_code_language": "javascript-typescript",
+        "repository_doc_language": "mixed"
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass",
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass"
+      },
+      "terminal_exclusion_ids": [],
+      "reason": "The Korean source describes one causally unified roster-consistency bug: the two roster computations, destructive cleanup, update-only recovery, and missing reconciliation jointly produce the same missing-user symptom. Exact-solution unit seams deterministically simulate an omitted realtime event, periodic reconciliation, non-destructive stale filtering, and the shared scene roster without contacting Supabase or Cloudflare; the hosted three-client script is corroborating integration evidence rather than the only evaluable seam.",
+      "next_route": "advance_agent_free_reproduction"
+    },
+    {
+      "candidate_id": "ghko-yvshdjcsldhdjt--ChunChuGwan-issue-403",
+      "ledger_index": 515,
+      "repository_id": "yvshdjcsldhdjt--ChunChuGwan",
+      "source_reference": "https://github.com/yvshdjcsldhdjt/ChunChuGwan/issues/403",
+      "task_statement_sha256": "df9df498bcc914a7e69978bd7df9687736e25639a574d0b48813a709f1294b44",
+      "source_snapshot_task_statement_sha256": "df9df498bcc914a7e69978bd7df9687736e25639a574d0b48813a709f1294b44",
+      "base_revision": "d45ebe324674212847a04e4412efa6e1b135fe2f",
+      "base_tree_hash": "5d4d03a72cbefe56680cebab8c0667702e98cce6",
+      "solution_revision": "b7735ce03148d4cbe0c5af8015d002b453fd987a",
+      "changed_path_count": 19,
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "refactoring",
+        "repository_code_language": "python",
+        "repository_doc_language": "mixed"
+      },
+      "screening_updates": {
+        "single_bounded_task": "fail",
+        "native_language_source": "pass"
+      },
+      "terminal_exclusion_ids": [
+        "multiple-coupled-issues"
+      ],
+      "reason": "The source independently requires S3 listing call-count reduction, WebP compaction repair, migration round-trip reduction, batched deletion, cache-budget changes, finalize parallelism, large-document and database streaming, marker re-evaluation, and an operational rollout. These have separable causes and acceptance criteria across P1, P2, and P3, so the original candidate cannot remain one paired evaluation unit.",
+      "next_route": "terminal_multiple_coupled_issues"
+    },
+    {
+      "candidate_id": "ghmix-jeongsk--daily_stock_analysis-issue-3",
+      "ledger_index": 760,
+      "repository_id": "jeongsk--daily_stock_analysis",
+      "source_reference": "https://github.com/jeongsk/daily_stock_analysis/issues/3",
+      "task_statement_sha256": "ff3f4ddb969c579c5eeef94c13e131f46c1f49e04735a9382e788ca3fcfd183b",
+      "source_snapshot_task_statement_sha256": "ff3f4ddb969c579c5eeef94c13e131f46c1f49e04735a9382e788ca3fcfd183b",
+      "base_revision": "990df4eb09556efad4e7f2de6c149498b764c6ee",
+      "base_tree_hash": "ec5f3c79a31e3a044961cb2b632cc0e7b9571c0c",
+      "solution_revision": "5b9b26c0e06423e981d8e3eab30a80b1ec766684",
+      "changed_path_count": 6,
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "refactoring",
+        "repository_code_language": "javascript-typescript",
+        "repository_doc_language": "mixed"
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "fail"
+      },
+      "terminal_exclusion_ids": [
+        "translation-only"
+      ],
+      "reason": "The primary deliverable is replacing existing Chinese client-owned UI copy with Korean copy across established translation dictionaries while preserving Chinese and English behavior. Under the preregistered quota rule, an opposite-language localization sweep cannot fill the Korean native-task quota.",
+      "next_route": "terminal_translation_only"
+    },
+    {
+      "candidate_id": "ghmix-JeremyDev87--kratos-issue-64",
+      "ledger_index": 833,
+      "repository_id": "JeremyDev87--kratos",
+      "source_reference": "https://github.com/JeremyDev87/kratos/issues/64",
+      "task_statement_sha256": "207c6a1ac58f7bbc198f08c0dd7a2d8e30f1e9c28a48dc480fce9fb855f0149f",
+      "source_snapshot_task_statement_sha256": "207c6a1ac58f7bbc198f08c0dd7a2d8e30f1e9c28a48dc480fce9fb855f0149f",
+      "base_revision": "6a5c57f40c54d93ec911131090e997052e922f0c",
+      "base_tree_hash": "dc7cb699a9b407e251e358f2141d468ffa149300",
+      "solution_revision": "3304d905bf91ebd12b564e5fe2d81a9e50c33820",
+      "changed_path_count": 6,
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "refactoring",
+        "repository_code_language": "rust",
+        "repository_doc_language": "mixed"
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "fail"
+      },
+      "terminal_exclusion_ids": [
+        "translation-only"
+      ],
+      "reason": "The source changes existing human-readable report summary and Markdown labels, sentences, known-reason mappings, and text fixtures from English to Korean while explicitly preserving JSON values and behavior. Its core output is therefore translation-only for the language quota.",
+      "next_route": "terminal_translation_only"
+    },
+    {
+      "candidate_id": "ghmix-genonai--doc_parser-issue-288",
+      "ledger_index": 903,
+      "repository_id": "genonai--doc_parser",
+      "source_reference": "https://github.com/genonai/doc_parser/issues/288",
+      "task_statement_sha256": "5658a3d5b4832e2bd4230bd3c34b18bc1fe34167f4b131b9ddfbd01450368d76",
+      "source_snapshot_task_statement_sha256": "5658a3d5b4832e2bd4230bd3c34b18bc1fe34167f4b131b9ddfbd01450368d76",
+      "base_revision": "3107d9663355fc042faa3c19f8e37e357af8a370",
+      "base_tree_hash": "c7dd7005be6099763960903fd116a02dc29bf9fd",
+      "solution_revision": "9bf82283a973b77b7bdc1070cfac96a7f7c4d452",
+      "changed_path_count": 17,
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "implementation",
+        "repository_code_language": "python",
+        "repository_doc_language": "mixed"
+      },
+      "screening_updates": {},
+      "terminal_exclusion_ids": [],
+      "reason": "The previously completed source review remains binding: direct XLSX processing is one Korean implementation task, and a synthetic workbook can objectively test row integrity and bypass of the PDF/LibreOffice route offline. Only agent-free base-negative and solution-positive reproduction remains unknown.",
+      "next_route": "advance_agent_free_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-Sungho-pk42ac--agentguard-issue-687",
+      "ledger_index": 945,
+      "repository_id": "Sungho-pk42ac--agentguard",
+      "source_reference": "https://github.com/Sungho-pk42ac/agentguard/issues/687",
+      "task_statement_sha256": "88db4478f878a759e8008ce58c1ff418c323884542b15b1b6f64d574878c3f43",
+      "source_snapshot_task_statement_sha256": "88db4478f878a759e8008ce58c1ff418c323884542b15b1b6f64d574878c3f43",
+      "base_revision": "23af7a7717bbe5cfbfb60bee2dc463a215a3d9ed",
+      "base_tree_hash": "0d007a20321c03ae028869ba394bec82e0523df2",
+      "solution_revision": "026ee7c8c90b36397f787c68b54df401a159a3cc",
+      "changed_path_count": 4,
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "implementation",
+        "repository_code_language": "javascript-typescript",
+        "repository_doc_language": "mixed"
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass",
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass"
+      },
+      "terminal_exclusion_ids": [],
+      "reason": "The native Korean task adds one local source-of-record check: doctor JSON and Korean/English text must prove that both root action.yml and the repository-local fallback action were inspected while schema and runtime semantics stay unchanged. Local CLI fixtures provide deterministic, offline assertions.",
+      "next_route": "advance_agent_free_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-Sungho-pk42ac--agentguard-issue-591",
+      "ledger_index": 951,
+      "repository_id": "Sungho-pk42ac--agentguard",
+      "source_reference": "https://github.com/Sungho-pk42ac/agentguard/issues/591",
+      "task_statement_sha256": "1e29f7e0248fb1e093c7522694d17dddbf608290761ed46982a0ac2444f581fd",
+      "source_snapshot_task_statement_sha256": "1e29f7e0248fb1e093c7522694d17dddbf608290761ed46982a0ac2444f581fd",
+      "base_revision": "d6877ffc1e60015ba1eda87151a1e88c2352503d",
+      "base_tree_hash": "b3dd1006b5362625d0d74e29d883e7e2681bf5ae",
+      "solution_revision": "f41be1811e7fa903d3cac9935a990702ea0a1d30",
+      "changed_path_count": 3,
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "repository-analysis-planning",
+        "repository_code_language": "javascript-typescript",
+        "repository_doc_language": "mixed"
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass",
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass"
+      },
+      "terminal_exclusion_ids": [],
+      "reason": "Unlike free-form release prose, this Korean-authored task defines a bounded documentation contract: four exact machine output names, their routing semantics, a discoverable documentation path, and explicit no-fake-claim guardrails. A protected Markdown/property check can validate those source-derived invariants without requiring the merged wording as an exact golden.",
+      "next_route": "advance_agent_free_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-KoreaNirsa--prompt-booster-issue-3",
+      "ledger_index": 1002,
+      "repository_id": "KoreaNirsa--prompt-booster",
+      "source_reference": "https://github.com/KoreaNirsa/prompt-booster/issues/3",
+      "task_statement_sha256": "e0cbaa46da97f4895ce25b785339fd093c8eb042a6b101c9d93aa2473f49e62f",
+      "source_snapshot_task_statement_sha256": "e0cbaa46da97f4895ce25b785339fd093c8eb042a6b101c9d93aa2473f49e62f",
+      "base_revision": "83150870002d46ff26e80a756bc11d506bad0969",
+      "base_tree_hash": "946e17af634cdce1f373ccf750bf3f1d5fb2b723",
+      "solution_revision": "153d0be0c3091540b0a9e0ab718450828ef73558",
+      "changed_path_count": 3,
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "implementation",
+        "repository_code_language": "python",
+        "repository_doc_language": "mixed"
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass",
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass"
+      },
+      "terminal_exclusion_ids": [],
+      "reason": "The native Korean source specifies one pure Intent/Category analyzer with exact enum members, Korean trigger mappings, output fields, confidence, safe fallback, and Korean/English unit behavior. These are deterministic and require neither an LLM nor network access.",
+      "next_route": "advance_agent_free_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-MTGVim--telltale-issue-11",
+      "ledger_index": 1003,
+      "repository_id": "MTGVim--telltale",
+      "source_reference": "https://github.com/MTGVim/telltale/issues/11",
+      "task_statement_sha256": "53c112c485cbbf4a47161a710e77ca3126149ba38f3786c3a3b5a5530760a43c",
+      "source_snapshot_task_statement_sha256": "53c112c485cbbf4a47161a710e77ca3126149ba38f3786c3a3b5a5530760a43c",
+      "base_revision": "a9eb28c1222e7aed773d635fe268c97c5329c606",
+      "base_tree_hash": "024135cd1080b8bf86eeda4e42ddc3d36f309e1e",
+      "solution_revision": "b6dc4a10c6531552675b131fa35462578726890c",
+      "changed_path_count": 14,
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "refactoring",
+        "repository_code_language": "python",
+        "repository_doc_language": "mixed"
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "fail"
+      },
+      "terminal_exclusion_ids": [
+        "translation-only"
+      ],
+      "reason": "The task's core is translating existing /sail headings, labels, sample output, and report sentences from English to Korean while retaining machine tokens. Version and regression-test edits do not change the translation-only language-quota identity.",
+      "next_route": "terminal_translation_only"
+    },
+    {
+      "candidate_id": "ghmix-joshua-jingu-lee--ante-issue-2398",
+      "ledger_index": 1005,
+      "repository_id": "joshua-jingu-lee--ante",
+      "source_reference": "https://github.com/joshua-jingu-lee/ante/issues/2398",
+      "task_statement_sha256": "744816fb672298a92d3b18aa61109d43bbfb8c5bc98fd7244f431295d15e506f",
+      "source_snapshot_task_statement_sha256": "744816fb672298a92d3b18aa61109d43bbfb8c5bc98fd7244f431295d15e506f",
+      "base_revision": "7f38e853696c9ba77f555c329b0c3da6e55301a0",
+      "base_tree_hash": "c16206011443c56ce74a2d140b76c864176dcb3a",
+      "solution_revision": "ec891bb188ab0fba3a7ceed3e1a3add72cbc8e8d",
+      "changed_path_count": 27,
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "implementation",
+        "repository_code_language": "python",
+        "repository_doc_language": "mixed"
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass",
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass"
+      },
+      "terminal_exclusion_ids": [],
+      "reason": "The Korean task is one readiness-gate invariant implemented as defense in depth across three order layers plus the virtual backstop; G1-G9 are coupled safety properties of that gate, not independent product tasks. Exact base inspection confirms src/ante/account/readiness.py already contains the prerequisite RuntimeReadinessRegistry and active_trading_ready implementation from #2397. Event-bus and broker doubles make the listed rejection, reservation, alert, suspension, and virtual-fill invariants deterministic and offline.",
+      "next_route": "advance_agent_free_reproduction"
+    }
+  ],
+  "next_queues": {
+    "advance_agent_free_reproduction": [
+      "ghko-hissinger--small-village-issue-54",
+      "ghmix-genonai--doc_parser-issue-288",
+      "ghmix-Sungho-pk42ac--agentguard-issue-687",
+      "ghmix-Sungho-pk42ac--agentguard-issue-591",
+      "ghmix-KoreaNirsa--prompt-booster-issue-3",
+      "ghmix-joshua-jingu-lee--ante-issue-2398"
+    ],
+    "terminal_source_exclusion": [
+      "ghko-yvshdjcsldhdjt--ChunChuGwan-issue-403",
+      "ghmix-jeongsk--daily_stock_analysis-issue-3",
+      "ghmix-JeremyDev87--kratos-issue-64",
+      "ghmix-MTGVim--telltale-issue-11"
+    ]
+  },
+  "next_boundary": "Run agent-free controls for the six survivors in ascending provisioning cost: prompt-booster first; the two shared-lock AgentGuard rows next; then small-village, ante, and doc_parser. Apply terminal and reproducibility decisions to the ledger only after the control batch is bound."
+}

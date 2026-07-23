@@ -1,0 +1,1278 @@
+{
+  "artifact_id": "phase2b-license-priority-2026-07-24",
+  "created_at": "2026-07-24",
+  "protocol_version": "phase2b-pilot-prereg-v1.1",
+  "purpose": "Result-blind license-first triage of the frozen candidate ledger before expensive source, solution, evaluator, and instruction review.",
+  "terminal_status": false,
+  "terminal_status_note": "This artifact changes screening order only. Repository metadata and default-branch file presence never mutate candidate decisions or inclusion-rule values; exact pre-solution revision artifacts remain mandatory for pass or terminal exclusion.",
+  "input_artifacts": [
+    {
+      "path": "experiments/phase2b-candidate-ledger-v1.json",
+      "sha256": "b59ff7449f5ebd50c182eeffb72abe9c0231b82dacb915a61c2d61e94c8d9bd2"
+    },
+    {
+      "path": "experiments/phase2b-license-probe-2026-07-19.json",
+      "sha256": "de3f20d5121604559cc8d48ac5076ebaff37d05a14782abf0b7a92090d8563e7"
+    }
+  ],
+  "eligible_permissive_spdx_ids": [
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "BSL-1.0",
+    "Unlicense",
+    "CC0-1.0"
+  ],
+  "explicitly_ineligible_classifier_ids": [
+    "GPL-2.0",
+    "GPL-3.0",
+    "AGPL-3.0",
+    "LGPL-2.1",
+    "MPL-2.0",
+    "EPL-2.0"
+  ],
+  "method": {
+    "frozen_order_within_bucket": "ascending ledger_index",
+    "first_stage": "Reuse the frozen repository-level probe across source pools and classify file-only signals without changing candidate status.",
+    "second_stage": "Resolve linked solution and exact pre-solution base only for license-priority rows, then inspect LICENSE, LICENCE, COPYING, NOTICE, UNLICENSE, manifests, and README at that pinned revision.",
+    "terminal_boundary": "Only exact-revision-license-confirmed or exact-revision-no-license-basis evidence may change license_or_use_basis or trigger license-or-use-basis-unavailable.",
+    "nonterminal_boundary": "classifier, default-branch file presence, none-observed, and not-probed are priority signals only."
+  },
+  "priority_order": [
+    "classify-file-only-signals",
+    "confirm-suspected-ineligible-classifiers-at-exact-revision",
+    "confirm-permissive-classifiers-at-exact-revision",
+    "defer-none-observed-until-the-signal-positive-queue-is-exhausted"
+  ],
+  "summary": {
+    "candidate_count": 1130,
+    "screening_count": 1025,
+    "local_screening_pinned_license_pass": 34,
+    "swebench_screening_exact_base_upstream_license_unverified": 300,
+    "github_screening_count": 691,
+    "github_pinned_license_pass": 2,
+    "github_permissive_classifier_awaiting_exact_revision": 36,
+    "github_file_only_awaiting_classification_and_exact_revision": 66,
+    "github_ineligible_classifier_awaiting_exact_revision": 2,
+    "github_none_observed_deferred": 585,
+    "github_not_probed": 0,
+    "github_nonterminal_license_signal_rows": 106,
+    "github_deep_review_queue_after_classifier_filter": 104
+  },
+  "buckets": {
+    "pinned_license_pass_ready_for_remaining_rules": {
+      "count": 2,
+      "candidates": [
+        {
+          "candidate_id": "ghmix-YSbookcase--TimePilot-issue-62",
+          "ledger_index": 819,
+          "source_reference": "https://github.com/YSbookcase/TimePilot/issues/62",
+          "repository_id": "YSbookcase--TimePilot",
+          "base_revision": "8ad41b136ecab5c5f2f1f97806cfbfe784004249",
+          "current_license_status": "pass",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-genonai--doc_parser-issue-288",
+          "ledger_index": 903,
+          "source_reference": "https://github.com/genonai/doc_parser/issues/288",
+          "repository_id": "genonai--doc_parser",
+          "base_revision": "3107d9663355fc042faa3c19f8e37e357af8a370",
+          "current_license_status": "pass",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        }
+      ]
+    },
+    "ineligible_classifier_awaiting_exact_revision": {
+      "count": 2,
+      "candidates": [
+        {
+          "candidate_id": "ghko-MannaDevelopers--meditation_blossom_frontend-issue-185",
+          "ledger_index": 355,
+          "source_reference": "https://github.com/MannaDevelopers/meditation_blossom_frontend/issues/185",
+          "repository_id": "MannaDevelopers--meditation_blossom_frontend",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "GPL-3.0",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghko-hang-in--tunaRound-issue-131",
+          "ledger_index": 607,
+          "source_reference": "https://github.com/hang-in/tunaRound/issues/131",
+          "repository_id": "hang-in--tunaRound",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "AGPL-3.0",
+          "license_file_at_head": null
+        }
+      ]
+    },
+    "permissive_classifier_awaiting_exact_revision": {
+      "count": 36,
+      "candidates": [
+        {
+          "candidate_id": "ghko-RosieOh--ccStory-issue-12",
+          "ledger_index": 350,
+          "source_reference": "https://github.com/RosieOh/ccStory/issues/12",
+          "repository_id": "RosieOh--ccStory",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghko-Soku-JINSEOK--Soku-Convention-Boilerplate-issue-16",
+          "ledger_index": 362,
+          "source_reference": "https://github.com/Soku-JINSEOK/Soku-Convention-Boilerplate/issues/16",
+          "repository_id": "Soku-JINSEOK--Soku-Convention-Boilerplate",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghko-dungsil-ai--intellij-plugin-egovframe-issue-4",
+          "ledger_index": 399,
+          "source_reference": "https://github.com/dungsil-ai/intellij-plugin-egovframe/issues/4",
+          "repository_id": "dungsil-ai--intellij-plugin-egovframe",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "Apache-2.0",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghko-dungsil-ai--intellij-plugin-egovframe-issue-5",
+          "ledger_index": 400,
+          "source_reference": "https://github.com/dungsil-ai/intellij-plugin-egovframe/issues/5",
+          "repository_id": "dungsil-ai--intellij-plugin-egovframe",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "Apache-2.0",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghko-Lyainc--filme-issue-417",
+          "ledger_index": 488,
+          "source_reference": "https://github.com/Lyainc/filme/issues/417",
+          "repository_id": "Lyainc--filme",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghko-hissinger--small-village-issue-54",
+          "ledger_index": 489,
+          "source_reference": "https://github.com/hissinger/small-village/issues/54",
+          "repository_id": "hissinger--small-village",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "Apache-2.0",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghko-Chigo55--Docker-Compose-issue-25",
+          "ledger_index": 493,
+          "source_reference": "https://github.com/Chigo55/Docker-Compose/issues/25",
+          "repository_id": "Chigo55--Docker-Compose",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghko-Aiddoo--Aido-platform-issue-651",
+          "ledger_index": 504,
+          "source_reference": "https://github.com/Aiddoo/Aido-platform/issues/651",
+          "repository_id": "Aiddoo--Aido-platform",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghko-Aiddoo--Aido-platform-issue-648",
+          "ledger_index": 511,
+          "source_reference": "https://github.com/Aiddoo/Aido-platform/issues/648",
+          "repository_id": "Aiddoo--Aido-platform",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghko-happyduck-git--RetroNote-issue-81",
+          "ledger_index": 574,
+          "source_reference": "https://github.com/happyduck-git/RetroNote/issues/81",
+          "repository_id": "happyduck-git--RetroNote",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghko-Lyainc--filme-issue-414",
+          "ledger_index": 598,
+          "source_reference": "https://github.com/Lyainc/filme/issues/414",
+          "repository_id": "Lyainc--filme",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghko-Chigo55--Docker-Compose-issue-28",
+          "ledger_index": 602,
+          "source_reference": "https://github.com/Chigo55/Docker-Compose/issues/28",
+          "repository_id": "Chigo55--Docker-Compose",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghko-SeokRae--blog-issue-20",
+          "ledger_index": 647,
+          "source_reference": "https://github.com/SeokRae/blog/issues/20",
+          "repository_id": "SeokRae--blog",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghko-RosieOh--ccStory-issue-11",
+          "ledger_index": 710,
+          "source_reference": "https://github.com/RosieOh/ccStory/issues/11",
+          "repository_id": "RosieOh--ccStory",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghko-RosieOh--ccStory-issue-10",
+          "ledger_index": 711,
+          "source_reference": "https://github.com/RosieOh/ccStory/issues/10",
+          "repository_id": "RosieOh--ccStory",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghko-ProudlyOffbeat--ProudlyOffbeat-MVP-iOS-issue-118",
+          "ledger_index": 718,
+          "source_reference": "https://github.com/ProudlyOffbeat/ProudlyOffbeat-MVP-iOS/issues/118",
+          "repository_id": "ProudlyOffbeat--ProudlyOffbeat-MVP-iOS",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "Apache-2.0",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghko-ProudlyOffbeat--ProudlyOffbeat-MVP-iOS-issue-116",
+          "ledger_index": 720,
+          "source_reference": "https://github.com/ProudlyOffbeat/ProudlyOffbeat-MVP-iOS/issues/116",
+          "repository_id": "ProudlyOffbeat--ProudlyOffbeat-MVP-iOS",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "Apache-2.0",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghmix-JungHoonGhae--tossinvest-cli-issue-96",
+          "ledger_index": 755,
+          "source_reference": "https://github.com/JungHoonGhae/tossinvest-cli/issues/96",
+          "repository_id": "JungHoonGhae--tossinvest-cli",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghmix-Soku-JINSEOK--Soku-Convention-Boilerplate-issue-3",
+          "ledger_index": 767,
+          "source_reference": "https://github.com/Soku-JINSEOK/Soku-Convention-Boilerplate/issues/3",
+          "repository_id": "Soku-JINSEOK--Soku-Convention-Boilerplate",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghmix-Hangi-n42--Growme_2026-issue-55",
+          "ledger_index": 782,
+          "source_reference": "https://github.com/Hangi-n42/Growme_2026/issues/55",
+          "repository_id": "Hangi-n42--Growme_2026",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghmix-JeremyDev87--ddalggak-issue-206",
+          "ledger_index": 785,
+          "source_reference": "https://github.com/JeremyDev87/ddalggak/issues/206",
+          "repository_id": "JeremyDev87--ddalggak",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghmix-JeremyDev87--ddalggak-issue-17",
+          "ledger_index": 820,
+          "source_reference": "https://github.com/JeremyDev87/ddalggak/issues/17",
+          "repository_id": "JeremyDev87--ddalggak",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghmix-115dkk--Impulcifer-pip313-issue-79",
+          "ledger_index": 830,
+          "source_reference": "https://github.com/115dkk/Impulcifer-pip313/issues/79",
+          "repository_id": "115dkk--Impulcifer-pip313",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghmix-JeremyDev87--kratos-issue-64",
+          "ledger_index": 833,
+          "source_reference": "https://github.com/JeremyDev87/kratos/issues/64",
+          "repository_id": "JeremyDev87--kratos",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghmix-GulSam00--singcode-issue-208",
+          "ledger_index": 834,
+          "source_reference": "https://github.com/GulSam00/singcode/issues/208",
+          "repository_id": "GulSam00--singcode",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghmix-Lyainc--filme-issue-201",
+          "ledger_index": 888,
+          "source_reference": "https://github.com/Lyainc/filme/issues/201",
+          "repository_id": "Lyainc--filme",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghmix-JeremyDev87--ddalggak-issue-211",
+          "ledger_index": 939,
+          "source_reference": "https://github.com/JeremyDev87/ddalggak/issues/211",
+          "repository_id": "JeremyDev87--ddalggak",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghmix-Lyainc--filme-issue-85",
+          "ledger_index": 943,
+          "source_reference": "https://github.com/Lyainc/filme/issues/85",
+          "repository_id": "Lyainc--filme",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghmix-SeoyunL--factlog-academic-issue-139",
+          "ledger_index": 961,
+          "source_reference": "https://github.com/SeoyunL/factlog-academic/issues/139",
+          "repository_id": "SeoyunL--factlog-academic",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "Apache-2.0",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghmix-Aiddoo--Aido-platform-issue-592",
+          "ledger_index": 970,
+          "source_reference": "https://github.com/Aiddoo/Aido-platform/issues/592",
+          "repository_id": "Aiddoo--Aido-platform",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghmix-JeremyDev87--ddalggak-issue-386",
+          "ledger_index": 995,
+          "source_reference": "https://github.com/JeremyDev87/ddalggak/issues/386",
+          "repository_id": "JeremyDev87--ddalggak",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghmix-Junghyun99--StockAsset-issue-285",
+          "ledger_index": 1001,
+          "source_reference": "https://github.com/Junghyun99/StockAsset/issues/285",
+          "repository_id": "Junghyun99--StockAsset",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghmix-KoreaNirsa--prompt-booster-issue-3",
+          "ledger_index": 1002,
+          "source_reference": "https://github.com/KoreaNirsa/prompt-booster/issues/3",
+          "repository_id": "KoreaNirsa--prompt-booster",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "Apache-2.0",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghmix-MTGVim--telltale-issue-11",
+          "ledger_index": 1003,
+          "source_reference": "https://github.com/MTGVim/telltale/issues/11",
+          "repository_id": "MTGVim--telltale",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghmix-Soku-JINSEOK--Soku-Convention-Boilerplate-issue-24",
+          "ledger_index": 1017,
+          "source_reference": "https://github.com/Soku-JINSEOK/Soku-Convention-Boilerplate/issues/24",
+          "repository_id": "Soku-JINSEOK--Soku-Convention-Boilerplate",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        },
+        {
+          "candidate_id": "ghmix-B-TING--bu-ting-mobile-issue-75",
+          "ledger_index": 1077,
+          "source_reference": "https://github.com/B-TING/bu-ting-mobile/issues/75",
+          "repository_id": "B-TING--bu-ting-mobile",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "core-api-repository-metadata-classifier",
+          "classifier_spdx_id": "MIT",
+          "license_file_at_head": null
+        }
+      ]
+    },
+    "file_only_awaiting_classification_and_exact_revision": {
+      "count": 66,
+      "candidates": [
+        {
+          "candidate_id": "ghko-nodease--mbased-issue-548",
+          "ledger_index": 353,
+          "source_reference": "https://github.com/nodease/mbased/issues/548",
+          "repository_id": "nodease--mbased",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghko-kangkyunghyun--LinKHU-issue-67",
+          "ledger_index": 390,
+          "source_reference": "https://github.com/kangkyunghyun/LinKHU/issues/67",
+          "repository_id": "kangkyunghyun--LinKHU",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghko-nodease--mbased-issue-499",
+          "ledger_index": 424,
+          "source_reference": "https://github.com/nodease/mbased/issues/499",
+          "repository_id": "nodease--mbased",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghko-kangkyunghyun--LinKHU-issue-69",
+          "ledger_index": 470,
+          "source_reference": "https://github.com/kangkyunghyun/LinKHU/issues/69",
+          "repository_id": "kangkyunghyun--LinKHU",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghko-yvshdjcsldhdjt--ChunChuGwan-issue-403",
+          "ledger_index": 515,
+          "source_reference": "https://github.com/yvshdjcsldhdjt/ChunChuGwan/issues/403",
+          "repository_id": "yvshdjcsldhdjt--ChunChuGwan",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghko-kangkyunghyun--LinKHU-issue-93",
+          "ledger_index": 547,
+          "source_reference": "https://github.com/kangkyunghyun/LinKHU/issues/93",
+          "repository_id": "kangkyunghyun--LinKHU",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghko-kangkyunghyun--LinKHU-issue-89",
+          "ledger_index": 550,
+          "source_reference": "https://github.com/kangkyunghyun/LinKHU/issues/89",
+          "repository_id": "kangkyunghyun--LinKHU",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghko-kangkyunghyun--LinKHU-issue-81",
+          "ledger_index": 553,
+          "source_reference": "https://github.com/kangkyunghyun/LinKHU/issues/81",
+          "repository_id": "kangkyunghyun--LinKHU",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghko-prgrms-be-adv-devcourse--beadv6_6_3JMT_BE-issue-394",
+          "ledger_index": 559,
+          "source_reference": "https://github.com/prgrms-be-adv-devcourse/beadv6_6_3JMT_BE/issues/394",
+          "repository_id": "prgrms-be-adv-devcourse--beadv6_6_3JMT_BE",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghko-nodease--mbased-issue-528",
+          "ledger_index": 645,
+          "source_reference": "https://github.com/nodease/mbased/issues/528",
+          "repository_id": "nodease--mbased",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghko-jongfeel--Godot-issue-191",
+          "ledger_index": 681,
+          "source_reference": "https://github.com/jongfeel/Godot/issues/191",
+          "repository_id": "jongfeel--Godot",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghko-yvshdjcsldhdjt--ChunChuGwan-issue-399",
+          "ledger_index": 685,
+          "source_reference": "https://github.com/yvshdjcsldhdjt/ChunChuGwan/issues/399",
+          "repository_id": "yvshdjcsldhdjt--ChunChuGwan",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghko-itismyfield--AgentDesk-issue-4640",
+          "ledger_index": 742,
+          "source_reference": "https://github.com/itismyfield/AgentDesk/issues/4640",
+          "repository_id": "itismyfield--AgentDesk",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghko-kangkyunghyun--LinKHU-issue-77",
+          "ledger_index": 743,
+          "source_reference": "https://github.com/kangkyunghyun/LinKHU/issues/77",
+          "repository_id": "kangkyunghyun--LinKHU",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-seob717--nunchi-issue-29",
+          "ledger_index": 750,
+          "source_reference": "https://github.com/seob717/nunchi/issues/29",
+          "repository_id": "seob717--nunchi",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-seob717--nunchi-issue-25",
+          "ledger_index": 751,
+          "source_reference": "https://github.com/seob717/nunchi/issues/25",
+          "repository_id": "seob717--nunchi",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-bongmyung-ye--nexora-corporate-web-issue-14",
+          "ledger_index": 757,
+          "source_reference": "https://github.com/bongmyung-ye/nexora-corporate-web/issues/14",
+          "repository_id": "bongmyung-ye--nexora-corporate-web",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-bongmyung-ye--nexora-corporate-web-issue-12",
+          "ledger_index": 758,
+          "source_reference": "https://github.com/bongmyung-ye/nexora-corporate-web/issues/12",
+          "repository_id": "bongmyung-ye--nexora-corporate-web",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-jeongsk--daily_stock_analysis-issue-3",
+          "ledger_index": 760,
+          "source_reference": "https://github.com/jeongsk/daily_stock_analysis/issues/3",
+          "repository_id": "jeongsk--daily_stock_analysis",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-jinwon-int--a2a-nexus-issue-1190",
+          "ledger_index": 773,
+          "source_reference": "https://github.com/jinwon-int/a2a-nexus/issues/1190",
+          "repository_id": "jinwon-int--a2a-nexus",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-baekenough--oh-my-customcode-issue-1415",
+          "ledger_index": 776,
+          "source_reference": "https://github.com/baekenough/oh-my-customcode/issues/1415",
+          "repository_id": "baekenough--oh-my-customcode",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-TangoEnSkai--uber-go-style-guide-kr-issue-105",
+          "ledger_index": 789,
+          "source_reference": "https://github.com/TangoEnSkai/uber-go-style-guide-kr/issues/105",
+          "repository_id": "TangoEnSkai--uber-go-style-guide-kr",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-yhzion--PortBridge-issue-115",
+          "ledger_index": 796,
+          "source_reference": "https://github.com/yhzion/PortBridge/issues/115",
+          "repository_id": "yhzion--PortBridge",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-hskim-solv--BidMate-DocAgent-issue-1402",
+          "ledger_index": 805,
+          "source_reference": "https://github.com/hskim-solv/BidMate-DocAgent/issues/1402",
+          "repository_id": "hskim-solv--BidMate-DocAgent",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-hskim-solv--BidMate-DocAgent-issue-1118",
+          "ledger_index": 808,
+          "source_reference": "https://github.com/hskim-solv/BidMate-DocAgent/issues/1118",
+          "repository_id": "hskim-solv--BidMate-DocAgent",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-landfill--secure-doc-issue-22",
+          "ledger_index": 809,
+          "source_reference": "https://github.com/landfill/secure-doc/issues/22",
+          "repository_id": "landfill--secure-doc",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-173",
+          "ledger_index": 811,
+          "source_reference": "https://github.com/Ootzk/Wor-chain-dle/issues/173",
+          "repository_id": "Ootzk--Wor-chain-dle",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-hskim-solv--BidMate-DocAgent-issue-919",
+          "ledger_index": 812,
+          "source_reference": "https://github.com/hskim-solv/BidMate-DocAgent/issues/919",
+          "repository_id": "hskim-solv--BidMate-DocAgent",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-hskim-solv--BidMate-DocAgent-issue-918",
+          "ledger_index": 813,
+          "source_reference": "https://github.com/hskim-solv/BidMate-DocAgent/issues/918",
+          "repository_id": "hskim-solv--BidMate-DocAgent",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-hskim-solv--BidMate-DocAgent-issue-916",
+          "ledger_index": 814,
+          "source_reference": "https://github.com/hskim-solv/BidMate-DocAgent/issues/916",
+          "repository_id": "hskim-solv--BidMate-DocAgent",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-YSbookcase--TimePilot-issue-99",
+          "ledger_index": 816,
+          "source_reference": "https://github.com/YSbookcase/TimePilot/issues/99",
+          "repository_id": "YSbookcase--TimePilot",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-Orchemi--my-resend-issue-27",
+          "ledger_index": 817,
+          "source_reference": "https://github.com/Orchemi/my-resend/issues/27",
+          "repository_id": "Orchemi--my-resend",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-YSbookcase--TimePilot-issue-63",
+          "ledger_index": 818,
+          "source_reference": "https://github.com/YSbookcase/TimePilot/issues/63",
+          "repository_id": "YSbookcase--TimePilot",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-130",
+          "ledger_index": 824,
+          "source_reference": "https://github.com/Ootzk/Wor-chain-dle/issues/130",
+          "repository_id": "Ootzk--Wor-chain-dle",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-jongwony--epistemic-protocols-issue-362",
+          "ledger_index": 825,
+          "source_reference": "https://github.com/jongwony/epistemic-protocols/issues/362",
+          "repository_id": "jongwony--epistemic-protocols",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-pillip--realtime-en2ko-captions-issue-53",
+          "ledger_index": 829,
+          "source_reference": "https://github.com/pillip/realtime-en2ko-captions/issues/53",
+          "repository_id": "pillip--realtime-en2ko-captions",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-pillip--realtime-en2ko-captions-issue-52",
+          "ledger_index": 835,
+          "source_reference": "https://github.com/pillip/realtime-en2ko-captions/issues/52",
+          "repository_id": "pillip--realtime-en2ko-captions",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-pillip--realtime-en2ko-captions-issue-16",
+          "ledger_index": 839,
+          "source_reference": "https://github.com/pillip/realtime-en2ko-captions/issues/16",
+          "repository_id": "pillip--realtime-en2ko-captions",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-pillip--realtime-en2ko-captions-issue-15",
+          "ledger_index": 840,
+          "source_reference": "https://github.com/pillip/realtime-en2ko-captions/issues/15",
+          "repository_id": "pillip--realtime-en2ko-captions",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-pillip--realtime-en2ko-captions-issue-13",
+          "ledger_index": 841,
+          "source_reference": "https://github.com/pillip/realtime-en2ko-captions/issues/13",
+          "repository_id": "pillip--realtime-en2ko-captions",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-raymond1203--LangAlpha-KR-issue-22",
+          "ledger_index": 845,
+          "source_reference": "https://github.com/raymond1203/LangAlpha-KR/issues/22",
+          "repository_id": "raymond1203--LangAlpha-KR",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-woo-in--LoanServicing-issue-61",
+          "ledger_index": 864,
+          "source_reference": "https://github.com/woo-in/LoanServicing/issues/61",
+          "repository_id": "woo-in--LoanServicing",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-ggqgga--issue-runner-issue-103",
+          "ledger_index": 867,
+          "source_reference": "https://github.com/ggqgga/issue-runner/issues/103",
+          "repository_id": "ggqgga--issue-runner",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-ggqgga--issue-runner-issue-75",
+          "ledger_index": 877,
+          "source_reference": "https://github.com/ggqgga/issue-runner/issues/75",
+          "repository_id": "ggqgga--issue-runner",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-prgrms-be-adv-devcourse--beadv6_6_3JMT_BE-issue-161",
+          "ledger_index": 886,
+          "source_reference": "https://github.com/prgrms-be-adv-devcourse/beadv6_6_3JMT_BE/issues/161",
+          "repository_id": "prgrms-be-adv-devcourse--beadv6_6_3JMT_BE",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-ggqgga--issue-runner-issue-43",
+          "ledger_index": 902,
+          "source_reference": "https://github.com/ggqgga/issue-runner/issues/43",
+          "repository_id": "ggqgga--issue-runner",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-buildon99x--copy-pet-issue-45",
+          "ledger_index": 915,
+          "source_reference": "https://github.com/buildon99x/copy-pet/issues/45",
+          "repository_id": "buildon99x--copy-pet",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-joshua-jingu-lee--ante-issue-2390",
+          "ledger_index": 924,
+          "source_reference": "https://github.com/joshua-jingu-lee/ante/issues/2390",
+          "repository_id": "joshua-jingu-lee--ante",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-joshua-jingu-lee--ante-issue-2353",
+          "ledger_index": 937,
+          "source_reference": "https://github.com/joshua-jingu-lee/ante/issues/2353",
+          "repository_id": "joshua-jingu-lee--ante",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-Sungho-pk42ac--agentguard-issue-687",
+          "ledger_index": 945,
+          "source_reference": "https://github.com/Sungho-pk42ac/agentguard/issues/687",
+          "repository_id": "Sungho-pk42ac--agentguard",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-seob717--nunchi-issue-38",
+          "ledger_index": 946,
+          "source_reference": "https://github.com/seob717/nunchi/issues/38",
+          "repository_id": "seob717--nunchi",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-hsu3046--MarkMind-issue-117",
+          "ledger_index": 949,
+          "source_reference": "https://github.com/hsu3046/MarkMind/issues/117",
+          "repository_id": "hsu3046--MarkMind",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-Sungho-pk42ac--agentguard-issue-591",
+          "ledger_index": 951,
+          "source_reference": "https://github.com/Sungho-pk42ac/agentguard/issues/591",
+          "repository_id": "Sungho-pk42ac--agentguard",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-ginishuh--contextforge-issue-167",
+          "ledger_index": 963,
+          "source_reference": "https://github.com/ginishuh/contextforge/issues/167",
+          "repository_id": "ginishuh--contextforge",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-loopback-social--community-network-banner-issue-28",
+          "ledger_index": 974,
+          "source_reference": "https://github.com/loopback-social/community-network-banner/issues/28",
+          "repository_id": "loopback-social--community-network-banner",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-lvis-project--lvis-app-issue-1512",
+          "ledger_index": 975,
+          "source_reference": "https://github.com/lvis-project/lvis-app/issues/1512",
+          "repository_id": "lvis-project--lvis-app",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-lvis-project--lvis-app-issue-1412",
+          "ledger_index": 989,
+          "source_reference": "https://github.com/lvis-project/lvis-app/issues/1412",
+          "repository_id": "lvis-project--lvis-app",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-joshua-jingu-lee--ante-issue-2398",
+          "ledger_index": 1005,
+          "source_reference": "https://github.com/joshua-jingu-lee/ante/issues/2398",
+          "repository_id": "joshua-jingu-lee--ante",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-hoksi--nexusts-issue-15",
+          "ledger_index": 1040,
+          "source_reference": "https://github.com/hoksi/nexusts/issues/15",
+          "repository_id": "hoksi--nexusts",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-yhzion--PortBridge-issue-157",
+          "ledger_index": 1048,
+          "source_reference": "https://github.com/yhzion/PortBridge/issues/157",
+          "repository_id": "yhzion--PortBridge",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-SIDED00R--algo-review-issue-49",
+          "ledger_index": 1056,
+          "source_reference": "https://github.com/SIDED00R/algo-review/issues/49",
+          "repository_id": "SIDED00R--algo-review",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-TangoEnSkai--uber-go-style-guide-kr-issue-80",
+          "ledger_index": 1057,
+          "source_reference": "https://github.com/TangoEnSkai/uber-go-style-guide-kr/issues/80",
+          "repository_id": "TangoEnSkai--uber-go-style-guide-kr",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-TangoEnSkai--uber-go-style-guide-kr-issue-53",
+          "ledger_index": 1058,
+          "source_reference": "https://github.com/TangoEnSkai/uber-go-style-guide-kr/issues/53",
+          "repository_id": "TangoEnSkai--uber-go-style-guide-kr",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-TangoEnSkai--uber-go-style-guide-kr-issue-23",
+          "ledger_index": 1059,
+          "source_reference": "https://github.com/TangoEnSkai/uber-go-style-guide-kr/issues/23",
+          "repository_id": "TangoEnSkai--uber-go-style-guide-kr",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-YSbookcase--TimePilot-issue-235",
+          "ledger_index": 1103,
+          "source_reference": "https://github.com/YSbookcase/TimePilot/issues/235",
+          "repository_id": "YSbookcase--TimePilot",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        },
+        {
+          "candidate_id": "ghmix-yumyum-corp--yumyum-issue-22",
+          "ledger_index": 1126,
+          "source_reference": "https://github.com/yumyum-corp/yumyum/issues/22",
+          "repository_id": "yumyum-corp--yumyum",
+          "base_revision": null,
+          "current_license_status": "unknown",
+          "probe_method": "raw-head-default-branch-file-presence",
+          "classifier_spdx_id": null,
+          "license_file_at_head": "LICENSE"
+        }
+      ]
+    },
+    "not_probed": {
+      "count": 0,
+      "repository_count": 0,
+      "candidates": []
+    },
+    "none_observed_deferred": {
+      "count": 585,
+      "repository_count": 287,
+      "candidate_ids_omitted": true
+    },
+    "swebench_exact_base_upstream_license_unverified": {
+      "count": 300,
+      "repository_count": 41,
+      "exact_base_count": 300,
+      "candidate_ids_omitted": true
+    },
+    "local_screening_pinned_license_pass": {
+      "count": 34,
+      "candidate_ids_omitted": true
+    }
+  },
+  "known_limitations": [
+    "The frozen license probe covers repository metadata or default-branch root-file presence, not candidate revisions.",
+    "A file-only signal does not identify license type and may resolve to copyleft, source-available, all-rights-reserved, or no grant.",
+    "A none-observed signal is not proof that the exact candidate revision lacks a license declaration in a manifest, README, or non-root path.",
+    "The SWE-bench Multilingual dataset card license does not establish the upstream repository license at each of 300 exact base revisions.",
+    "This artifact observes no agent result and does not change the 60-task quotas, inclusion rules, or candidate decisions."
+  ]
+}

@@ -1,0 +1,289 @@
+{
+  "artifact_id": "phase2b-screening-cascade-2026-07-24",
+  "created_at": "2026-07-24",
+  "protocol_version": "phase2b-pilot-prereg-v1.1",
+  "purpose": "Cost-ordered, result-blind Phase 2b source-screening cascade that spends deep-review work only after cheaper eligibility and feasibility signals are exhausted.",
+  "terminal_status": false,
+  "terminal_status_note": "Stages before exact-revision inspection order work only. They never mutate candidate decisions or inclusion-rule values. Existing preregistered terminal rules remain the only exclusion paths.",
+  "agent_results_observed": false,
+  "design_change_required": false,
+  "design_change_note": "This artifact changes operational screening order, not source frames, quotas, eligibility rules, instruction-discovery assumptions, or terminal evidence. Any future change to those contracts requires a protocol amendment and renewed review of the supporting research and preregistration rationale.",
+  "input_artifacts": [
+    {
+      "path": "experiments/phase2b-candidate-ledger-v1.json",
+      "sha256": "b59ff7449f5ebd50c182eeffb72abe9c0231b82dacb915a61c2d61e94c8d9bd2"
+    },
+    {
+      "path": "experiments/phase2b-license-probe-2026-07-19.json",
+      "sha256": "de3f20d5121604559cc8d48ac5076ebaff37d05a14782abf0b7a92090d8563e7"
+    },
+    {
+      "path": "experiments/phase2b-license-priority-2026-07-24.json",
+      "sha256": "c150a17564159bf2c5a37ca774f0398d1f10908645a5653fdc4e2b3297e0c1dd"
+    },
+    {
+      "path": "experiments/phase2b-license-file-classification-2026-07-24.json",
+      "sha256": "3eaa584204125e154ad66f2ba22ba89dce8d88cc64ac91874824b6a64c219e76"
+    },
+    {
+      "path": "experiments/phase2b-linked-solution-prefilter-2026-07-24.json",
+      "sha256": "6fdc6e69bbd0e38795c472bfa457ce496715f36e7d2a57274ea29dfe410abcfa"
+    },
+    {
+      "path": "experiments/phase2b-exact-revision-license-2026-07-24.json",
+      "sha256": "fabb62de7b5838450d1f7c3c7529543d3238286fa81747bcddd9b2a073db699e"
+    },
+    {
+      "path": "experiments/phase2b-rank5-ledger-application-2026-07-24.json",
+      "sha256": "11ef0cb9a42c4de0dd5fd19144e4134dd843168ba72a21d61e5a759c3d8a5c62"
+    },
+    {
+      "path": "experiments/phase2b-mechanical-prefilter-2026-07-19.json",
+      "sha256": "ca68c196b8a4c52ff533ed1445c8316324a58eef92ae4b9138dd533afbc6677a"
+    },
+    {
+      "path": "experiments/phase2b-rank6-instruction-parity-2026-07-24.json",
+      "sha256": "c73e3a9d7886f5686f7446f6bc1c08b6111e182fb4b1e62d1b66c78b28c58279"
+    },
+    {
+      "path": "experiments/phase2b-rank6-ledger-application-2026-07-24.json",
+      "sha256": "7c8630b36472943136d6a3230aaa5e97e97347d4a32d9c92e40e222b470821a1"
+    },
+    {
+      "path": "experiments/phase2b-rank7-semantic-prefilter-2026-07-24.json",
+      "sha256": "c197ff0e4e7665710e8d16a89e3f5ff865263d766f9e07b525478aa4f4bad0de"
+    },
+    {
+      "path": "experiments/phase2b-rank7-agent-free-reproduction-2026-07-24.json",
+      "sha256": "71026e607d019671a9b10fc967ba9b9ac7a8d7304fa8542279adce3102066bdd"
+    },
+    {
+      "path": "experiments/phase2b-rank7-ledger-application-2026-07-24.json",
+      "sha256": "a6483444eb1dc40dbfe6f89bf41121c4220908bdd02485b5887c1a0a492d8acc"
+    }
+  ],
+  "cost_scale": {
+    "kind": "ordinal",
+    "meaning": "A higher rank is expected to require strictly more remote data, repository materialization, environment work, or human semantic judgment. Ranks are ordering constraints, not measured dollar or wall-clock estimates."
+  },
+  "stage_sequence": [
+    {
+      "rank": 0,
+      "stage_id": "ledger-integrity-and-prior-state",
+      "cost_class": "local-linear-scan",
+      "network_required": false,
+      "manual_semantic_review_required": false,
+      "terminal": false,
+      "input_rows": 1130,
+      "observed": {
+        "screening": 1005,
+        "excluded": 118,
+        "selected_for_task_authoring": 7
+      },
+      "action": "Validate unique identities, source references, hashes, frozen decisions, and summary counts; perform no work on already terminal rows."
+    },
+    {
+      "rank": 1,
+      "stage_id": "source-identity-presence",
+      "cost_class": "cached-ledger-fields",
+      "network_required": false,
+      "manual_semantic_review_required": false,
+      "terminal": false,
+      "input_rows": 1025,
+      "observed": {
+        "external_statement_and_hash_present": 991,
+        "local_history_without_native_task_statement": 34
+      },
+      "action": "Route the 34 local-history rows to a separate source-adaptation queue; do not spend external-source screening work on them."
+    },
+    {
+      "rank": 2,
+      "stage_id": "repository-license-signal",
+      "cost_class": "cached-repository-metadata-or-head-file-presence",
+      "network_required": false,
+      "manual_semantic_review_required": false,
+      "terminal": false,
+      "input_rows": 691,
+      "observed": {
+        "github_nonterminal_license_signal": 106,
+        "github_none_observed_deferred": 585,
+        "github_not_probed": 0
+      },
+      "action": "Advance signal-positive rows and defer none-observed rows without treating absence at current HEAD as exact-revision evidence."
+    },
+    {
+      "rank": 3,
+      "stage_id": "license-type-classification",
+      "cost_class": "repository-license-content-only",
+      "network_required": true,
+      "manual_semantic_review_required": true,
+      "manual_review_scope": "Only the three GitHub NOASSERTION license bodies; the other 30 repositories use the pinned GitHub SPDX response.",
+      "terminal": false,
+      "input_rows": 106,
+      "observed": {
+        "pinned_permissive_pass": 2,
+        "permissive_classifier_signal": 36,
+        "file_only_repositories_classified": 33,
+        "file_only_candidate_rows_classified": 66,
+        "file_only_eligible_permissive_current_head": 64,
+        "file_only_suspected_ineligible_copyleft_current_head": 1,
+        "file_only_suspected_ineligible_noncommercial_current_head": 1,
+        "existing_ineligible_copyleft_classifier_signal": 2,
+        "unknown_after_current_head_classification": 0
+      },
+      "action": "Completed for the 66 file-only candidate rows across 33 repositories. Advance 64 rows and route two suspected-ineligible rows to exact-revision confirmation; keep every current-HEAD classification nonterminal."
+    },
+    {
+      "rank": 4,
+      "stage_id": "linked-solution-and-test-scope",
+      "cost_class": "issue-timeline-pr-metadata-and-diff",
+      "network_required": true,
+      "manual_semantic_review_required": false,
+      "terminal": false,
+      "input_rows": 106,
+      "observed": {
+        "eligible_current_head_priority_rows": 102,
+        "suspected_ineligible_exact_confirmation_rows": 4,
+        "issue_html_200_and_parsed": 106,
+        "unique_pull_request_html_and_diff_200": 107,
+        "single_merged_closing_pr_rows": 103,
+        "multiple_closing_pr_rows": 3,
+        "eligible_single_pr_test_touch_rows": 37,
+        "advance_exact_base_and_pinned_license_rows": 27,
+        "advance_suspected_ineligible_confirmation_rows": 4,
+        "needs_solution_scope_review_rows": 18,
+        "deferred_no_test_touch_single_scope_rows": 57
+      },
+      "action": "Completed for all 106 signal-positive rows. Advance 27 eligible rows plus four suspected-ineligible confirmation rows; defer 18 scope-review and 57 no-test-touch rows without changing candidate decisions."
+    },
+    {
+      "rank": 5,
+      "stage_id": "exact-base-and-pinned-license",
+      "cost_class": "git-graph-and-minimal-materialization",
+      "network_required": true,
+      "manual_semantic_review_required": false,
+      "terminal": true,
+      "input_rows": 31,
+      "observed": {
+        "github_exact_base_already_known_before_stage": 1,
+        "github_new_exact_bases_resolved": 30,
+        "github_eligible_priority_rows": 27,
+        "github_suspected_ineligible_confirmation_rows": 4,
+        "exact_license_pass_rows": 27,
+        "exact_license_fail_rows": 4,
+        "advance_remaining_rule_review_rows": 26,
+        "return_to_solution_scope_review_rows": 1,
+        "swebench_rows_with_recorded_base_but_missing_tree_and_upstream_license": 300,
+        "swebench_upstream_repositories": 41
+      },
+      "action": "Completed for the 31-row GitHub work queue. All source lineages and changed-path sets validated; 27 exact licenses pass, three copyleft licenses and one no-license base fail, and one current-HEAD PolyForm signal is rescued by an MIT candidate base but returns to scope review."
+    },
+    {
+      "rank": 6,
+      "stage_id": "exact-tree-instruction-inventory",
+      "cost_class": "full-tree-path-and-import-scan",
+      "network_required": false,
+      "manual_semantic_review_required": true,
+      "terminal": true,
+      "input_rows": 26,
+      "observed": {
+        "instruction_parity_already_passed_before_stage": 1,
+        "new_exact_tree_instruction_inventories_completed": 25,
+        "new_instruction_parity_pass_rows": 9,
+        "new_instruction_parity_fail_rows": 16,
+        "advance_boundedness_evaluator_reproduction_rows": 10
+      },
+      "action": "Completed for all 25 newly advanced exact trees. Five trees have no discovered project instruction, three use byte-equivalent CLAUDE.md-to-AGENTS.md symlinks, one uses an explicit semantic adapter, and sixteen contain material one-sided active guidance. Nine pass and sixteen terminate on instruction parity; with previously-passed doc_parser #288, ten rows advance."
+    },
+    {
+      "rank": 7,
+      "stage_id": "boundedness-evaluator-and-reproduction",
+      "cost_class": "manual-semantic-review-and-agent-free-controls",
+      "network_required": false,
+      "manual_semantic_review_required": true,
+      "terminal": true,
+      "input_rows": 10,
+      "action": "Completed for all ten parity-passing rows. Source semantics terminally exclude three translation-only tasks and one multi-optimization issue; all six survivors reproduce with intended base-negative and solution-positive controls and advance to selected-for-task-authoring without candidate-agent execution.",
+      "observed": {
+        "source_semantic_rows_completed": 10,
+        "translation_only_terminal_rows": 3,
+        "multiple_coupled_issues_terminal_rows": 1,
+        "advance_agent_free_reproduction_rows": 6,
+        "intended_base_negative_rows": 6,
+        "solution_positive_rows": 6,
+        "reproducible_within_budget_pass_rows": 6,
+        "small_bucket_rows": 4,
+        "medium_bucket_rows": 2,
+        "new_selected_for_task_authoring_rows": 6,
+        "boundedness_evaluator_reproduction_pending": 0
+      }
+    }
+  ],
+  "pool_routes": {
+    "aao-local-history-through-0e32241": {
+      "screening_rows": 34,
+      "route": "defer-to-native-task-source-adaptation",
+      "reason": "Exact code lineage and repository license exist, but no native task statement exists."
+    },
+    "github-current-screening": {
+      "screening_rows": 691,
+      "route": "license-signal-then-linked-solution-cascade",
+      "deep_review_queue_before_cascade": 691,
+      "deep_review_queue_after_current_head_classification": 102,
+      "suspected_ineligible_requiring_exact_revision_confirmation": 4,
+      "exact_revision_queue_after_linked_solution_prefilter": 31,
+      "exact_revision_queue_completed": 31,
+      "exact_license_pass": 27,
+      "exact_license_terminal_exclusion": 4,
+      "remaining_rule_review_after_rank5": 26,
+      "eligible_solution_scope_review_deferred": 19,
+      "eligible_no_test_touch_deferred": 57,
+      "deferred_none_observed": 585,
+      "rank6_instruction_inventory_completed": 25,
+      "rank6_new_instruction_parity_pass": 9,
+      "rank6_instruction_parity_terminal_exclusion": 16,
+      "rank7_boundedness_evaluator_reproduction_queue": 10,
+      "rank7_queue_completed": 10,
+      "rank7_source_terminal_exclusion": 4,
+      "rank7_new_selected_for_task_authoring": 6,
+      "rank7_pending": 0
+    },
+    "swebench-multilingual-at-2b7aced": {
+      "screening_rows": 300,
+      "upstream_repositories": 41,
+      "route": "dataset-terms-and-pinned-upstream-license-before-task-review",
+      "reason": "The dataset card license does not establish upstream code rights at each recorded base revision."
+    }
+  },
+  "nonterminal_priority_signals": [
+    "GitHub repository license classifier",
+    "default-branch license-file presence or type",
+    "none-observed at default branch HEAD",
+    "linked PR presence",
+    "solution touches tests",
+    "changed-file count",
+    "default-branch instruction-file prevalence",
+    "repository language or ecosystem"
+  ],
+  "terminal_or_pass_evidence_boundaries": [
+    "exact candidate task statement and hash",
+    "exact pre-solution revision and tree",
+    "license or use basis read at the exact revision",
+    "exact-tree effective project-instruction inventory",
+    "manual boundedness and safety judgment tied to the source statement",
+    "agent-free evaluator and reproduction controls"
+  ],
+  "next_actions": [
+    "Review solution scope for the rescued MIT-at-base row after the existing 18 scope-review rows; keep 57 no-test-touch rows deferred.",
+    "Freeze independent final evaluator assertions and validity-review roles for the 13 selected-for-task-authoring rows only after enough language/category yield exists; do not run candidate agents yet.",
+    "After the current signal-positive queues, screen the 300 SWE-bench rows by 41 upstream repositories for pinned license and dataset terms before deeper task review."
+  ],
+  "known_limitations": [
+    "Rank-3 license classifications observe current default-branch HEAD and remain priority signals only; rank 5 separately resolved exact candidate revisions for the 31-row priority batch.",
+    "The earlier mechanical prefilter covered only one current priority row, so the dedicated linked-solution artifact independently covered all 106 signal-positive rows rather than extrapolating it.",
+    "Git and GitHub rendered diff bytes can differ for binary/index metadata; exact-base scope uses the complete changed-path set, which matched for all 31 rank-5 rows.",
+    "Ordinal cost ranks encode an intended order, not measured latency or API usage. Actual measurements should be appended without reordering stages after outcomes are known.",
+    "No cheap signal or parity result is allowed to relax the 60-task language/category quotas or select a candidate after observing agent performance.",
+    "Rank 7 proves screening controls, not final evaluator validity. In particular, small-village #54 still requires an independent reviewer to confirm that offline roster invariants cover the source's hosted three-client E2E sentence without narrowing the task."
+  ]
+}
