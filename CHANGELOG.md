@@ -14,6 +14,9 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - Package metadata now matches the public repository name.
+- Repository licensing changes from MIT to Apache License 2.0 from this change
+  forward; previously published MIT-licensed revisions remain available under
+  their original terms.
 
 The source currently identifies itself as version `0.1.0`, but no GitHub or
 package-index release has been published. A versioned section and comparison

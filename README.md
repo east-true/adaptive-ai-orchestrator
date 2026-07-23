@@ -1,7 +1,7 @@
 # Adaptive AI Software Engineering Orchestrator — Kernel v0.1
 
 [![CI](https://github.com/east-true/adaptive-ai-orchestrator/actions/workflows/ci.yml/badge.svg)](https://github.com/east-true/adaptive-ai-orchestrator/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 This repository contains the first, intentionally small control-plane kernel. It controls logged-in coding-agent CLIs, not LLM SDKs or APIs. Single-agent-first is still the default: the workflow runs one selected agent first and escalates to exactly one more only when execution failure, verification failure, or high analyzed risk/uncertainty/difficulty warrants it (see "Escalation" below). It does not implement full multi-agent orchestration (parallel or collaborating agents) — that remains [Phase 5 of the project constitution](docs/project-constitution.md).
 
@@ -563,5 +563,6 @@ Contributions are welcome under the [contribution guide](CONTRIBUTING.md) and
 [Code of Conduct](CODE_OF_CONDUCT.md). Use the issue templates for public bug
 reports and feature proposals, [SUPPORT.md](SUPPORT.md) for support boundaries,
 and [SECURITY.md](SECURITY.md) for private vulnerability reporting. Changes are
-released under the [MIT License](LICENSE); research users should cite the exact
-evaluated commit as described in [CITATION.cff](CITATION.cff).
+released under the [Apache License 2.0](LICENSE), with attribution notices in
+[NOTICE](NOTICE); research users should cite the exact evaluated commit as
+described in [CITATION.cff](CITATION.cff).

@@ -78,4 +78,4 @@ A pull request should explain:
 
 Maintainers may ask to split changes that mix unrelated behavior, protocol, and
 documentation work. By contributing, you agree that your contribution is
-licensed under the repository's [MIT License](LICENSE).
+licensed under the repository's [Apache License 2.0](LICENSE).

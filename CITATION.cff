@@ -7,5 +7,5 @@ authors:
     given-names: "DongJin"
 repository-code: "https://github.com/east-true/adaptive-ai-orchestrator"
 url: "https://github.com/east-true/adaptive-ai-orchestrator"
-license: MIT
+license: Apache-2.0
 version: 0.1.0
