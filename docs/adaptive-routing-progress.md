@@ -1,41 +1,54 @@
 # Adaptive Routing 개선 작업 진행상황
 
-> 마지막 갱신: 2026-07-22
-> 상태: Phase -1/0/1과 Phase 2a v1/v2 paired smoke 완료, Phase 2b source screening 7/60 및 global instruction gate 미해결
+> 마지막 갱신: 2026-07-24
+> 상태: Phase -1/0/1과 Phase 2a v1/v2 paired smoke 완료, Phase 2b source screening 13/60, cost-ordered cheap-filter cascade 적용 및 global instruction gate 미해결
 > 목적: 다른 세션이 결정 근거와 다음 순서를 잃지 않고 작업을 이어간다.
+>
+> 공개 독자 안내: 이 문서는 세션 간 인계를 위한 상세 작업 로그다. 설치와
+> 프로젝트 개요는 [README](../README.md), 규범적 설계는
+> [architecture](architecture.md)와 [Phase 2b 사전등록 계약](paired-pilot-preregistration.md)을
+> 먼저 본다. 이 로그의 중간 판정은 릴리스된 벤치마크나 agent 순위가 아니다.
 
 ## 0. 한눈에 보는 다음 작업
 
 > **지금 할 일:** agent 실행이나 task authoring이 아니라, candidate ledger의
-> **source screening 다음 batch**를 처리한다.
+> **cost-ordered cheap-filter cascade의 다음 미완료 단계**를 처리한다.
 
 | 구분 | 내용 |
 |---|---|
 | 현재 위치 | Phase 2b construction, source screening |
-| 현재 수치 | 1,130 candidates = screening 1,025 + excluded 98 + selected 7 |
+| 현재 수치 | 1,130 candidates = screening 995 + excluded 122 + selected 13 |
 | 목표 | selected candidate 60개; Korean 20 / English 20 / mixed 20; category 각 12 |
-| 바로 할 작업 | 미판정 후보의 linked PR, exact base/tree, pinned license, active instruction path, parity와 inclusion rule 판정 |
+| 바로 할 작업 | 기존 18건 + MIT-at-base 반환 1건의 solution-scope 저비용 의미 필터; ledger 순서를 유지하고 terminal source 판정을 먼저 수행 |
 | 병렬 blocker | Claude/Codex global instruction을 동등화하거나 isolated empty home으로 격리하고 effective hash pin |
 | 다음 단계 진입 조건 | candidate 60개 ledger freeze **그리고** global instruction gate 해결 |
 | 금지 | quota 완화, 임의 번역/분류, task/evaluator 동시 저술, agent 결과 열람, 120-run 실행, learned policy 승격 |
 | 부족할 때 | `construction incomplete / pilot not authorized`로 수치와 원인을 그대로 보고 |
 
-### 다음 batch 처리 절차
+### 다음 저비용 screening cascade
 
-1. [candidate ledger의 현재 순서](paired-pilot-candidate-ledger.md#6-심사-순서)를 따라
-   아직 판정하지 않은 행을 고른다.
-2. issue와 linked PR의 관계 및 merge parent를 확인하고 exact base commit/tree를
-   materialize한다.
-3. pinned base revision에서 허용 license artifact를 확인한다. default branch나
-   classifier 추정으로 소급 판정하지 않는다.
-4. exact tree의 root부터 candidate path까지 실제로 활성화되는 `AGENTS.md`,
-   `CLAUDE.md` 및 import chain을 inventory한다.
-5. `instruction-parity`를 포함한 12개 inclusion rule을 각각 evidence와 함께 판정한다.
-   하나라도 terminal failure면 해당 exclusion ID로 제외하고, 근거가 부족하면
-   `unknown`/`screening`으로 유지한다.
-6. ledger JSON, summary count, candidate-ledger 문서와 진행 snapshot을 같은 변경에서
+1. [screening cascade artifact](../experiments/phase2b-screening-cascade-2026-07-24.json)의
+   rank를 건너뛰지 않는다. Cached identity/source/license 신호는 이미 적용됐고 GitHub
+   `none-observed` 585건은 제외가 아니라 보류다.
+2. file-only 66건의 current-HEAD license 분류는 완료됐다. 64건을 전진시키고 GPL-3.0 1건과
+   PolyForm Noncommercial 1건은 exact-revision 확인 queue로 보냈다. 이 결과는 nonterminal이다.
+3. signal-positive 106건의 issue timeline, direct closing PR, changed-file와 test-touch metadata
+   수집은 완료됐다. Eligible 102건은 exact 단계 27 / scope-review 18 / no-test-touch 57로
+   나뉘며, suspected-ineligible 4건도 direct solution을 확인했다.
+4. rank 5 exact-base/tree와 pinned-license 확인은 31/31 완료됐다. License pass 27 / fail 4이며,
+   broad release 1건은 MIT exact base를 확인했지만 scope review로 되돌렸다. Default branch나
+   classifier 추정은 끝까지 pass/fail 근거로 사용하지 않았다.
+5. 25개 exact tree의 active `AGENTS.md`, `CLAUDE.md`, symlink/import/path-rule inventory는
+   완료됐다. Parity pass 9 / fail 16이며 fail 행은 terminal 제외했다.
+6. rank 7의 10건 의미 판정과 agent-free reproduction도 완료됐다. 번역 전용 3건과
+   다중 결합 1건을 제외했고, 6건은 intended base-negative/solution-positive를 통과해
+   `selected-for-task-authoring`으로 이동했다. Candidate agent는 실행하지 않았다.
+7. 다음 queue는 linked-solution 단계에서 보류한 scope-review 18건과 rank 5에서 반환된
+   MIT-at-base 1건이다. 이 19건도 boundedness/native-source 같은 저비용 terminal gate를
+   먼저 적용하고, 통과 가능할 때만 exact Git·runtime·reproduction 비용을 쓴다.
+8. ledger JSON, summary count, candidate-ledger 문서와 진행 snapshot을 같은 변경에서
    동기화한다. `selected-for-task-authoring`은 12개 rule이 모두 `pass`일 때만 허용한다.
-7. 아래 검증을 통과한 뒤 다음 batch로 넘어간다.
+9. 아래 검증을 통과한 뒤 다음 batch로 넘어간다.
 
 ```bash
 PYTHONPATH=src python3 -m unittest tests/test_phase2b_candidate_ledger.py -v
@@ -44,7 +57,7 @@ git diff --check
 ```
 
 전체 단계와 이후 task/evaluator construction 순서는
-[현재 재개 지점과 고정 작업 순서](#현재-재개-지점과-고정-작업-순서-2026-07-22)에,
+[현재 재개 지점과 고정 작업 순서](#현재-재개-지점과-고정-작업-순서-2026-07-24)에,
 중단·승인 조건은 [Phase 2b 사전등록 계약](paired-pilot-preregistration.md)에 있다.
 
 ## 1. 목표
@@ -161,7 +174,7 @@ additive identity + policy/cohort labels
 
 ## 4. 지금 작업 중
 
-### 현재 재개 지점과 고정 작업 순서 (2026-07-22)
+### 현재 재개 지점과 고정 작업 순서 (2026-07-24)
 
 이 절이 **다음 작업의 현재 진입점**이다. 아래의 오래된 handoff들은 판단 근거와 감사
 기록이며, 작업 순서는 이 절을 우선한다.
@@ -169,15 +182,15 @@ additive identity + policy/cohort labels
 | 항목 | 현재 값 |
 |---|---:|
 | 전체 candidate | 1,130 |
-| `screening` | 1,025 |
-| `excluded` | 98 |
-| `selected-for-task-authoring` | **7** |
+| `screening` | 995 |
+| `excluded` | 122 |
+| `selected-for-task-authoring` | **13** |
 | 목표 native task | 60 (Korean 20 / English 20 / mixed 20) |
 | category quota | 각 12 |
 | global instruction gate | `unresolved` |
-| 현재 전체 unit tests | **281 passed** |
+| 현재 focused / 전체 unit tests | **37 / 290 passed** |
 
-#### Portable resume checkpoint — 18차 handoff 완료
+#### Portable resume checkpoint — 23차 handoff
 
 이 절만 읽어도 새 clone이나 다른 세션에서 현재 source-screening을 이어갈 수 있어야 한다.
 `/tmp` clone, 로컬 CLI history, 이 대화는 근거의 단일 출처가 아니다. 임시 clone은 공개
@@ -189,6 +202,17 @@ Authoritative 파일의 역할은 다음과 같다.
 | 파일 | 재개 시 신뢰할 내용 |
 |---|---|
 | `experiments/phase2b-candidate-ledger-v1.json` | 1,130개 row, full revision/tree/artifact hash, 12-rule 상태, terminal 사유와 summary count |
+| `experiments/phase2b-license-priority-2026-07-24.json` | 현재 screening 전체의 nonterminal license bucket, frozen ledger 순서와 입력 hash |
+| `experiments/phase2b-license-file-classification-2026-07-24.json` | file-only 33 repositories/66 rows의 exact current-HEAD license 관측, content hash와 nonterminal 분류 |
+| `experiments/phase2b-linked-solution-prefilter-2026-07-24.json` | signal-positive 106 rows의 direct closing PR, HTML/diff hash, test-touch와 nonterminal next route |
+| `experiments/phase2b-exact-revision-license-2026-07-24.json` | rank 5의 31개 exact base/tree, complete PR commit lineage, changed-path 대조와 pinned license terminal evidence |
+| `experiments/phase2b-rank5-ledger-application-2026-07-24.json` | pre-rank-5 ledger/evidence/output ledger hash 연결, 31개 mutation과 decision-count invariant |
+| `experiments/phase2b-rank6-instruction-parity-2026-07-24.json` | 25개 exact tree의 active instruction blob/content hash, effective Claude/Codex chain과 parity terminal 판정 |
+| `experiments/phase2b-rank6-ledger-application-2026-07-24.json` | pre-rank-6 ledger/parity evidence/output ledger hash 연결과 25개 mutation |
+| `experiments/phase2b-rank7-semantic-prefilter-2026-07-24.json` | rank 7 10건의 source hash 결합, translation/coupling terminal 판정과 6건 reproduction route |
+| `experiments/phase2b-rank7-agent-free-reproduction-2026-07-24.json` | 6건의 exact base-negative/solution-positive, evaluator/control hash, resource bucket과 local evidence 위치 |
+| `experiments/phase2b-rank7-ledger-application-2026-07-24.json` | pre-rank-7 ledger와 두 evidence hash, 4개 terminal + 6개 selected mutation, 현재 ledger hash |
+| `experiments/phase2b-screening-cascade-2026-07-24.json` | 저비용 cached filter부터 exact/manual review까지 비용 증가 순서와 evidence boundary |
 | `experiments/phase2b-agent-instruction-parity-2026-07-20.json` | exact pinned tree별 active instruction inventory와 parity 판정 27건(pass 13 / fail 14) |
 | `docs/paired-pilot-candidate-ledger.md` | inclusion/exclusion 규칙, pool별 현재 수치, 심사 우선순위 |
 | `docs/paired-pilot-preregistration.md` | result-blind 역할 분리, global instruction gate, 실행 승인·중단 조건 |
@@ -206,31 +230,48 @@ Authoritative 파일의 역할은 다음과 같다.
 | 17 | `ghmix-prgrms-aibe-devcourse--AIBE5_FinalProject_Team7_JackPot-issue-499` | `9ae892a…` / `6722de4…` | license/use basis 부재; parity pass |
 | 18 | `ghmix-SKALA-TEAM5--frontend-issue-66` | `0950a8e…` / `55524f7…` | multi-issue PR의 final atomic commit 분리; license 부재; parity pass |
 
-다음 단일 진입점은
-`ghmix-yt010108--kr-gov-job-mcp-issue-51`
-([public issue](https://github.com/yt010108/kr-gov-job-mcp/issues/51))이다. 현재 row는
-`screening`, provisional `mixed / repository-analysis-planning`이며 task statement SHA-256은
-`62600ccca287a3996e3d03b45c0d4f1c6c5f5c6ddbc6281f20ca888c17c8265d`다. Base, solution,
-license, repository language와 parity는 모두 아직 `unknown`이다. 재개 시 아래 순서를
-건너뛰지 않는다.
+2026-07-24부터 단일 issue 순차 심사를 중단하고 cost-ordered cascade를 사용한다. License
+filter는 그 첫 remote-data stage다. Cascade 시작 snapshot의
+GitHub `screening` 691건은 pinned license pass 2, permissive classifier 36,
+license-file-only 66, copyleft classifier 2, `none-observed` 585로 나뉜다. Repository-level
+probe는 source pool과 무관하게 재사용하므로 미탐색 저장소는 0개다. File-only 66건은
+2026-07-24 current HEAD를 full revision으로 고정한 뒤 GitHub license endpoint와 body hash로
+모두 분류했다. 64건은 허용형 신호, 1건은 GPL-3.0, 1건은 PolyForm Noncommercial이었다.
+따라서 license-priority queue는 **102건**이며 candidate decision과 12-rule 값은 이
+분류만으로 바뀌지 않았다. 후속 linked-solution prefilter는 eligible 102건을 exact 단계 27,
+scope-review 18, no-test-touch 보류 57로 나눴다. Suspected-ineligible 4건까지 합친 rank 5
+queue 31건은 모두 exact base/tree와 pinned license를 확인했다. 그 결과 27건이 license를
+통과하고 4건이 terminal 제외됐으며, 통과 행 중 broad release 1건은 scope review로 되돌아가
+**26건**이 다음 rule로 전진했다. 이어진 rank 6에서 새 25건은 parity pass 9 / fail 16으로
+판정됐다. 기존 parity pass `doc_parser #288`을 합친 rank 7 work queue **10건**도 모두
+처리했다. Source 의미 필터에서 translation-only 3 / multiple-coupled 1을 terminal 제외했고,
+나머지 6건은 agent-free base-negative와 solution-positive를 통과해 construction queue로
+이동했다.
 
-1. GitHub issue의 `title + "\n\n" + body` SHA-256을 위 값과 비교한다.
-2. Timeline의 direct closing PR/commit을 찾고, current PR API base를 곧바로 믿지 않는다.
-   Commit graph에서 ancestor, merge-base, earliest/final atomic commit parent와 PR file
-   inventory가 같은 범위를 exact pre-solution base로 고정한다.
-3. Exact base 전체 tree를 materialize해 license artifact와 manifest/README의 use grant를
-   읽고, root→candidate path의 `AGENTS.override.md`, `AGENTS.md`, `CLAUDE.md`와 import를
-   inventory한다.
-4. Terminal rule 하나라도 실패하면 evaluator 저술로 범위를 넓히지 않는다. 통과할 때만
-   나머지 isolation/objective-evaluator/reproduction rule을 진행한다.
-5. Candidate row, summary, parity artifact/assessment, 이 문서, candidate-ledger 문서와
-   candidate-specific 회귀 테스트를 한 batch로 동기화한다.
+이전 다음 후보였던 `ghmix-yt010108--kr-gov-job-mcp-issue-51`은 frozen probe에서
+`none-observed`인 저장소의 행이다. 탈락시키지 않고 585건 보류 queue로 옮겼다. 지금의
+순서는 다음과 같다.
+
+1. file-only 66건의 license 종류 분류는 완료됐다. Current HEAD signal로만 기록돼 있다.
+2. signal-positive 106건의 linked solution/test-touch metadata prefilter는 완료됐다.
+3. rank 5 exact pre-solution base/tree와 pinned license 31건은 완료됐다. GPL-3.0 2건,
+   AGPL-3.0 1건, exact base에 license/use basis가 없는 1건은 terminal 제외했다.
+4. Exact-tree instruction inventory 25건은 완료됐다. 9건은 parity를 통과했고 16건은
+   `instruction-parity-mismatch`로 terminal 제외했다.
+5. rank 7 10건은 완료됐다. 4건 terminal 제외, 6건 selected-for-task-authoring이며 pending은 0이다.
+6. 다음은 기존 solution-scope review 18건 뒤에 MIT-at-base 반환 1건을 붙인 19건이다.
+   저비용 의미 필터를 먼저 적용하고 57개 no-test-touch 행은 계속 보류한다.
+7. SWE-bench 300건은 이미 base revision이 있으므로 41개 upstream repository 단위로
+   pinned license와 별도 dataset terms를 확인한다.
+8. Candidate decision이 실제로 변할 때만 ledger summary, 관련 evidence artifact, 문서와
+   candidate-specific 회귀 테스트를 함께 동기화한다.
 
 재개하는 세션은 먼저 `git status --short`와 `git diff --stat`로 checkout 이후의 로컬 변경을
 확인하고, 파일을 되돌리거나 전체 add하지 않는다. 이 checkpoint가 기록한 의도된 변경 경계는
-`.gitignore`, `README.md`, `docs/adaptive-routing-progress.md`,
-`docs/paired-pilot-candidate-ledger.md`, `docs/paired-pilot-preregistration.md`,
-`docs/routing-claude-review.md`, 두 Phase 2b JSON artifact와
+`README.md`, `experiments/README.md`, `docs/adaptive-routing-progress.md`,
+`docs/paired-pilot-candidate-ledger.md`, license-priority/classification/linked-solution/exact-revision/
+rank5-application/rank6-parity/rank6-application/rank7-semantic/rank7-reproduction/
+rank7-application/cascade JSON artifact와
 `tests/test_phase2b_candidate_ledger.py`다. Local `security_best_practices_report.md`는 제거된
 Web UI를 전제로 한 오래된 review라 `.gitignore`에 두고 이 변경에 포함하지 않는다. 다시
 공개하려면 현재 source 기준으로 scope와 finding을 먼저 재검증한다.
@@ -240,6 +281,16 @@ Web UI를 전제로 한 오래된 review라 `.gitignore`에 두고 이 변경에
 ```bash
 python3 -m json.tool experiments/phase2b-candidate-ledger-v1.json >/dev/null
 python3 -m json.tool experiments/phase2b-agent-instruction-parity-2026-07-20.json >/dev/null
+python3 -m json.tool experiments/phase2b-license-file-classification-2026-07-24.json >/dev/null
+python3 -m json.tool experiments/phase2b-linked-solution-prefilter-2026-07-24.json >/dev/null
+python3 -m json.tool experiments/phase2b-exact-revision-license-2026-07-24.json >/dev/null
+python3 -m json.tool experiments/phase2b-rank5-ledger-application-2026-07-24.json >/dev/null
+python3 -m json.tool experiments/phase2b-rank6-instruction-parity-2026-07-24.json >/dev/null
+python3 -m json.tool experiments/phase2b-rank6-ledger-application-2026-07-24.json >/dev/null
+python3 -m json.tool experiments/phase2b-rank7-semantic-prefilter-2026-07-24.json >/dev/null
+python3 -m json.tool experiments/phase2b-rank7-agent-free-reproduction-2026-07-24.json >/dev/null
+python3 -m json.tool experiments/phase2b-rank7-ledger-application-2026-07-24.json >/dev/null
+python3 -m json.tool experiments/phase2b-screening-cascade-2026-07-24.json >/dev/null
 PYTHONPATH=src python3 -m unittest tests/test_phase2b_candidate_ledger.py -v
 PYTHONPATH=src python3 -m unittest discover -s tests
 git diff --check
@@ -253,8 +304,13 @@ Draft 2020-12 schema는 `jsonschema>=4`가 있는 환경에서
 다음 작업은 순서대로 진행한다.
 
 1. **Source screening 완료**
-   - 아직 판정하지 않은 후보의 linked PR exact base/tree를 materialize한다.
-   - pinned revision license와 전체 active project-instruction path를 확인한다.
+   - license type, linked-solution/test metadata, rank 5 exact-base/pinned-license,
+     rank 6 exact-tree instruction, 첫 rank 7 semantics/reproduction stage는 완료됐다.
+   - 다음은 기존 scope-review 18건에 exact MIT가 확인된 broad release 1건을 더한
+     19건의 저비용 source-semantic review다. No-test-touch 57건은 nonterminal deferred
+     상태로 보존한다.
+   - SWE-bench 300행은 41개 repository별 upstream pinned license와 dataset terms를
+     먼저 확인한다.
    - instruction parity와 나머지 inclusion rule을 판정하고 classifier 기반 license
      근거가 남은 과거 행을 재점검한다.
    - 60개 quota를 채우지 못하면 기준을 완화하지 않고
@@ -1614,6 +1670,341 @@ Root README와 `package.json`에도 license grant/declaration이 없어
 
 다음 unmaterialized explicit-language 후보는 `yt010108/kr-gov-job-mcp #51`이다. 동일한
 순서로 source/solution/base/license/parity를 판정한다.
+
+## 2026-07-24 19차 handoff — 전체 ledger license-first triage와 cost cascade
+
+단일 issue를 순차적으로 깊게 읽기 전에 현재 후보 전체에 공통으로 적용할 수 있는 저비용
+필터를 먼저 쓰도록 순서를 바꿨다. 이는 agent 결과를 보거나 eligibility 기준을 바꾼 protocol
+amendment가 아니다. 기존 사전등록이 이미 classifier/default-branch license를 priority cache로
+허용하므로, **운영 순서만 비용 증가형 cascade로 고정**했다. 따라서 연구 설계나 논문의
+결론을 다시 해석할 필요는 없었다. 이후 어떤 cheap signal을 terminal exclusion으로 바꾸거나
+source frame, quota, instruction discovery, eligibility rule을 바꾸려면 그때는 사전등록과
+근거 연구를 다시 읽고 amendment를 먼저 작성한다.
+
+현재 `screening` 1,025건을 pool별로 나누면 local history 34, GitHub 691, SWE-bench
+Multilingual 300이다. Local 34건은 exact code lineage와 이 저장소의 license는 있지만 native
+task statement가 없어 source-adaptation queue로 분리한다. SWE-bench 300건은 base revision과
+patch hash는 있으나 base tree와 upstream pinned license가 없고 dataset card MIT가 upstream
+code use basis를 대신하지 않으므로, 41개 repository 단위의 dataset-terms/pinned-license
+검사가 먼저다.
+
+Frozen license probe는 source pool이 아니라 **repository 단위 관측**이다. 같은 repository가
+Korean-bearing/explicit pool 양쪽에 있어도 한 번의 probe를 재사용한다. 이 기준으로 GitHub
+screening 691건의 저장소는 모두 probe됐고 결과는 다음과 같다.
+
+| license bucket | rows | 현재 효력 |
+|---|---:|---|
+| exact pinned permissive pass | 2 | 나머지 rule 심사 가능 |
+| permissive classifier | 36 | exact revision 확인 전 nonterminal |
+| license-file-only | 66 | license 종류와 exact revision 모두 미확인 |
+| GPL-3.0 / AGPL-3.0 classifier | 2 | exact revision 확인 전 제외 아님 |
+| `none-observed` | 585 | terminal 부재 근거가 아니므로 보류 |
+
+따라서 license signal만으로도 expensive review의 우선 queue는 691→104건으로 줄었다. 이
+104건은 Korean-bearing 31 / explicit multilingual 73, 55 repositories다. 104건 모두 source
+statement와 hash는 있지만 base가 알려진 것은 `TimePilot #62`, `doc_parser #288` 두 건뿐이고,
+기존 mechanical prefilter가 덮는 행도 1건뿐이다. 나머지 102건에는 같은 값싼
+issue-timeline/linked-PR/test-touch prefilter를 확대 적용해야 한다.
+
+[`phase2b-screening-cascade-2026-07-24.json`](../experiments/phase2b-screening-cascade-2026-07-24.json)은
+다음 비용 순서를 고정한다.
+
+1. local ledger identity·hash·기존 terminal state;
+2. source statement 존재와 adaptation 필요 여부;
+3. cached repository license signal;
+4. license content만 읽는 종류 분류;
+5. issue timeline, linked solution, changed-file와 test-touch metadata;
+6. Git graph, exact base/tree와 pinned license;
+7. exact-tree project instruction inventory;
+8. 마지막에만 boundedness, evaluator feasibility와 agent-free reproduction.
+
+Rank 0–4는 어떤 candidate decision이나 inclusion value도 바꾸지 못한다. Rank 5의 exact
+revision evidence부터만 license pass/fail이 가능하다. Default-branch instruction prevalence,
+repository language, test-touch와 file count도 계속 priority signal일 뿐 terminal 근거가 아니다.
+
+Claude에는 이 cascade를 로컬 artifact만으로 독립 검산하는 읽기 전용 작업을 맡겼으나 현재
+세션의 외부 API가 `ENOTIMP`로 차단돼 비용 `$0`, 파일 변경 없이 실패했다. GitHub DNS도 같은
+환경에서 차단돼 remote stage는 수행하지 않았다. 권한을 우회하지 않았으며, 연결 가능한
+환경에서 같은 bounded 검산과 rank 3–4 수집을 재개한다.
+
+| 항목 | 값 |
+|---|---:|
+| 전체 inventory | 1,130 |
+| `screening` / `excluded` / `selected` | 1,025 / 98 / 7 |
+| GitHub cheap-license deep queue | **104 / 691** |
+| GitHub suspected-ineligible exact-confirm queue | 2 |
+| GitHub `none-observed` deferred | 585 |
+| SWE-bench pinned-license queue | 300 rows / 41 repositories |
+| focused candidate-ledger tests | **32 passed** |
+| 전체 unit tests | **285 passed** |
+
+다음 작업은 file-only 66건의 license 종류 분류다. 이어서 permissive 36건과 file-only의
+허용 subset에 linked-solution/test-scope prefilter를 적용하고, surviving row만 exact Git과
+pinned-license 단계로 넘긴다. `yt010108/kr-gov-job-mcp #51`은 `none-observed` 585건의
+보류 queue에 있으며 제외되지 않았다.
+
+## 2026-07-24 20차 handoff — file-only license 분류 완료
+
+19차 handoff 뒤 network-enabled sandbox에서 rank 3을 재개했다. Frozen priority artifact의
+file-only 후보 66건은 중복을 제거하면 33 repositories다. 각 repository에 대해 `git
+ls-remote <repo>.git HEAD`로 관측 시점의 full revision을 고정하고, GitHub repository license
+endpoint에 그 SHA를 `ref`로 전달했다. 33/33 HEAD와 33/33 license response를 얻었다. Tracked
+artifact에는 repository URL, exact blob URL, HEAD SHA, Git blob SHA, decoded byte length와
+content SHA-256만 넣었고 license 원문 전체는 복제하지 않았다.
+
+GitHub SPDX가 직접 분류한 30 repositories는 MIT 26, Apache-2.0 3, GPL-3.0 1이었다.
+`NOASSERTION` 3개만 원문을 읽었다. 이 좁은 작업은 Claude CLI에 read-only로 독립 판정을
+맡기고 주 검토자가 같은 content hash의 원문을 다시 대조했다. 3/3 결과가 일치했다.
+
+| current-HEAD 분류 | repositories | candidate rows | 다음 route |
+|---|---:|---:|---|
+| preregistered permissive | 31 | 64 | linked-solution/test-scope prefilter |
+| GPL-3.0 suspected ineligible | 1 | 1 | exact candidate revision 확인 |
+| PolyForm Noncommercial suspected ineligible | 1 | 1 | exact candidate revision 확인 |
+| unknown | 0 | 0 | 없음 |
+
+`lvis-project/lvis-app`과 `yvshdjcsldhdjt/ChunChuGwan`의 `NOASSERTION` body는 표준 MIT grant로
+확인됐다. `baekenough/oh-my-customcode`는 PolyForm Noncommercial 1.0.0으로, grant의 permitted
+purpose가 noncommercial use로 제한된다. 별도로 `hsu3046/MarkMind`는 GitHub가 GPL-3.0으로
+식별했다. 이 네 설명은 **현재 HEAD signal**이며 과거 candidate base의 pass/fail이 아니다.
+저작권 조건이 candidate 시점에 달랐을 수 있으므로 exact pre-solution revision을 확인하기
+전까지 ledger의 `license_or_use_basis=unknown`, `decision=screening`을 그대로 유지했다.
+
+새 artifact는
+[`phase2b-license-file-classification-2026-07-24.json`](../experiments/phase2b-license-file-classification-2026-07-24.json)이며,
+input priority artifact hash와 33개 license body integrity를 고정한다. 이에 따라 GitHub 다음
+deep-review queue는 104→**102 rows**(Korean-bearing 31 / explicit multilingual 71,
+53 repositories)로 줄었다. Suspected-ineligible exact-confirm queue는 기존 GPL/AGPL classifier
+2건에 새 GPL-3.0/PolyForm 2건을 더한 **4 rows**다. `none-observed` 585건은 계속 보류다.
+
+Cascade rank 3은 완료됐고 다음 진입점은 rank 4다. 102 rows 중 exact base가 이미 있는 것은
+`TimePilot #62`, `doc_parser #288` 두 건이며, 기존 mechanical prefilter가 덮는 것은
+`doc_parser #288` 한 건뿐이다. 나머지 100건은 issue timeline에서 direct closing solution,
+changed-file count, test-touch와 명백한 multi-issue scope를 값싼 metadata로 먼저 수집한다.
+이 단계에서도 issue 의미나 evaluator를 깊게 읽지 않고 candidate decision을 바꾸지 않는다.
+
+이어서 rank 4도 같은 세션에서 완료했다. Eligible current-HEAD queue 102건과
+suspected-ineligible confirmation 4건, 합계 106건의 공개 issue HTML을 읽었다. 106/106에서
+`closedByPullRequestsReferences`를 복원했고, 103건은 단일 merged closing PR, 3건은 closing
+PR이 여러 개였다. 연결된 unique PR 107개의 HTML과 `.diff`도 107/107 성공해 각각 SHA-256,
+full head revision, commit count, changed-file count와 test paths를 기록했다. GitHub core API
+한도는 이 단계에 쓰지 않았다.
+
+첫 test-path parser가 `docs/specs/`를 test `spec/`으로, `test_cases.md`를 실행 가능한 test로
+과잉 분류했다. Claude의 3 multiple-closing candidate + 9 multi-issue PR read-only anomaly
+검산과 주 검토자의 전체 test-path 재대조로 이 오탐을 수정했다. 최종 규칙은 정확한
+`test|tests|spec|__tests__` directory segment 또는 문서 확장자가 아닌 conventional test
+filename만 센다.
+
+| rank 4 next route | rows | 효력 |
+|---|---:|---|
+| eligible: exact base/pinned license 전진 | 27 | 단일 merged closing PR + test touch + obvious multi-issue 신호 없음 |
+| suspected-ineligible exact confirmation | 4 | current-HEAD GPL/AGPL/PolyForm 신호를 candidate revision에서 확인 |
+| solution segmentation / multi-issue review | 18 | nonterminal deferred |
+| no-test-touch single-scope | 57 | nonterminal deferred |
+
+Tracked 근거는
+[`phase2b-linked-solution-prefilter-2026-07-24.json`](../experiments/phase2b-linked-solution-prefilter-2026-07-24.json)이다.
+PR 107개의 commit link도 전부 복원했다. 다른 priority PR의 commit set을 포함하는 stacked
+superset은 scope-review로 보냈지만, 이후 PR이 쌓였다는 이유만으로 더 작은 self-contained
+prefix PR까지 불이익을 주지는 않았다. 이 값싼 overlap filter로 `intellij-plugin-egovframe
+#5`와 stacked documentation PR 2건이 추가로 scope-review에 들어갔다.
+
+Eligible advance 27건은 Korean-bearing 9 / explicit multilingual 18, 22 repositories다.
+Changed-file count는 기록했지만 사후 threshold를 새로 만들지 않았고, route 안 순서는 frozen
+ledger index를 유지했다. `TimePilot #62`는 pinned license가 알려졌어도 test-touch가 없어
+보류됐고, `doc_parser #288`만 27건 중 exact base가 이미 알려져 있다. 따라서 rank 5의 현재
+work queue는 **31건**, 실제 base reconstruction 미완료는 **30건**이다.
+
+20차 변경의 focused candidate-ledger suite는 **34 tests passed**다. 전체 suite 수치는 문서·
+artifact 동기화 뒤 다시 측정해 이 handoff와 상단 resume snapshot을 갱신한다.
+
+## 2026-07-24 21차 handoff — rank 5 exact base와 pinned license 완료
+
+Rank 4가 만든 31건(eligible 27 + suspected-ineligible confirmation 4)을 모두 exact Git
+단계로 처리했다. 각 direct closing PR의 전체 commit list를 복원하고, 첫 solution commit의
+유일한 parent를 exact pre-solution base로 사용했다. 31/31에서 fetched head가 관측 head와
+일치하고, commit sequence ancestry가 연결되며, 첫 commit은 parent가 하나이고, 별도로
+해시한 GitHub `.diff`와 base-to-head Git diff의 **complete changed-path set/count**가
+일치한다. Git 자체 diff bytes와 GitHub가 렌더링한 diff bytes는 binary/index 표현 차이가
+있으므로 동일성을 요구하지 않는다(15/31 byte hash 일치); exact base와 scope 검증에는
+31/31 path-set 일치를 사용한다.
+
+Pinned base의 root license/use basis 결과는 다음과 같다.
+
+| exact-base 결과 | rows | rank 5 판정 |
+|---|---:|---|
+| MIT | 21 | pass |
+| Apache-2.0 | 6 | pass |
+| GPL-3.0 | 2 | fail |
+| AGPL-3.0 | 1 | fail |
+| license/use basis 없음 | 1 | fail |
+
+따라서 license pass 27 / fail 4다. Eligible 27건에서는 26 pass / 1 fail, suspected queue
+4건에서는 1 pass / 3 fail이었다. 다음 네 행을 exact revision 근거로
+`license-or-use-basis-unavailable` terminal 제외했다.
+
+- `ghko-MannaDevelopers--meditation_blossom_frontend-issue-185`: GPL-3.0;
+- `ghko-hang-in--tunaRound-issue-131`: AGPL-3.0;
+- `ghmix-hsu3046--MarkMind-issue-117`: GPL-3.0;
+- `ghmix-landfill--secure-doc-issue-22`: base에 license artifact가 없고 root `README.md`와
+  `package.json`에도 license grant/declaration이 없음.
+
+Current-HEAD signal을 terminal로 쓰지 않은 규칙은 실제 반례 두 개로 확인됐다.
+`baekenough/oh-my-customcode #1415`는 current HEAD가 PolyForm Noncommercial이지만 exact
+candidate base는 MIT라 license를 통과했다. 다만 27-file release PR이므로 선택하지 않고
+solution-scope review로 되돌렸다. 반대로 `landfill/secure-doc #22`는 current HEAD가 MIT지만
+exact candidate base에는 use basis가 없어 제외됐다. 따라서 current-HEAD 분류는 앞으로도
+priority 신호일 뿐이다.
+
+Tracked terminal evidence는
+[`phase2b-exact-revision-license-2026-07-24.json`](../experiments/phase2b-exact-revision-license-2026-07-24.json)
+(SHA-256 `fabb62de7b5838450d1f7c3c7529543d3238286fa81747bcddd9b2a073db699e`)에,
+pre-rank-5 ledger → evidence → post-rank-5 ledger 연결은
+[`phase2b-rank5-ledger-application-2026-07-24.json`](../experiments/phase2b-rank5-ledger-application-2026-07-24.json)
+(SHA-256 `11ef0cb9a42c4de0dd5fd19144e4134dd843168ba72a21d61e5a759c3d8a5c62`)에
+고정했다. 이전 ledger SHA-256은
+`b59ff7449f5ebd50c182eeffb72abe9c0231b82dacb915a61c2d61e94c8d9bd2`, 현재 ledger는
+`faf4ee88177adc32e97cd331a6700ce55624f56eb0ec2db886126e086639ce2c`다. Agent 결과는
+보지 않았고 selected row는 만들지 않았다.
+
+현재 ledger는 screening 1,021 / excluded 102 / selected-for-task-authoring 7이다. Rank 6
+입력은 license를 통과하고 scope-review로 돌아가지 않은 26건이다. 이 중
+`doc_parser #288`은 exact-tree instruction parity가 이미 pass라 rank 7
+evaluator/reproduction만 남고, 나머지 **25건**은 exact-tree instruction inventory가
+필요하다. 다음 순서는 25건의 active `AGENTS.md`/`CLAUDE.md`/import-chain inventory,
+그 통과 행과 `doc_parser #288`의 boundedness/evaluator/reproduction, 반환된 MIT 행의
+solution-scope review다. 설계·eligibility 기준은 바뀌지 않았고 operational screening
+순서만 실행했으므로 근거 연구 재해석이나 protocol amendment는 필요하지 않았다.
+
+회귀 검증은 focused candidate-ledger **35 tests**, 전체 suite **288 tests**가 통과했다.
+
+## 2026-07-24 22차 handoff — rank 6 exact-tree instruction parity 완료
+
+Rank 5에서 새로 전진한 25개 exact base를 ignored bare-repository cache에서 다시 열어
+`revision^{tree}`를 ledger tree hash와 25/25 대조했다. 전체 tree의 `AGENTS.override.md`,
+`AGENTS.md`, `CLAUDE.md`, `CLAUDE.local.md`, `.claude/rules/*.md`를 전수 열거하고, changed
+path의 ancestor scope, symlink, 명시적 import/adapter와 path-rule index를 적용했다. Tracked
+artifact에는 원문 전체가 아니라 path, Git blob SHA, decoded-content SHA-256, byte count와
+effective Claude/Codex chain만 남겼다.
+
+| exact-tree profile | rows | parity |
+|---|---:|---|
+| 양쪽 CLI가 발견하는 project instruction 없음 | 5 | pass |
+| root `CLAUDE.md`가 root `AGENTS.md`를 가리키는 byte-equivalent symlink | 3 | pass |
+| `AGENTS.md`가 `CLAUDE.md` SSOT와 같은 path-rule index를 명시적으로 읽게 함 | 1 (`ChunChuGwan #403`) | pass |
+| task-active `AGENTS.md`만 존재 | 6 | fail |
+| task-active `CLAUDE.md`만 존재 | 8 | fail |
+| 공통 root/service 지침 위에 Codex-only 하위 지침이 추가됨 | 2 (`settlement #394`, `mbased #528`) | fail |
+
+따라서 새 batch는 pass 9 / fail 16 / unknown 0이다. Fail 16건은 exact tree에 material
+one-sided guidance가 있으므로 사전등록된 `instruction-parity-mismatch`로 terminal 제외했다.
+`mbased #528`은 Claude도 root `CLAUDE.md -> AGENTS.md`를 받지만 Codex만 changed
+`apps/**`와 `apps/client/**`의 추가 `AGENTS.md`를 받는다. `settlement #394`는 두 agent가
+service `CLAUDE.md`와 일곱 rules를 공유하지만 Codex만 authorization 변경에 적용되는 scope,
+security, skill-routing 조건을 추가로 받는다. 반면 `ChunChuGwan #403`은 root `AGENTS.md`가
+Codex에게 root `CLAUDE.md` SSOT와 동일한 DB/storage/dashboard/testing rule을 읽도록 명시해
+통과했다.
+
+Claude CLI에는 문서 stale-value 감사와 복합 parity 세 건의 두 bounded read-only 호출을
+맡겼으나 둘 다 장시간 아무 결과를 내지 않아 중단했다. 파일 변경이나 판정 기여는 없었고,
+이 사실을 artifact provenance에 기록했다. 판정은 이전 behavioral discovery 측정과 exact
+blob 원문을 주 검토자가 대조한 결과다.
+
+Tracked 근거는
+[`phase2b-rank6-instruction-parity-2026-07-24.json`](../experiments/phase2b-rank6-instruction-parity-2026-07-24.json)
+(SHA-256 `c73e3a9d7886f5686f7446f6bc1c08b6111e182fb4b1e62d1b66c78b28c58279`)과
+[`phase2b-rank6-ledger-application-2026-07-24.json`](../experiments/phase2b-rank6-ledger-application-2026-07-24.json)
+(SHA-256 `7c8630b36472943136d6a3230aaa5e97e97347d4a32d9c92e40e222b470821a1`)이다.
+Pre-rank-6 ledger SHA-256은
+`faf4ee88177adc32e97cd331a6700ce55624f56eb0ec2db886126e086639ce2c`, 적용 뒤 ledger는
+`228dbbf05ec46a7f94dde40e780bad9b6d64a32944ace5bddb49839f15a1a0f1`다. 당시 rank-6 output
+snapshot은 screening 1,005 / excluded 118 / selected-for-task-authoring 7이며 parity 누적 판정은
+pass 22 / fail 30 / unknown 1,078이다.
+
+Rank 7은 아래 frozen ledger 순서의 10건만 받는다.
+
+1. `ghko-hissinger--small-village-issue-54`
+2. `ghko-yvshdjcsldhdjt--ChunChuGwan-issue-403`
+3. `ghmix-jeongsk--daily_stock_analysis-issue-3`
+4. `ghmix-JeremyDev87--kratos-issue-64`
+5. `ghmix-genonai--doc_parser-issue-288`
+6. `ghmix-Sungho-pk42ac--agentguard-issue-687`
+7. `ghmix-Sungho-pk42ac--agentguard-issue-591`
+8. `ghmix-KoreaNirsa--prompt-booster-issue-3`
+9. `ghmix-MTGVim--telltale-issue-11`
+10. `ghmix-joshua-jingu-lee--ante-issue-2398`
+
+각 행은 boundedness와 native-language source를 먼저 의미 판정하고, 통과 가능할 때만
+objective evaluator/protected-gold/isolation과 agent-free base-negative/solution-positive
+reproduction을 수행한다. Agent 결과는 계속 보지 않는다. 설계나 eligibility 기준은 바뀌지
+않았으므로 연구 재검토나 protocol amendment는 필요하지 않았다. 회귀 검증은 focused
+candidate-ledger **36 tests**, 전체 suite **289 tests**가 통과했다.
+
+## 2026-07-24 23차 handoff — rank 7 의미 필터와 agent-free reproduction 완료
+
+22차 handoff가 고정한 10건만 ledger 순서대로 처리했다. 먼저 source snapshot의 제목+본문
+SHA-256을 원장과 10/10 대조하고, runtime을 설치하기 전에 native-source와 boundedness를
+판정했다. 그 결과는 다음과 같다.
+
+| route | candidate | 근거 |
+|---|---|---|
+| terminal `multiple-coupled-issues` | `ChunChuGwan #403` | S3 호출, WebP, migration, batch delete, cache, finalize, streaming, rollout을 독립 수용 기준으로 결합 |
+| terminal `translation-only` | `daily_stock_analysis #3` | 기존 중국어 UI 사전을 한국어로 치환하는 localization sweep |
+| terminal `translation-only` | `kratos #64` | JSON 동작을 유지한 채 report/Markdown 영문 문구를 한국어로 치환 |
+| terminal `translation-only` | `telltale #11` | 핵심 산출물이 기존 사용자 문구의 한국어 번역 |
+| reproduction 전진 | `small-village #54`, `doc_parser #288`, `agentguard #687`, `agentguard #591`, `prompt-booster #3`, `ante #2398` | source-derived deterministic invariant/property/test seam과 offline isolation이 존재 |
+
+일곱 개 비자명 행은 Claude CLI의 bounded read-only source review로 교차검토했다. Claude는
+명확한 terminal/advance 판정에 동의하고 `small-village #54`, `agentguard #591`,
+`ante #2398`을 disagreement-sensitive unknown으로 남겼다. 주 검토자가 exact base와 solution
+test seam을 다시 대조해 각각 offline roster/reconcile invariant, 문서의 명시적 output
+property contract, base에 이미 존재하는 runtime-readiness prerequisite를 확인한 뒤 전진을
+확정했다. Claude는 파일을 수정하지 않았고 candidate agent 결과도 만들거나 보지 않았다.
+
+여섯 survivor는 ignored local worktree와 evaluator 디렉터리에서 exact commit/tree를 원장과
+대조한 뒤 같은 protected control로 intended base-negative와 solution-positive를 실행했다.
+
+| candidate | control 결과 | bucket |
+|---|---|---:|
+| `prompt-booster #3` | base module 부재로 fail, solution source-derived intent 9 assertions pass | small |
+| `doc_parser #288` | base direct XLSX module 부재, solution synthetic workbook 5 assertions pass | small |
+| `small-village #54` | base context module 부재, solution offline mocked roster/reconcile 7/7 및 broader 20/20 pass | small |
+| `ante #2398` | copied byte-identical readiness control base 63/63 fail, solution 63/63 pass | small |
+| `agentguard #687` | doctor evidence의 local action path가 base에 없고 solution 10 assertions pass; full suite sequential pass | medium |
+| `agentguard #591` | machine-output docs contract가 base에 없고 solution 18 properties pass; full suite sequential pass | medium |
+
+AgentGuard의 처음 concurrent full-suite probe는 `tsx` socket과 duration-test 간섭을 일으켜
+증거에서 제외했고, 서로 다른 짧은 `TMPDIR`, writable npm cache, synthetic GitHub ref를 둔
+순차 실행만 bucket 근거로 사용했다. 모든 base/solution tracked tree는 control 뒤 clean이며
+네 small, 두 medium 모두 `reproducible_within_budget=pass`다. 여섯 행은 12/12 pass로
+`selected-for-task-authoring`에 이동했지만 final task/evaluator/manifest는 만들지 않았다.
+
+Tracked evidence와 결합 hash는 다음과 같다.
+
+- `phase2b-rank7-semantic-prefilter-2026-07-24.json`:
+  `c197ff0e4e7665710e8d16a89e3f5ff865263d766f9e07b525478aa4f4bad0de`
+- `phase2b-rank7-agent-free-reproduction-2026-07-24.json`:
+  `71026e607d019671a9b10fc967ba9b9ac7a8d7304fa8542279adce3102066bdd`
+- `phase2b-rank7-ledger-application-2026-07-24.json`:
+  `a6483444eb1dc40dbfe6f89bf41121c4220908bdd02485b5887c1a0a492d8acc`
+- pre-rank-7 ledger:
+  `228dbbf05ec46a7f94dde40e780bad9b6d64a32944ace5bddb49839f15a1a0f1`
+- 적용 뒤 ledger:
+  `09d2e1293fd49d49a6d1b9a3bd2b305c6808262e95de5ce89039b2a8d312b9f9`
+
+현재 수치는 screening 995 / excluded 122 / selected-for-task-authoring 13이다. Rank 7 pending은
+0이며 다음 순서는 기존 solution-scope 18건, 그 뒤 `oh-my-customcode #1415` MIT-at-base 반환
+행이다. 57개 no-test-touch 행은 보류하고, 이 signal-positive queue 뒤에 SWE-bench 300건을
+41개 upstream repository 단위 pinned-license/dataset-terms 필터로 처리한다.
+
+Known limitation은 그대로 남긴다. `small-village #54`의 final validity reviewer는 offline
+roster invariant가 source의 hosted three-client E2E 문장을 조용히 축소하지 않는지 확인해야
+한다. Managed CPython은 executable hash와 dependency hash lock을 기록했지만 publisher archive
+checksum은 보존하지 못했으므로 manifest freeze 전에 재생성·검증해야 한다. 이번 작업은 기존
+eligibility를 적용한 operational screening이고 설계 변경이 아니므로 연구 논문 재해석이나
+protocol amendment는 필요하지 않았다. 회귀 검증은 focused **37 tests**, 전체 **290 tests**가
+통과했다.
 
 ## 5. 다음 구현 작업
 

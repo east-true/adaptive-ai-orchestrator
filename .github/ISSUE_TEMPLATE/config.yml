@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security or sensitive report
+    url: https://github.com/east-true/adaptive-ai-orchestrator/security/advisories/new
+    about: Report vulnerabilities, exposed credentials, or sensitive conduct issues privately.
