@@ -1,0 +1,148 @@
+{
+  "artifact_id": "phase2b-scope-review-survivor-semantic-2026-07-24",
+  "protocol_version": "phase2b-pilot-prereg-v1.1",
+  "created_at": "2026-07-24",
+  "purpose": "Apply boundedness, isolation, evaluator-feasibility, and evaluator-hiding gates to the four exact-tree instruction-parity survivors before agent-free reproduction.",
+  "terminal_status": "routing-evidence",
+  "terminal_status_note": "All four rows advance to agent-free reproduction. This artifact does not settle reproducible-within-budget, select a final pilot task, approve a protected evaluator, or authorize a candidate-agent run.",
+  "agent_results_observed": false,
+  "design_change_required": false,
+  "input_artifacts": [
+    {
+      "path": "experiments/phase2b-candidate-ledger-v1.json",
+      "sha256": "6f7206d5775fe21ac0a0e555bb1f016361f3aa5865dcb343715473b6016ea444",
+      "state": "post-exact-revision/parity, pre-survivor-semantic working snapshot"
+    },
+    {
+      "path": "experiments/phase2b-scope-review-source-semantic-2026-07-24.json",
+      "sha256": "9ab7a488ce64d4bdccf6513d605147d8bbf5b8a31711e238644b7de49174f5f3"
+    },
+    {
+      "path": "experiments/phase2b-scope-review-solution-segmentation-2026-07-24.json",
+      "sha256": "8930853eca14324a25472b08a4a1f54ab954a0e5f0c9720132b0a8f454831e76"
+    },
+    {
+      "path": "experiments/phase2b-scope-review-instruction-parity-2026-07-24.json",
+      "sha256": "1eaedbe8efe316e15649a7f60eb07d1a2900da899d48acc4557099085a643a9b"
+    }
+  ],
+  "method": [
+    "Use only the frozen issue statement, pinned exact base, task-relevant solution segment, and repository-local tests or seams; do not inspect or run either candidate agent.",
+    "Require one causally coherent task, an offline and non-destructive execution path, source-derived objective assertions, and a protected evaluator that can be withheld from the candidate agent.",
+    "Treat the solution only as lineage and evaluator-seam evidence. Do not copy its exact wording or implementation into a future task statement or protected evaluator unless the requirement is independently source-derived.",
+    "Advance passing rows to base-negative and solution-positive controls; leave reproducible-within-budget unknown until those controls complete."
+  ],
+  "review_provenance": {
+    "primary": "Codex exact-source and solution-seam review under the frozen Phase 2b eligibility contract",
+    "claude_cli_cross_review": "No additional Claude review was needed at this stage. The only earlier ambiguity was instruction parity for the two Wor-chain-dle bases, which the bound parity artifact records as independently cross-reviewed by a read-only Claude CLI invocation."
+  },
+  "summary": {
+    "candidate_count": 4,
+    "boundedness_pass_rows": 4,
+    "isolation_pass_rows": 4,
+    "objective_evaluator_feasible_pass_rows": 4,
+    "gold_and_evaluator_hideable_pass_rows": 4,
+    "advance_agent_free_reproduction_rows": 4,
+    "selected_rows_created": 0
+  },
+  "assessments": [
+    {
+      "candidate_id": "ghmix-jinwon-int--a2a-nexus-issue-1190",
+      "ledger_index": 773,
+      "source_reference": "https://github.com/jinwon-int/a2a-nexus/issues/1190",
+      "task_statement_sha256": "05187f8b5d93b212e516a71ac0dc3d08b2d90fa9cd0755df65a799862f17dfcc",
+      "base_revision": "83450ca4d4ad1e41bd8bd3ea29942474792fc534",
+      "base_tree_hash": "ec0767628380b622eda2466d07ab53f321f6269e",
+      "solution_revision": "95bf8310d0d05d7154cf5b3122c50d30fc720712",
+      "solution_tree_hash": "894cfc4e2de65cc99bb7903a16edd156a9212a55",
+      "screening_updates": {
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass"
+      },
+      "objective_seams": [
+        "release-readiness documentation states the 0.x breaking-change minor-bump rule and lockstep-versus-independent package decision",
+        "contract and experimental stability tiers and changelog triggers are present",
+        "public English default, bilingual marker, and historical audit-evidence exception are present"
+      ],
+      "reason": "The source defines one docs-only governance contract and explicitly excludes translating existing Korean documents and performing releases or publishes. A protected Markdown property evaluator can assert the ten source-derived clauses offline without requiring the solution's exact prose.",
+      "next_route": "advance_agent_free_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-173",
+      "ledger_index": 811,
+      "source_reference": "https://github.com/Ootzk/Wor-chain-dle/issues/173",
+      "task_statement_sha256": "ef37699f7c0b25b1858a3be70e5a2c30140cfc4d0e9ef17565e337dbd1321fef",
+      "base_revision": "b4a8b32dd9ff454c1e5b3a8ab438b6d2815853f1",
+      "base_tree_hash": "bec3e84e8c1e7846616557016bb6832b4d7eea6d",
+      "solution_revision": "ef7701c662050117f47b043751fb07f253719064",
+      "solution_tree_hash": "28cfa5d1ea53e9339b73ba70dffc64ea08c27e19",
+      "screening_updates": {
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass"
+      },
+      "objective_seams": [
+        "Daily, Practice, Custom, and Create remain fixed English labels under a Korean locale",
+        "the shared label contract is consumed consistently by game headings, navigation links, and the create page"
+      ],
+      "reason": "One fixed-label consistency invariant spans several UI consumers. React Testing Library can set the Korean locale and assert observable headings and links entirely in jsdom, with the protected test supplied outside the checkout.",
+      "next_route": "advance_agent_free_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-130",
+      "ledger_index": 824,
+      "source_reference": "https://github.com/Ootzk/Wor-chain-dle/issues/130",
+      "task_statement_sha256": "9c55ce03db77cf72d9cdc8518e1c28265f0b190feb5e1d61ef3a93c3b3d22050",
+      "base_revision": "2346913bc1347718e9d2deba2ef6cf5f91193b3b",
+      "base_tree_hash": "3053e0e69685f0a4f1d17becea18c690fcfdc599",
+      "solution_revision": "9adbad4b98b0c78faf1f309067a3cca88a1d5157",
+      "solution_tree_hash": "66aa453f4b5a1008bab5e7a170d9a5f8b636b039",
+      "screening_updates": {
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass"
+      },
+      "objective_seams": [
+        "the Information modal exposes a fourth Patch Notes tab",
+        "the tab reuses the existing patch-note history and permits expanding a version entry",
+        "the existing first-visit patch-note behavior remains outside this additive modal path"
+      ],
+      "reason": "The task is an additive modal tab over existing patch-note data. A focused jsdom interaction can verify tab count, accessible name, reused content, and expansion without a browser, network, credential, or production side effect.",
+      "next_route": "advance_agent_free_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-B-TING--bu-ting-mobile-issue-75",
+      "ledger_index": 1077,
+      "source_reference": "https://github.com/B-TING/bu-ting-mobile/issues/75",
+      "task_statement_sha256": "a317215ff6e25963b43ac25b3f969521596c1560e56e9bbe05be42a9dc5a3d76",
+      "base_revision": "0c8689a8444972d33fcbed0b505ea33b767d2ba7",
+      "base_tree_hash": "fb7faa78dc27a72c82e4da0c8223c6f29ecc52e4",
+      "solution_revision": "59950e531ea17680d2b71d2fb3ffb2e4fcb81e5d",
+      "solution_tree_hash": "2ffd992e0cc5fd43cb728816582dfbc1321e5cf8",
+      "screening_updates": {
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass"
+      },
+      "objective_seams": [
+        "server memo data maps into a route and a store update changes only the target route",
+        "editor input trims meaningful text and maps whitespace-only text to no memo",
+        "the API seam resolves the server place id and sends trimmed text or null through a mock",
+        "the screen retains a previous value for optimistic rollback and the route card exposes a bounded preview"
+      ],
+      "reason": "The data, store, editor, API, rollback, and preview layers implement one persisted destination-memo behavior. Jest and React Test Renderer can isolate the native UI and API seams with local mocks; final task authoring must convert the rollback structural control into a behavioral protected assertion before pilot approval.",
+      "next_route": "advance_agent_free_reproduction"
+    }
+  ],
+  "invariants": [
+    "No candidate agent was run and no agent-quality result was observed.",
+    "No row became selected-for-task-authoring in this artifact.",
+    "All evaluator requirements are derived from the source statement rather than from incidental solution breadth.",
+    "Passing evaluator feasibility does not approve the temporary screening evaluator as the final protected evaluator."
+  ]
+}

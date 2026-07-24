@@ -1,0 +1,417 @@
+{
+  "artifact_id": "phase2b-scope-review-ledger-application-2026-07-24",
+  "protocol_version": "phase2b-pilot-prereg-v1.1",
+  "created_at": "2026-07-24",
+  "purpose": "Bind the fixed 19-row source-semantic decisions to the candidate ledger without selecting tasks or observing candidate-agent results.",
+  "agent_results_observed": false,
+  "design_change_required": false,
+  "input_artifacts": [
+    {
+      "path": "experiments/phase2b-candidate-ledger-v1.json",
+      "sha256": "09d2e1293fd49d49a6d1b9a3bd2b305c6808262e95de5ce89039b2a8d312b9f9",
+      "state": "pre-scope-source-review Git-tracked snapshot"
+    },
+    {
+      "path": "experiments/phase2b-scope-review-source-semantic-2026-07-24.json",
+      "sha256": "9ab7a488ce64d4bdccf6513d605147d8bbf5b8a31711e238644b7de49174f5f3"
+    }
+  ],
+  "summary": {
+    "candidate_rows_updated": 19,
+    "terminal_source_exclusion_rows": 7,
+    "screening_rows_advanced_to_solution_segmentation": 12,
+    "new_selected_for_task_authoring_rows": 0,
+    "screening_after": 988,
+    "excluded_after": 129,
+    "selected_after": 13
+  },
+  "mutations": [
+    {
+      "candidate_id": "ghko-RosieOh--ccStory-issue-12",
+      "before_decision": "screening",
+      "after_decision": "screening",
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "debugging",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghko-dungsil-ai--intellij-plugin-egovframe-issue-5",
+      "before_decision": "screening",
+      "after_decision": "screening",
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "implementation",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghko-nodease--mbased-issue-499",
+      "before_decision": "screening",
+      "after_decision": "excluded",
+      "screening_updates": {
+        "single_bounded_task": "fail",
+        "native_language_source": "pass"
+      },
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "repository-analysis-planning",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "exclusion_rule_ids_triggered": [
+        "multiple-coupled-issues"
+      ],
+      "next_route": "terminal_multiple_coupled_issues"
+    },
+    {
+      "candidate_id": "ghko-Lyainc--filme-issue-417",
+      "before_decision": "screening",
+      "after_decision": "screening",
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "debugging",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghko-Lyainc--filme-issue-414",
+      "before_decision": "screening",
+      "after_decision": "excluded",
+      "screening_updates": {
+        "single_bounded_task": "fail",
+        "native_language_source": "pass"
+      },
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "debugging",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "exclusion_rule_ids_triggered": [
+        "multiple-coupled-issues"
+      ],
+      "next_route": "terminal_multiple_coupled_issues"
+    },
+    {
+      "candidate_id": "ghko-RosieOh--ccStory-issue-11",
+      "before_decision": "screening",
+      "after_decision": "screening",
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "debugging",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghko-RosieOh--ccStory-issue-10",
+      "before_decision": "screening",
+      "after_decision": "screening",
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "debugging",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghmix-Soku-JINSEOK--Soku-Convention-Boilerplate-issue-3",
+      "before_decision": "screening",
+      "after_decision": "excluded",
+      "screening_updates": {
+        "single_bounded_task": "fail",
+        "native_language_source": "pass"
+      },
+      "provisional_classification": {
+        "instruction_language": "mixed",
+        "task_category": "refactoring",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "exclusion_rule_ids_triggered": [
+        "multiple-coupled-issues"
+      ],
+      "next_route": "terminal_multiple_coupled_issues"
+    },
+    {
+      "candidate_id": "ghmix-jinwon-int--a2a-nexus-issue-1190",
+      "before_decision": "screening",
+      "after_decision": "screening",
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "repository-analysis-planning",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-173",
+      "before_decision": "screening",
+      "after_decision": "screening",
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "refactoring",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghmix-hskim-solv--BidMate-DocAgent-issue-919",
+      "before_decision": "screening",
+      "after_decision": "excluded",
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "fail"
+      },
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "refactoring",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "exclusion_rule_ids_triggered": [
+        "translation-only"
+      ],
+      "next_route": "terminal_translation_only"
+    },
+    {
+      "candidate_id": "ghmix-hskim-solv--BidMate-DocAgent-issue-918",
+      "before_decision": "screening",
+      "after_decision": "excluded",
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "fail",
+        "no_network_secret_push_production": "fail"
+      },
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "refactoring",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "exclusion_rule_ids_triggered": [
+        "translation-only",
+        "unsafe-or-external-side-effect"
+      ],
+      "next_route": "terminal_translation_and_external_side_effect"
+    },
+    {
+      "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-130",
+      "before_decision": "screening",
+      "after_decision": "screening",
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "implementation",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghmix-115dkk--Impulcifer-pip313-issue-79",
+      "before_decision": "screening",
+      "after_decision": "screening",
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "testing",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghmix-GulSam00--singcode-issue-208",
+      "before_decision": "screening",
+      "after_decision": "excluded",
+      "screening_updates": {
+        "single_bounded_task": "fail",
+        "native_language_source": "pass"
+      },
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "implementation",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "exclusion_rule_ids_triggered": [
+        "multiple-coupled-issues"
+      ],
+      "next_route": "terminal_multiple_coupled_issues"
+    },
+    {
+      "candidate_id": "ghmix-pillip--realtime-en2ko-captions-issue-15",
+      "before_decision": "screening",
+      "after_decision": "screening",
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "implementation",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghmix-pillip--realtime-en2ko-captions-issue-13",
+      "before_decision": "screening",
+      "after_decision": "screening",
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "implementation",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghmix-B-TING--bu-ting-mobile-issue-75",
+      "before_decision": "screening",
+      "after_decision": "screening",
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "implementation",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghmix-baekenough--oh-my-customcode-issue-1415",
+      "before_decision": "screening",
+      "after_decision": "excluded",
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "fail",
+        "no_network_secret_push_production": "fail"
+      },
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "refactoring",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "exclusion_rule_ids_triggered": [
+        "translation-only",
+        "unsafe-or-external-side-effect"
+      ],
+      "next_route": "terminal_translation_and_external_side_effect"
+    }
+  ],
+  "output_artifact": {
+    "path": "experiments/phase2b-candidate-ledger-v1.json",
+    "sha256": "7cca33b5d318f17b661cac29f2e406ab899389f09d9cad20286ca7c2ac3772ec",
+    "summary": {
+      "candidate_count": 1130,
+      "screening_count": 988,
+      "excluded_count": 129,
+      "selected_for_task_authoring_count": 13,
+      "language_assignment_counts": {
+        "ko": 88,
+        "en": 301,
+        "mixed": 23,
+        "unassigned": 718
+      },
+      "category_assignment_counts": {
+        "implementation": 47,
+        "debugging": 22,
+        "testing": 8,
+        "refactoring": 24,
+        "repository-analysis-planning": 11,
+        "unassigned": 1018
+      },
+      "known_gaps": [
+        "selected-for-task-authoring is a construction queue state only: thirteen rows satisfy candidate eligibility, but no pilot task, final evaluator, validity review, manifest instance, or agent execution has been authored or run.",
+        "Project-level instruction parity is an explicit rule. It is now settled for 52 exact pinned bases across phase2b-agent-instruction-parity-2026-07-20.json and phase2b-rank6-instruction-parity-2026-07-24.json: 22 pass and 30 fail. All other rows remain unknown unless independently excluded.",
+        "The active Claude and Codex global instruction inventories are not semantically equivalent. Before execution, Phase 2b must make them semantically equivalent or use isolated empty agent homes, then pin the resulting effective instruction state; pinning a known asymmetric state does not resolve the confounder.",
+        "Only 33 of 411 Korean-bearing GitHub rows have manual language/category review; 29 are excluded, factlog-academic #314/#342, ChunChuGwan #406, and small-village #54 are selected-for-task-authoring, and 378 rows remain unprobed.",
+        "A second explicit-language pool added 383 nonduplicate rows; a deterministic 50-row review found 21 provisional mixed requirements, but 22 rows failed translation-only, subjectivity, coupling, or external-side-effect rules.",
+        "The reviewed rows now provide 70 provisional Korean, 301 English, and 22 mixed assignments. Thirteen Korean rows are selected-for-task-authoring, but this construction state does not fill the 20/20/20 quota or create a pilot task.",
+        "The 300 externally inventoried statements are provisionally English, but native-source fidelity has not been verified instance by instance.",
+        "GitHub linked solution PR, exact base, patch scope, and upstream license remain unresolved for most of the Korean-bearing discovery pool.",
+        "Task category remains unassigned for 1037 of 1130 rows.",
+        "Upstream license, exact base/tree, project instruction parity, objective evaluator coverage, protected-fixture leakage, isolation, flakiness, and resource reproducibility remain unscreened for most rows.",
+        "Public benchmark exposure may contaminate agent behavior; this pilot cannot turn those instances into confirmatory capability evidence.",
+        "Eligibility does not depend on runtimes that happen to be installed on the screening host. A Linux-reproducible runtime or toolchain may be provisioned into an isolated immutable environment before manifest freeze, subject to exact version and artifact-hash pins, byte-equivalent environments for both agents, no network during agent or evaluator execution, agent-free base and control reproduction, the preregistered resource bucket, and a recorded environment epoch and fixture provenance.",
+        "Twelve reviewed Korean-bearing rows were excluded as license-or-use-basis-unavailable: their pinned base revisions carry no license artifact and no manifest license declaration. The reviewed Korean pool that remains in screening is therefore small, and the language and category quotas are marginal targets that this pool alone is not required to satisfy.",
+        "The 2026-07-24 cost cascade resolved exact source lineage and pinned licenses for 31 rows: 27 license passes, three copyleft failures, and one exact-base license absence. Twenty-six pass rows advance to exact-tree instruction or remaining-rule review; one MIT-at-base row returns to solution-scope review.",
+        "The 2026-07-24 rank-7 review processed the ten parity survivors without candidate-agent execution: three localization tasks and one multi-optimization issue were terminally excluded, while six exact base-negative/solution-positive controls passed within their resource buckets and moved to selected-for-task-authoring.",
+        "The fixed 19-row solution-scope source review is complete: seven rows are terminally excluded by preregistered translation, coupling, or external-side-effect rules; twelve bounded native-source rows remain screening and advance only to solution segmentation. No candidate agent was run."
+      ]
+    }
+  },
+  "known_limitations": [
+    "The twelve nonterminal rows still require solution segmentation and the remaining exact-revision eligibility gates.",
+    "This application changes candidate screening state only; it creates no pilot task, evaluator, manifest instance, or agent execution."
+  ]
+}

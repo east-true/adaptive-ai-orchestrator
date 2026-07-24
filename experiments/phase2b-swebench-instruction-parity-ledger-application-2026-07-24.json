@@ -1,0 +1,2699 @@
+{
+  "artifact_id": "phase2b-swebench-instruction-parity-ledger-application-2026-07-24",
+  "created_at": "2026-07-24T10:27:59+09:00",
+  "protocol_version": "phase2b-pilot-prereg-v1.1",
+  "purpose": "Apply the frozen SWE-bench exact-tree instruction-parity evidence to the candidate ledger without observing candidate-agent results.",
+  "agent_results_observed": false,
+  "design_change_required": false,
+  "input_artifacts": [
+    {
+      "path": "experiments/phase2b-candidate-ledger-v1.json",
+      "sha256": "5387689e35319a558aa133b0a9655f4d16469fa4a95c0fa5ba38d39cd59d96c1",
+      "state": "post-SWE-bench exact-license, pre-instruction-parity working snapshot"
+    },
+    {
+      "path": "experiments/phase2b-swebench-instruction-parity-2026-07-24.json",
+      "sha256": "e2e420657edd5bf32c3235a33abc517543185cd61a2f82dd1b94ece47d6dd3b3"
+    }
+  ],
+  "mutation_contract": {
+    "eligible_rows": "Only the 291 SWE-bench rows with exact-base and pinned upstream-license pass.",
+    "allowed_changes": [
+      "screening.instruction_parity: unknown -> pass",
+      "append one evidence-bound decision reason",
+      "refresh summary.known_gaps to the current evidence state"
+    ],
+    "forbidden_changes": [
+      "candidate identity, source statement, base, tree, solution, changed files, license, or classification",
+      "candidate decision or exclusion rules",
+      "any other screening gate"
+    ]
+  },
+  "mutations": [
+    {
+      "candidate_id": "swebm-apache__druid-13704",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__druid-14092",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__druid-14136",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__druid-15402",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__druid-16875",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__lucene-11760",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__lucene-12022",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__lucene-12196",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__lucene-12212",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__lucene-12626",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__lucene-13170",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__lucene-13301",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__lucene-13494",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__lucene-13704",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-astral-sh__ruff-15309",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-astral-sh__ruff-15330",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-astral-sh__ruff-15356",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-astral-sh__ruff-15394",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-astral-sh__ruff-15443",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-astral-sh__ruff-15543",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-astral-sh__ruff-15626",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-axios__axios-4731",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-axios__axios-4738",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-axios__axios-5085",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-axios__axios-5316",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-axios__axios-5892",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-axios__axios-6539",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-babel__babel-13928",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-babel__babel-14532",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-babel__babel-15445",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-babel__babel-15649",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-babel__babel-16130",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-briannesbitt__carbon-2665",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-briannesbitt__carbon-2752",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-briannesbitt__carbon-2762",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-briannesbitt__carbon-2813",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-briannesbitt__carbon-2981",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-briannesbitt__carbon-3005",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-briannesbitt__carbon-3041",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-briannesbitt__carbon-3073",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-briannesbitt__carbon-3098",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-briannesbitt__carbon-3103",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-burntsushi__ripgrep-2209",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-burntsushi__ripgrep-2576",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-4774",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-4943",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-5404",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-5626",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-5761",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-5870",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-5995",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-6051",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-6115",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-6288",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-6345",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-6350",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-6370",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-6411",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-facebook__docusaurus-10130",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-facebook__docusaurus-10309",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-facebook__docusaurus-8927",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-facebook__docusaurus-9183",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-facebook__docusaurus-9897",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-faker-ruby__faker-2705",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-faker-ruby__faker-2970",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fastlane__fastlane-19207",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fastlane__fastlane-19304",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fastlane__fastlane-19765",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fastlane__fastlane-20642",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fastlane__fastlane-20958",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fastlane__fastlane-20975",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fastlane__fastlane-21857",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-3328",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-3466",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-3608",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-3616",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-3631",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-3640",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-3641",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-3917",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-4030",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-4311",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-4598",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-4655",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-1683",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-2310",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-2317",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-2457",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-3158",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-3248",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-3272",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-3729",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-3750",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-3863",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-3901",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gin-gonic__gin-1805",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gin-gonic__gin-1957",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gin-gonic__gin-2121",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gin-gonic__gin-2755",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gin-gonic__gin-3227",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gin-gonic__gin-3741",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gin-gonic__gin-3820",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gin-gonic__gin-4003",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gohugoio__hugo-12171",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gohugoio__hugo-12204",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gohugoio__hugo-12343",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gohugoio__hugo-12448",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gohugoio__hugo-12562",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gohugoio__hugo-12579",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gohugoio__hugo-12768",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-google__gson-1014",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-google__gson-1093",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-google__gson-1100",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-google__gson-2024",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-google__gson-2061",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-google__gson-2134",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-google__gson-2158",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-google__gson-2311",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-google__gson-2479",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-immutable-js__immutable-js-2005",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-immutable-js__immutable-js-2006",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-javaparser__javaparser-4538",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-javaparser__javaparser-4561",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jekyll__jekyll-8047",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jekyll__jekyll-8167",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jekyll__jekyll-8761",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jekyll__jekyll-8771",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jekyll__jekyll-9141",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jordansissel__fpm-1829",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jordansissel__fpm-1850",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jqlang__jq-2235",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jqlang__jq-2650",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jqlang__jq-2658",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jqlang__jq-2681",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jqlang__jq-2728",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jqlang__jq-2750",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jqlang__jq-2839",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-46234",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-48573",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-48636",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-51195",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-51890",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-52451",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-52680",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-52684",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-52866",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-53206",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-53696",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-53914",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-53949",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-micropython__micropython-10095",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-micropython__micropython-12158",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-micropython__micropython-13039",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-micropython__micropython-13569",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-micropython__micropython-15898",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-mrdoob__three.js-25687",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-mrdoob__three.js-26589",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-mrdoob__three.js-27395",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-nlohmann__json-4237",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-nushell__nushell-12901",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-nushell__nushell-12950",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-nushell__nushell-13246",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-nushell__nushell-13605",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-nushell__nushell-13831",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-php-cs-fixer__php-cs-fixer-7523",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-php-cs-fixer__php-cs-fixer-7635",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-php-cs-fixer__php-cs-fixer-7663",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-php-cs-fixer__php-cs-fixer-7875",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-php-cs-fixer__php-cs-fixer-7998",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-php-cs-fixer__php-cs-fixer-8064",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-php-cs-fixer__php-cs-fixer-8075",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-php-cs-fixer__php-cs-fixer-8256",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-php-cs-fixer__php-cs-fixer-8331",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-php-cs-fixer__php-cs-fixer-8367",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-phpoffice__phpspreadsheet-3463",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-phpoffice__phpspreadsheet-3469",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-phpoffice__phpspreadsheet-3570",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-phpoffice__phpspreadsheet-3659",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-phpoffice__phpspreadsheet-3903",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-phpoffice__phpspreadsheet-3940",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-phpoffice__phpspreadsheet-4114",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-phpoffice__phpspreadsheet-4186",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-phpoffice__phpspreadsheet-4214",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-phpoffice__phpspreadsheet-4313",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-2757",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-2896",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-2927",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-3010",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-3062",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-3345",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-3454",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-3562",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-3567",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-3689",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-3739",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-3763",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-4152",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-4182",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-4245",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-4316",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-4436",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-2792",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3009",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3042",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3052",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3215",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3312",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3326",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3350",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3371",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3422",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3479",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3486",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3571",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3594",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3602",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3674",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3697",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-prometheus__prometheus-10633",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-prometheus__prometheus-10720",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-prometheus__prometheus-11859",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-prometheus__prometheus-12874",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-prometheus__prometheus-13845",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-prometheus__prometheus-14861",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-prometheus__prometheus-15142",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-prometheus__prometheus-9248",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-reactivex__rxjava-7597",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-redis__redis-10068",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-redis__redis-10095",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-redis__redis-10764",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-redis__redis-11279",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-redis__redis-11510",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-redis__redis-11631",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-redis__redis-11734",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-redis__redis-12472",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-redis__redis-13115",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-redis__redis-9733",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13362",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13375",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13393",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13396",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13424",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13431",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13479",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13503",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13560",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13579",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13627",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13653",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13668",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13680",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13687",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13705",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-sharkdp__bat-1892",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-sharkdp__bat-2201",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-sharkdp__bat-2260",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-sharkdp__bat-2393",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-sharkdp__bat-2650",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-sharkdp__bat-2835",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-sharkdp__bat-3108",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-sharkdp__bat-562",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__axum-1119",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__axum-1730",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__axum-1934",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__axum-2096",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__axum-682",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__axum-691",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__axum-734",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__tokio-4384",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__tokio-4867",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__tokio-4898",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__tokio-6551",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__tokio-6603",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__tokio-6724",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__tokio-6752",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__tokio-6838",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__tokio-7139",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-uutils__coreutils-6377",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-uutils__coreutils-6575",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-uutils__coreutils-6682",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-uutils__coreutils-6690",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-uutils__coreutils-6731",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-valkey-io__valkey-1499",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-valkey-io__valkey-1842",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-valkey-io__valkey-790",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-valkey-io__valkey-928",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-vuejs__core-11589",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-vuejs__core-11739",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-vuejs__core-11870",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-vuejs__core-11899",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-vuejs__core-11915",
+      "instruction_parity_before": "unknown",
+      "instruction_parity_after": "pass",
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "decision_reason_appended": "The complete exact-base tree contains no AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, or .claude/rules Markdown entry, so neither CLI receives candidate-tree project guidance; the separate global-instruction gate remains unresolved.",
+      "exclusion_rule_ids_after": []
+    }
+  ],
+  "summary": {
+    "candidate_rows_updated": 291,
+    "instruction_parity_pass_rows": 291,
+    "instruction_parity_fail_rows": 0,
+    "new_terminal_instruction_parity_exclusions": 0,
+    "screening_after": 967,
+    "excluded_after": 146,
+    "selected_after": 17,
+    "candidate_agent_executions": 0
+  },
+  "output_artifact": {
+    "path": "experiments/phase2b-candidate-ledger-v1.json",
+    "sha256": "45768bd4df54556dc524d4ee8240fbbe460eb9b1e75d50702b1f70673df9daf2",
+    "summary": {
+      "candidate_count": 1130,
+      "screening_count": 967,
+      "excluded_count": 146,
+      "selected_for_task_authoring_count": 17,
+      "language_assignment_counts": {
+        "ko": 88,
+        "en": 301,
+        "mixed": 23,
+        "unassigned": 718
+      },
+      "category_assignment_counts": {
+        "implementation": 47,
+        "debugging": 22,
+        "testing": 8,
+        "refactoring": 24,
+        "repository-analysis-planning": 11,
+        "unassigned": 1018
+      },
+      "known_gaps": [
+        "selected-for-task-authoring is a construction queue state only: seventeen rows satisfy candidate eligibility, but no pilot task, final evaluator, validity review, manifest instance, or agent execution has been authored or run.",
+        "Project-level instruction parity is settled for 355 exact pinned bases across the existing parity artifacts: 317 pass and 38 fail. The remaining 775 rows stay unknown unless independently excluded.",
+        "The active Claude and Codex global instruction inventories are not semantically equivalent. Before execution, Phase 2b must make them semantically equivalent or use isolated empty agent homes, then pin the resulting effective instruction state; pinning a known asymmetric state does not resolve the confounder.",
+        "The fixed GitHub discovery frames contain 411 Korean-bearing rows and 383 nonduplicate explicit-language rows, but most remain at low-cost screening depth and lack exact solution, base, license, or deeper gate evidence.",
+        "The ledger now assigns 88 Korean, 301 English, and 23 mixed rows, while 718 remain unassigned. All seventeen selected-for-task-authoring rows are Korean, so the preregistered 20/20/20 language quota is not met.",
+        "For the 300 SWE-bench Multilingual rows, exact dataset terms, base revisions, trees, and task-relevant upstream license scope are settled: 291 pass and 9 are terminal license failures. Exact-tree project instruction parity also passes for all 291 license-pass rows, which still require native-source fidelity, boundedness, evaluator, isolation, flakiness, and resource review.",
+        "Task category remains unassigned for 1018 of 1130 rows, and the seventeen selected-for-task-authoring rows do not include a testing task; the preregistered category balance is not met.",
+        "Public benchmark exposure may contaminate agent behavior; this pilot cannot turn those instances into confirmatory capability evidence.",
+        "Eligibility does not depend on runtimes that happen to be installed on the screening host. A Linux-reproducible runtime or toolchain may be provisioned into an isolated immutable environment before manifest freeze, subject to exact version and artifact-hash pins, byte-equivalent environments for both agents, no network during agent or evaluator execution, agent-free base and control reproduction, the preregistered resource bucket, and a recorded environment epoch and fixture provenance.",
+        "Fifty-seven no-test-touch rows remain deferred rather than excluded because not changing tests is not itself a failure, and 585 current-HEAD none-observed GitHub rows remain deferred because present-day absence is not evidence about the pinned task base."
+      ]
+    }
+  }
+}

@@ -1,0 +1,489 @@
+{
+  "artifact_id": "phase2b-scope-review-source-semantic-2026-07-24",
+  "protocol_version": "phase2b-pilot-prereg-v1.1",
+  "created_at": "2026-07-24",
+  "purpose": "Apply the cheapest native-source, translation, boundedness, and mandatory-external-side-effect gates to the fixed 19-row solution-scope queue before any new exact-tree materialization or runtime reproduction.",
+  "terminal_status": "mixed-terminal-and-routing-evidence",
+  "terminal_status_note": "This artifact is terminal only for source statements that directly prove translation-only, multiple-coupled-issues, or unsafe-or-external-side-effect. Passing rows advance only to solution segmentation and remain screening candidates.",
+  "agent_results_observed": false,
+  "design_change_required": false,
+  "input_artifacts": [
+    {
+      "path": "experiments/phase2b-candidate-ledger-v1.json",
+      "sha256": "09d2e1293fd49d49a6d1b9a3bd2b305c6808262e95de5ce89039b2a8d312b9f9",
+      "state": "pre-scope-source-review Git-tracked snapshot"
+    },
+    {
+      "path": "experiments/phase2b-linked-solution-prefilter-2026-07-24.json",
+      "sha256": "6fdc6e69bbd0e38795c472bfa457ce496715f36e7d2a57274ea29dfe410abcfa"
+    },
+    {
+      "path": "experiments/phase2b-screening-cascade-2026-07-24.json",
+      "sha256": "b91a56312a37cf9704f1429b60304ffb5c58d8e12347acc1428d7652138ed61b"
+    }
+  ],
+  "source_integrity": {
+    "candidate_count": 19,
+    "current_title_plus_body_sha256_matches_ledger": 18,
+    "frozen_statement_reconstructed_from_public_history": 1,
+    "exception": {
+      "candidate_id": "ghmix-Soku-JINSEOK--Soku-Convention-Boilerplate-issue-3",
+      "ledger_task_statement_sha256": "7ded761fe786e7616e9cd05f73e2beb6171c46b18355d3c71f9997f3216c2a1d",
+      "current_statement_matches_ledger": false,
+      "change": "GitHub timeline records a 2026-07-21 title rename from '[Chore] Repository structure cleanup, multi-stack skeletons, and README language block refactor' to the current emoji/conventional-commit title; the body is unchanged.",
+      "reconstruction": "SHA-256(previous timeline title + two LF bytes + current body) equals the frozen ledger task_statement_hash exactly. The semantic review used that reconstructed frozen statement, not the mutable current title."
+    },
+    "note": "The tracked artifact stores public source URLs and hashes, not copied issue bodies. Existing issue HTML hashes remain pinned in the linked-solution prefilter."
+  },
+  "method": [
+    "Preserve ledger order: the existing 18 solution-scope rows first, followed by the rescued MIT-at-base oh-my-customcode row.",
+    "Verify title-plus-body SHA-256 against the frozen ledger before semantic review; reconstruct only a publicly recorded title rename when it restores the exact frozen hash.",
+    "Apply native-language/translation identity first, then single-task coupling, then mandatory external-side-effect. Do not use PR breadth, changed-file count, or test touch as terminal evidence.",
+    "Treat a coherent vertical feature spanning layers as one task. Fail boundedness only when the source couples independently evaluable workstreams.",
+    "Advance survivors only to solution segmentation. Exact base, pinned license, instruction parity, evaluator feasibility, isolation, and reproduction remain unresolved unless already proven by an earlier artifact."
+  ],
+  "review_provenance": {
+    "primary": "Codex review of all 19 frozen source statements against the preregistered inclusion and exclusion rules",
+    "claude_cli_cross_review": "A bounded read-only Claude CLI review independently assessed eight disagreement-sensitive sources with tools disabled and no workspace write access. It agreed on ccStory #12, intellij-plugin-egovframe #5, a2a-nexus #1190, singcode #208, realtime-en2ko-captions #15, bu-ting-mobile #75, and the translation-only identity of oh-my-customcode #1415; it additionally identified filme #414's explicitly separated three-cause/two-stage work as multiple coupled issues. Codex retained that finding. Codex independently recorded unsafe-or-external-side-effect for oh-my-customcode #1415 because retroactive gh issue edit mutations are explicit completion requirements, not merely production context."
+  },
+  "summary": {
+    "candidate_count": 19,
+    "translation_only_terminal_occurrences": 3,
+    "multiple_coupled_issues_terminal_occurrences": 4,
+    "unsafe_or_external_side_effect_terminal_occurrences": 2,
+    "unique_terminal_exclusion_rows": 7,
+    "advance_solution_segmentation_rows": 12,
+    "selected_rows_created": 0,
+    "candidate_agent_executions": 0
+  },
+  "assessments": [
+    {
+      "candidate_id": "ghko-RosieOh--ccStory-issue-12",
+      "ledger_index": 350,
+      "source_reference": "https://github.com/RosieOh/ccStory/issues/12",
+      "task_statement_sha256": "6e012a4551fcc8eeff371f15d4540757f08a910b723bb37954970bc191c4e1dd",
+      "issue_html_sha256": "8bd211092988575c3082294e24d15774abaa5aca0daa6b1fc70dbea7d2303e27",
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "debugging",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "terminal_exclusion_ids": [],
+      "reason": "The Korean source describes one causally unified type-check failure: an implicit ES3 target hides modern API/type errors, and the exposed main-process database value then needs null narrowing. ES2022 target/lib plus the narrowing fix are jointly verified by the same build/typecheck contract.",
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghko-dungsil-ai--intellij-plugin-egovframe-issue-5",
+      "ledger_index": 400,
+      "source_reference": "https://github.com/dungsil-ai/intellij-plugin-egovframe/issues/5",
+      "task_statement_sha256": "295ff077a9e94233fd6887c13f9f1e95f2011ce43d5c91bcbd69b4e04e63bb15",
+      "issue_html_sha256": "44390d7a9c1f2e670e55a86015f78ef1ab0c4533e378d7166c88fb4813f9271f",
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "implementation",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "terminal_exclusion_ids": [],
+      "reason": "The Korean source specifies one SQL DDL input/validation feature: dialect selection, sample DDLs, SQL-aware editing, and diagnostics form one editor workflow while the existing 11-artifact generation contract remains unchanged. Component breadth alone does not split a vertical feature.",
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghko-nodease--mbased-issue-499",
+      "ledger_index": 424,
+      "source_reference": "https://github.com/nodease/mbased/issues/499",
+      "task_statement_sha256": "c303d3135988fed1b4dcd3a6955c151f5a482c1df964d1501aeec4278f45c75b",
+      "issue_html_sha256": "8c0b89b94c23f7d5f7bdbafacb92cc4e186553a8db0878d71726e2026e19e7af",
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "repository-analysis-planning",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "screening_updates": {
+        "single_bounded_task": "fail",
+        "native_language_source": "pass"
+      },
+      "terminal_exclusion_ids": [
+        "multiple-coupled-issues"
+      ],
+      "reason": "The source independently requires PRD, architecture, data-model, glossary, operational-lifecycle, organization, audit-tracing, credential API/component/requirements/test-case, and model-recommendation document reconciliations. These span separable product contracts and acceptance surfaces rather than one bounded documentation invariant.",
+      "next_route": "terminal_multiple_coupled_issues"
+    },
+    {
+      "candidate_id": "ghko-Lyainc--filme-issue-417",
+      "ledger_index": 488,
+      "source_reference": "https://github.com/Lyainc/filme/issues/417",
+      "task_statement_sha256": "5302846a3b8f96ffca3726de9179170907a6106f6b0b14dbd221e00864a56881",
+      "issue_html_sha256": "b2f47090f5157d9df2a3e108fd5499ebd9b5b458cf72425c828582dd3830fd26",
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "debugging",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "terminal_exclusion_ids": [],
+      "reason": "The Korean source isolates one signature caret-positioning defect caused by measuring the wrapper instead of the text geometry and gives a direction-specific correction. Sharing a later release PR with other fixes does not enlarge the source task.",
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghko-Lyainc--filme-issue-414",
+      "ledger_index": 598,
+      "source_reference": "https://github.com/Lyainc/filme/issues/414",
+      "task_statement_sha256": "e6ea221d42c4e5e87806556a2c567af70206820843bf3a18ab1ae24d756cac69",
+      "issue_html_sha256": "13f6cf7d7a21c4b6ab5fd5edd75476a8f2d8579313a8c927e0e4f267e036f615",
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "debugging",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "screening_updates": {
+        "single_bounded_task": "fail",
+        "native_language_source": "pass"
+      },
+      "terminal_exclusion_ids": [
+        "multiple-coupled-issues"
+      ],
+      "reason": "The source explicitly separates three candidate causes into two stages: crossOrigin consistency and silent-catch surfacing are independent unconditional fixes, while blob URL revoke timing requires separate real-device reproduction before a fix. Those workstreams have distinct causes, files, and acceptance evidence.",
+      "next_route": "terminal_multiple_coupled_issues"
+    },
+    {
+      "candidate_id": "ghko-RosieOh--ccStory-issue-11",
+      "ledger_index": 710,
+      "source_reference": "https://github.com/RosieOh/ccStory/issues/11",
+      "task_statement_sha256": "ac3adc2de3d70b71dd60ba81efd80838ac5b20910acb4423036567a220ce73c2",
+      "issue_html_sha256": "82610969539dd2db66e2bc910e57af537cb54fbcaf9477837dd9aa95feec8264",
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "debugging",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "terminal_exclusion_ids": [],
+      "reason": "The Korean source defines one stale-project/session database pruning defect and one coherent cleanup behavior. It is independently separable from the other issues that later shared PR #13.",
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghko-RosieOh--ccStory-issue-10",
+      "ledger_index": 711,
+      "source_reference": "https://github.com/RosieOh/ccStory/issues/10",
+      "task_statement_sha256": "a715831736129524463b6c887c8b44a2f724932da8396cfe1f659eaa0d5aa490",
+      "issue_html_sha256": "32e9c947d3ca7efaafb244ee9f5a5d5f9e36a8550e38f1ba28b1cb42f9bfdf59",
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "debugging",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "terminal_exclusion_ids": [],
+      "reason": "The Korean source describes one chokidar-v4 compatibility bug: removed glob interpretation requires explicit watch roots plus filtering while preserving the existing observable watcher behavior.",
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghmix-Soku-JINSEOK--Soku-Convention-Boilerplate-issue-3",
+      "ledger_index": 767,
+      "source_reference": "https://github.com/Soku-JINSEOK/Soku-Convention-Boilerplate/issues/3",
+      "task_statement_sha256": "7ded761fe786e7616e9cd05f73e2beb6171c46b18355d3c71f9997f3216c2a1d",
+      "issue_html_sha256": "eb44c35cb125867a681bd406755ae2ff0ab25ff37ed5812a3f7d01d4712afc80",
+      "provisional_classification": {
+        "instruction_language": "mixed",
+        "task_category": "refactoring",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "screening_updates": {
+        "single_bounded_task": "fail",
+        "native_language_source": "pass"
+      },
+      "terminal_exclusion_ids": [
+        "multiple-coupled-issues"
+      ],
+      "reason": "The frozen multilingual source combines executable skeletons for three stacks, documentation relocation, shared/per-stack template separation, a new initialization guide, README language-block restructuring, local-artifact removal, sync-script parity, and CI path updates. These are independently testable repository-hygiene workstreams, not one bounded task.",
+      "next_route": "terminal_multiple_coupled_issues"
+    },
+    {
+      "candidate_id": "ghmix-jinwon-int--a2a-nexus-issue-1190",
+      "ledger_index": 773,
+      "source_reference": "https://github.com/jinwon-int/a2a-nexus/issues/1190",
+      "task_statement_sha256": "05187f8b5d93b212e516a71ac0dc3d08b2d90fa9cd0755df65a799862f17dfcc",
+      "issue_html_sha256": "e0ef2add92d59813980229bd0d850369f14f01121b687a1d6ea04cbe9f818238",
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "repository-analysis-planning",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "terminal_exclusion_ids": [],
+      "reason": "The Korean source authors one bounded release-readiness governance contract across version/stability and language policy sections, explicitly excludes translating existing Korean documents and excludes release or publish actions, and gives one docs-only validation gate.",
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-173",
+      "ledger_index": 811,
+      "source_reference": "https://github.com/Ootzk/Wor-chain-dle/issues/173",
+      "task_statement_sha256": "ef37699f7c0b25b1858a3be70e5a2c30140cfc4d0e9ef17565e337dbd1321fef",
+      "issue_html_sha256": "a60d9755cf272e9c9084fd6268772902f58df7b1b49cad63d33f0892df587b6a",
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "refactoring",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "terminal_exclusion_ids": [],
+      "reason": "The Korean source defines one observable consistency invariant: fixed English mode labels must be identical across displays, controls, locale resources, and tests. Multiple display sites are consumers of the same behavior, not separate tasks.",
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghmix-hskim-solv--BidMate-DocAgent-issue-919",
+      "ledger_index": 812,
+      "source_reference": "https://github.com/hskim-solv/BidMate-DocAgent/issues/919",
+      "task_statement_sha256": "98f9365b2b533357eca4eb835e3f7fd0d0f0d61218492e44eefbeca2b027c2b1",
+      "issue_html_sha256": "663e74fa3975bf4b9a0e7e1d144aecfcf087033120deca2cc5b4092e85b974e9",
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "refactoring",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "fail"
+      },
+      "terminal_exclusion_ids": [
+        "translation-only"
+      ],
+      "reason": "The source's core deliverable is translating and compressing 50 existing ADR bodies into Korean while explicitly preserving decisions. That localization sweep cannot fill the native Korean engineering-task quota.",
+      "next_route": "terminal_translation_only"
+    },
+    {
+      "candidate_id": "ghmix-hskim-solv--BidMate-DocAgent-issue-918",
+      "ledger_index": 813,
+      "source_reference": "https://github.com/hskim-solv/BidMate-DocAgent/issues/918",
+      "task_statement_sha256": "43df12aabd0f918b94be6ac6da82115406db458d71aa8acd62e2c57e7704397e",
+      "issue_html_sha256": "9dc239c44b5b12659b3a3d3702a61d4c0859a3ef97df460bb225f082980c84ff",
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "refactoring",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "fail",
+        "no_network_secret_push_production": "fail"
+      },
+      "terminal_exclusion_ids": [
+        "translation-only",
+        "unsafe-or-external-side-effect"
+      ],
+      "reason": "The core output is Korean translation/compression of ten existing PR bodies, and completion explicitly requires gh pr edit mutations of live GitHub state plus an audit log. It therefore fails both the language-quota identity and the no-external-side-effect requirement.",
+      "next_route": "terminal_translation_and_external_side_effect"
+    },
+    {
+      "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-130",
+      "ledger_index": 824,
+      "source_reference": "https://github.com/Ootzk/Wor-chain-dle/issues/130",
+      "task_statement_sha256": "9c55ce03db77cf72d9cdc8518e1c28265f0b190feb5e1d61ef3a93c3b3d22050",
+      "issue_html_sha256": "a90e252d998637dd02fd1a6686b32675be32f8312a92041ffd0df069a6aa1174",
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "implementation",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "terminal_exclusion_ids": [],
+      "reason": "The Korean source requests one Information-modal update tab that reuses patch-note data and adds the corresponding translations and tests. Later follow-up PRs require segmentation, but the source task itself is bounded.",
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghmix-115dkk--Impulcifer-pip313-issue-79",
+      "ledger_index": 830,
+      "source_reference": "https://github.com/115dkk/Impulcifer-pip313/issues/79",
+      "task_statement_sha256": "a29696befa2e24de8dfcb185ef8a78e505282d00d51199cdb10d7b5f2da1d085",
+      "issue_html_sha256": "9f72ec9e4927abdee3160b4330b20a38d3f57d29ce860eb7941d199f36e5bded",
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "testing",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "terminal_exclusion_ids": [],
+      "reason": "The Korean source specifies one CI invariant: nine locale JSON files must maintain key parity, with optional auto-correction explicitly nonessential. The core check has a deterministic offline evaluator seam.",
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghmix-GulSam00--singcode-issue-208",
+      "ledger_index": 834,
+      "source_reference": "https://github.com/GulSam00/singcode/issues/208",
+      "task_statement_sha256": "fdd8c9b0174820994b4d8f42e4a0133d3f5221ff28d343192152f5d7826eecd0",
+      "issue_html_sha256": "9ec7d84ec484a0cc873533436684e115ca7e09476ec299cd2b40b50f32a77aa8",
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "implementation",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "screening_updates": {
+        "single_bounded_task": "fail",
+        "native_language_source": "pass"
+      },
+      "terminal_exclusion_ids": [
+        "multiple-coupled-issues"
+      ],
+      "reason": "The source couples two independently accepted deliverables: a Korean privacy-policy route with legal/data statements and a separate PWA icon/manifest asset pipeline with Lighthouse maskable-icon acceptance. Neither is a necessary layer of the other.",
+      "next_route": "terminal_multiple_coupled_issues"
+    },
+    {
+      "candidate_id": "ghmix-pillip--realtime-en2ko-captions-issue-15",
+      "ledger_index": 840,
+      "source_reference": "https://github.com/pillip/realtime-en2ko-captions/issues/15",
+      "task_statement_sha256": "b925bef7852d82d76fe0826d580118012e2469532598eb4de7b6d0aeb01daea4",
+      "issue_html_sha256": "80dc90ddcd9466496240a7e6dde5863f519406459156f914e79b737892671e55",
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "implementation",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "terminal_exclusion_ids": [],
+      "reason": "The Korean source implements translation functionality for Chinese and Vietnamese through prompt builders, routing, fallback, and unit tests. This is behavioral code rather than translation of an existing task into the quota language, and mocked service seams can be assessed during solution review.",
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghmix-pillip--realtime-en2ko-captions-issue-13",
+      "ledger_index": 841,
+      "source_reference": "https://github.com/pillip/realtime-en2ko-captions/issues/13",
+      "task_statement_sha256": "78a451a717517779b04a08a7208375366b64506fe1e8a1b3883687f5294dae4f",
+      "issue_html_sha256": "3dfbe0e05f0f8d2f317e58487014eaf13a321d0676d54c6001a41717164d4bae",
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "implementation",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "terminal_exclusion_ids": [],
+      "reason": "The Korean source describes one language-selector UI feature with persisted input/output choices, invalid-pair warnings, and derived welcome text. These are coupled behaviors of one selection state rather than independent workstreams.",
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghmix-B-TING--bu-ting-mobile-issue-75",
+      "ledger_index": 1077,
+      "source_reference": "https://github.com/B-TING/bu-ting-mobile/issues/75",
+      "task_statement_sha256": "a317215ff6e25963b43ac25b3f969521596c1560e56e9bbe05be42a9dc5a3d76",
+      "issue_html_sha256": "679ae9ca1d1652434bcab7bb578895ee70f494ac107cf39c07a9d6391b3933f7",
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "implementation",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "pass"
+      },
+      "terminal_exclusion_ids": [],
+      "reason": "The Korean source describes one destination-memo vertical feature across data mapping, state update, editing UI, optimistic rollback, and incidental localized labels. The layers jointly implement one persisted behavior and can use mocked API seams.",
+      "next_route": "advance_solution_segmentation"
+    },
+    {
+      "candidate_id": "ghmix-baekenough--oh-my-customcode-issue-1415",
+      "ledger_index": 776,
+      "source_reference": "https://github.com/baekenough/oh-my-customcode/issues/1415",
+      "task_statement_sha256": "f523ba8898e5e1a88d575ee37f9845636a0f1b188a659482f79a42983d4bf0d8",
+      "issue_html_sha256": "ac18728c7d606f0c475e6407b6fc1cc1a942ca5eb1dc9c06d4b4a1b04d637b29",
+      "provisional_classification": {
+        "instruction_language": "ko",
+        "task_category": "refactoring",
+        "repository_code_language": null,
+        "repository_doc_language": null
+      },
+      "screening_updates": {
+        "single_bounded_task": "pass",
+        "native_language_source": "fail",
+        "no_network_secret_push_production": "fail"
+      },
+      "terminal_exclusion_ids": [
+        "translation-only",
+        "unsafe-or-external-side-effect"
+      ],
+      "reason": "The core deliverable replaces existing English issue-template headings, action items, footer text, and fallback text with Korean across mirrored files while preserving synchronization. Completion also explicitly requires retroactive gh issue edit mutations of two live issues, so the candidate independently fails both translation identity and no-external-side-effect.",
+      "next_route": "terminal_translation_and_external_side_effect"
+    }
+  ],
+  "next_queues": {
+    "advance_solution_segmentation": [
+      "ghko-RosieOh--ccStory-issue-12",
+      "ghko-dungsil-ai--intellij-plugin-egovframe-issue-5",
+      "ghko-Lyainc--filme-issue-417",
+      "ghko-RosieOh--ccStory-issue-11",
+      "ghko-RosieOh--ccStory-issue-10",
+      "ghmix-jinwon-int--a2a-nexus-issue-1190",
+      "ghmix-Ootzk--Wor-chain-dle-issue-173",
+      "ghmix-Ootzk--Wor-chain-dle-issue-130",
+      "ghmix-115dkk--Impulcifer-pip313-issue-79",
+      "ghmix-pillip--realtime-en2ko-captions-issue-15",
+      "ghmix-pillip--realtime-en2ko-captions-issue-13",
+      "ghmix-B-TING--bu-ting-mobile-issue-75"
+    ],
+    "terminal_exclusions": [
+      "ghko-nodease--mbased-issue-499",
+      "ghko-Lyainc--filme-issue-414",
+      "ghmix-Soku-JINSEOK--Soku-Convention-Boilerplate-issue-3",
+      "ghmix-hskim-solv--BidMate-DocAgent-issue-919",
+      "ghmix-hskim-solv--BidMate-DocAgent-issue-918",
+      "ghmix-GulSam00--singcode-issue-208",
+      "ghmix-baekenough--oh-my-customcode-issue-1415"
+    ]
+  },
+  "known_limitations": [
+    "Eleven of the twelve survivors still lack exact base/tree, pinned license, and instruction-parity evidence; this artifact does not infer those facts from current default branches.",
+    "The broad or multi-issue closing PRs may not contain an isolated solution lineage for the bounded source task. That is the next gate, not a source-semantic failure.",
+    "No protected evaluator has been authored and no candidate agent has been run."
+  ]
+}

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import unittest
 from collections import Counter
 from pathlib import Path
@@ -52,6 +53,92 @@ RANK7_APPLICATION_PATH = (
     / "experiments"
     / "phase2b-rank7-ledger-application-2026-07-24.json"
 )
+SCOPE_REVIEW_SEMANTIC_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-scope-review-source-semantic-2026-07-24.json"
+)
+SCOPE_REVIEW_APPLICATION_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-scope-review-ledger-application-2026-07-24.json"
+)
+SCOPE_REVIEW_SEGMENTATION_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-scope-review-solution-segmentation-2026-07-24.json"
+)
+SCOPE_REVIEW_EXACT_LICENSE_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-scope-review-exact-revision-license-2026-07-24.json"
+)
+SCOPE_REVIEW_PARITY_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-scope-review-instruction-parity-2026-07-24.json"
+)
+SCOPE_REVIEW_EXACT_APPLICATION_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-scope-review-exact-parity-ledger-application-2026-07-24.json"
+)
+SCOPE_REVIEW_SURVIVOR_SEMANTIC_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-scope-review-survivor-semantic-2026-07-24.json"
+)
+SCOPE_REVIEW_SURVIVOR_REPRODUCTION_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-scope-review-survivor-agent-free-reproduction-2026-07-24.json"
+)
+SCOPE_REVIEW_SURVIVOR_APPLICATION_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-scope-review-survivor-ledger-application-2026-07-24.json"
+)
+SWEBENCH_LICENSE_TERMS_PATH = (
+    ROOT / "experiments" / "phase2b-swebench-license-terms-2026-07-24.json"
+)
+SWEBENCH_LICENSE_APPLICATION_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-swebench-license-terms-ledger-application-2026-07-24.json"
+)
+SWEBENCH_PARITY_PATH = (
+    ROOT / "experiments" / "phase2b-swebench-instruction-parity-2026-07-24.json"
+)
+SWEBENCH_PARITY_APPLICATION_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-swebench-instruction-parity-ledger-application-2026-07-24.json"
+)
+SWEBENCH_NATIVE_SOURCE_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-swebench-native-source-fidelity-2026-07-24.json"
+)
+SWEBENCH_NATIVE_SOURCE_APPLICATION_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-swebench-native-source-fidelity-ledger-application-2026-07-24.json"
+)
+SWEBENCH_SEMANTIC_TRIAGE_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-swebench-semantic-triage-2026-07-24.json"
+)
+SWEBENCH_SEMANTIC_REVIEW_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-swebench-semantic-review-2026-07-24.json"
+)
+SWEBENCH_SEMANTIC_APPLICATION_PATH = (
+    ROOT
+    / "experiments"
+    / "phase2b-swebench-semantic-review-ledger-application-2026-07-24.json"
+)
 PRE_RANK5_LEDGER_SHA256 = (
     "b59ff7449f5ebd50c182eeffb72abe9c0231b82dacb915a61c2d61e94c8d9bd2"
 )
@@ -60,6 +147,30 @@ PRE_RANK6_LEDGER_SHA256 = (
 )
 PRE_RANK7_LEDGER_SHA256 = (
     "228dbbf05ec46a7f94dde40e780bad9b6d64a32944ace5bddb49839f15a1a0f1"
+)
+PRE_SCOPE_REVIEW_LEDGER_SHA256 = (
+    "09d2e1293fd49d49a6d1b9a3bd2b305c6808262e95de5ce89039b2a8d312b9f9"
+)
+PRE_SCOPE_REVIEW_EXACT_LEDGER_SHA256 = (
+    "7cca33b5d318f17b661cac29f2e406ab899389f09d9cad20286ca7c2ac3772ec"
+)
+PRE_SCOPE_REVIEW_SURVIVOR_LEDGER_SHA256 = (
+    "6f7206d5775fe21ac0a0e555bb1f016361f3aa5865dcb343715473b6016ea444"
+)
+PRE_SWEBENCH_LICENSE_LEDGER_SHA256 = (
+    "8f71326cc2131cd816c4ef8fbf42eb84a96fdeb0300b357bdec791072306f5d8"
+)
+PRE_SWEBENCH_PARITY_LEDGER_SHA256 = (
+    "5387689e35319a558aa133b0a9655f4d16469fa4a95c0fa5ba38d39cd59d96c1"
+)
+PRE_SWEBENCH_NATIVE_SOURCE_LEDGER_SHA256 = (
+    "45768bd4df54556dc524d4ee8240fbbe460eb9b1e75d50702b1f70673df9daf2"
+)
+PRE_SWEBENCH_SEMANTIC_LEDGER_SHA256 = (
+    "165f65d6569f194321b3b8926a685e9d24579961f2569d935fc34a1390a4a1bd"
+)
+POST_SWEBENCH_SEMANTIC_LEDGER_SHA256 = (
+    "d7344dfab4805cdb73fd3c814109be5ff7497eed80747c7b93c00d7b9dc66aad"
 )
 SCREENING_CASCADE_PATH = (
     ROOT / "experiments" / "phase2b-screening-cascade-2026-07-24.json"
@@ -116,16 +227,61 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
         self.rank7_mutations = {
             row["candidate_id"]: row for row in rank7_application["mutations"]
         }
+        scope_application = json.loads(
+            SCOPE_REVIEW_APPLICATION_PATH.read_text(encoding="utf-8")
+        )
+        self.scope_review_mutations = {
+            row["candidate_id"]: row for row in scope_application["mutations"]
+        }
+        scope_exact_application = json.loads(
+            SCOPE_REVIEW_EXACT_APPLICATION_PATH.read_text(encoding="utf-8")
+        )
+        self.scope_review_exact_mutations = {
+            row["candidate_id"]: row
+            for row in scope_exact_application["mutations"]
+        }
+        scope_survivor_application = json.loads(
+            SCOPE_REVIEW_SURVIVOR_APPLICATION_PATH.read_text(encoding="utf-8")
+        )
+        self.scope_review_survivor_mutations = {
+            row["candidate_id"]: row
+            for row in scope_survivor_application["mutations"]
+        }
+        swebench_application = json.loads(
+            SWEBENCH_LICENSE_APPLICATION_PATH.read_text(encoding="utf-8")
+        )
+        self.swebench_license_mutations = {
+            row["candidate_id"]: row
+            for row in swebench_application["mutations"]
+        }
 
     def _current_decision_after_rank7(
         self, candidate_id: str, prior_decision: str
     ) -> str:
+        mutation = self.scope_review_survivor_mutations.get(candidate_id)
+        if mutation:
+            return mutation["after_decision"]
+        mutation = self.scope_review_exact_mutations.get(candidate_id)
+        if mutation:
+            return mutation["after_decision"]
+        mutation = self.scope_review_mutations.get(candidate_id)
+        if mutation:
+            return mutation["after_decision"]
         mutation = self.rank7_mutations.get(candidate_id)
         return mutation["after_decision"] if mutation else prior_decision
 
     def _current_exclusions_after_rank7(
         self, candidate_id: str, prior_exclusions: list[str]
     ) -> list[str]:
+        mutation = self.scope_review_survivor_mutations.get(candidate_id)
+        if mutation:
+            return mutation["exclusion_rule_ids_triggered"]
+        mutation = self.scope_review_exact_mutations.get(candidate_id)
+        if mutation:
+            return mutation["exclusion_rule_ids_triggered"]
+        mutation = self.scope_review_mutations.get(candidate_id)
+        if mutation:
+            return mutation["exclusion_rule_ids_triggered"]
         mutation = self.rank7_mutations.get(candidate_id)
         return (
             mutation["exclusion_rule_ids_triggered"]
@@ -250,6 +406,7 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             for candidate in candidates
             if candidate["provisional_classification"]["task_category"] is not None
             and candidate["candidate_id"] not in self.rank7_mutations
+            and candidate["candidate_id"] not in self.scope_review_mutations
         ]
 
         self.assertEqual(len(candidates), 411)
@@ -309,6 +466,13 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
                 "ghko-nodease--mbased-issue-528",
                 "ghko-MannaDevelopers--meditation_blossom_frontend-issue-185",
                 "ghko-hang-in--tunaRound-issue-131",
+                # The fixed scope-review cascade resolved five additional
+                # Korean-bearing bases before parity excluded each row.
+                "ghko-RosieOh--ccStory-issue-12",
+                "ghko-dungsil-ai--intellij-plugin-egovframe-issue-5",
+                "ghko-Lyainc--filme-issue-417",
+                "ghko-RosieOh--ccStory-issue-11",
+                "ghko-RosieOh--ccStory-issue-10",
             },
         )
 
@@ -361,6 +525,8 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             for candidate in self.ledger["candidates"]
             if candidate["decision"] == "screening"
             or candidate["candidate_id"] in preexisting_license_by_id
+            or candidate["candidate_id"] in self.scope_review_mutations
+            or candidate["candidate_id"] in self.swebench_license_mutations
         ]
         github = [
             candidate
@@ -374,6 +540,8 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             return "not-probed" if entry is None else entry["signal"]
 
         def license_state_at_snapshot(candidate: dict[str, object]) -> str:
+            if str(candidate["candidate_id"]) in self.scope_review_exact_mutations:
+                return "unknown"
             return preexisting_license_by_id.get(
                 str(candidate["candidate_id"]),
                 candidate["screening"]["license_or_use_basis"],
@@ -434,17 +602,28 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             },
             expected_hashes,
         )
-
     def test_license_priority_never_promotes_unpinned_probe_signals(self) -> None:
         artifact = json.loads(LICENSE_PRIORITY_PATH.read_text(encoding="utf-8"))
         exact = json.loads(EXACT_REVISION_LICENSE_PATH.read_text(encoding="utf-8"))
         parity = json.loads(RANK6_PARITY_PATH.read_text(encoding="utf-8"))
+        scope_exact = json.loads(
+            SCOPE_REVIEW_EXACT_LICENSE_PATH.read_text(encoding="utf-8")
+        )
+        scope_parity = json.loads(
+            SCOPE_REVIEW_PARITY_PATH.read_text(encoding="utf-8")
+        )
         exact_by_id = {
             row["candidate_id"]: row for row in exact["observations"]
         }
+        exact_by_id.update(
+            {row["candidate_id"]: row for row in scope_exact["observations"]}
+        )
         parity_by_id = {
             row["candidate_id"]: row for row in parity["assessments"]
         }
+        parity_by_id.update(
+            {row["candidate_id"]: row for row in scope_parity["assessments"]}
+        )
         by_id = {
             candidate["candidate_id"]: candidate
             for candidate in self.ledger["candidates"]
@@ -538,7 +717,12 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
                 self.assertEqual(
                     candidate["screening"]["license_or_use_basis"], "unknown"
                 )
-                self.assertEqual(candidate["decision"], "screening")
+                self.assertEqual(
+                    candidate["decision"],
+                    self._current_decision_after_rank7(
+                        str(row["candidate_id"]), "screening"
+                    ),
+                )
                 return
             self.assertEqual(
                 candidate["screening"]["license_or_use_basis"],
@@ -579,7 +763,12 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             candidate = by_id[row["candidate_id"]]
             self.assertIsNone(row["probe_method"])
             self.assertEqual(candidate["screening"]["license_or_use_basis"], "unknown")
-            self.assertEqual(candidate["decision"], "screening")
+            self.assertEqual(
+                candidate["decision"],
+                self._current_decision_after_rank7(
+                    str(row["candidate_id"]), "screening"
+                ),
+            )
 
         self.assertEqual(
             artifact["summary"]["github_deep_review_queue_after_classifier_filter"],
@@ -595,12 +784,24 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
         priority = json.loads(LICENSE_PRIORITY_PATH.read_text(encoding="utf-8"))
         exact = json.loads(EXACT_REVISION_LICENSE_PATH.read_text(encoding="utf-8"))
         parity = json.loads(RANK6_PARITY_PATH.read_text(encoding="utf-8"))
+        scope_exact = json.loads(
+            SCOPE_REVIEW_EXACT_LICENSE_PATH.read_text(encoding="utf-8")
+        )
+        scope_parity = json.loads(
+            SCOPE_REVIEW_PARITY_PATH.read_text(encoding="utf-8")
+        )
         exact_by_id = {
             row["candidate_id"]: row for row in exact["observations"]
         }
+        exact_by_id.update(
+            {row["candidate_id"]: row for row in scope_exact["observations"]}
+        )
         parity_by_id = {
             row["candidate_id"]: row for row in parity["assessments"]
         }
+        parity_by_id.update(
+            {row["candidate_id"]: row for row in scope_parity["assessments"]}
+        )
         repositories = artifact["repositories"]
         classified_ids = {
             candidate_id
@@ -687,7 +888,12 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
                 candidate = by_id[candidate_id]
                 evidence = exact_by_id.get(candidate_id)
                 if evidence is None:
-                    self.assertEqual(candidate["decision"], "screening")
+                    self.assertEqual(
+                        candidate["decision"],
+                        self._current_decision_after_rank7(
+                            candidate_id, "screening"
+                        ),
+                    )
                     self.assertEqual(
                         candidate["screening"]["license_or_use_basis"], "unknown"
                     )
@@ -783,7 +989,12 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             candidate = by_id[row["candidate_id"]]
             evidence = exact_by_id.get(row["candidate_id"])
             if evidence is None:
-                self.assertEqual(candidate["decision"], "screening")
+                self.assertEqual(
+                    candidate["decision"],
+                    self._current_decision_after_rank7(
+                        row["candidate_id"], "screening"
+                    ),
+                )
                 continue
             self.assertEqual(candidate["base_revision"], evidence["base_revision"])
             self.assertEqual(candidate["base_tree_hash"], evidence["base_tree_hash"])
@@ -1005,7 +1216,11 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
                 "assessments"
             ]
         }
-        later_stage_ids = rank6_ids | set(self.rank7_mutations)
+        later_stage_ids = (
+            rank6_ids
+            | set(self.rank7_mutations)
+            | set(self.scope_review_mutations)
+        )
         for mutation in application["mutations"]:
             candidate = by_id[mutation["candidate_id"]]
             for field in (
@@ -1351,16 +1566,40 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
         )
         self.assertEqual(
             application["output_artifact"]["sha256"],
-            hashlib.sha256(LEDGER_PATH.read_bytes()).hexdigest(),
+            PRE_SCOPE_REVIEW_LEDGER_SHA256,
         )
-        self.assertEqual(application["output_artifact"]["summary"], self.ledger["summary"])
+        self.assertEqual(
+            {
+                key: application["output_artifact"]["summary"][key]
+                for key in (
+                    "candidate_count",
+                    "screening_count",
+                    "excluded_count",
+                    "selected_for_task_authoring_count",
+                )
+            },
+            {
+                "candidate_count": 1130,
+                "screening_count": 995,
+                "excluded_count": 122,
+                "selected_for_task_authoring_count": 13,
+            },
+        )
         self.assertEqual(len(application["mutations"]), 10)
         for mutation in application["mutations"]:
             candidate = by_id[mutation["candidate_id"]]
-            self.assertEqual(candidate["decision"], mutation["after_decision"])
+            self.assertEqual(
+                candidate["decision"],
+                self._current_decision_after_rank7(
+                    mutation["candidate_id"], mutation["after_decision"]
+                ),
+            )
             self.assertEqual(
                 candidate["exclusion_rule_ids_triggered"],
-                mutation["exclusion_rule_ids_triggered"],
+                self._current_exclusions_after_rank7(
+                    mutation["candidate_id"],
+                    mutation["exclusion_rule_ids_triggered"],
+                ),
             )
             self.assertEqual(
                 candidate["provisional_classification"],
@@ -1370,6 +1609,2551 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
                 self.assertEqual(candidate["screening"][field], value)
             if mutation["after_decision"] == "selected-for-task-authoring":
                 self.assertEqual(Counter(candidate["screening"].values()), {"pass": 12})
+
+    def test_scope_source_review_and_ledger_application_are_bound(self) -> None:
+        semantic = json.loads(
+            SCOPE_REVIEW_SEMANTIC_PATH.read_text(encoding="utf-8")
+        )
+        application = json.loads(
+            SCOPE_REVIEW_APPLICATION_PATH.read_text(encoding="utf-8")
+        )
+        linked = json.loads(
+            LINKED_SOLUTION_PREFILTER_PATH.read_text(encoding="utf-8")
+        )
+        by_id = {
+            candidate["candidate_id"]: candidate
+            for candidate in self.ledger["candidates"]
+        }
+        linked_by_id = {
+            row["candidate_id"]: row for row in linked["candidate_rows"]
+        }
+        assessments = semantic["assessments"]
+        assessment_by_id = {row["candidate_id"]: row for row in assessments}
+
+        self.assertFalse(semantic["agent_results_observed"])
+        self.assertFalse(semantic["design_change_required"])
+        self.assertEqual(
+            semantic["input_artifacts"][0],
+            {
+                "path": "experiments/phase2b-candidate-ledger-v1.json",
+                "sha256": PRE_SCOPE_REVIEW_LEDGER_SHA256,
+                "state": "pre-scope-source-review Git-tracked snapshot",
+            },
+        )
+        self.assertEqual(
+            semantic["summary"],
+            {
+                "candidate_count": 19,
+                "translation_only_terminal_occurrences": 3,
+                "multiple_coupled_issues_terminal_occurrences": 4,
+                "unsafe_or_external_side_effect_terminal_occurrences": 2,
+                "unique_terminal_exclusion_rows": 7,
+                "advance_solution_segmentation_rows": 12,
+                "selected_rows_created": 0,
+                "candidate_agent_executions": 0,
+            },
+        )
+        self.assertEqual(len(assessment_by_id), 19)
+        self.assertEqual(
+            Counter(
+                exclusion
+                for row in assessments
+                for exclusion in row["terminal_exclusion_ids"]
+            ),
+            {
+                "multiple-coupled-issues": 4,
+                "translation-only": 3,
+                "unsafe-or-external-side-effect": 2,
+            },
+        )
+        self.assertEqual(
+            {
+                row["candidate_id"]: row["terminal_exclusion_ids"]
+                for row in assessments
+                if row["terminal_exclusion_ids"]
+            },
+            {
+                "ghko-nodease--mbased-issue-499": [
+                    "multiple-coupled-issues"
+                ],
+                "ghko-Lyainc--filme-issue-414": [
+                    "multiple-coupled-issues"
+                ],
+                "ghmix-Soku-JINSEOK--Soku-Convention-Boilerplate-issue-3": [
+                    "multiple-coupled-issues"
+                ],
+                "ghmix-hskim-solv--BidMate-DocAgent-issue-919": [
+                    "translation-only"
+                ],
+                "ghmix-hskim-solv--BidMate-DocAgent-issue-918": [
+                    "translation-only",
+                    "unsafe-or-external-side-effect",
+                ],
+                "ghmix-GulSam00--singcode-issue-208": [
+                    "multiple-coupled-issues"
+                ],
+                "ghmix-baekenough--oh-my-customcode-issue-1415": [
+                    "translation-only",
+                    "unsafe-or-external-side-effect",
+                ],
+            },
+        )
+        self.assertEqual(
+            semantic["source_integrity"],
+            {
+                "candidate_count": 19,
+                "current_title_plus_body_sha256_matches_ledger": 18,
+                "frozen_statement_reconstructed_from_public_history": 1,
+                "exception": semantic["source_integrity"]["exception"],
+                "note": semantic["source_integrity"]["note"],
+            },
+        )
+        self.assertEqual(
+            semantic["source_integrity"]["exception"]["candidate_id"],
+            "ghmix-Soku-JINSEOK--Soku-Convention-Boilerplate-issue-3",
+        )
+        for row in assessments:
+            candidate = by_id[row["candidate_id"]]
+            linked_row = linked_by_id[row["candidate_id"]]
+            self.assertEqual(
+                row["task_statement_sha256"],
+                candidate["task_statement_hash"],
+            )
+            self.assertEqual(
+                row["issue_html_sha256"],
+                linked_row["issue_html_sha256"],
+            )
+
+        self.assertFalse(application["agent_results_observed"])
+        self.assertFalse(application["design_change_required"])
+        self.assertEqual(
+            application["input_artifacts"],
+            [
+                {
+                    "path": "experiments/phase2b-candidate-ledger-v1.json",
+                    "sha256": PRE_SCOPE_REVIEW_LEDGER_SHA256,
+                    "state": "pre-scope-source-review Git-tracked snapshot",
+                },
+                {
+                    "path": "experiments/phase2b-scope-review-source-semantic-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        SCOPE_REVIEW_SEMANTIC_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+            ],
+        )
+        self.assertEqual(
+            application["summary"],
+            {
+                "candidate_rows_updated": 19,
+                "terminal_source_exclusion_rows": 7,
+                "screening_rows_advanced_to_solution_segmentation": 12,
+                "new_selected_for_task_authoring_rows": 0,
+                "screening_after": 988,
+                "excluded_after": 129,
+                "selected_after": 13,
+            },
+        )
+        self.assertEqual(len(application["mutations"]), 19)
+        self.assertEqual(
+            application["output_artifact"]["sha256"],
+            PRE_SCOPE_REVIEW_EXACT_LEDGER_SHA256,
+        )
+        self.assertEqual(
+            {
+                key: application["output_artifact"]["summary"][key]
+                for key in (
+                    "candidate_count",
+                    "screening_count",
+                    "excluded_count",
+                    "selected_for_task_authoring_count",
+                )
+            },
+            {
+                "candidate_count": 1130,
+                "screening_count": 988,
+                "excluded_count": 129,
+                "selected_for_task_authoring_count": 13,
+            },
+        )
+        for mutation in application["mutations"]:
+            candidate = by_id[mutation["candidate_id"]]
+            assessment = assessment_by_id[mutation["candidate_id"]]
+            self.assertEqual(
+                candidate["decision"],
+                self._current_decision_after_rank7(
+                    mutation["candidate_id"], mutation["after_decision"]
+                ),
+            )
+            self.assertEqual(
+                candidate["exclusion_rule_ids_triggered"],
+                self._current_exclusions_after_rank7(
+                    mutation["candidate_id"],
+                    mutation["exclusion_rule_ids_triggered"],
+                ),
+            )
+            self.assertEqual(
+                candidate["provisional_classification"],
+                mutation["provisional_classification"],
+            )
+            self.assertEqual(
+                mutation["screening_updates"], assessment["screening_updates"]
+            )
+            for field, value in mutation["screening_updates"].items():
+                self.assertEqual(candidate["screening"][field], value)
+
+    def test_scope_exact_license_parity_and_application_are_bound(self) -> None:
+        segmentation = json.loads(
+            SCOPE_REVIEW_SEGMENTATION_PATH.read_text(encoding="utf-8")
+        )
+        exact_license = json.loads(
+            SCOPE_REVIEW_EXACT_LICENSE_PATH.read_text(encoding="utf-8")
+        )
+        parity = json.loads(
+            SCOPE_REVIEW_PARITY_PATH.read_text(encoding="utf-8")
+        )
+        application = json.loads(
+            SCOPE_REVIEW_EXACT_APPLICATION_PATH.read_text(encoding="utf-8")
+        )
+        by_id = {
+            candidate["candidate_id"]: candidate
+            for candidate in self.ledger["candidates"]
+        }
+        segments = {
+            row["candidate_id"]: row for row in segmentation["assessments"]
+        }
+        licenses = {
+            row["candidate_id"]: row for row in exact_license["observations"]
+        }
+        parity_by_id = {
+            row["candidate_id"]: row for row in parity["assessments"]
+        }
+
+        self.assertFalse(segmentation["terminal_status"])
+        self.assertFalse(segmentation["agent_results_observed"])
+        self.assertFalse(segmentation["design_change_required"])
+        self.assertEqual(len(segments), 12)
+        self.assertEqual(
+            segmentation["summary"],
+            {
+                "candidate_count": 12,
+                "atomic_or_direct_segments": 8,
+                "contiguous_task_tail_segments": 1,
+                "broad_single_commit_path_segments": 2,
+                "noncontiguous_task_relevant_segments": 1,
+                "terminal_exclusion_rows": 0,
+                "advance_exact_base_and_pinned_license_rows": 12,
+                "selected_rows_created": 0,
+                "candidate_agent_executions": 0,
+            },
+        )
+
+        self.assertFalse(exact_license["agent_results_observed"])
+        self.assertFalse(exact_license["design_change_required"])
+        self.assertEqual(set(licenses), set(segments))
+        self.assertEqual(
+            Counter(row["classified_spdx_id"] for row in licenses.values()),
+            {"MIT": 11, "Apache-2.0": 1},
+        )
+        self.assertTrue(
+            all(
+                row["exact_base_resolvable"] == "pass"
+                and row["license_or_use_basis_decision"] == "pass"
+                and row["license_artifact_unchanged_at_solution"]
+                for row in licenses.values()
+            )
+        )
+
+        self.assertTrue(parity["terminal_status"])
+        self.assertFalse(parity["agent_results_observed"])
+        self.assertFalse(parity["design_change_required"])
+        self.assertEqual(set(parity_by_id), set(segments))
+        self.assertEqual(
+            Counter(row["result"] for row in parity_by_id.values()),
+            {"fail": 8, "pass": 4},
+        )
+        self.assertEqual(
+            parity["next_queues"]["advance_boundedness_evaluator_reproduction"],
+            [
+                "ghmix-jinwon-int--a2a-nexus-issue-1190",
+                "ghmix-Ootzk--Wor-chain-dle-issue-173",
+                "ghmix-Ootzk--Wor-chain-dle-issue-130",
+                "ghmix-B-TING--bu-ting-mobile-issue-75",
+            ],
+        )
+
+        self.assertFalse(application["agent_results_observed"])
+        self.assertEqual(
+            application["input_artifacts"],
+            [
+                {
+                    "path": "experiments/phase2b-candidate-ledger-v1.json",
+                    "sha256": PRE_SCOPE_REVIEW_EXACT_LEDGER_SHA256,
+                    "state": "post-source-review, pre-exact-revision/parity working snapshot",
+                },
+                {
+                    "path": "experiments/phase2b-scope-review-solution-segmentation-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        SCOPE_REVIEW_SEGMENTATION_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+                {
+                    "path": "experiments/phase2b-scope-review-exact-revision-license-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        SCOPE_REVIEW_EXACT_LICENSE_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+                {
+                    "path": "experiments/phase2b-scope-review-instruction-parity-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        SCOPE_REVIEW_PARITY_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+            ],
+        )
+        self.assertEqual(len(application["mutations"]), 12)
+        self.assertEqual(
+            application["output_artifact"]["sha256"],
+            PRE_SCOPE_REVIEW_SURVIVOR_LEDGER_SHA256,
+        )
+        self.assertEqual(
+            application["output_artifact"]["summary"],
+            {
+                "candidate_count": 1130,
+                "screening_count": 980,
+                "excluded_count": 137,
+                "selected_for_task_authoring_count": 13,
+                "language_assignment_counts": {
+                    "ko": 88,
+                    "en": 301,
+                    "mixed": 23,
+                    "unassigned": 718,
+                },
+                "category_assignment_counts": {
+                    "implementation": 47,
+                    "debugging": 22,
+                    "testing": 8,
+                    "refactoring": 24,
+                    "repository-analysis-planning": 11,
+                    "unassigned": 1018,
+                },
+            },
+        )
+        self.assertEqual(
+            application["summary"],
+            {
+                "candidate_rows_updated": 12,
+                "exact_base_resolvable_pass_rows": 12,
+                "license_pass_rows": 12,
+                "instruction_parity_pass_rows": 4,
+                "instruction_parity_fail_rows": 8,
+                "new_terminal_instruction_parity_exclusions": 8,
+                "screening_after": 980,
+                "excluded_after": 137,
+                "selected_after": 13,
+                "candidate_agent_executions": 0,
+            },
+        )
+
+        for mutation in application["mutations"]:
+            candidate_id = mutation["candidate_id"]
+            candidate = by_id[candidate_id]
+            segment = segments[candidate_id]
+            license_row = licenses[candidate_id]
+            parity_row = parity_by_id[candidate_id]
+            for field in (
+                "base_revision",
+                "base_tree_hash",
+                "solution_revision",
+                "solution_tree_hash",
+                "solution_artifact_hash",
+            ):
+                expected = (
+                    segment["task_relevant_diff_sha256"]
+                    if field == "solution_artifact_hash"
+                    else segment[field]
+                )
+                self.assertEqual(candidate[field], expected)
+                self.assertEqual(mutation[field], expected)
+            self.assertEqual(candidate["changed_files"], segment["task_relevant_paths"])
+            self.assertEqual(
+                len(candidate["changed_files"]), mutation["changed_file_count"]
+            )
+            self.assertEqual(
+                mutation["license_at_exact_base"],
+                license_row["classified_spdx_id"],
+            )
+            self.assertEqual(candidate["screening"]["exact_base_resolvable"], "pass")
+            self.assertEqual(candidate["screening"]["license_or_use_basis"], "pass")
+            self.assertEqual(
+                candidate["screening"]["instruction_parity"], parity_row["result"]
+            )
+            self.assertEqual(
+                candidate["decision"],
+                self._current_decision_after_rank7(
+                    candidate_id, mutation["after_decision"]
+                ),
+            )
+            self.assertEqual(
+                candidate["exclusion_rule_ids_triggered"],
+                self._current_exclusions_after_rank7(
+                    candidate_id,
+                    mutation["exclusion_rule_ids_triggered"],
+                ),
+            )
+
+    def test_scope_survivor_semantics_reproduction_and_application_are_bound(self) -> None:
+        semantic = json.loads(
+            SCOPE_REVIEW_SURVIVOR_SEMANTIC_PATH.read_text(encoding="utf-8")
+        )
+        reproduction = json.loads(
+            SCOPE_REVIEW_SURVIVOR_REPRODUCTION_PATH.read_text(encoding="utf-8")
+        )
+        application = json.loads(
+            SCOPE_REVIEW_SURVIVOR_APPLICATION_PATH.read_text(encoding="utf-8")
+        )
+        by_id = {
+            candidate["candidate_id"]: candidate
+            for candidate in self.ledger["candidates"]
+        }
+        assessments = {
+            row["candidate_id"]: row for row in semantic["assessments"]
+        }
+        controls = {
+            row["candidate_id"]: row for row in reproduction["controls"]
+        }
+        expected_ids = {
+            "ghmix-jinwon-int--a2a-nexus-issue-1190",
+            "ghmix-Ootzk--Wor-chain-dle-issue-173",
+            "ghmix-Ootzk--Wor-chain-dle-issue-130",
+            "ghmix-B-TING--bu-ting-mobile-issue-75",
+        }
+
+        self.assertFalse(semantic["agent_results_observed"])
+        self.assertFalse(semantic["design_change_required"])
+        self.assertEqual(set(assessments), expected_ids)
+        self.assertEqual(
+            semantic["summary"],
+            {
+                "candidate_count": 4,
+                "boundedness_pass_rows": 4,
+                "isolation_pass_rows": 4,
+                "objective_evaluator_feasible_pass_rows": 4,
+                "gold_and_evaluator_hideable_pass_rows": 4,
+                "advance_agent_free_reproduction_rows": 4,
+                "selected_rows_created": 0,
+            },
+        )
+        self.assertEqual(
+            semantic["input_artifacts"][0],
+            {
+                "path": "experiments/phase2b-candidate-ledger-v1.json",
+                "sha256": PRE_SCOPE_REVIEW_SURVIVOR_LEDGER_SHA256,
+                "state": "post-exact-revision/parity, pre-survivor-semantic working snapshot",
+            },
+        )
+        for candidate_id, row in assessments.items():
+            candidate = by_id[candidate_id]
+            self.assertEqual(row["task_statement_sha256"], candidate["task_statement_hash"])
+            self.assertEqual(row["base_revision"], candidate["base_revision"])
+            self.assertEqual(row["base_tree_hash"], candidate["base_tree_hash"])
+            self.assertEqual(row["solution_revision"], candidate["solution_revision"])
+            self.assertEqual(row["solution_tree_hash"], candidate["solution_tree_hash"])
+            self.assertEqual(
+                set(row["screening_updates"]),
+                {
+                    "low_risk_isolated_execution",
+                    "no_network_secret_push_production",
+                    "objective_evaluator_feasible",
+                    "gold_and_evaluator_hideable",
+                },
+            )
+            self.assertTrue(
+                all(value == "pass" for value in row["screening_updates"].values())
+            )
+
+        self.assertFalse(reproduction["agent_results_observed"])
+        self.assertEqual(set(controls), expected_ids)
+        self.assertEqual(
+            reproduction["input_artifacts"][1],
+            {
+                "path": "experiments/phase2b-scope-review-survivor-semantic-2026-07-24.json",
+                "sha256": hashlib.sha256(
+                    SCOPE_REVIEW_SURVIVOR_SEMANTIC_PATH.read_bytes()
+                ).hexdigest(),
+            },
+        )
+        self.assertEqual(
+            reproduction["summary"],
+            {
+                "candidate_count": 4,
+                "base_negative_expected_rows": 4,
+                "solution_positive_rows": 4,
+                "reproducible_within_budget_pass_rows": 4,
+                "selected_for_task_authoring_rows": 4,
+                "candidate_agent_executions": 0,
+            },
+        )
+        for candidate_id, row in controls.items():
+            self.assertEqual(row["base_control"]["result"], "expected-negative")
+            self.assertEqual(row["base_control"]["exit_code"], 1)
+            self.assertEqual(row["solution_control"]["result"], "pass")
+            self.assertEqual(row["solution_control"]["exit_code"], 0)
+            self.assertEqual(row["screening_updates"], {"reproducible_within_budget": "pass"})
+            self.assertFalse(row["screening_evaluator"]["tracked"])
+            self.assertFalse(row["screening_evaluator"]["final_evaluator_approved"])
+            self.assertEqual(row["next_route"], "selected_for_task_authoring")
+            self.assertEqual(row["base_revision"], by_id[candidate_id]["base_revision"])
+            self.assertEqual(row["solution_revision"], by_id[candidate_id]["solution_revision"])
+        self.assertTrue(
+            controls["ghmix-B-TING--bu-ting-mobile-issue-75"]
+            ["repository_health_control"]["symmetric_failure"]
+        )
+        self.assertIn(
+            "behavioral failure-and-restore",
+            controls["ghmix-B-TING--bu-ting-mobile-issue-75"]
+            ["screening_evaluator"]["authoring_requirement"],
+        )
+
+        self.assertFalse(application["agent_results_observed"])
+        self.assertEqual(
+            application["input_artifacts"],
+            [
+                {
+                    "path": "experiments/phase2b-candidate-ledger-v1.json",
+                    "sha256": PRE_SCOPE_REVIEW_SURVIVOR_LEDGER_SHA256,
+                    "state": "post-exact-revision/parity, pre-survivor-screening working snapshot",
+                },
+                {
+                    "path": "experiments/phase2b-scope-review-exact-parity-ledger-application-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        SCOPE_REVIEW_EXACT_APPLICATION_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+                {
+                    "path": "experiments/phase2b-scope-review-survivor-semantic-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        SCOPE_REVIEW_SURVIVOR_SEMANTIC_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+                {
+                    "path": "experiments/phase2b-scope-review-survivor-agent-free-reproduction-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        SCOPE_REVIEW_SURVIVOR_REPRODUCTION_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+            ],
+        )
+        self.assertEqual(len(application["mutations"]), 4)
+        self.assertEqual(
+            {row["candidate_id"] for row in application["mutations"]}, expected_ids
+        )
+        self.assertEqual(
+            application["output_artifact"]["sha256"],
+            PRE_SWEBENCH_LICENSE_LEDGER_SHA256,
+        )
+        self.assertEqual(
+            application["output_artifact"]["summary"],
+            {
+                "candidate_count": 1130,
+                "screening_count": 976,
+                "excluded_count": 137,
+                "selected_for_task_authoring_count": 17,
+                "language_assignment_counts": {
+                    "ko": 88,
+                    "en": 301,
+                    "mixed": 23,
+                    "unassigned": 718,
+                },
+                "category_assignment_counts": {
+                    "implementation": 47,
+                    "debugging": 22,
+                    "testing": 8,
+                    "refactoring": 24,
+                    "repository-analysis-planning": 11,
+                    "unassigned": 1018,
+                },
+            },
+        )
+        self.assertEqual(
+            application["summary"],
+            {
+                "candidate_rows_updated": 4,
+                "semantic_gate_pass_rows": 4,
+                "base_negative_expected_rows": 4,
+                "solution_positive_rows": 4,
+                "new_selected_for_task_authoring_rows": 4,
+                "screening_after": 976,
+                "excluded_after": 137,
+                "selected_after": 17,
+                "candidate_agent_executions": 0,
+            },
+        )
+        for mutation in application["mutations"]:
+            candidate = by_id[mutation["candidate_id"]]
+            self.assertEqual(candidate["decision"], "selected-for-task-authoring")
+            self.assertEqual(candidate["exclusion_rule_ids_triggered"], [])
+            self.assertEqual(Counter(candidate["screening"].values()), {"pass": 12})
+            for field, value in mutation["screening_updates"].items():
+                self.assertEqual(candidate["screening"][field], value)
+
+    def test_swebench_exact_license_terms_and_ledger_application_are_bound(
+        self,
+    ) -> None:
+        evidence = json.loads(
+            SWEBENCH_LICENSE_TERMS_PATH.read_text(encoding="utf-8")
+        )
+        application = json.loads(
+            SWEBENCH_LICENSE_APPLICATION_PATH.read_text(encoding="utf-8")
+        )
+        observations = evidence["candidate_observations"]
+        by_id = {
+            candidate["candidate_id"]: candidate
+            for candidate in self.ledger["candidates"]
+        }
+        terminal_ids = {
+            "swebm-hashicorp__terraform-34580",
+            "swebm-hashicorp__terraform-34814",
+            "swebm-hashicorp__terraform-34900",
+            "swebm-hashicorp__terraform-35543",
+            "swebm-hashicorp__terraform-35611",
+            "swebm-jqlang__jq-2598",
+            "swebm-jqlang__jq-2919",
+            "swebm-redis__redis-12272",
+            "swebm-redis__redis-13338",
+        }
+
+        self.assertTrue(evidence["terminal_status"])
+        self.assertFalse(evidence["agent_results_observed"])
+        self.assertFalse(evidence["design_change_required"])
+        self.assertEqual(
+            evidence["input_artifacts"],
+            [
+                {
+                    "path": "experiments/phase2b-candidate-ledger-v1.json",
+                    "sha256": PRE_SWEBENCH_LICENSE_LEDGER_SHA256,
+                    "state": "post-scope-review, pre-SWE-bench exact-license working snapshot",
+                }
+            ],
+        )
+        self.assertEqual(
+            evidence["dataset_terms"],
+            {
+                "source_uri": "https://huggingface.co/datasets/SWE-bench/SWE-bench_Multilingual",
+                "revision": "2b7aced941b4873e9cad3e76abbae93f481d1beb",
+                "tree_hash": "1ca27052e9230732e8b47b8fa5d474a5a660a830",
+                "readme_path": "README.md",
+                "readme_blob_sha": "bbc3e2b155814f80ffcab9c6aadd051b5b27ff22",
+                "readme_content_sha256": "05d5096b015147c8cd7de51579965aacc5a184b1c5c90e5ccdb2109fb1f11dc1",
+                "readme_content_bytes": 729,
+                "declared_license": "MIT",
+                "declared_language": "en",
+                "declared_test_rows": 300,
+                "additional_terms_in_readme": False,
+                "decision": "pass",
+            },
+        )
+        self.assertEqual(
+            evidence["summary"],
+            {
+                "candidate_count": 300,
+                "repository_count": 41,
+                "dataset_terms_pass_rows": 300,
+                "exact_base_resolvable_pass_rows": 300,
+                "license_pass_rows": 291,
+                "license_fail_rows": 9,
+                "new_terminal_license_exclusion_rows": 9,
+                "advance_instance_review_rows": 291,
+                "candidate_agent_executions": 0,
+            },
+        )
+        self.assertEqual(len(observations), 300)
+        self.assertEqual(len(evidence["repository_observations"]), 41)
+        self.assertEqual(len(evidence["license_blob_inventory"]), 82)
+        self.assertEqual(
+            evidence["collection_integrity"]["scope_artifact_occurrences"], 5
+        )
+        self.assertEqual(
+            evidence["collection_integrity"]["unique_scope_artifact_blobs"], 2
+        )
+        self.assertEqual(
+            evidence["collection_integrity"]["path_scope_license_candidate_rows"],
+            55,
+        )
+        self.assertEqual(
+            evidence["collection_integrity"][
+                "path_scope_license_artifact_occurrences"
+            ],
+            61,
+        )
+        self.assertEqual(
+            evidence["collection_integrity"]["unique_path_scope_license_blobs"],
+            14,
+        )
+        self.assertEqual(
+            evidence["collection_integrity"][
+                "new_unique_path_scope_license_blobs"
+            ],
+            5,
+        )
+        self.assertEqual(set(evidence["terminal_candidate_ids"]), terminal_ids)
+        canonical = json.dumps(
+            observations,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+        self.assertEqual(
+            evidence["collection_integrity"]["candidate_observations_sha256"],
+            hashlib.sha256(canonical).hexdigest(),
+        )
+        self.assertEqual(
+            Counter(row["license_or_use_basis_decision"] for row in observations),
+            {"pass": 291, "fail": 9},
+        )
+
+        mutations = {
+            row["candidate_id"]: row for row in application["mutations"]
+        }
+        self.assertFalse(application["agent_results_observed"])
+        self.assertEqual(len(mutations), 300)
+        self.assertEqual(
+            application["input_artifacts"],
+            [
+                {
+                    "path": "experiments/phase2b-candidate-ledger-v1.json",
+                    "sha256": PRE_SWEBENCH_LICENSE_LEDGER_SHA256,
+                    "state": "post-scope-review, pre-SWE-bench exact-license working snapshot",
+                },
+                {
+                    "path": "experiments/phase2b-swebench-license-terms-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        SWEBENCH_LICENSE_TERMS_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+            ],
+        )
+        self.assertEqual(
+            application["output_artifact"]["sha256"],
+            "5387689e35319a558aa133b0a9655f4d16469fa4a95c0fa5ba38d39cd59d96c1",
+        )
+        self.assertEqual(
+            {
+                key: application["output_artifact"]["summary"][key]
+                for key in (
+                    "candidate_count",
+                    "screening_count",
+                    "excluded_count",
+                    "selected_for_task_authoring_count",
+                )
+            },
+            {
+                "candidate_count": 1130,
+                "screening_count": 967,
+                "excluded_count": 146,
+                "selected_for_task_authoring_count": 17,
+            },
+        )
+        self.assertIn(
+            "64 exact pinned bases",
+            application["output_artifact"]["summary"]["known_gaps"][1],
+        )
+
+        for row in observations:
+            candidate = by_id[row["candidate_id"]]
+            mutation = mutations[row["candidate_id"]]
+            self.assertEqual(candidate["base_revision"], row["base_revision"])
+            self.assertEqual(candidate["base_tree_hash"], row["base_tree_hash"])
+            self.assertEqual(candidate["changed_files"], row["changed_files"])
+            self.assertEqual(
+                candidate["screening"]["exact_base_resolvable"], "pass"
+            )
+            self.assertEqual(
+                candidate["screening"]["license_or_use_basis"],
+                row["license_or_use_basis_decision"],
+            )
+            self.assertEqual(
+                mutation["base_tree_hash_after"], row["base_tree_hash"]
+            )
+            self.assertIn(row["base_revision"], candidate["license_or_use_basis"])
+            self.assertIn(row["base_tree_hash"], candidate["license_or_use_basis"])
+            if row["candidate_id"] in terminal_ids:
+                self.assertEqual(candidate["decision"], "excluded")
+                self.assertEqual(
+                    candidate["exclusion_rule_ids_triggered"],
+                    ["license-or-use-basis-unavailable"],
+                )
+
+    def test_swebench_exact_tree_instruction_parity_and_application_are_bound(
+        self,
+    ) -> None:
+        evidence = json.loads(SWEBENCH_PARITY_PATH.read_text(encoding="utf-8"))
+        application = json.loads(
+            SWEBENCH_PARITY_APPLICATION_PATH.read_text(encoding="utf-8")
+        )
+        license_evidence = json.loads(
+            SWEBENCH_LICENSE_TERMS_PATH.read_text(encoding="utf-8")
+        )
+        assessments = evidence["assessments"]
+        assessment_by_id = {row["candidate_id"]: row for row in assessments}
+        mutations = {
+            row["candidate_id"]: row for row in application["mutations"]
+        }
+        license_pass_ids = {
+            row["candidate_id"]
+            for row in license_evidence["candidate_observations"]
+            if row["license_or_use_basis_decision"] == "pass"
+        }
+
+        self.assertTrue(evidence["terminal_status"])
+        self.assertFalse(evidence["agent_results_observed"])
+        self.assertFalse(evidence["design_change_required"])
+        self.assertEqual(set(assessment_by_id), license_pass_ids)
+        self.assertEqual(len(assessment_by_id), 291)
+        self.assertEqual(
+            evidence["collection_integrity"],
+            {
+                "requested_candidates": 291,
+                "observed_candidates": 291,
+                "repository_count": 40,
+                "unique_base_revisions": 291,
+                "unique_base_trees": 291,
+                "exact_tree_hash_matches": 291,
+                "tree_entry_occurrences_scanned": 684580,
+                "minimum_tree_entry_count": 95,
+                "maximum_tree_entry_count": 30223,
+                "instruction_entry_occurrences": 0,
+                "rows_with_instruction_entries": 0,
+                "case_variant_occurrences": 0,
+                "collection_anomalies": 0,
+                "assessments_sha256": hashlib.sha256(
+                    json.dumps(
+                        assessments,
+                        ensure_ascii=False,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ).encode()
+                ).hexdigest(),
+            },
+        )
+        self.assertEqual(
+            evidence["summary"],
+            {
+                "candidate_count": 291,
+                "repository_count": 40,
+                "no_discovered_instruction_rows": 291,
+                "instruction_parity_pass_rows": 291,
+                "instruction_parity_fail_rows": 0,
+                "instruction_parity_unknown_rows": 0,
+                "advance_native_source_fidelity_and_instance_review_rows": 291,
+                "terminal_instruction_parity_exclusion_rows": 0,
+                "candidate_agent_executions": 0,
+            },
+        )
+        self.assertEqual(
+            application["input_artifacts"],
+            [
+                {
+                    "path": "experiments/phase2b-candidate-ledger-v1.json",
+                    "sha256": PRE_SWEBENCH_PARITY_LEDGER_SHA256,
+                    "state": "post-SWE-bench exact-license, pre-instruction-parity working snapshot",
+                },
+                {
+                    "path": "experiments/phase2b-swebench-instruction-parity-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        SWEBENCH_PARITY_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+            ],
+        )
+        self.assertFalse(application["agent_results_observed"])
+        self.assertEqual(set(mutations), license_pass_ids)
+        self.assertEqual(
+            application["output_artifact"]["sha256"],
+            "45768bd4df54556dc524d4ee8240fbbe460eb9b1e75d50702b1f70673df9daf2",
+        )
+        self.assertNotEqual(
+            application["output_artifact"]["sha256"],
+            hashlib.sha256(LEDGER_PATH.read_bytes()).hexdigest(),
+        )
+        self.assertEqual(
+            {
+                key: application["output_artifact"]["summary"][key]
+                for key in (
+                    "candidate_count",
+                    "screening_count",
+                    "excluded_count",
+                    "selected_for_task_authoring_count",
+                )
+            },
+            {
+                "candidate_count": 1130,
+                "screening_count": 967,
+                "excluded_count": 146,
+                "selected_for_task_authoring_count": 17,
+            },
+        )
+
+        by_id = {
+            candidate["candidate_id"]: candidate
+            for candidate in self.ledger["candidates"]
+        }
+        for candidate_id in license_pass_ids:
+            assessment = assessment_by_id[candidate_id]
+            candidate = by_id[candidate_id]
+            mutation = mutations[candidate_id]
+            self.assertEqual(assessment["full_tree_instruction_entry_count"], 0)
+            self.assertEqual(assessment["task_active_instruction_entries"], [])
+            self.assertEqual(assessment["inactive_instruction_paths"], [])
+            self.assertEqual(assessment["effective_claude_chain"], [])
+            self.assertEqual(assessment["effective_codex_chain"], [])
+            self.assertEqual(assessment["result"], "pass")
+            self.assertEqual(candidate["screening"]["instruction_parity"], "pass")
+            self.assertEqual(candidate["decision"], "screening")
+            self.assertEqual(mutation["instruction_parity_before"], "unknown")
+            self.assertEqual(mutation["instruction_parity_after"], "pass")
+
+        license_fail_candidates = [
+            candidate
+            for candidate in self.ledger["candidates"]
+            if candidate["candidate_id"].startswith("swebm-")
+            and candidate["screening"]["license_or_use_basis"] == "fail"
+        ]
+        self.assertEqual(len(license_fail_candidates), 9)
+        self.assertTrue(
+            all(
+                candidate["screening"]["instruction_parity"] == "unknown"
+                for candidate in license_fail_candidates
+            )
+        )
+
+    def test_swebench_native_source_fidelity_and_application_are_bound(
+        self,
+    ) -> None:
+        evidence = json.loads(
+            SWEBENCH_NATIVE_SOURCE_PATH.read_text(encoding="utf-8")
+        )
+        application = json.loads(
+            SWEBENCH_NATIVE_SOURCE_APPLICATION_PATH.read_text(encoding="utf-8")
+        )
+        semantic_application = json.loads(
+            SWEBENCH_SEMANTIC_APPLICATION_PATH.read_text(encoding="utf-8")
+        )
+        license_evidence = json.loads(
+            SWEBENCH_LICENSE_TERMS_PATH.read_text(encoding="utf-8")
+        )
+        parity_evidence = json.loads(
+            SWEBENCH_PARITY_PATH.read_text(encoding="utf-8")
+        )
+        parity_application = json.loads(
+            SWEBENCH_PARITY_APPLICATION_PATH.read_text(encoding="utf-8")
+        )
+        target_ids = {
+            row["candidate_id"]
+            for row in license_evidence["candidate_observations"]
+            if row["license_or_use_basis_decision"] == "pass"
+        } & {
+            row["candidate_id"]
+            for row in parity_evidence["assessments"]
+            if row["result"] == "pass"
+        }
+        assessments = evidence["assessments"]
+        assessment_by_id = {row["candidate_id"]: row for row in assessments}
+        mutations = {
+            row["candidate_id"]: row for row in application["mutations"]
+        }
+        by_id = {
+            candidate["candidate_id"]: candidate
+            for candidate in self.ledger["candidates"]
+        }
+        source_pool = next(
+            pool
+            for pool in self.ledger["source_pools"]
+            if pool["source_pool_id"] == "swebench-multilingual-at-2b7aced"
+        )
+
+        self.assertEqual(len(target_ids), 291)
+        self.assertEqual(set(assessment_by_id), target_ids)
+        self.assertEqual(set(mutations), target_ids)
+        self.assertTrue(evidence["terminal_status"])
+        self.assertFalse(evidence["agent_results_observed"])
+        self.assertFalse(evidence["design_change_required"])
+        self.assertEqual(
+            evidence["pinned_dataset_identity"],
+            {
+                "source_uri": "https://huggingface.co/datasets/SWE-bench/SWE-bench_Multilingual",
+                "revision": "2b7aced941b4873e9cad3e76abbae93f481d1beb",
+                "tree_hash": "1ca27052e9230732e8b47b8fa5d474a5a660a830",
+                "parquet_path": "data/test-00000-of-00001.parquet",
+                "tree_blob_sha": "f7b835eb04ef4d5297f88840f9275a031365d0a7",
+                "lfs_pointer_content_sha256": "f53fafe81599679d6251788c157f7ccf50ed20922fa7c0405907b712d055b7da8",
+                "lfs_pointer_bytes": 132,
+                "lfs_oid_sha256": "28b7f874e48496399077d276f9f2b163a077ddf0a70dc507c148d58da826baa9",
+                "lfs_size": 1165968,
+                "materialized_payload_sha256": "28b7f874e48496399077d276f9f2b163a077ddf0a70dc507c148d58da826baa9",
+                "materialized_payload_bytes": 1165968,
+                "row_count": 300,
+                "canonical_rows_sha256": "01af606b75abc6c442af3cdbd6785cbcc6e6f93a9136a00ef1aedca982985ef0",
+                "canonical_rows_hash_basis": "All 300 complete row objects in official dataset order, sorted object keys, compact separators, UTF-8.",
+                "declared_language": "en",
+                "pinned_inventory_repository_count": 41,
+            },
+        )
+        self.assertEqual(
+            evidence["pinned_dataset_identity"]["canonical_rows_sha256"],
+            source_pool["inventory_artifact_hash"],
+        )
+        self.assertEqual(
+            evidence["collection_integrity"],
+            {
+                "dataset_rows": 300,
+                "ledger_identity_matches": 300,
+                "ledger_identity_mismatches": 0,
+                "requested_candidates": 291,
+                "observed_candidates": 291,
+                "repository_count": 40,
+                "unique_dataset_indexes": 291,
+                "nonempty_task_statements": 291,
+                "unique_task_statement_hashes": 291,
+                "surface_language_en_rows": 291,
+                "surface_language_errors": 0,
+                "rows_with_non_latin_script": 1,
+                "unique_exact_issue_urls": 291,
+                "unique_exact_issue_match_rows": 291,
+                "exact_official_collector_reconstruction_matches": 291,
+                "pull_fetch_errors": 0,
+                "discarded_candidate_issue_fetch_or_parse_errors": 577,
+                "ambiguous_exact_issue_match_rows": 0,
+                "unresolved_exact_issue_match_rows": 0,
+                "assessments_sha256": hashlib.sha256(
+                    json.dumps(
+                        assessments,
+                        ensure_ascii=False,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ).encode()
+                ).hexdigest(),
+            },
+        )
+        self.assertEqual(
+            evidence["summary"],
+            {
+                "candidate_count": 291,
+                "repository_count": 40,
+                "native_language_source_pass_rows": 291,
+                "native_language_source_fail_rows": 0,
+                "native_language_source_unknown_rows": 0,
+                "advance_instance_task_semantics_rows": 291,
+                "resolve_historical_issue_provenance_rows": 0,
+                "terminal_native_source_exclusion_rows": 0,
+                "candidate_agent_executions": 0,
+            },
+        )
+        expected_assessment_keys = {
+            "dataset_index",
+            "candidate_id",
+            "repository_id",
+            "repo",
+            "base_revision",
+            "pull_number",
+            "pull_url",
+            "issue_number",
+            "issue_url",
+            "task_statement_sha256",
+            "solution_artifact_sha256",
+            "source_evaluator_artifact_sha256",
+            "task_statement_bytes",
+            "task_statement_nonempty",
+            "surface_language",
+            "surface_language_probability",
+            "surface_language_error",
+            "non_latin_script_counts",
+            "candidate_issue_count",
+            "exact_issue_match_count",
+            "issue_title_sha256",
+            "issue_body_sha256",
+            "issue_published_at",
+            "exact_current_issue_reconstruction_match",
+            "reconstruction_contract",
+            "result",
+            "evidence_basis_ids",
+            "next_route",
+        }
+        self.assertEqual(len({row["dataset_index"] for row in assessments}), 291)
+        for row in assessments:
+            self.assertEqual(set(row), expected_assessment_keys)
+            self.assertEqual(row["result"], "pass")
+            self.assertEqual(row["surface_language"], "en")
+            self.assertIsNone(row["surface_language_error"])
+            self.assertTrue(row["task_statement_nonempty"])
+            self.assertEqual(row["exact_issue_match_count"], 1)
+            self.assertTrue(row["exact_current_issue_reconstruction_match"])
+            self.assertEqual(
+                row["reconstruction_contract"],
+                "current GitHub issue title + LF + body + LF",
+            )
+            candidate = by_id[row["candidate_id"]]
+            self.assertEqual(candidate["repository_id"], row["repository_id"])
+            self.assertEqual(candidate["base_revision"], row["base_revision"])
+            self.assertEqual(
+                candidate["task_statement_hash"], row["task_statement_sha256"]
+            )
+            self.assertEqual(
+                candidate["solution_artifact_hash"],
+                row["solution_artifact_sha256"],
+            )
+            self.assertEqual(
+                candidate["source_evaluator_artifact_hash"],
+                row["source_evaluator_artifact_sha256"],
+            )
+
+        self.assertEqual(
+            application["input_artifacts"],
+            [
+                {
+                    "path": "experiments/phase2b-candidate-ledger-v1.json",
+                    "sha256": PRE_SWEBENCH_NATIVE_SOURCE_LEDGER_SHA256,
+                    "state": "post-SWE-bench instruction parity, pre-native-source working snapshot",
+                },
+                {
+                    "path": "experiments/phase2b-swebench-native-source-fidelity-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        SWEBENCH_NATIVE_SOURCE_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+            ],
+        )
+        self.assertFalse(application["agent_results_observed"])
+        self.assertEqual(
+            application["output_artifact"]["sha256"],
+            "165f65d6569f194321b3b8926a685e9d24579961f2569d935fc34a1390a4a1bd",
+        )
+        self.assertNotEqual(
+            application["output_artifact"]["sha256"],
+            PRE_SWEBENCH_NATIVE_SOURCE_LEDGER_SHA256,
+        )
+        self.assertEqual(
+            application["output_artifact"]["sha256"],
+            semantic_application["input_artifacts"][0]["sha256"],
+        )
+        self.assertEqual(
+            application["summary"],
+            {
+                "candidate_rows_reason_refreshed": 291,
+                "candidate_rows_native_source_updated": 291,
+                "native_language_source_pass_rows": 291,
+                "native_language_source_fail_rows": 0,
+                "native_language_source_unknown_rows": 0,
+                "new_terminal_native_source_exclusions": 0,
+                "screening_after": 967,
+                "excluded_after": 146,
+                "selected_after": 17,
+                "candidate_agent_executions": 0,
+            },
+        )
+        stale_reason = (
+            "Pinned dataset terms, exact-base resolution, and upstream license pass; "
+            "native-source fidelity, boundedness, instruction parity, evaluator feasibility, "
+            "isolation, hiding, and resource budget remain unreviewed."
+        )
+        for candidate_id in target_ids:
+            candidate = by_id[candidate_id]
+            mutation = mutations[candidate_id]
+            self.assertEqual(
+                candidate["screening"]["native_language_source"], "pass"
+            )
+            self.assertEqual(candidate["decision"], "screening")
+            self.assertEqual(candidate["exclusion_rule_ids_triggered"], [])
+            self.assertNotIn(stale_reason, candidate["decision_reasons"])
+            self.assertEqual(mutation["native_language_source_before"], "unknown")
+            self.assertEqual(mutation["native_language_source_after"], "pass")
+            self.assertEqual(mutation["decision_before"], "screening")
+            self.assertEqual(mutation["decision_after"], "screening")
+
+        reconstructed_pre_ledger = json.loads(json.dumps(self.ledger))
+        reconstructed_by_id = {
+            candidate["candidate_id"]: candidate
+            for candidate in reconstructed_pre_ledger["candidates"]
+        }
+        semantic_reason_contract = semantic_application[
+            "decision_reason_contract"
+        ]
+        for mutation in semantic_application["mutations"]:
+            candidate = reconstructed_by_id[mutation["candidate_id"]]
+            candidate["screening"]["single_bounded_task"] = mutation[
+                "single_bounded_task_before"
+            ]
+            candidate["screening"]["objective_evaluator_feasible"] = mutation[
+                "objective_evaluator_feasible_before"
+            ]
+            candidate["decision_reasons"] = [
+                semantic_reason_contract["before"]
+                if reason == mutation["decision_reason_after"]
+                else reason
+                for reason in candidate["decision_reasons"]
+            ]
+        semantic_summary_mutation = semantic_application["summary_mutation"]
+        reconstructed_pre_ledger["summary"]["known_gaps"] = [
+            semantic_summary_mutation["known_gap_before"]
+            if gap == semantic_summary_mutation["known_gap_after"]
+            else gap
+            for gap in reconstructed_pre_ledger["summary"]["known_gaps"]
+        ]
+        for candidate_id in target_ids:
+            candidate = reconstructed_by_id[candidate_id]
+            mutation = mutations[candidate_id]
+            candidate["screening"]["native_language_source"] = "unknown"
+            candidate["decision_reasons"] = [
+                stale_reason
+                if reason == mutation["decision_reason_after"]
+                else reason
+                for reason in candidate["decision_reasons"]
+            ]
+        reconstructed_pre_ledger["summary"]["known_gaps"] = (
+            parity_application["output_artifact"]["summary"]["known_gaps"]
+        )
+        reconstructed_bytes = (
+            json.dumps(reconstructed_pre_ledger, ensure_ascii=False, indent=2) + "\n"
+        ).encode()
+        self.assertEqual(
+            hashlib.sha256(reconstructed_bytes).hexdigest(),
+            PRE_SWEBENCH_NATIVE_SOURCE_LEDGER_SHA256,
+        )
+
+        license_fail_candidates = [
+            candidate
+            for candidate in self.ledger["candidates"]
+            if candidate["candidate_id"].startswith("swebm-")
+            and candidate["screening"]["license_or_use_basis"] == "fail"
+        ]
+        self.assertEqual(len(license_fail_candidates), 9)
+        self.assertTrue(
+            all(
+                candidate["screening"]["native_language_source"] == "unknown"
+                for candidate in license_fail_candidates
+            )
+        )
+
+        serialized = json.dumps(
+            {"evidence": evidence, "application": application},
+            ensure_ascii=False,
+        )
+        for forbidden in (
+            "/home/",
+            "/Users/",
+            "/tmp/",
+        ):
+            self.assertNotIn(forbidden, serialized)
+
+        raw_content_keys = {
+            "problem_statement",
+            "patch",
+            "test_patch",
+            "body",
+            "content",
+            "diff",
+        }
+
+        def walk_keys(value: object) -> set[str]:
+            if isinstance(value, dict):
+                return set(value) | set().union(
+                    *(walk_keys(child) for child in value.values())
+                )
+            if isinstance(value, list):
+                return set().union(*(walk_keys(child) for child in value))
+            return set()
+
+        self.assertTrue(raw_content_keys.isdisjoint(walk_keys(evidence)))
+        self.assertTrue(raw_content_keys.isdisjoint(walk_keys(application)))
+
+    def test_swebench_semantic_triage_is_complete_nonterminal_and_public_safe(
+        self,
+    ) -> None:
+        artifact = json.loads(
+            SWEBENCH_SEMANTIC_TRIAGE_PATH.read_text(encoding="utf-8")
+        )
+        native = json.loads(
+            SWEBENCH_NATIVE_SOURCE_PATH.read_text(encoding="utf-8")
+        )
+        rows = artifact["assessments"]
+        by_id = {
+            candidate["candidate_id"]: candidate
+            for candidate in self.ledger["candidates"]
+        }
+        target_ids = [row["candidate_id"] for row in native["assessments"]]
+
+        def canonical_sha(value: object) -> str:
+            return hashlib.sha256(
+                json.dumps(
+                    value,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode()
+            ).hexdigest()
+
+        self.assertFalse(artifact["terminal_status"])
+        self.assertFalse(artifact["agent_results_observed"])
+        self.assertFalse(artifact["design_change_required"])
+        self.assertEqual(
+            artifact["protocol_version"], "phase2b-pilot-prereg-v1.1"
+        )
+        self.assertEqual(
+            artifact["input_artifacts"],
+            [
+                {
+                    "path": "experiments/phase2b-candidate-ledger-v1.json",
+                    "sha256": PRE_SWEBENCH_SEMANTIC_LEDGER_SHA256,
+                    "state": "post-SWE-bench native-source working snapshot",
+                },
+                {
+                    "path": "experiments/phase2b-swebench-license-terms-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        SWEBENCH_LICENSE_TERMS_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+                {
+                    "path": "experiments/phase2b-swebench-license-terms-ledger-application-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        SWEBENCH_LICENSE_APPLICATION_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+                {
+                    "path": "experiments/phase2b-swebench-instruction-parity-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        SWEBENCH_PARITY_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+                {
+                    "path": "experiments/phase2b-swebench-instruction-parity-ledger-application-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        SWEBENCH_PARITY_APPLICATION_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+                {
+                    "path": "experiments/phase2b-swebench-native-source-fidelity-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        SWEBENCH_NATIVE_SOURCE_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+                {
+                    "path": "experiments/phase2b-swebench-native-source-fidelity-ledger-application-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        SWEBENCH_NATIVE_SOURCE_APPLICATION_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+            ],
+        )
+        self.assertEqual(len(rows), 291)
+        self.assertEqual([row["candidate_id"] for row in rows], target_ids)
+        self.assertEqual(
+            [row["dataset_index"] for row in rows],
+            sorted(row["dataset_index"] for row in rows),
+        )
+        self.assertEqual(
+            artifact["selection_contract"],
+            {
+                "expression": "SWE-bench source pool AND license-or-use-basis pass AND exact-base-resolvable pass AND instruction-parity pass AND native-language-source pass",
+                "order": "pinned dataset index ascending",
+                "target_count": 291,
+                "candidate_ids_sha256": canonical_sha(target_ids),
+            },
+        )
+        self.assertEqual(artifact["assessments_sha256"], canonical_sha(rows))
+        self.assertEqual(artifact["terminal_exclusion_ids"], [])
+        self.assertEqual(artifact["screening_updates"], {})
+        self.assertEqual(
+            artifact["summary"]["priority_label_counts"],
+            {
+                "priority-1-multiple-review-cue-families": 28,
+                "priority-2-specific-single-review-cue": 33,
+                "priority-3-generic-or-metadata-review-cue": 73,
+                "priority-4-no-routing-cue": 157,
+            },
+        )
+        self.assertEqual(
+            {
+                key: artifact["summary"][key]
+                for key in (
+                    "row_count",
+                    "repository_count",
+                    "statement_hash_match_rows",
+                    "source_evaluator_present_rows",
+                    "fail_to_pass_nonempty_rows",
+                    "rows_with_review_cues",
+                    "reference_context_rows",
+                    "reference_context_without_nonmetadata_cue_rows",
+                    "structural_or_evaluator_metadata_rows",
+                    "retained_for_manual_review",
+                    "terminal_exclusion_count",
+                    "screening_update_count",
+                    "candidate_agent_executions",
+                )
+            },
+            {
+                "row_count": 291,
+                "repository_count": 40,
+                "statement_hash_match_rows": 291,
+                "source_evaluator_present_rows": 291,
+                "fail_to_pass_nonempty_rows": 290,
+                "rows_with_review_cues": 130,
+                "reference_context_rows": 167,
+                "reference_context_without_nonmetadata_cue_rows": 76,
+                "structural_or_evaluator_metadata_rows": 5,
+                "retained_for_manual_review": 291,
+                "terminal_exclusion_count": 0,
+                "screening_update_count": 0,
+                "candidate_agent_executions": 0,
+            },
+        )
+        self.assertEqual(
+            artifact["automation_boundary"],
+            {
+                "semantic_decisions_prohibited": True,
+                "ledger_mutations_prohibited": True,
+                "candidate_agent_executions": 0,
+                "source_test_presence_is_priority_only": True,
+                "solution_scope_is_priority_only": True,
+                "reference_url_is_not_network_evidence": True,
+            },
+        )
+
+        expected_row_keys = {
+            "dataset_index",
+            "candidate_id",
+            "repository_id",
+            "repo",
+            "base_revision",
+            "base_tree_hash",
+            "task_statement_sha256",
+            "solution_artifact_sha256",
+            "source_evaluator_artifact_sha256",
+            "mechanical_features",
+            "routing",
+            "semantic_decision",
+            "terminal_exclusion_ids",
+            "screening_updates",
+        }
+        expected_feature_keys = {
+            "statement_bytes",
+            "statement_lines",
+            "statement_heading_count",
+            "statement_list_item_count",
+            "statement_checkbox_item_count",
+            "ambiguity_term_count",
+            "external_service_term_count",
+            "distinct_action_family_count",
+            "requirement_modal_count",
+            "conjunctive_requirement_term_count",
+            "network_term_count",
+            "translation_term_count",
+            "non_latin_script_character_count",
+            "url_reference_count",
+            "solution_changed_file_count",
+            "solution_changed_line_count",
+            "source_evaluator_present",
+            "source_evaluator_changed_file_count",
+            "source_evaluator_changed_line_count",
+            "fail_to_pass_count",
+            "pass_to_pass_count",
+        }
+        allowed_signal_codes = set(artifact["signal_contract"]["definitions"])
+        for row in rows:
+            self.assertEqual(set(row), expected_row_keys)
+            self.assertEqual(set(row["mechanical_features"]), expected_feature_keys)
+            self.assertEqual(
+                set(row["routing"]),
+                {
+                    "priority_rank",
+                    "priority_label",
+                    "mechanical_review_cue_codes",
+                    "mechanical_review_cue_categories",
+                    "next_route",
+                },
+            )
+            candidate = by_id[row["candidate_id"]]
+            self.assertEqual(candidate["repository_id"], row["repository_id"])
+            self.assertEqual(candidate["base_revision"], row["base_revision"])
+            self.assertEqual(candidate["base_tree_hash"], row["base_tree_hash"])
+            self.assertEqual(
+                candidate["task_statement_hash"], row["task_statement_sha256"]
+            )
+            self.assertEqual(
+                candidate["solution_artifact_hash"],
+                row["solution_artifact_sha256"],
+            )
+            self.assertEqual(
+                candidate["source_evaluator_artifact_hash"],
+                row["source_evaluator_artifact_sha256"],
+            )
+            for name, value in row["mechanical_features"].items():
+                if name == "source_evaluator_present":
+                    self.assertIsInstance(value, bool)
+                else:
+                    self.assertIsInstance(value, int)
+                    self.assertGreaterEqual(value, 0)
+            self.assertTrue(
+                set(row["routing"]["mechanical_review_cue_codes"])
+                <= allowed_signal_codes
+            )
+            self.assertEqual(row["semantic_decision"], "not-performed")
+            self.assertEqual(row["terminal_exclusion_ids"], [])
+            self.assertEqual(row["screening_updates"], {})
+            self.assertEqual(row["routing"]["next_route"], "manual-semantic-review")
+
+        serialized = json.dumps(artifact, ensure_ascii=False)
+        for forbidden in (
+            "/home/",
+            "/Users/",
+            "/tmp/",
+            "obsidian://",
+        ):
+            self.assertNotIn(forbidden, serialized)
+
+        raw_content_keys = {
+            "problem_statement",
+            "patch",
+            "test_patch",
+            "body",
+            "content",
+            "diff",
+        }
+
+        def walk_keys(value: object) -> set[str]:
+            if isinstance(value, dict):
+                return set(value) | set().union(
+                    *(walk_keys(child) for child in value.values())
+                )
+            if isinstance(value, list):
+                return set().union(*(walk_keys(child) for child in value))
+            return set()
+
+        self.assertTrue(raw_content_keys.isdisjoint(walk_keys(artifact)))
+
+    def test_swebench_semantic_triage_derivations_and_contract_are_recomputed(
+        self,
+    ) -> None:
+        artifact = json.loads(
+            SWEBENCH_SEMANTIC_TRIAGE_PATH.read_text(encoding="utf-8")
+        )
+        license_evidence = json.loads(
+            SWEBENCH_LICENSE_TERMS_PATH.read_text(encoding="utf-8")
+        )
+        parity_evidence = json.loads(
+            SWEBENCH_PARITY_PATH.read_text(encoding="utf-8")
+        )
+        native_evidence = json.loads(
+            SWEBENCH_NATIVE_SOURCE_PATH.read_text(encoding="utf-8")
+        )
+        native_application = json.loads(
+            SWEBENCH_NATIVE_SOURCE_APPLICATION_PATH.read_text(encoding="utf-8")
+        )
+        rows = artifact["assessments"]
+        by_id = {
+            candidate["candidate_id"]: candidate
+            for candidate in self.ledger["candidates"]
+        }
+        native_by_id = {
+            row["candidate_id"]: row for row in native_evidence["assessments"]
+        }
+
+        def canonical_sha(value: object) -> str:
+            return hashlib.sha256(
+                json.dumps(
+                    value,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode()
+            ).hexdigest()
+
+        expected_definitions = {
+            "AMBIGUITY_LANGUAGE_CUES": {
+                "category": "ambiguity-term-review-cue",
+                "operands": ["ambiguity_term_count"],
+                "rule": "ambiguity_term_count > 0",
+            },
+            "EXTERNAL_SERVICE_TERMS": {
+                "category": "external-service-term-review-cue",
+                "operands": ["external_service_term_count"],
+                "rule": "external_service_term_count > 0",
+            },
+            "LARGE_PATCH_FILE_SCOPE": {
+                "category": "structural-metadata-review-cue",
+                "operands": ["solution_changed_file_count"],
+                "rule": "solution_changed_file_count >= 10",
+            },
+            "LARGE_PATCH_LINE_SCOPE": {
+                "category": "structural-metadata-review-cue",
+                "operands": ["solution_changed_line_count"],
+                "rule": "solution_changed_line_count >= 500",
+            },
+            "LOW_DETAIL_STATEMENT_SHAPE": {
+                "category": "structural-metadata-review-cue",
+                "operands": [
+                    "statement_bytes",
+                    "statement_list_item_count",
+                    "fail_to_pass_count",
+                ],
+                "rule": "statement_bytes < 256 and statement_list_item_count == 0 and fail_to_pass_count == 0",
+            },
+            "MISSING_TEST_PATCH": {
+                "category": "evaluator-metadata-review-cue",
+                "operands": ["source_evaluator_present"],
+                "rule": "source_evaluator_present is false",
+            },
+            "MULTIPLE_ACTION_FAMILY_CUES": {
+                "category": "multi-structure-review-cue",
+                "operands": [
+                    "distinct_action_family_count",
+                    "requirement_modal_count",
+                ],
+                "rule": "distinct_action_family_count >= 3 and requirement_modal_count >= 2",
+            },
+            "MULTIPLE_CONJUNCTIVE_CUES": {
+                "category": "multi-structure-review-cue",
+                "operands": ["conjunctive_requirement_term_count"],
+                "rule": "conjunctive_requirement_term_count >= 2",
+            },
+            "MULTIPLE_REQUIREMENT_LIST_CUES": {
+                "category": "multi-structure-review-cue",
+                "operands": ["statement_list_item_count"],
+                "rule": "statement_list_item_count >= 4",
+            },
+            "NETWORK_OPERATION_TERMS": {
+                "category": "network-term-review-cue",
+                "operands": ["network_term_count"],
+                "rule": "network_term_count > 0",
+            },
+            "NON_LATIN_SCRIPT_PRESENT": {
+                "category": "non-latin-script-review-cue",
+                "operands": ["non_latin_script_character_count"],
+                "rule": "non_latin_script_character_count > 0",
+            },
+            "NO_FAIL_TO_PASS_DECLARATION": {
+                "category": "evaluator-metadata-review-cue",
+                "operands": ["fail_to_pass_count"],
+                "rule": "fail_to_pass_count == 0",
+            },
+            "TRANSLATION_LOCALIZATION_TERMS": {
+                "category": "localization-term-review-cue",
+                "operands": ["translation_term_count"],
+                "rule": "translation_term_count > 0",
+            },
+            "URL_REFERENCE_PRESENT": {
+                "category": "reference-context-review-cue",
+                "operands": ["url_reference_count"],
+                "rule": "url_reference_count > 0",
+            },
+        }
+        self.assertEqual(
+            artifact["signal_contract"]["definitions"], expected_definitions
+        )
+        self.assertEqual(
+            artifact["schema_version"], "phase2b-swebench-semantic-triage-v1"
+        )
+        self.assertEqual(
+            set(artifact),
+            {
+                "artifact_id",
+                "schema_version",
+                "protocol_version",
+                "created_at",
+                "purpose",
+                "terminal_status",
+                "terminal_status_note",
+                "agent_results_observed",
+                "design_change_required",
+                "hash_basis",
+                "input_artifacts",
+                "pinned_dataset_identity",
+                "selection_contract",
+                "construction_attestation",
+                "automation_boundary",
+                "signal_contract",
+                "summary",
+                "review_order",
+                "assessments",
+                "assessments_sha256",
+                "terminal_exclusion_ids",
+                "screening_updates",
+            },
+        )
+        self.assertEqual(
+            set(artifact["pinned_dataset_identity"]),
+            {
+                "source_uri",
+                "revision",
+                "tree_hash",
+                "materialized_payload_sha256",
+                "canonical_rows_sha256",
+                "row_count",
+            },
+        )
+        self.assertEqual(
+            set(artifact["construction_attestation"]),
+            {
+                "private_raw_triage_snapshot_sha256",
+                "raw_content_retained_in_public_artifact",
+                "safe_operands_retained_for_signal_recalculation",
+                "identity_or_hash_mismatch_count",
+            },
+        )
+        self.assertEqual(
+            artifact["construction_attestation"],
+            {
+                "private_raw_triage_snapshot_sha256": "39fc0ece7ff6b58897338a75c0f552e70ec47a1416b0675825fe7ffdaa20e3be",
+                "raw_content_retained_in_public_artifact": False,
+                "safe_operands_retained_for_signal_recalculation": True,
+                "identity_or_hash_mismatch_count": 0,
+            },
+        )
+        self.assertEqual(
+            artifact["pinned_dataset_identity"],
+            {
+                "source_uri": native_evidence["pinned_dataset_identity"][
+                    "source_uri"
+                ],
+                "revision": native_evidence["pinned_dataset_identity"][
+                    "revision"
+                ],
+                "tree_hash": native_evidence["pinned_dataset_identity"][
+                    "tree_hash"
+                ],
+                "materialized_payload_sha256": native_evidence[
+                    "pinned_dataset_identity"
+                ]["materialized_payload_sha256"],
+                "canonical_rows_sha256": native_evidence[
+                    "pinned_dataset_identity"
+                ]["canonical_rows_sha256"],
+                "row_count": 300,
+            },
+        )
+        self.assertEqual(
+            artifact["input_artifacts"][0]["sha256"],
+            native_application["output_artifact"]["sha256"],
+        )
+        self.assertEqual(
+            artifact["input_artifacts"][0]["sha256"],
+            PRE_SWEBENCH_SEMANTIC_LEDGER_SHA256,
+        )
+
+        ledger_target_ids = {
+            candidate["candidate_id"]
+            for candidate in self.ledger["candidates"]
+            if candidate["source_pool_id"]
+            == "swebench-multilingual-at-2b7aced"
+            and all(
+                candidate["screening"][field] == "pass"
+                for field in (
+                    "license_or_use_basis",
+                    "exact_base_resolvable",
+                    "instruction_parity",
+                    "native_language_source",
+                )
+            )
+        }
+        license_pass_ids = {
+            row["candidate_id"]
+            for row in license_evidence["candidate_observations"]
+            if row["license_or_use_basis_decision"] == "pass"
+        }
+        parity_pass_ids = {
+            row["candidate_id"]
+            for row in parity_evidence["assessments"]
+            if row["result"] == "pass"
+        }
+        native_pass_rows = [
+            row
+            for row in native_evidence["assessments"]
+            if row["result"] == "pass"
+        ]
+        native_pass_ids = {row["candidate_id"] for row in native_pass_rows}
+        expected_target_ids = (
+            ledger_target_ids
+            & license_pass_ids
+            & parity_pass_ids
+            & native_pass_ids
+        )
+        self.assertEqual(len(expected_target_ids), 291)
+        self.assertEqual(
+            [row["candidate_id"] for row in rows],
+            [row["candidate_id"] for row in native_pass_rows],
+        )
+        self.assertEqual({row["candidate_id"] for row in rows}, expected_target_ids)
+
+        specific_codes = {
+            "MULTIPLE_ACTION_FAMILY_CUES",
+            "MULTIPLE_CONJUNCTIVE_CUES",
+            "TRANSLATION_LOCALIZATION_TERMS",
+            "NON_LATIN_SCRIPT_PRESENT",
+            "EXTERNAL_SERVICE_TERMS",
+            "NETWORK_OPERATION_TERMS",
+        }
+        nonsemantic_categories = {
+            "reference-context-review-cue",
+            "structural-metadata-review-cue",
+            "evaluator-metadata-review-cue",
+        }
+
+        def expected_codes(feature: dict[str, int | bool]) -> list[str]:
+            codes = []
+            if feature["ambiguity_term_count"] > 0:
+                codes.append("AMBIGUITY_LANGUAGE_CUES")
+            if feature["external_service_term_count"] > 0:
+                codes.append("EXTERNAL_SERVICE_TERMS")
+            if feature["solution_changed_file_count"] >= 10:
+                codes.append("LARGE_PATCH_FILE_SCOPE")
+            if feature["solution_changed_line_count"] >= 500:
+                codes.append("LARGE_PATCH_LINE_SCOPE")
+            if (
+                feature["statement_bytes"] < 256
+                and feature["statement_list_item_count"] == 0
+                and feature["fail_to_pass_count"] == 0
+            ):
+                codes.append("LOW_DETAIL_STATEMENT_SHAPE")
+            if not feature["source_evaluator_present"]:
+                codes.append("MISSING_TEST_PATCH")
+            if (
+                feature["distinct_action_family_count"] >= 3
+                and feature["requirement_modal_count"] >= 2
+            ):
+                codes.append("MULTIPLE_ACTION_FAMILY_CUES")
+            if feature["conjunctive_requirement_term_count"] >= 2:
+                codes.append("MULTIPLE_CONJUNCTIVE_CUES")
+            if feature["statement_list_item_count"] >= 4:
+                codes.append("MULTIPLE_REQUIREMENT_LIST_CUES")
+            if feature["network_term_count"] > 0:
+                codes.append("NETWORK_OPERATION_TERMS")
+            if feature["non_latin_script_character_count"] > 0:
+                codes.append("NON_LATIN_SCRIPT_PRESENT")
+            if feature["fail_to_pass_count"] == 0:
+                codes.append("NO_FAIL_TO_PASS_DECLARATION")
+            if feature["translation_term_count"] > 0:
+                codes.append("TRANSLATION_LOCALIZATION_TERMS")
+            if feature["url_reference_count"] > 0:
+                codes.append("URL_REFERENCE_PRESENT")
+            return sorted(codes)
+
+        signal_counts = Counter({code: 0 for code in expected_definitions})
+        category_counts = Counter(
+            {
+                definition["category"]: 0
+                for definition in expected_definitions.values()
+            }
+        )
+        priority_counts = Counter()
+        rows_with_review_cues = 0
+        reference_context_rows = 0
+        reference_without_nonmetadata = 0
+        metadata_rows = 0
+        for row in rows:
+            feature = row["mechanical_features"]
+            codes = expected_codes(feature)
+            categories = sorted(
+                {expected_definitions[code]["category"] for code in codes}
+            )
+            review_categories = sorted(
+                set(categories) - nonsemantic_categories
+            )
+            if len(review_categories) >= 2:
+                expected_priority = (
+                    1,
+                    "priority-1-multiple-review-cue-families",
+                )
+            elif len(review_categories) == 1 and specific_codes.intersection(
+                codes
+            ):
+                expected_priority = (
+                    2,
+                    "priority-2-specific-single-review-cue",
+                )
+            elif len(review_categories) == 1 or set(categories).intersection(
+                {
+                    "structural-metadata-review-cue",
+                    "evaluator-metadata-review-cue",
+                }
+            ):
+                expected_priority = (
+                    3,
+                    "priority-3-generic-or-metadata-review-cue",
+                )
+            else:
+                expected_priority = (4, "priority-4-no-routing-cue")
+
+            self.assertEqual(
+                row["routing"]["mechanical_review_cue_codes"], codes
+            )
+            self.assertEqual(
+                row["routing"]["mechanical_review_cue_categories"],
+                categories,
+            )
+            self.assertEqual(
+                (
+                    row["routing"]["priority_rank"],
+                    row["routing"]["priority_label"],
+                ),
+                expected_priority,
+            )
+            candidate = by_id[row["candidate_id"]]
+            native_row = native_by_id[row["candidate_id"]]
+            self.assertEqual(row["dataset_index"], native_row["dataset_index"])
+            self.assertEqual(
+                feature["statement_bytes"], native_row["task_statement_bytes"]
+            )
+            self.assertEqual(
+                feature["solution_changed_file_count"],
+                len(candidate["changed_files"]),
+            )
+            signal_counts.update(codes)
+            category_counts.update(categories)
+            priority_counts.update([expected_priority[1]])
+            rows_with_review_cues += bool(review_categories)
+            has_reference = "reference-context-review-cue" in categories
+            reference_context_rows += has_reference
+            reference_without_nonmetadata += has_reference and not review_categories
+            metadata_rows += bool(
+                set(categories)
+                & {
+                    "structural-metadata-review-cue",
+                    "evaluator-metadata-review-cue",
+                }
+            )
+
+        summary = artifact["summary"]
+        self.assertEqual(
+            summary["signal_occurrence_counts"],
+            dict(sorted(signal_counts.items())),
+        )
+        self.assertEqual(
+            summary["review_cue_category_row_counts"],
+            dict(sorted(category_counts.items())),
+        )
+        self.assertEqual(
+            summary["priority_label_counts"],
+            dict(sorted(priority_counts.items())),
+        )
+        self.assertEqual(summary["rows_with_review_cues"], rows_with_review_cues)
+        self.assertEqual(summary["reference_context_rows"], reference_context_rows)
+        self.assertEqual(
+            summary["reference_context_without_nonmetadata_cue_rows"],
+            reference_without_nonmetadata,
+        )
+        self.assertEqual(
+            summary["structural_or_evaluator_metadata_rows"], metadata_rows
+        )
+        expected_review_order = [
+            row["candidate_id"]
+            for row in sorted(
+                rows,
+                key=lambda row: (
+                    row["routing"]["priority_rank"],
+                    row["dataset_index"],
+                ),
+            )
+        ]
+        self.assertEqual(
+            artifact["review_order"]["candidate_ids"], expected_review_order
+        )
+        self.assertEqual(
+            artifact["review_order"]["candidate_ids_sha256"],
+            canonical_sha(expected_review_order),
+        )
+
+        self.assertFalse(
+            (
+                ROOT
+                / "experiments"
+                / "phase2b-swebench-semantic-triage-ledger-application-2026-07-24.json"
+            ).exists()
+        )
+        serialized = json.dumps(artifact, ensure_ascii=False)
+        self.assertIsNone(
+            re.search(r"(?:^|[\s\"'])(?:/home/|/tmp/|/Users/|[A-Za-z]:\\\\)", serialized)
+        )
+        self.assertIsNone(
+            re.search(
+                r"(?i)(?:api[_-]?key|password|secret|token)\s*[:=]\s*[^\s,}]+",
+                serialized,
+            )
+        )
+
+    def test_swebench_semantic_review_is_complete_and_source_bound(self) -> None:
+        review = json.loads(
+            SWEBENCH_SEMANTIC_REVIEW_PATH.read_text(encoding="utf-8")
+        )
+        triage = json.loads(
+            SWEBENCH_SEMANTIC_TRIAGE_PATH.read_text(encoding="utf-8")
+        )
+        rows = review["assessments"]
+        by_id = {
+            candidate["candidate_id"]: candidate
+            for candidate in self.ledger["candidates"]
+        }
+
+        def canonical_sha(value: object) -> str:
+            return hashlib.sha256(
+                json.dumps(
+                    value,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode()
+            ).hexdigest()
+
+        self.assertFalse(review["terminal_status"])
+        self.assertFalse(review["agent_results_observed"])
+        self.assertFalse(review["design_change_required"])
+        self.assertEqual(review["candidate_agent_executions"], 0)
+        self.assertEqual(review["final_evaluators_approved"], 0)
+        self.assertEqual(
+            review["schema_version"], "phase2b-swebench-semantic-review-v1"
+        )
+        self.assertEqual(
+            review["input_artifacts"],
+            [
+                {
+                    "path": "experiments/phase2b-candidate-ledger-v1.json",
+                    "sha256": PRE_SWEBENCH_SEMANTIC_LEDGER_SHA256,
+                    "state": "post-native-source, pre-semantic-review working snapshot",
+                },
+                {
+                    "path": "experiments/phase2b-swebench-semantic-triage-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        SWEBENCH_SEMANTIC_TRIAGE_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+                {
+                    "path": "experiments/phase2b-swebench-native-source-fidelity-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        SWEBENCH_NATIVE_SOURCE_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+                {
+                    "path": "experiments/phase2b-swebench-native-source-fidelity-ledger-application-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        SWEBENCH_NATIVE_SOURCE_APPLICATION_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+            ],
+        )
+        triage_ids = [row["candidate_id"] for row in triage["assessments"]]
+        self.assertEqual([row["candidate_id"] for row in rows], triage_ids)
+        self.assertEqual(len(rows), 291)
+        self.assertEqual(len(set(triage_ids)), 291)
+        self.assertEqual(review["assessments_sha256"], canonical_sha(rows))
+        self.assertEqual(
+            review["selection_contract"],
+            {
+                "expression": triage["selection_contract"]["expression"],
+                "order": "pinned dataset index ascending",
+                "target_count": 291,
+                "candidate_ids_sha256": canonical_sha(triage_ids),
+            },
+        )
+        self.assertEqual(
+            set(review["frozen_rules"]),
+            {"single-bounded-task", "objective-evaluator-feasible"},
+        )
+        self.assertEqual(
+            set(review["review_method"]),
+            {
+                "source_first",
+                "boundedness_before_evaluator",
+                "solution_scope_used_only_when_needed_for_evaluator_seam",
+                "triage_cues_used_only_for_review_priority",
+                "parallel_disjoint_shards",
+                "parallel_advisory_role",
+                "presentation_normalization",
+                "central_adjudication",
+            },
+        )
+        self.assertEqual(
+            Counter(row["dataset_index"] % 3 for row in rows),
+            {0: 98, 1: 96, 2: 97},
+        )
+        expected_source_shard_keys = {
+            "shard_index",
+            "shard_count",
+            "selection",
+            "row_count",
+            "local_review_file_sha256",
+            "source_declared_assessments_sha256",
+            "central_canonical_assessments_sha256",
+            "source_hash_note",
+        }
+        for shard_index, shard in enumerate(review["source_shards"]):
+            self.assertEqual(set(shard), expected_source_shard_keys)
+            self.assertEqual(shard["shard_index"], shard_index)
+            self.assertEqual(shard["shard_count"], 3)
+            self.assertEqual(
+                shard["selection"],
+                f"pinned dataset index modulo 3 equals {shard_index}",
+            )
+            self.assertEqual(
+                shard["row_count"],
+                sum(row["dataset_index"] % 3 == shard_index for row in rows),
+            )
+        self.assertEqual(
+            review["summary"],
+            {
+                "candidate_count": 291,
+                "repository_count": 40,
+                "statement_hash_match_rows": 291,
+                "single_bounded_task": {"pass": 291, "fail": 0, "unknown": 0},
+                "objective_evaluator_feasible": {
+                    "pass": 290,
+                    "fail": 0,
+                    "unknown": 1,
+                },
+                "review_sensitivity": {
+                    "clear": 272,
+                    "central-cross-review-resolved-pass": 18,
+                    "needs-central-cross-review": 1,
+                },
+                "evaluator_mode_occurrences": {
+                    "deterministic-test": 255,
+                    "held-out-mutation": 1,
+                    "integration-check": 88,
+                    "invariant": 17,
+                    "property-check": 2,
+                    "unknown": 1,
+                },
+                "next_route": {
+                    "advance-isolation-hideability-reproducibility-review": 290,
+                    "semantic-adjudication": 1,
+                },
+                "terminal_exclusion_rows": 0,
+                "partial_application_rows": 291,
+                "single_bounded_task_updates": 291,
+                "objective_evaluator_feasible_updates": 290,
+                "candidate_agent_executions": 0,
+                "selected_rows_created": 0,
+            },
+        )
+        self.assertEqual(
+            review["summary"]["single_bounded_task"],
+            {
+                key: Counter(
+                    row["single_bounded_task"] for row in rows
+                ).get(key, 0)
+                for key in ("pass", "fail", "unknown")
+            },
+        )
+        self.assertEqual(
+            review["summary"]["objective_evaluator_feasible"],
+            {
+                key: Counter(
+                    row["objective_evaluator_feasible"] for row in rows
+                ).get(key, 0)
+                for key in ("pass", "fail", "unknown")
+            },
+        )
+        self.assertEqual(
+            review["summary"]["review_sensitivity"],
+            {
+                key: Counter(row["review_sensitivity"] for row in rows).get(
+                    key, 0
+                )
+                for key in (
+                    "clear",
+                    "central-cross-review-resolved-pass",
+                    "needs-central-cross-review",
+                )
+            },
+        )
+        self.assertEqual(
+            review["summary"]["next_route"],
+            dict(sorted(Counter(row["next_route"] for row in rows).items())),
+        )
+        self.assertEqual(
+            review["summary"]["evaluator_mode_occurrences"],
+            dict(
+                sorted(
+                    Counter(
+                        mode
+                        for row in rows
+                        for mode in row["evaluator_mode_codes"]
+                    ).items()
+                )
+            ),
+        )
+        self.assertEqual(
+            [shard["row_count"] for shard in review["source_shards"]],
+            [98, 96, 97],
+        )
+        self.assertEqual(
+            [
+                shard["central_canonical_assessments_sha256"]
+                for shard in review["source_shards"]
+            ],
+            [
+                "c0f362561c6f6e5e2de722c004ed0e88e8047dcdd44571d41cb16eba672df64f",
+                "23297e2efa5ebd76ab39a8375f16989a0ea12732874d95cbe90a4dcb5a4b77dc",
+                "da19e5c6a43e191138ff30064ff529f91b42fbd16c1ae53ad648d1b7e86617c1",
+            ],
+        )
+        unknown_ids = []
+        allowed_evaluator_modes = {
+            "deterministic-test",
+            "held-out-mutation",
+            "integration-check",
+            "invariant",
+            "property-check",
+            "unknown",
+        }
+        allowed_sensitivities = {
+            "clear",
+            "central-cross-review-resolved-pass",
+            "needs-central-cross-review",
+        }
+        expected_row_keys = {
+            "dataset_index",
+            "candidate_id",
+            "repository_id",
+            "repo",
+            "base_revision",
+            "base_tree_hash",
+            "task_statement_sha256",
+            "solution_artifact_sha256",
+            "source_evaluator_artifact_sha256",
+            "statement_hash_matches_ledger",
+            "single_bounded_task",
+            "objective_evaluator_feasible",
+            "terminal_exclusion_ids",
+            "top_level_outcome_code",
+            "core_criteria_count",
+            "objectively_coverable_criteria_count",
+            "evaluator_mode_codes",
+            "final_evaluator_approved",
+            "concise_public_reason",
+            "review_sensitivity",
+            "next_route",
+        }
+        for row in rows:
+            self.assertEqual(set(row), expected_row_keys)
+            candidate = by_id[row["candidate_id"]]
+            self.assertEqual(candidate["repository_id"], row["repository_id"])
+            self.assertEqual(candidate["base_revision"], row["base_revision"])
+            self.assertEqual(candidate["base_tree_hash"], row["base_tree_hash"])
+            self.assertEqual(
+                candidate["task_statement_hash"], row["task_statement_sha256"]
+            )
+            self.assertEqual(
+                candidate["solution_artifact_hash"],
+                row["solution_artifact_sha256"],
+            )
+            self.assertEqual(
+                candidate["source_evaluator_artifact_hash"],
+                row["source_evaluator_artifact_sha256"],
+            )
+            self.assertTrue(row["statement_hash_matches_ledger"])
+            self.assertEqual(row["single_bounded_task"], "pass")
+            self.assertEqual(row["terminal_exclusion_ids"], [])
+            self.assertFalse(row["final_evaluator_approved"])
+            self.assertGreater(row["core_criteria_count"], 0)
+            self.assertTrue(
+                set(row["evaluator_mode_codes"]) <= allowed_evaluator_modes
+            )
+            self.assertIn(row["review_sensitivity"], allowed_sensitivities)
+            if row["objective_evaluator_feasible"] == "pass":
+                self.assertEqual(
+                    row["objectively_coverable_criteria_count"],
+                    row["core_criteria_count"],
+                )
+                self.assertEqual(
+                    row["next_route"],
+                    "advance-isolation-hideability-reproducibility-review",
+                )
+            else:
+                unknown_ids.append(row["candidate_id"])
+                self.assertEqual(row["evaluator_mode_codes"], ["unknown"])
+                self.assertEqual(row["next_route"], "semantic-adjudication")
+
+        faker_id = "swebm-faker-ruby__faker-2705"
+        self.assertEqual(unknown_ids, [faker_id])
+        self.assertEqual(
+            review["next_queues"]["semantic_adjudication"], [faker_id]
+        )
+        self.assertEqual(
+            review["next_queues"][
+                "advance_isolation_hideability_reproducibility_review"
+            ],
+            [
+                row["candidate_id"]
+                for row in rows
+                if row["next_route"]
+                == "advance-isolation-hideability-reproducibility-review"
+            ],
+        )
+        serialized = json.dumps(review, ensure_ascii=False)
+        self.assertIsNone(
+            re.search(
+                r"(?:^|[\s\"'])(?:/home/|/tmp/|/Users/|[A-Za-z]:\\)",
+                serialized,
+            )
+        )
+        raw_content_keys = {
+            "problem_statement",
+            "patch",
+            "test_patch",
+            "body",
+            "content",
+            "diff",
+        }
+
+        def walk_keys(value: object) -> set[str]:
+            if isinstance(value, dict):
+                return set(value) | set().union(
+                    *(walk_keys(child) for child in value.values())
+                )
+            if isinstance(value, list):
+                return set().union(*(walk_keys(child) for child in value))
+            return set()
+
+        self.assertTrue(raw_content_keys.isdisjoint(walk_keys(review)))
+
+    def test_swebench_semantic_application_is_exact_and_reversible(self) -> None:
+        review = json.loads(
+            SWEBENCH_SEMANTIC_REVIEW_PATH.read_text(encoding="utf-8")
+        )
+        application = json.loads(
+            SWEBENCH_SEMANTIC_APPLICATION_PATH.read_text(encoding="utf-8")
+        )
+        mutations = {
+            row["candidate_id"]: row for row in application["mutations"]
+        }
+        review_by_id = {
+            row["candidate_id"]: row for row in review["assessments"]
+        }
+        by_id = {
+            candidate["candidate_id"]: candidate
+            for candidate in self.ledger["candidates"]
+        }
+
+        self.assertFalse(application["agent_results_observed"])
+        self.assertFalse(application["design_change_required"])
+        self.assertFalse(application["terminal_status"])
+        self.assertEqual(
+            set(application),
+            {
+                "artifact_id",
+                "created_at",
+                "protocol_version",
+                "purpose",
+                "terminal_status",
+                "terminal_status_note",
+                "input_artifacts",
+                "partial_application_contract",
+                "mutation_contract",
+                "decision_reason_contract",
+                "summary_mutation",
+                "deferred_evaluator_candidate_ids",
+                "mutations",
+                "output_artifact",
+                "summary",
+                "design_change_required",
+                "agent_results_observed",
+            },
+        )
+        self.assertEqual(
+            set(application["partial_application_contract"]),
+            {
+                "basis",
+                "resolved_fields_applied",
+                "unresolved_fields_retained",
+                "authorization_boundary",
+            },
+        )
+        self.assertEqual(
+            set(application["mutation_contract"]),
+            {"eligible_rows", "allowed_changes", "forbidden_changes"},
+        )
+        self.assertEqual(
+            set(application["decision_reason_contract"]),
+            {
+                "before",
+                "after_when_evaluator_passes",
+                "after_when_evaluator_remains_unknown",
+            },
+        )
+        self.assertEqual(
+            set(application["summary_mutation"]),
+            {"known_gap_before", "known_gap_after"},
+        )
+        self.assertEqual(set(mutations), set(review_by_id))
+        self.assertEqual(len(mutations), 291)
+        self.assertEqual(
+            application["input_artifacts"],
+            [
+                {
+                    "path": "experiments/phase2b-candidate-ledger-v1.json",
+                    "sha256": PRE_SWEBENCH_SEMANTIC_LEDGER_SHA256,
+                    "state": "post-native-source, pre-semantic-review working snapshot",
+                },
+                {
+                    "path": "experiments/phase2b-swebench-semantic-review-2026-07-24.json",
+                    "sha256": hashlib.sha256(
+                        SWEBENCH_SEMANTIC_REVIEW_PATH.read_bytes()
+                    ).hexdigest(),
+                },
+            ],
+        )
+        self.assertEqual(
+            application["output_artifact"]["sha256"],
+            POST_SWEBENCH_SEMANTIC_LEDGER_SHA256,
+        )
+        self.assertEqual(
+            application["output_artifact"]["sha256"],
+            hashlib.sha256(LEDGER_PATH.read_bytes()).hexdigest(),
+        )
+        self.assertEqual(
+            application["output_artifact"]["summary"], self.ledger["summary"]
+        )
+        self.assertEqual(
+            application["summary"],
+            {
+                "candidate_rows_updated": 291,
+                "candidate_rows_reason_refreshed": 291,
+                "single_bounded_task_pass_rows": 291,
+                "objective_evaluator_feasible_pass_rows": 290,
+                "objective_evaluator_feasible_unknown_rows": 1,
+                "deferred_evaluator_rows": 1,
+                "new_terminal_semantic_exclusions": 0,
+                "decision_transition_rows": 0,
+                "exclusion_rule_change_rows": 0,
+                "screening_after": 967,
+                "excluded_after": 146,
+                "selected_after": 17,
+                "candidate_agent_executions": 0,
+            },
+        )
+        faker_id = "swebm-faker-ruby__faker-2705"
+        self.assertEqual(
+            application["deferred_evaluator_candidate_ids"], [faker_id]
+        )
+        expected_mutation_keys = {
+            "dataset_index",
+            "candidate_id",
+            "single_bounded_task_before",
+            "single_bounded_task_after",
+            "objective_evaluator_feasible_before",
+            "objective_evaluator_feasible_after",
+            "decision_before",
+            "decision_after",
+            "exclusion_rule_ids_before",
+            "exclusion_rule_ids_after",
+            "decision_reason_before_sha256",
+            "decision_reason_after",
+        }
+        for candidate_id, mutation in mutations.items():
+            candidate = by_id[candidate_id]
+            assessment = review_by_id[candidate_id]
+            self.assertEqual(set(mutation), expected_mutation_keys)
+            self.assertEqual(
+                mutation["dataset_index"], assessment["dataset_index"]
+            )
+            self.assertEqual(
+                candidate["screening"]["single_bounded_task"], "pass"
+            )
+            self.assertEqual(
+                candidate["screening"]["objective_evaluator_feasible"],
+                assessment["objective_evaluator_feasible"],
+            )
+            self.assertEqual(mutation["single_bounded_task_before"], "unknown")
+            self.assertEqual(mutation["single_bounded_task_after"], "pass")
+            self.assertEqual(
+                mutation["objective_evaluator_feasible_before"], "unknown"
+            )
+            self.assertEqual(
+                mutation["objective_evaluator_feasible_after"],
+                assessment["objective_evaluator_feasible"],
+            )
+            self.assertEqual(mutation["decision_before"], "screening")
+            self.assertEqual(mutation["decision_after"], "screening")
+            self.assertEqual(mutation["exclusion_rule_ids_before"], [])
+            self.assertEqual(mutation["exclusion_rule_ids_after"], [])
+            self.assertEqual(
+                mutation["decision_reason_before_sha256"],
+                hashlib.sha256(
+                    application["decision_reason_contract"]["before"].encode()
+                ).hexdigest(),
+            )
+            self.assertIn(
+                mutation["decision_reason_after"], candidate["decision_reasons"]
+            )
+            self.assertEqual(
+                Counter(candidate["screening"].values()),
+                {"pass": 7, "unknown": 5}
+                if candidate_id == faker_id
+                else {"pass": 8, "unknown": 4},
+            )
+
+        license_fail_candidates = [
+            candidate
+            for candidate in self.ledger["candidates"]
+            if candidate["source_pool_id"]
+            == "swebench-multilingual-at-2b7aced"
+            and candidate["screening"]["license_or_use_basis"] == "fail"
+        ]
+        self.assertEqual(len(license_fail_candidates), 9)
+        for candidate in license_fail_candidates:
+            self.assertEqual(candidate["decision"], "excluded")
+            self.assertEqual(
+                candidate["exclusion_rule_ids_triggered"],
+                ["license-or-use-basis-unavailable"],
+            )
+            self.assertEqual(
+                candidate["screening"]["single_bounded_task"], "unknown"
+            )
+            self.assertEqual(
+                candidate["screening"]["objective_evaluator_feasible"],
+                "unknown",
+            )
+
+        reconstructed = json.loads(json.dumps(self.ledger))
+        reconstructed_by_id = {
+            candidate["candidate_id"]: candidate
+            for candidate in reconstructed["candidates"]
+        }
+        reason_contract = application["decision_reason_contract"]
+        for candidate_id, mutation in mutations.items():
+            candidate = reconstructed_by_id[candidate_id]
+            candidate["screening"]["single_bounded_task"] = mutation[
+                "single_bounded_task_before"
+            ]
+            candidate["screening"]["objective_evaluator_feasible"] = mutation[
+                "objective_evaluator_feasible_before"
+            ]
+            candidate["decision_reasons"] = [
+                reason_contract["before"]
+                if reason == mutation["decision_reason_after"]
+                else reason
+                for reason in candidate["decision_reasons"]
+            ]
+        summary_mutation = application["summary_mutation"]
+        reconstructed["summary"]["known_gaps"] = [
+            summary_mutation["known_gap_before"]
+            if gap == summary_mutation["known_gap_after"]
+            else gap
+            for gap in reconstructed["summary"]["known_gaps"]
+        ]
+        reconstructed_bytes = (
+            json.dumps(reconstructed, ensure_ascii=False, indent=2) + "\n"
+        ).encode()
+        self.assertEqual(
+            hashlib.sha256(reconstructed_bytes).hexdigest(),
+            PRE_SWEBENCH_SEMANTIC_LEDGER_SHA256,
+        )
+
+        serialized = json.dumps(application, ensure_ascii=False)
+        for forbidden in (
+            "/home/",
+            "/Users/",
+            "/tmp/",
+            "obsidian://",
+        ):
+            self.assertNotIn(forbidden, serialized)
 
     def test_screening_cascade_is_nonterminal_and_cost_ordered(self) -> None:
         artifact = json.loads(SCREENING_CASCADE_PATH.read_text(encoding="utf-8"))
@@ -1437,6 +4221,57 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             "experiments/phase2b-rank7-ledger-application-2026-07-24.json": hashlib.sha256(
                 RANK7_APPLICATION_PATH.read_bytes()
             ).hexdigest(),
+            "experiments/phase2b-scope-review-source-semantic-2026-07-24.json": hashlib.sha256(
+                SCOPE_REVIEW_SEMANTIC_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-scope-review-ledger-application-2026-07-24.json": hashlib.sha256(
+                SCOPE_REVIEW_APPLICATION_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-scope-review-solution-segmentation-2026-07-24.json": hashlib.sha256(
+                SCOPE_REVIEW_SEGMENTATION_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-scope-review-exact-revision-license-2026-07-24.json": hashlib.sha256(
+                SCOPE_REVIEW_EXACT_LICENSE_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-scope-review-instruction-parity-2026-07-24.json": hashlib.sha256(
+                SCOPE_REVIEW_PARITY_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-scope-review-survivor-semantic-2026-07-24.json": hashlib.sha256(
+                SCOPE_REVIEW_SURVIVOR_SEMANTIC_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-scope-review-survivor-agent-free-reproduction-2026-07-24.json": hashlib.sha256(
+                SCOPE_REVIEW_SURVIVOR_REPRODUCTION_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-scope-review-survivor-ledger-application-2026-07-24.json": hashlib.sha256(
+                SCOPE_REVIEW_SURVIVOR_APPLICATION_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-swebench-license-terms-2026-07-24.json": hashlib.sha256(
+                SWEBENCH_LICENSE_TERMS_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-swebench-license-terms-ledger-application-2026-07-24.json": hashlib.sha256(
+                SWEBENCH_LICENSE_APPLICATION_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-swebench-instruction-parity-2026-07-24.json": hashlib.sha256(
+                SWEBENCH_PARITY_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-swebench-instruction-parity-ledger-application-2026-07-24.json": hashlib.sha256(
+                SWEBENCH_PARITY_APPLICATION_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-swebench-native-source-fidelity-2026-07-24.json": hashlib.sha256(
+                SWEBENCH_NATIVE_SOURCE_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-swebench-native-source-fidelity-ledger-application-2026-07-24.json": hashlib.sha256(
+                SWEBENCH_NATIVE_SOURCE_APPLICATION_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-swebench-semantic-triage-2026-07-24.json": hashlib.sha256(
+                SWEBENCH_SEMANTIC_TRIAGE_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-swebench-semantic-review-2026-07-24.json": hashlib.sha256(
+                SWEBENCH_SEMANTIC_REVIEW_PATH.read_bytes()
+            ).hexdigest(),
+            "experiments/phase2b-swebench-semantic-review-ledger-application-2026-07-24.json": hashlib.sha256(
+                SWEBENCH_SEMANTIC_APPLICATION_PATH.read_bytes()
+            ).hexdigest(),
             "experiments/phase2b-mechanical-prefilter-2026-07-19.json": hashlib.sha256(
                 (
                     ROOT
@@ -1452,6 +4287,31 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             },
             expected_hashes,
         )
+        self.assertEqual(
+            artifact["current_ledger_snapshot"],
+            {
+                "sha256": hashlib.sha256(LEDGER_PATH.read_bytes()).hexdigest(),
+                "screening": 967,
+                "excluded": 146,
+                "selected_for_task_authoring": 17,
+            },
+        )
+        self.assertEqual(
+            artifact["scope_review_continuation"],
+            {
+                "input_rows": 19,
+                "source_terminal_rows": 7,
+                "advance_exact_segmentation_rows": 12,
+                "exact_license_pass_rows": 12,
+                "instruction_parity_terminal_rows": 8,
+                "advance_agent_free_reproduction_rows": 4,
+                "intended_base_negative_rows": 4,
+                "solution_positive_rows": 4,
+                "new_selected_for_task_authoring_rows": 4,
+                "pending_rows": 0,
+                "candidate_agent_executions": 0,
+            },
+        )
 
     def test_screening_cascade_routes_current_pools_before_deep_review(self) -> None:
         cascade = json.loads(SCREENING_CASCADE_PATH.read_text(encoding="utf-8"))
@@ -1464,31 +4324,77 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
         )
         exact = json.loads(EXACT_REVISION_LICENSE_PATH.read_text(encoding="utf-8"))
         exact_ids = {row["candidate_id"] for row in exact["observations"]}
-        screening = [
+        current_screening = [
             candidate
             for candidate in self.ledger["candidates"]
             if candidate["decision"] == "screening"
-            or candidate["candidate_id"] in exact_ids
         ]
-        by_pool = Counter(candidate["source_pool_id"] for candidate in screening)
+        historical_github_screening = [
+            candidate
+            for candidate in self.ledger["candidates"]
+            if candidate["source_pool_id"].startswith("github-")
+            and (
+                candidate["decision"] == "screening"
+                or candidate["candidate_id"] in exact_ids
+                or candidate["candidate_id"] in self.scope_review_mutations
+            )
+        ]
+        current_by_pool = Counter(
+            candidate["source_pool_id"] for candidate in current_screening
+        )
         routes = cascade["pool_routes"]
 
-        self.assertEqual(len(screening), 1025)
+        self.assertEqual(len(current_screening), 967)
         self.assertEqual(
             routes["aao-local-history-through-0e32241"]["screening_rows"],
-            by_pool["aao-local-history-through-0e32241"],
+            current_by_pool["aao-local-history-through-0e32241"],
         )
         self.assertEqual(
             routes["swebench-multilingual-at-2b7aced"]["screening_rows"],
-            by_pool["swebench-multilingual-at-2b7aced"],
+            current_by_pool["swebench-multilingual-at-2b7aced"],
         )
-        github_count = sum(
-            count
-            for pool_id, count in by_pool.items()
-            if pool_id.startswith("github-")
+        self.assertEqual(
+            {
+                key: routes["swebench-multilingual-at-2b7aced"][key]
+                for key in (
+                    "native_source_fidelity_completed",
+                    "native_language_source_pass",
+                    "native_language_source_fail",
+                    "native_language_source_unknown",
+                    "semantic_triage_rows_retained",
+                    "single_bounded_task_reviewed",
+                    "single_bounded_task_pass",
+                    "objective_evaluator_feasible_pass",
+                    "objective_evaluator_feasible_unknown",
+                    "advance_isolation_hideability_reproducibility_review",
+                    "semantic_adjudication",
+                    "route",
+                )
+            },
+            {
+                "native_source_fidelity_completed": 291,
+                "native_language_source_pass": 291,
+                "native_language_source_fail": 0,
+                "native_language_source_unknown": 0,
+                "semantic_triage_rows_retained": 291,
+                "single_bounded_task_reviewed": 291,
+                "single_bounded_task_pass": 291,
+                "objective_evaluator_feasible_pass": 290,
+                "objective_evaluator_feasible_unknown": 1,
+                "advance_isolation_hideability_reproducibility_review": 290,
+                "semantic_adjudication": 1,
+                "route": "isolation-hideability-reproducibility-review",
+            },
         )
         self.assertEqual(routes["github-current-screening"]["screening_rows"], 691)
-        self.assertEqual(routes["github-current-screening"]["screening_rows"], github_count)
+        self.assertEqual(
+            cascade["known_limitations"][-1],
+            "SWE-bench exact-base, license, candidate-tree instruction parity, native-source fidelity, and boundedness are complete for all 291 survivors; evaluator feasibility passes 290 and remains unknown for one. All 291 still lack isolation and no-network safety, hiding, fixture-health, reproduction, and resource-budget decisions.",
+        )
+        self.assertEqual(
+            routes["github-current-screening"]["screening_rows"],
+            len(historical_github_screening),
+        )
         self.assertEqual(
             routes["github-current-screening"][
                 "deep_review_queue_after_current_head_classification"
@@ -1578,8 +4484,13 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
                 "exact_license_fail_rows": 4,
                 "advance_remaining_rule_review_rows": 26,
                 "return_to_solution_scope_review_rows": 1,
-                "swebench_rows_with_recorded_base_but_missing_tree_and_upstream_license": 300,
+                "swebench_input_rows": 300,
                 "swebench_upstream_repositories": 41,
+                "swebench_dataset_terms_pass_rows": 300,
+                "swebench_exact_bases_resolved": 300,
+                "swebench_exact_license_pass_rows": 291,
+                "swebench_exact_license_fail_rows": 9,
+                "swebench_advance_instruction_inventory_rows": 291,
             },
         )
         self.assertEqual(
@@ -1590,6 +4501,12 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
                 "new_instruction_parity_pass_rows": 9,
                 "new_instruction_parity_fail_rows": 16,
                 "advance_boundedness_evaluator_reproduction_rows": 10,
+                "swebench_input_rows": 291,
+                "swebench_exact_tree_instruction_inventories_completed": 291,
+                "swebench_no_discovered_instruction_rows": 291,
+                "swebench_new_instruction_parity_pass_rows": 291,
+                "swebench_instruction_parity_fail_rows": 0,
+                "swebench_advance_native_source_fidelity_and_instance_review_rows": 291,
             },
         )
         self.assertEqual(
@@ -1606,6 +4523,18 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
                 "medium_bucket_rows": 2,
                 "new_selected_for_task_authoring_rows": 6,
                 "boundedness_evaluator_reproduction_pending": 0,
+                "swebench_native_source_fidelity_rows_completed": 291,
+                "swebench_native_language_source_pass_rows": 291,
+                "swebench_native_language_source_fail_rows": 0,
+                "swebench_native_language_source_unknown_rows": 0,
+                "swebench_advance_instance_task_semantics_rows": 291,
+                "swebench_semantic_triage_rows_retained": 291,
+                "swebench_single_bounded_task_reviewed": 291,
+                "swebench_single_bounded_task_pass_rows": 291,
+                "swebench_objective_evaluator_feasible_pass_rows": 290,
+                "swebench_objective_evaluator_feasible_unknown_rows": 1,
+                "swebench_advance_isolation_hideability_reproducibility_review_rows": 290,
+                "swebench_semantic_adjudication_rows": 1,
             },
         )
         self.assertEqual(
@@ -1643,7 +4572,7 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             in candidate["exclusion_rule_ids_triggered"]
         ]
 
-        self.assertEqual(len(rows), 25)
+        self.assertEqual(len(rows), 34)
         for candidate in rows:
             self.assertEqual(candidate["decision"], "excluded")
             self.assertEqual(candidate["screening"]["license_or_use_basis"], "fail")
@@ -1724,6 +4653,7 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             if candidate["provisional_classification"]["task_category"] is not None
             and candidate["screened_by_role_id"] != "task-source-construction-2026-07-20"
             and candidate["candidate_id"] not in self.rank7_mutations
+            and candidate["candidate_id"] not in self.scope_review_mutations
         ]
 
         self.assertEqual(len(candidates), 383)
@@ -2468,6 +5398,12 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             for candidate in self.ledger["candidates"]
         }
         rank6 = json.loads(RANK6_PARITY_PATH.read_text(encoding="utf-8"))
+        scope_parity = json.loads(
+            SCOPE_REVIEW_PARITY_PATH.read_text(encoding="utf-8")
+        )
+        swebench_parity = json.loads(
+            SWEBENCH_PARITY_PATH.read_text(encoding="utf-8")
+        )
         passing = {
             "ghko-SeoyunL--factlog-academic-issue-314",
             "ghmix-joshua-jingu-lee--ante-issue-2349",
@@ -2508,6 +5444,21 @@ class Phase2bCandidateLedgerTests(unittest.TestCase):
             row["candidate_id"]
             for row in rank6["assessments"]
             if row["result"] == "fail"
+        )
+        passing.update(
+            row["candidate_id"]
+            for row in scope_parity["assessments"]
+            if row["result"] == "pass"
+        )
+        failing.update(
+            row["candidate_id"]
+            for row in scope_parity["assessments"]
+            if row["result"] == "fail"
+        )
+        passing.update(
+            row["candidate_id"]
+            for row in swebench_parity["assessments"]
+            if row["result"] == "pass"
         )
 
         self.assertEqual(

@@ -1,0 +1,3695 @@
+{
+  "artifact_id": "phase2b-swebench-license-terms-ledger-application-2026-07-24",
+  "created_at": "2026-07-24",
+  "protocol_version": "phase2b-pilot-prereg-v1.1",
+  "purpose": "Bind the 300 SWE-bench exact-base, dataset-terms, and upstream license decisions to their ledger mutations without observing candidate-agent results.",
+  "terminal_status": true,
+  "terminal_status_note": "Terminal for the nine license failures only. The 291 passing rows remain screening and are not selected.",
+  "agent_results_observed": false,
+  "input_artifacts": [
+    {
+      "path": "experiments/phase2b-candidate-ledger-v1.json",
+      "sha256": "8f71326cc2131cd816c4ef8fbf42eb84a96fdeb0300b357bdec791072306f5d8",
+      "state": "post-scope-review, pre-SWE-bench exact-license working snapshot"
+    },
+    {
+      "path": "experiments/phase2b-swebench-license-terms-2026-07-24.json",
+      "sha256": "9f28bd5e881b8ab0cc17321ef5d65c51d7f2307f2789078cccfb1f64b42a71f9"
+    }
+  ],
+  "method": [
+    "Populate each SWE-bench row base_tree_hash from its fetched exact commit.",
+    "Set exact_base_resolvable to pass for all 300 rows and license_or_use_basis to the exact evidence result.",
+    "Move only the nine non-eligible upstream path-license rows to excluded with license-or-use-basis-unavailable; keep all 291 pass rows in screening.",
+    "Recompute ledger summary counts without changing language or category assignments."
+  ],
+  "summary": {
+    "candidate_rows_updated": 300,
+    "exact_base_resolvable_pass_rows": 300,
+    "dataset_terms_pass_rows": 300,
+    "license_pass_rows": 291,
+    "license_fail_rows": 9,
+    "new_terminal_license_exclusions": 9,
+    "advance_instance_review_rows": 291,
+    "screening_after": 967,
+    "excluded_after": 146,
+    "selected_after": 17,
+    "candidate_agent_executions": 0
+  },
+  "mutations": [
+    {
+      "candidate_id": "swebm-apache__druid-13704",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "22932f43e4de244bcb54df7bffa79e4e76ea5708",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__druid-14092",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "63733d3b0b2355257d255eb8bddf6edb095c6030",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__druid-14136",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "22b0934caaecc6d03ffb463d1e3f97442bb1b5de",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__druid-15402",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "784d81e5ff26063215541e85559fb6478e4c9933",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__druid-16875",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "a7cdbf8d63cc40a024cf5cf6769a8d2dc596f4e1",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__lucene-11760",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "45efcbdcb43be1034b626aa315e1c199c4a7878f",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__lucene-12022",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "e9069429ceb395af2dc1ad216c621b45a08dd7aa",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__lucene-12196",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "b6dccbfa89933d07b91066060a9f80dd6abe7ba6",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__lucene-12212",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "16361aa789a1004a02c74e1f1a894c4f215e0a74",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__lucene-12626",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "40276da26fbb6db82f49407a6b662c0b49fc4f7f",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__lucene-13170",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "8076025a33e9b75a17a1c84206dd4a558f17a53c",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__lucene-13301",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "a60f2069d46ae644a5d7ae3eaad50d1dcacb9451",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__lucene-13494",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "06598b4c606efebb6d4f09a0b277d3d565ea6ca3",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-apache__lucene-13704",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "5374554edbeb93b81e86b35947d9c4e1e95cec84",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-astral-sh__ruff-15309",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "1be87203730e74b166ad86599ff315cec0ddd616",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-astral-sh__ruff-15330",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "52ec3c7f8d2ba4515e3a0cf4a4020b68d9c86124",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-astral-sh__ruff-15356",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "9279372082b74f7e427b4d5403563d93b4342708",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-astral-sh__ruff-15394",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "bdd02f9a6dd07187ea956ed71d5eb0fb447d591e",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-astral-sh__ruff-15443",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "3ccd9820143147b934d341613c098bad9146d0c2",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-astral-sh__ruff-15543",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "cc30611a365d2b1673b579c1fcbb32297ea57fd4",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-astral-sh__ruff-15626",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "ed1a0537687f35e5e05e9e2e76d3c5d830adfe83",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-axios__axios-4731",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "6218dcbfbfbc1ab72418abf3266d1bec42dbd5d1",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-axios__axios-4738",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "5757ef53ca7b72ee3217fd36b67ded6202ab7f5b",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-axios__axios-5085",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "1d61ba6faf8507ce1588a33dfdb585db6584c4a5",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-axios__axios-5316",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "86e7ea84b094532297d510f0f6462671c3039dfa",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-axios__axios-5892",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "d37c27531ee7d744f25932ad0cb20ecabbf202ff",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-axios__axios-6539",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "17157af95707b0d13e24f0e53162460c9162199a",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-babel__babel-13928",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "ddd21e9e98e81447f313101549079ab3ff06210d",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-babel__babel-14532",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "a1ab81195da9b15a219969cae47e9188feafc3fd",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-babel__babel-15445",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "72c1996b1ed530520c5eff12300c8ce128ab8020",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-babel__babel-15649",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "79cbf5c94575759c5a6dba5c358c7beb173460d6",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-babel__babel-16130",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "2efcd700ae0f261aa9a881c83e6386190d202022",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-briannesbitt__carbon-2665",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "b3aa5fa3251fe011827e310de298f66ad508b2bc",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-briannesbitt__carbon-2752",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "c760f164b8b992753d1f94b9bb49dbe2c24c41dd",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-briannesbitt__carbon-2762",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "5e23cff9de32c457ea3988ecf1d0f79081be7265",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-briannesbitt__carbon-2813",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "3504f2e6f7643db118e9f4784790d1826744be45",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-briannesbitt__carbon-2981",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "00412c81045be1dce21d66a36ddeb52febfba8ff",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-briannesbitt__carbon-3005",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "20fbeea6f7cf575db054586955fa71cd4d3c3cfa",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-briannesbitt__carbon-3041",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "e3ca1d906735863027966f1147394fba00c2e490",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-briannesbitt__carbon-3073",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "beda1db5ceff16d08a5e8bf86904796aafd53775",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-briannesbitt__carbon-3098",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "edbea8b766c9f9f03b3d64b1cff9d4230b5f5f86",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-briannesbitt__carbon-3103",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "060c58bc3c7902da50c95d37f710c918a6439aca",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-burntsushi__ripgrep-2209",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "971467dc62dfc2357560f3f9431e34401a32514d",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-burntsushi__ripgrep-2576",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "d624887feded5c4a5f609f345b29684afb714e23",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-4774",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "986ae3462343180b3ab881ad9b3296e00e05e356",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-4943",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "0336d9138e35d6038de2ccb8e0bc85b9da3d9c9d",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-5404",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "a3608546db0b154a75afc3dae2d52d44b92ceac9",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-5626",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "3669f5d01fa351bda933d3796c50a72da9942a01",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-5761",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "3e25ab2dd9b746800b47ed9eeb9ccef1c2f09f36",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-5870",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "5f96b9d358d12880b0574251ffdf9aae8f16723b",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-5995",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "3a4a9745d2bc54ff557b4439ea0fe2dbc58238e0",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-6051",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "fdbe25dec45d958720f0581439b39a9f37da28fb",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-6115",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "4c07c48b246a219e8151e9cd5efc09d7d8bd97a3",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-6288",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "f64a68167b215ac3a3140736addf3f7a12e1d393",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-6345",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "8ae8e566f0bddfe9356d84bf073c2bb63fac99a2",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-6350",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "7b03461ce842235ed8ee89538b1bcca305d3e1ed",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-6370",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "0c3a95a483e2fa77dfb7e2c7f88265577d37f046",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-caddyserver__caddy-6411",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "2f437bbef98830c52c5ba65e51f19f21d3aa59bb",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-facebook__docusaurus-10130",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "7d5705365b42fb2441518b5698d0653029feb041",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-facebook__docusaurus-10309",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "bb126ab56628d3ffeefbfa707c8056396f13c6bd",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-facebook__docusaurus-8927",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "ca8a5105b62382eb2a53dfa7f03ab1babaef65d8",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-facebook__docusaurus-9183",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "fb3ec089ac5019b00cb9d0327823efb938355aa6",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-facebook__docusaurus-9897",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "7f31f3f171bb70542509e95cf956cc5728867f4d",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-faker-ruby__faker-2705",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "099a907e5a96aac8dfbad5eed0da4f8ce87b560d",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-faker-ruby__faker-2970",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "b35f9918978a89a9e09baac4a971754fe67ff4be",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fastlane__fastlane-19207",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "26b9ba9276665fa4d668893e01cd37fb5a5fc465",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fastlane__fastlane-19304",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "6a1f24bde6ac6fa28cca795708e462dff0befff2",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fastlane__fastlane-19765",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "db4fb33841fdf3ae8b00b3d450249de02171cac0",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fastlane__fastlane-20642",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "a7afc5415998566946b96fd52f1559bb24dc8494",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fastlane__fastlane-20958",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "fb5ca7b6ba60f7e3377ff90f0cbec52236516b91",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fastlane__fastlane-20975",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "d44a71cbbe7f7ef5b6a58163dc26da0541e008bf",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fastlane__fastlane-21857",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "1f9f8a2f4346d7b31e8b43eeeb335e316d9d5425",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-3328",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "1cf2058528042a2c06ea55f816a28533fe962897",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-3466",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "c97970cccd6f805ce57e0da99270fefc084151f9",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-3608",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "dcde6eeee12cd0f77a3ec42814831716a8c9fb57",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-3616",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "db16bc32f9be1a3c35e276aad3630b882ba74517",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-3631",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "01924f9dd5c948f5d7f1de3f1ed220c5e73a9739",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-3640",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "6817a4c660e0a2d5e07c685fc701e43bd68d7fc3",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-3641",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "19ffbe68808bcfe14f025df5ec9e148c1de342d0",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-3917",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "098f84ac5e1262ef2d114e07a430dd42cdec94b8",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-4030",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "d4379046418b4c6d36f6dc6d2a98af41247276b9",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-4311",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "27d182b6651249be3ccf489212b6a63056e56281",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-4598",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "63da34f200a0e769983c964f4bf934af67ff711e",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fluent__fluentd-4655",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "209d2b12e96ef502d93c933005f079a43b40d141",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-1683",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "8ccd12ea7ab379e67dacb1ab7b1b0dcd8ef8113a",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-2310",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "cfee0738313bb18294750422fa96cfecbb6e263f",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-2317",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "f51189644552110fd40fac8b49898984c04fb8ee",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-2457",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "4eb3f69fc1a76ed5d4408e6fb4846cdf407001b5",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-3158",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "4c72dd5e1efcc2212ca2c35aa362cd8a38b17b08",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-3248",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "bd884af8f019848873b15a96812a4f3f9fa6b438",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-3272",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "0b69c7bd03571e11a7e2e16fca0d8c7a12e9c9fe",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-3729",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "229cdbe33927b032a4d8fd97e6413cd316679e27",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-3750",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "6936aba7a48097edfbdf75fd416203cd54774ef6",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-3863",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "e1725f0dd1f2cf6198d7d062233ff6c157ab9064",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-fmtlib__fmt-3901",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "9e2697ed7a594d4dd34224dd87a2061325285edf",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gin-gonic__gin-1805",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "76c59f68a816d732dcc42a3a0dc650f8079d075a",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gin-gonic__gin-1957",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "3b78168dce1e73ecd83ea90e4334d81e2b377ef3",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gin-gonic__gin-2121",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "8751f336737bca894083d42d5102c0a7f6cad279",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gin-gonic__gin-2755",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "ae28848c98aaa5a1f5c4edc8c55faa00986c5221",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gin-gonic__gin-3227",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "1ba138eaa1e089ee8bf205ba1e1d8b67cbedc334",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gin-gonic__gin-3741",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "d324a6635a18737d56d831282c4838100892bfcd",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gin-gonic__gin-3820",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "c9eb9eadbf33cf670e34f9432be97b189fb49884",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gin-gonic__gin-4003",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "2edc4099d89b51f677265812206cbb2753a4ba02",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gohugoio__hugo-12171",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "e70177f71b79c3e1212b5b3584d1a68272a7c3dd",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gohugoio__hugo-12204",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "6d1b1a5ef1fc1adbc838dd49e1fe36fa4c731dd4",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gohugoio__hugo-12343",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "24c82d82f709b0af818d78e3b3d2170f3f5f3274",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gohugoio__hugo-12448",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "cb0943b16e2d967958d8a855815d6cf4deff510b",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gohugoio__hugo-12562",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "310caa9f6fa80ad9f6b84e60a51cf8d99a28e534",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gohugoio__hugo-12579",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "e860d7bb4bbcc10f2783f706bdcde43d5de351de",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-gohugoio__hugo-12768",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "9d48fb46a34b0e0ac4125850cc23be0bfd2ebbf7",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-google__gson-1014",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "c7f929ba98f3c07a1565041644fc7e3bcc6603f0",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-google__gson-1093",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "0a58bd6e30274e6bbac6ae3cb19bf0838e4310e1",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-google__gson-1100",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "51b36c069c760eaa48780965a927a22237f44967",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-google__gson-2024",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "69d6021b0139d69098e465ff13d2e93b7687c232",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-google__gson-2061",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "ae6a59fe9e91241f801c855512b9307dc235bae4",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-google__gson-2134",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "9812ced7744d2dfab1ab2184cf3f1a344d0cdb50",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-google__gson-2158",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "b51271871198fd1615228898ef0874276d256b67",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-google__gson-2311",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "cf94a5198fa8d47f76d5c5c61a8c17261fe61d5f",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-google__gson-2479",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "57686ff803ad67eb0cfb07c0abb3cbd7a96ffad5",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-hashicorp__terraform-34580",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "db2a643b788910f59d2fedef5a402888331f0d6e",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "fail"
+      },
+      "decision_before": "screening",
+      "decision_after": "excluded",
+      "exclusion_rule_ids_after": [
+        "license-or-use-basis-unavailable"
+      ]
+    },
+    {
+      "candidate_id": "swebm-hashicorp__terraform-34814",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "1aaa4ea45adca53557ecbc837c34c9337237df85",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "fail"
+      },
+      "decision_before": "screening",
+      "decision_after": "excluded",
+      "exclusion_rule_ids_after": [
+        "license-or-use-basis-unavailable"
+      ]
+    },
+    {
+      "candidate_id": "swebm-hashicorp__terraform-34900",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "ccdd395d3a81e145f22042ad49983e134af3bcad",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "fail"
+      },
+      "decision_before": "screening",
+      "decision_after": "excluded",
+      "exclusion_rule_ids_after": [
+        "license-or-use-basis-unavailable"
+      ]
+    },
+    {
+      "candidate_id": "swebm-hashicorp__terraform-35543",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "9de19527d8d35c91d264834dcb15dbd793313799",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "fail"
+      },
+      "decision_before": "screening",
+      "decision_after": "excluded",
+      "exclusion_rule_ids_after": [
+        "license-or-use-basis-unavailable"
+      ]
+    },
+    {
+      "candidate_id": "swebm-hashicorp__terraform-35611",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "51a82be8120154ab2ae12c6f704075e12ccd1fc5",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "fail"
+      },
+      "decision_before": "screening",
+      "decision_after": "excluded",
+      "exclusion_rule_ids_after": [
+        "license-or-use-basis-unavailable"
+      ]
+    },
+    {
+      "candidate_id": "swebm-immutable-js__immutable-js-2005",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "7cd8bc84f3809af7afb30808040f4714c989ffeb",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-immutable-js__immutable-js-2006",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "9b55941fe4c925e04ddac89277b98192d7609bcb",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-javaparser__javaparser-4538",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "8faacea1db8ae7e50d88682ee189302121b0854b",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-javaparser__javaparser-4561",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "cbb833239a5dda3ddf036b1bbf627a091021a7cb",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jekyll__jekyll-8047",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "b85e1dee68bc6ca539bb29b42179fb1004377e02",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jekyll__jekyll-8167",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "c7327ab75d7f68fd7bc8b37eee5951f860ceed3f",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jekyll__jekyll-8761",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "1699825a32d8b2a53d591dacc021c40cdbcdac4f",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jekyll__jekyll-8771",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "bc1ef1a551a234d5f1526c0d8ccffe280a4c990f",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jekyll__jekyll-9141",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "950af6a224f461a10e02c9c4152597d76fe03301",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jordansissel__fpm-1829",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "9220a7f8e75b3f4487c1c1829d5bc8bbb89691ef",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jordansissel__fpm-1850",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "958964a5684033bd1eaa584e0261cd007edbdb92",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jqlang__jq-2235",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "9abf2b67a3892183f5039050eca954450c213d37",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jqlang__jq-2598",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "dafbfe800bff415ff6b0ed9c6e2eadeb44817132",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "fail"
+      },
+      "decision_before": "screening",
+      "decision_after": "excluded",
+      "exclusion_rule_ids_after": [
+        "license-or-use-basis-unavailable"
+      ]
+    },
+    {
+      "candidate_id": "swebm-jqlang__jq-2650",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "47e98bb8a510f15d927b3e0ea50d292881e009d9",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jqlang__jq-2658",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "a20aa52bfc5b07f1571f22e880083f55105f7682",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jqlang__jq-2681",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "76c466c98d6c1b6d0484f277319b62010c71fd1d",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jqlang__jq-2728",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "468047ccf0f145514abfdff67e755d5f52473983",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jqlang__jq-2750",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "b68ab1896ec53669e898700342e229610b3dfe56",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jqlang__jq-2839",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "145f23c0525036ea0077083718bff0eaf949f201",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-jqlang__jq-2919",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "7918c86308a5d0caffc97b76a7a120e3023b37cd",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "fail"
+      },
+      "decision_before": "screening",
+      "decision_after": "excluded",
+      "exclusion_rule_ids_after": [
+        "license-or-use-basis-unavailable"
+      ]
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-46234",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "c00641afac16cd7321b58ac3cf9b31f287308564",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-48573",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "3f7a283e5c346b6e08c0bc82d6479ca36db1ae4e",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-48636",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "3cc3ddcae682d93336ac903278bd1ad2cc2f3436",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-51195",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "d40fd770ed27563a74754fdd8fb849718e7fb6be",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-51890",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "e04df62a38d33682ed703c7825ecc2940b7a542c",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-52451",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "4c56691dd8fd7674f8136fd13ed33967b0980731",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-52680",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "6ae7439d1fd58accd140482651040dd4c73fd9ef",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-52684",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "55504f979da4fdd669171524c78a5fff2762d41f",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-52866",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "a20900a79a93cabf1bdb6a67c3a4ca8c5eb45bc0",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-53206",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "bcaef4bc4d5c3f395ab3882b3bb218cbf24965ec",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-53696",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "f74d7c99dae9ac66016ef087a5c0f23f0f0b3a06",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-53914",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "b89771c6b4240968d491b3f2ec2826152815a183",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-laravel__framework-53949",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "31e8f6767fae7448ca5fada403312ae2464f982e",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-micropython__micropython-10095",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "26a97ce7b21e85caf1e46704fb4b168a7b7d9b58",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-micropython__micropython-12158",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "f0a7cc4a30245d2be571737e9cfcc655d3847b62",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-micropython__micropython-13039",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "3fa0aa6cc141009956c0bb0f42b9d1d648254e88",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-micropython__micropython-13569",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "1e4727f4da142941bfbe6f0b7c8296262cc304a4",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-micropython__micropython-15898",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "157bf2dd1070c8e39cea533b9d87a21a1419c38c",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-mrdoob__three.js-25687",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "52f00b2955270461399c8f2ab8c1acba34167d29",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-mrdoob__three.js-26589",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "2f4477c1a3eb36f7c2ebea4a00cc81ee0be0e40b",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-mrdoob__three.js-27395",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "e26042a44a9e8c132ac5c5f7f6134e23db0c96f3",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-nlohmann__json-4237",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "18eed0f6b51291f18cb2f33ee5bf701dffd07954",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-nushell__nushell-12901",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "a0e3a8cacc1548f5262fd91155edc73cd40e66ca",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-nushell__nushell-12950",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "f628bb3c3d79eb6716ee6ea027bf331dd90aabf0",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-nushell__nushell-13246",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "05b59aa238730eb1bbed5adafdce8aab3b9218f4",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-nushell__nushell-13605",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "0781526a8a79041c0f0ab745e072fee78187cf97",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-nushell__nushell-13831",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "69a1917795dbbcd129fcb4df4f710835814349d1",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-php-cs-fixer__php-cs-fixer-7523",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "3b0306520f02098ce4543f10296f727c6c390833",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-php-cs-fixer__php-cs-fixer-7635",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "d71c07473d90b5bee41f7bcf746713d67957a731",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-php-cs-fixer__php-cs-fixer-7663",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "ec9b39c7bc63b84a9e6e4f7eef6aa92a2cc3273c",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-php-cs-fixer__php-cs-fixer-7875",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "1e62aa611bca9bfbb687496f9bf1468cf59a5486",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-php-cs-fixer__php-cs-fixer-7998",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "51d7bfdebd403744c54f2c9a0f90bc8bc49d24a4",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-php-cs-fixer__php-cs-fixer-8064",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "16cea5a907c208980c5fbb1cebb44a2cf4b2a5f4",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-php-cs-fixer__php-cs-fixer-8075",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "1e5494b97921e1a35dbfed34813f4aef45211383",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-php-cs-fixer__php-cs-fixer-8256",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "eb6dd58cb95c994ab537fe86f5fd15bf11c0ac76",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-php-cs-fixer__php-cs-fixer-8331",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "13833c7e5919b558bdc56be8a5c780a8a84cb9fe",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-php-cs-fixer__php-cs-fixer-8367",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "1f60db801304e856312269c1808f2044a519f5ea",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-phpoffice__phpspreadsheet-3463",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "6bfa16f11620f8effc2f85b24452c5afeaa42496",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-phpoffice__phpspreadsheet-3469",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "46235099dfaa626e64faebfe1edc30a666a520ba",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-phpoffice__phpspreadsheet-3570",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "d32ccba401855254c07b1c3ae5a34c062b2122ef",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-phpoffice__phpspreadsheet-3659",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "ed1f1ca5d4f63f1f1d2488bd52c5fb1ab12af13c",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-phpoffice__phpspreadsheet-3903",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "fc7835f5a99ee668fa1712fd523c6d30280629be",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-phpoffice__phpspreadsheet-3940",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "fa77254fa3532554a099b15f13bae79b6898f302",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-phpoffice__phpspreadsheet-4114",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "6d2f403a5842fdef93d25ce21bc31d46c56d1a94",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-phpoffice__phpspreadsheet-4186",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "9b7aeda3ecbb81fc926c89fe75189fdd52a9b4f1",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-phpoffice__phpspreadsheet-4214",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "2f9eee0f6339c31519a58d53ef23320fc6d3e960",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-phpoffice__phpspreadsheet-4313",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "b695b980e76a937860183a49ef75577d97cbcf4e",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-2757",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "1aef212ba52f5ab54b03aaf4b60fec6b908fb638",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-2896",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "0424685d2039fe2e34e57bc50fef4dc1473e680a",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-2927",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "369c8551b4538896f035cb1daf15e96e6415a330",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-3010",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "e53d9a46c9c6762659f01a7a85a60b965590939c",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-3062",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "a14cf588169e4c0ab010f1d01715f7ce818dbfab",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-3345",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "7598cf5f1e4453f10745b407893384884070da2b",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-3454",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "06ecdd9dba30c8dcf1da1eb5cbea612790f9775a",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-3562",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "382c5071255a9170e6a8687e861d6e8e322728cb",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-3567",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "aa75aa1c9cf7f6e46abaa7d31e24c3bedd1bbb9e",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-3689",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "7defd60123bd9ba93171de500b0f4b73a161ce33",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-3739",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "b82ecad99e935b58358d68ae09ef2295dfa33b1c",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-3763",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "b8a44b7c82853ab9e8688d6ae4c6bcd87e7ae4bc",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-4152",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "eb6ec1b13d27059c1ab3ae666481b13e50a7aeb4",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-4182",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "56f1c98b2b6bb70cfdd1496da6ade5ad76c7ae60",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-4245",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "7da03394f047318d677e9b2767f955935f3563b1",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-4316",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "a6ed2cc5c1a6e6cb6708b4739dd31a9adaabd33c",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-preactjs__preact-4436",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "d083654d4edaeb339ce814054d030cb7112bcfff",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-2792",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "a76551f4184c4800c44c95b572d71601056eda03",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3009",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "ee27ff79a2368c5ad047cfaac1a029c69983bad0",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3042",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "96d665a5f6b6a7df606cc39ddfd378982080a4de",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3052",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "ba2c4338f4a812acedc2be63937f8986dfc96c1b",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3215",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "92bb1d45e1f80ff8cb321124343e17a449c8250a",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3312",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "d3a418762387f46e992e510f7f35f951b9fd6c83",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3326",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "caa14a97db0852d16444575892db6d0761cc18de",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3350",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "6be454339098aa537e79cef1c44dda93fccf160c",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3371",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "1f80cd5783c95366fa8fb6c69bcddc86195e1b11",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3422",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "ca6e7f174403bdbc0aa0b5d92c35292882700c8f",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3479",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "c81ac99d95c545628fad69d0fc9b2f88d101bae1",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3486",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "540a96db16498fd0a125ad36ffdd4f0c4e166859",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3571",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "ad4697882a0c73a36a03fa9fcfbafc6d6aeab19d",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3594",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "2579f0af19ca3e93dc977e6022aa32ea2a6d336a",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3602",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "b97f476759ed44dabcffeddf3bdb7ac12b77b298",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3674",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "e4ca9fb166dc086658fe36391503955e5fb59e48",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-projectlombok__lombok-3697",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "84ee1226b0689d7c8f8b87fe428fe4d6796f6d47",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-prometheus__prometheus-10633",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "eb9d3920ee69fffaef7d8fd31728052bab7283e7",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-prometheus__prometheus-10720",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "8c4ae9bcfda14957234ea1b134441c21680a5b11",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-prometheus__prometheus-11859",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "28c4017296af3166d40bc2a8e75d1d5a60728f0b",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-prometheus__prometheus-12874",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "b2b815ef3af1b44a4e9a5864010b0b7905c39279",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-prometheus__prometheus-13845",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "e6949467f703e03c8a9dbd214a3c3b8bf36ea39d",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-prometheus__prometheus-14861",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "49c87e7fc305c08acf42c2a9dee8298009f337a7",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-prometheus__prometheus-15142",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "aaf26d957290132f8a92c961cefccf0c729448f2",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-prometheus__prometheus-9248",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "1ee11fd8ab0b1b09d1dede16cc712fc53c39980b",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-reactivex__rxjava-7597",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "9dd4f3a47221f811bd585aa25fd015668aec7649",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-redis__redis-10068",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "d8da3bf4f76dcc17fa05280f74ac16b33e636f1d",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-redis__redis-10095",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "86c580a0a11cd56ade7a3aed7effae4edd4d1f12",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-redis__redis-10764",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "92f3ddd15a21e9e04ea77799ee5964899cc07809",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-redis__redis-11279",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "7edb11c9a8ebdd3eb8e76839567586b7f012319d",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-redis__redis-11510",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "6336a7e353ef03a746e047ef0f0481866033e20f",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-redis__redis-11631",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "0478e1b98aa2d3d62546a99f276201c93bf2b61d",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-redis__redis-11734",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "9711d7a8620bf05a4204b83d240aa24056133715",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-redis__redis-12272",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "d64646f9d4c8e3ebc1c0827c8117382515f2dbfb",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "fail"
+      },
+      "decision_before": "screening",
+      "decision_after": "excluded",
+      "exclusion_rule_ids_after": [
+        "license-or-use-basis-unavailable"
+      ]
+    },
+    {
+      "candidate_id": "swebm-redis__redis-12472",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "71e38b7954775db2dbd0fbe8db106a4932307f33",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-redis__redis-13115",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "6da56f8194f6eff59d6c916447f18773dec10fff",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-redis__redis-13338",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "6ae4c6cf0be115ae86afc593d09607e11b4f793c",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "fail"
+      },
+      "decision_before": "screening",
+      "decision_after": "excluded",
+      "exclusion_rule_ids_after": [
+        "license-or-use-basis-unavailable"
+      ]
+    },
+    {
+      "candidate_id": "swebm-redis__redis-9733",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "3d75a24a94d09bc47041c5afdbc794cb62be04b0",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13362",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "ec030aec1b333e5af54b2f0c478283a124885c82",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13375",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "0fde0822fd26c634ef5be7d7efde9c783bb0543a",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13393",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "a253f981072beac78ef1d9810d2f7e9a2e0f2abd",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13396",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "25838a5cabfe5c4cbfc621e822e4ec8c2da901e7",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13424",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "00001e6fefc32480e0b9625c539fad49a5cae994",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13431",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "8e8dd059a2400e83eb27e76920fde3c68e5231e7",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13479",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "9b1167fcc407641b4170e54199c4c5d146d3c6b1",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13503",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "4297be7bb9bb512db4844bd13647b8ff928a983a",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13560",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "0e291bf97cc9a1f2ddca6d3b05248a64fcb20d84",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13579",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "05818b1e0f7fbb6c0bf8f7bdc0a4bba442d723fa",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13627",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "c41b76542605e7a3036a11c013a48d6774b9adc6",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13653",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "83e8f0c0a2b002e4d3b97aa44fcdddec8d4f4a05",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13668",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "1cdd0aee0e5c7db01f76efbdc0a53e55b35b3f8e",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13680",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "a3c9c40fc34f1db921cfd13b03c23fa9888f0cdc",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13687",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "44a555f29b4b53c18de90cd8b639f46cd4471ca2",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-rubocop__rubocop-13705",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "b5dda80a3ad814edb7249052a69e51105237ba34",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-sharkdp__bat-1892",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "ff1ec74eaf14b96073d1b0ba2cc5db1db6c34cfb",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-sharkdp__bat-2201",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "e2b970a7bf44b9082efe9b01f69dd2a5b199c32a",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-sharkdp__bat-2260",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "8ccec66dd7f28c360c84dc7ae5ede12e7f9833b2",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-sharkdp__bat-2393",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "21c8e43dac6f9b4ae4285c99f92481581b6ec315",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-sharkdp__bat-2650",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "ef933d84d4087031b7bec05986ec6041bcfa8263",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-sharkdp__bat-2835",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "73312b6455af954f30078b79a514428d2b549eb4",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-sharkdp__bat-3108",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "f50848e21012fa34fe46635128f2517cd21cd804",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-sharkdp__bat-562",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "3dc4afa6fb956670b5e0070ccaedc0111ae059ed",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__axum-1119",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "714125a64ca9cc1c71981ab99a523aad461b21db",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__axum-1730",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "10e7bd9178f906bd2d5601f35519d8fad8ee056c",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__axum-1934",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "4d489eb2db90895efefd79df860dd4715c913fe1",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__axum-2096",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "7665003290fbbeecd3c1aa931406963a76ead618",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__axum-682",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "d332a7c7ff4622ee2e8a6504ebeefe09437ba364",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__axum-691",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "6c49279e4c6d98da1b92e76c5459a16307a09790",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__axum-734",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "818c0f30f5ef49fd772f70507d252bd82c23b9c0",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__tokio-4384",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "d3dbf498c05bf074b5d689a18e802456c6102557",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__tokio-4867",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "4b3dc28cbef1394d6194d44725c26958588ce822",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__tokio-4898",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "d72faf0c7045c7be19516a21d6c3fdaca572e12f",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__tokio-6551",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "e137b02b1676c3b30a3f13d4ca2bfff392e87a3c",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__tokio-6603",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "7e5756e965a0ae140e0c707f541e588d4b48ddbc",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__tokio-6724",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "4d16aab71d8df246fe4a6ab357eaac3e9c2853d7",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__tokio-6752",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "60915bf239c4f52d527ef3ca7a97e407dab4bbcb",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__tokio-6838",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "9d2b641d2e588dfe09090fb878e7abf3d37fd026",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-tokio-rs__tokio-7139",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "f252d88e9fa4355ec80d6f687ea6b48830580ca5",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-uutils__coreutils-6377",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "f40fbbe1787b50c8fe9df4e8e99733f7bfd386df",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-uutils__coreutils-6575",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "601ad671f03ee7a16ab8ac107ae266c1378a93c6",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-uutils__coreutils-6682",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "5f7bd225d122d097bb49ea025382a86238ced102",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-uutils__coreutils-6690",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "452379850f1f34be7be9bc306eed4b5259909f10",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-uutils__coreutils-6731",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "2a05cb51a786ddd708c4020b82905c7df81900e5",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-valkey-io__valkey-1499",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "6c16c7b6acc0a33113d26e17f1845f8faa0135d6",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-valkey-io__valkey-1842",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "18aaad27e53536e875c08981aa3e58374445b6ab",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-valkey-io__valkey-790",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "e2c1681231181c81db27ff470ab694a644d99e38",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-valkey-io__valkey-928",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "8b8c3da755916fa24dc32c0a594668633ecfa110",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-vuejs__core-11589",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "c192989d2aa55a643356b0cea11f8ea3ed44f48a",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-vuejs__core-11739",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "d5445cfcb12b754f3d24171a3e14ab66ad7f7712",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-vuejs__core-11870",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "1fdc2d89d23426bcd00db4b3ed24225b98a122cd",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-vuejs__core-11899",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "89a8df40e9410ffd7d68b5c25df4bf55fd95a2fc",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    },
+    {
+      "candidate_id": "swebm-vuejs__core-11915",
+      "base_tree_hash_before": null,
+      "base_tree_hash_after": "283c79e64584f42483238782a96f51877113acba",
+      "screening_updates": {
+        "exact_base_resolvable": "pass",
+        "license_or_use_basis": "pass"
+      },
+      "decision_before": "screening",
+      "decision_after": "screening",
+      "exclusion_rule_ids_after": []
+    }
+  ],
+  "output_artifact": {
+    "path": "experiments/phase2b-candidate-ledger-v1.json",
+    "sha256": "5387689e35319a558aa133b0a9655f4d16469fa4a95c0fa5ba38d39cd59d96c1",
+    "summary": {
+      "candidate_count": 1130,
+      "screening_count": 967,
+      "excluded_count": 146,
+      "selected_for_task_authoring_count": 17,
+      "language_assignment_counts": {
+        "ko": 88,
+        "en": 301,
+        "mixed": 23,
+        "unassigned": 718
+      },
+      "category_assignment_counts": {
+        "implementation": 47,
+        "debugging": 22,
+        "testing": 8,
+        "refactoring": 24,
+        "repository-analysis-planning": 11,
+        "unassigned": 1018
+      },
+      "known_gaps": [
+        "selected-for-task-authoring is a construction queue state only: seventeen rows satisfy candidate eligibility, but no pilot task, final evaluator, validity review, manifest instance, or agent execution has been authored or run.",
+        "Project-level instruction parity is settled for 64 exact pinned bases across the existing parity artifacts: 26 pass and 38 fail. All other rows remain unknown unless independently excluded.",
+        "The active Claude and Codex global instruction inventories are not semantically equivalent. Before execution, Phase 2b must make them semantically equivalent or use isolated empty agent homes, then pin the resulting effective instruction state; pinning a known asymmetric state does not resolve the confounder.",
+        "The fixed GitHub discovery frames contain 411 Korean-bearing rows and 383 nonduplicate explicit-language rows, but most remain at low-cost screening depth and lack exact solution, base, license, or deeper gate evidence.",
+        "The ledger now assigns 88 Korean, 301 English, and 23 mixed rows, while 718 remain unassigned. All seventeen selected-for-task-authoring rows are Korean, so the preregistered 20/20/20 language quota is not met.",
+        "For the 300 SWE-bench Multilingual rows, exact dataset terms, base revisions, trees, and task-relevant upstream license scope are settled: 291 pass and 9 are terminal license failures. The 291 pass rows still require native-source fidelity, instruction parity, boundedness, evaluator, isolation, flakiness, and resource review.",
+        "Task category remains unassigned for 1018 of 1130 rows, and the seventeen selected-for-task-authoring rows do not include a testing task; the preregistered category balance is not met.",
+        "Public benchmark exposure may contaminate agent behavior; this pilot cannot turn those instances into confirmatory capability evidence.",
+        "Eligibility does not depend on runtimes that happen to be installed on the screening host. A Linux-reproducible runtime or toolchain may be provisioned into an isolated immutable environment before manifest freeze, subject to exact version and artifact-hash pins, byte-equivalent environments for both agents, no network during agent or evaluator execution, agent-free base and control reproduction, the preregistered resource bucket, and a recorded environment epoch and fixture provenance.",
+        "Fifty-seven no-test-touch rows remain deferred rather than excluded because not changing tests is not itself a failure, and 585 current-HEAD none-observed GitHub rows remain deferred because present-day absence is not evidence about the pinned task base."
+      ]
+    }
+  }
+}
