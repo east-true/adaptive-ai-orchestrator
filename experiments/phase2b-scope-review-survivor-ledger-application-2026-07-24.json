@@ -1,0 +1,127 @@
+{
+  "artifact_id": "phase2b-scope-review-survivor-ledger-application-2026-07-24",
+  "created_at": "2026-07-24",
+  "protocol_version": "phase2b-pilot-prereg-v1.1",
+  "purpose": "Bind the exact/parity ledger snapshot, four-survivor semantic gates, agent-free reproduction controls, and resulting selected-for-task-authoring mutations without observing candidate-agent results.",
+  "agent_results_observed": false,
+  "input_artifacts": [
+    {
+      "path": "experiments/phase2b-candidate-ledger-v1.json",
+      "sha256": "6f7206d5775fe21ac0a0e555bb1f016361f3aa5865dcb343715473b6016ea444",
+      "state": "post-exact-revision/parity, pre-survivor-screening working snapshot"
+    },
+    {
+      "path": "experiments/phase2b-scope-review-exact-parity-ledger-application-2026-07-24.json",
+      "sha256": "058cbf5011c8b5643708845a33c91b49bd43d773d1501dccecf7004005e6aa9f"
+    },
+    {
+      "path": "experiments/phase2b-scope-review-survivor-semantic-2026-07-24.json",
+      "sha256": "d1c5bfb63c33aa43049d2e01ff7256fce5d78a2be7d9c12d42c614ee58c37528"
+    },
+    {
+      "path": "experiments/phase2b-scope-review-survivor-agent-free-reproduction-2026-07-24.json",
+      "sha256": "63f77f4914f406f07f47bbee400ed473beb8ca3d849ff5ddcb6ef32d96500997"
+    }
+  ],
+  "output_artifact": {
+    "path": "experiments/phase2b-candidate-ledger-v1.json",
+    "sha256": "8f71326cc2131cd816c4ef8fbf42eb84a96fdeb0300b357bdec791072306f5d8",
+    "summary": {
+      "candidate_count": 1130,
+      "screening_count": 976,
+      "excluded_count": 137,
+      "selected_for_task_authoring_count": 17,
+      "language_assignment_counts": {
+        "ko": 88,
+        "en": 301,
+        "mixed": 23,
+        "unassigned": 718
+      },
+      "category_assignment_counts": {
+        "implementation": 47,
+        "debugging": 22,
+        "testing": 8,
+        "refactoring": 24,
+        "repository-analysis-planning": 11,
+        "unassigned": 1018
+      }
+    }
+  },
+  "summary": {
+    "candidate_rows_updated": 4,
+    "semantic_gate_pass_rows": 4,
+    "base_negative_expected_rows": 4,
+    "solution_positive_rows": 4,
+    "new_selected_for_task_authoring_rows": 4,
+    "screening_after": 976,
+    "excluded_after": 137,
+    "selected_after": 17,
+    "candidate_agent_executions": 0
+  },
+  "invariants": [
+    "Only the four exact-tree instruction-parity survivors were mutated by this application.",
+    "Each row passed every preregistered candidate-eligibility gate and a byte-identical base-negative/solution-positive screening control.",
+    "selected-for-task-authoring is a construction queue state, not final evaluator approval or candidate-agent execution authorization.",
+    "The B-TING final evaluator must replace the rollback structural screening assertion with a behavioral failure-and-restore assertion.",
+    "No candidate agent or agent-quality result was run or observed."
+  ],
+  "mutations": [
+    {
+      "candidate_id": "ghmix-jinwon-int--a2a-nexus-issue-1190",
+      "before_decision": "screening",
+      "after_decision": "selected-for-task-authoring",
+      "screening_updates": {
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass",
+        "reproducible_within_budget": "pass"
+      },
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "selected_for_task_authoring"
+    },
+    {
+      "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-173",
+      "before_decision": "screening",
+      "after_decision": "selected-for-task-authoring",
+      "screening_updates": {
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass",
+        "reproducible_within_budget": "pass"
+      },
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "selected_for_task_authoring"
+    },
+    {
+      "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-130",
+      "before_decision": "screening",
+      "after_decision": "selected-for-task-authoring",
+      "screening_updates": {
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass",
+        "reproducible_within_budget": "pass"
+      },
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "selected_for_task_authoring"
+    },
+    {
+      "candidate_id": "ghmix-B-TING--bu-ting-mobile-issue-75",
+      "before_decision": "screening",
+      "after_decision": "selected-for-task-authoring",
+      "screening_updates": {
+        "low_risk_isolated_execution": "pass",
+        "no_network_secret_push_production": "pass",
+        "objective_evaluator_feasible": "pass",
+        "gold_and_evaluator_hideable": "pass",
+        "reproducible_within_budget": "pass"
+      },
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "selected_for_task_authoring",
+      "authoring_requirement": "Replace rollback structural screening coverage with a behavioral failure-and-restore protected test."
+    }
+  ]
+}

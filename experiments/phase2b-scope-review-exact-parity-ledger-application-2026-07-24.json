@@ -1,0 +1,263 @@
+{
+  "artifact_id": "phase2b-scope-review-exact-parity-ledger-application-2026-07-24",
+  "created_at": "2026-07-24",
+  "protocol_version": "phase2b-pilot-prereg-v1.1",
+  "purpose": "Bind the post-source-review ledger, exact solution segmentation, pinned-license evidence, instruction-parity decisions, and resulting ledger mutations without observing agent results.",
+  "agent_results_observed": false,
+  "input_artifacts": [
+    {
+      "path": "experiments/phase2b-candidate-ledger-v1.json",
+      "sha256": "7cca33b5d318f17b661cac29f2e406ab899389f09d9cad20286ca7c2ac3772ec",
+      "state": "post-source-review, pre-exact-revision/parity working snapshot"
+    },
+    {
+      "path": "experiments/phase2b-scope-review-solution-segmentation-2026-07-24.json",
+      "sha256": "8930853eca14324a25472b08a4a1f54ab954a0e5f0c9720132b0a8f454831e76"
+    },
+    {
+      "path": "experiments/phase2b-scope-review-exact-revision-license-2026-07-24.json",
+      "sha256": "fb58ac9269c6c28e3aa6ad53a1634d3f64eac0592c406f51414ed7cb2cae7460"
+    },
+    {
+      "path": "experiments/phase2b-scope-review-instruction-parity-2026-07-24.json",
+      "sha256": "1eaedbe8efe316e15649a7f60eb07d1a2900da899d48acc4557099085a643a9b"
+    }
+  ],
+  "output_artifact": {
+    "path": "experiments/phase2b-candidate-ledger-v1.json",
+    "sha256": "6f7206d5775fe21ac0a0e555bb1f016361f3aa5865dcb343715473b6016ea444",
+    "summary": {
+      "candidate_count": 1130,
+      "screening_count": 980,
+      "excluded_count": 137,
+      "selected_for_task_authoring_count": 13,
+      "language_assignment_counts": {
+        "ko": 88,
+        "en": 301,
+        "mixed": 23,
+        "unassigned": 718
+      },
+      "category_assignment_counts": {
+        "implementation": 47,
+        "debugging": 22,
+        "testing": 8,
+        "refactoring": 24,
+        "repository-analysis-planning": 11,
+        "unassigned": 1018
+      }
+    }
+  },
+  "summary": {
+    "candidate_rows_updated": 12,
+    "exact_base_resolvable_pass_rows": 12,
+    "license_pass_rows": 12,
+    "instruction_parity_pass_rows": 4,
+    "instruction_parity_fail_rows": 8,
+    "new_terminal_instruction_parity_exclusions": 8,
+    "screening_after": 980,
+    "excluded_after": 137,
+    "selected_after": 13,
+    "candidate_agent_executions": 0
+  },
+  "invariants": [
+    "No selected-for-task-authoring row was created.",
+    "All twelve rows received the pinned base, solution, task-relevant path set, task-diff hash, exact-base pass, and exact-base license pass from the bound evidence.",
+    "Only the eight exact-tree parity failures became terminal and each uses the preregistered instruction-parity-mismatch exclusion path.",
+    "The four parity-pass rows remain screening and advance only to boundedness, evaluator, isolation, and reproduction review.",
+    "No candidate agent or agent-quality result was run or observed."
+  ],
+  "mutations": [
+    {
+      "candidate_id": "ghko-RosieOh--ccStory-issue-12",
+      "base_revision": "d81613addcaf7ccb3fec8b4acb5eed46dc27911e",
+      "base_tree_hash": "4294d59a871403453796c0b21687f2e129918a01",
+      "solution_revision": "c26128e887b4eeb07db401efdaa53cd5867d913b",
+      "solution_tree_hash": "9f86fb73f53ea0283b8d67aa9f3c0974fa684bb3",
+      "solution_artifact_hash": "944915fef2d23c49f4d62b9938fae1e188482b3339238518f808d441bb43012c",
+      "changed_file_count": 2,
+      "license_at_exact_base": "MIT",
+      "exact_base_resolvable": "pass",
+      "license_or_use_basis": "pass",
+      "instruction_parity": "fail",
+      "after_decision": "excluded",
+      "exclusion_rule_ids_triggered": ["instruction-parity-mismatch"],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghko-dungsil-ai--intellij-plugin-egovframe-issue-5",
+      "base_revision": "c588d65cfc545f81faf0ccf93ccdab1db923833a",
+      "base_tree_hash": "1a4bfda183b7cfe53ae7424e36a2987e8ee6952d",
+      "solution_revision": "36d6e62dbbe4c72f9cc4f01c87aa142bced302c9",
+      "solution_tree_hash": "28f9a487485f9c35bd8dab8018b9c5e08472a799",
+      "solution_artifact_hash": "e244175b315ca756438fe50d4cc72df84100a5c98de4788372484d45a8070e2a",
+      "changed_file_count": 21,
+      "license_at_exact_base": "Apache-2.0",
+      "exact_base_resolvable": "pass",
+      "license_or_use_basis": "pass",
+      "instruction_parity": "fail",
+      "after_decision": "excluded",
+      "exclusion_rule_ids_triggered": ["instruction-parity-mismatch"],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghko-Lyainc--filme-issue-417",
+      "base_revision": "b6bc851c93474e6dd674b3c2506ef1ac0a65d8d7",
+      "base_tree_hash": "811be3bf3e2f84f430776225b8fb1766723c8c5f",
+      "solution_revision": "17696fbcc1058f89423a3e36491b8b305faeb5a8",
+      "solution_tree_hash": "760eac60c460ab27eb97d0f92207e01fd188edbb",
+      "solution_artifact_hash": "a4c99999f72117a44fde852d39a05ce08bb9c5ac9ff9b3cf14eacd5c2ff68348",
+      "changed_file_count": 3,
+      "license_at_exact_base": "MIT",
+      "exact_base_resolvable": "pass",
+      "license_or_use_basis": "pass",
+      "instruction_parity": "fail",
+      "after_decision": "excluded",
+      "exclusion_rule_ids_triggered": ["instruction-parity-mismatch"],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghko-RosieOh--ccStory-issue-11",
+      "base_revision": "e207c658fc05a6297e943e239ffd1da394a0cbc4",
+      "base_tree_hash": "a7dfe9054c6577f7c3f7fd84b942acd4f46f1cc9",
+      "solution_revision": "7c0d24407f432ca230fd34be0c0097256b29746d",
+      "solution_tree_hash": "37134165407f6bf5a4879294328a4c968741448d",
+      "solution_artifact_hash": "f2d941d259721221c38b83e1e972dfd42660505160f32a1cb5bde032c967a588",
+      "changed_file_count": 1,
+      "license_at_exact_base": "MIT",
+      "exact_base_resolvable": "pass",
+      "license_or_use_basis": "pass",
+      "instruction_parity": "fail",
+      "after_decision": "excluded",
+      "exclusion_rule_ids_triggered": ["instruction-parity-mismatch"],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghko-RosieOh--ccStory-issue-10",
+      "base_revision": "dc68091e4c5576e9307fbab1217061ba17905ca5",
+      "base_tree_hash": "f364a09c85e70acabdc0471fa2b16d8e62356dc0",
+      "solution_revision": "c26128e887b4eeb07db401efdaa53cd5867d913b",
+      "solution_tree_hash": "9f86fb73f53ea0283b8d67aa9f3c0974fa684bb3",
+      "solution_artifact_hash": "4e0407c5d68199a4a32bb4a45a0845bf083da2535c3010f1cf67794691d64263",
+      "changed_file_count": 1,
+      "license_at_exact_base": "MIT",
+      "exact_base_resolvable": "pass",
+      "license_or_use_basis": "pass",
+      "instruction_parity": "fail",
+      "after_decision": "excluded",
+      "exclusion_rule_ids_triggered": ["instruction-parity-mismatch"],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-jinwon-int--a2a-nexus-issue-1190",
+      "base_revision": "83450ca4d4ad1e41bd8bd3ea29942474792fc534",
+      "base_tree_hash": "ec0767628380b622eda2466d07ab53f321f6269e",
+      "solution_revision": "95bf8310d0d05d7154cf5b3122c50d30fc720712",
+      "solution_tree_hash": "894cfc4e2de65cc99bb7903a16edd156a9212a55",
+      "solution_artifact_hash": "4f21a3e1928b04fdfef3d0bda3558fed030f1af268df98b0d9ae45adf982e3ba",
+      "changed_file_count": 2,
+      "license_at_exact_base": "MIT",
+      "exact_base_resolvable": "pass",
+      "license_or_use_basis": "pass",
+      "instruction_parity": "pass",
+      "after_decision": "screening",
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-173",
+      "base_revision": "b4a8b32dd9ff454c1e5b3a8ab438b6d2815853f1",
+      "base_tree_hash": "bec3e84e8c1e7846616557016bb6832b4d7eea6d",
+      "solution_revision": "ef7701c662050117f47b043751fb07f253719064",
+      "solution_tree_hash": "28cfa5d1ea53e9339b73ba70dffc64ea08c27e19",
+      "solution_artifact_hash": "208c75435b5a1b55ad7b0144f2d2a3bb71e41b1e033370e34aa0193ff54c8ba1",
+      "changed_file_count": 4,
+      "license_at_exact_base": "MIT",
+      "exact_base_resolvable": "pass",
+      "license_or_use_basis": "pass",
+      "instruction_parity": "pass",
+      "after_decision": "screening",
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-130",
+      "base_revision": "2346913bc1347718e9d2deba2ef6cf5f91193b3b",
+      "base_tree_hash": "3053e0e69685f0a4f1d17becea18c690fcfdc599",
+      "solution_revision": "9adbad4b98b0c78faf1f309067a3cca88a1d5157",
+      "solution_tree_hash": "66aa453f4b5a1008bab5e7a170d9a5f8b636b039",
+      "solution_artifact_hash": "710b2438b8e99e47d7ed7db73e73125417a8de1e5465d06270da405c9b5f336c",
+      "changed_file_count": 11,
+      "license_at_exact_base": "MIT",
+      "exact_base_resolvable": "pass",
+      "license_or_use_basis": "pass",
+      "instruction_parity": "pass",
+      "after_decision": "screening",
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-115dkk--Impulcifer-pip313-issue-79",
+      "base_revision": "f360f86b94a95e5332028b93f8f9d800f4d5e8e3",
+      "base_tree_hash": "ddfc04be70a0d1f6e707c9b3f4a99ca21de7113b",
+      "solution_revision": "4a0f61318d64631c531c060a7fe6533ff5bccbf8",
+      "solution_tree_hash": "31febf619e635a490d3131a0b04075d25666604f",
+      "solution_artifact_hash": "88d6945e050d7b72909d403699026d84dbf6b90cf7c630c843bc9294635430d6",
+      "changed_file_count": 2,
+      "license_at_exact_base": "MIT",
+      "exact_base_resolvable": "pass",
+      "license_or_use_basis": "pass",
+      "instruction_parity": "fail",
+      "after_decision": "excluded",
+      "exclusion_rule_ids_triggered": ["instruction-parity-mismatch"],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-pillip--realtime-en2ko-captions-issue-15",
+      "base_revision": "8cb5c00c9cbb0b839f06e97881f48ac4d0e66ad9",
+      "base_tree_hash": "25cf43a870f5ac9b067128cffa5c9c61e1bacaca",
+      "solution_revision": "94ee457c19d08461a9eac6dd828e200dfacec0da",
+      "solution_tree_hash": "a38c164424d1af484d0756b85213c55bd585b3a3",
+      "solution_artifact_hash": "ea40bfd4a17c6025e33860c8fcd9f1698e10d15d441138dfe5ce3f7c653067c2",
+      "changed_file_count": 2,
+      "license_at_exact_base": "MIT",
+      "exact_base_resolvable": "pass",
+      "license_or_use_basis": "pass",
+      "instruction_parity": "fail",
+      "after_decision": "excluded",
+      "exclusion_rule_ids_triggered": ["instruction-parity-mismatch"],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-pillip--realtime-en2ko-captions-issue-13",
+      "base_revision": "032cb8fea944a1419d8e1b03de4aae390821d0a1",
+      "base_tree_hash": "f4bd49d2137ca53e1abed22353038e554bdb0db0",
+      "solution_revision": "02127b3dd66a9a5e9541c413930a2c826faf9ae7",
+      "solution_tree_hash": "f3c2a9cdb37d2083c7e66a8cc4b00f58e51b1e52",
+      "solution_artifact_hash": "04b885d93d403e2ec2a510a1c944d1c3476aaafc2c3b6c4fbce0cfa4cede4cd4",
+      "changed_file_count": 1,
+      "license_at_exact_base": "MIT",
+      "exact_base_resolvable": "pass",
+      "license_or_use_basis": "pass",
+      "instruction_parity": "fail",
+      "after_decision": "excluded",
+      "exclusion_rule_ids_triggered": ["instruction-parity-mismatch"],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-B-TING--bu-ting-mobile-issue-75",
+      "base_revision": "0c8689a8444972d33fcbed0b505ea33b767d2ba7",
+      "base_tree_hash": "fb7faa78dc27a72c82e4da0c8223c6f29ecc52e4",
+      "solution_revision": "59950e531ea17680d2b71d2fb3ffb2e4fcb81e5d",
+      "solution_tree_hash": "2ffd992e0cc5fd43cb728816582dfbc1321e5cf8",
+      "solution_artifact_hash": "21a5f29f640ce2182c654f78669927a5784939770a21225dbc390a47c3f037e8",
+      "changed_file_count": 13,
+      "license_at_exact_base": "MIT",
+      "exact_base_resolvable": "pass",
+      "license_or_use_basis": "pass",
+      "instruction_parity": "pass",
+      "after_decision": "screening",
+      "exclusion_rule_ids_triggered": [],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    }
+  ]
+}

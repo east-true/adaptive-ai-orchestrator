@@ -1,0 +1,331 @@
+{
+  "artifact_id": "phase2b-scope-review-exact-revision-license-2026-07-24",
+  "protocol_version": "phase2b-pilot-prereg-v1.1",
+  "created_at": "2026-07-24",
+  "purpose": "Verify exact pre-solution base/tree identity and permissive license/use-basis artifacts for the twelve segmented scope-review survivors before instruction or runtime work.",
+  "terminal_status": "mixed-terminal-and-routing-evidence",
+  "terminal_status_note": "Exact base and license decisions are terminal-capable under the preregistered rules; all twelve observations pass, so this artifact only advances routing.",
+  "agent_results_observed": false,
+  "design_change_required": false,
+  "input_artifacts": [
+    {
+      "path": "experiments/phase2b-scope-review-solution-segmentation-2026-07-24.json",
+      "sha256": "8930853eca14324a25472b08a4a1f54ab954a0e5f0c9720132b0a8f454831e76"
+    }
+  ],
+  "eligible_spdx_ids": [
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "BSL-1.0",
+    "Unlicense",
+    "CC0-1.0"
+  ],
+  "method": [
+    "Read the LICENSE blob from each exact segmented base tree, not from the current default branch or GitHub classifier.",
+    "Classify only exact canonical license text and retain blob SHA, content SHA-256, and byte count.",
+    "Verify the same LICENSE blob remains at the chosen solution revision; a base/solution license change would not pass.",
+    "Retain Apache NOTICE identity separately because future fixture redistribution must preserve applicable notices."
+  ],
+  "summary": {
+    "candidate_count": 12,
+    "exact_base_resolvable_pass_rows": 12,
+    "license_pass_rows": 12,
+    "mit_rows": 11,
+    "apache_2_0_rows": 1,
+    "license_terminal_exclusion_rows": 0,
+    "advance_exact_tree_instruction_inventory_rows": 12,
+    "selected_rows_created": 0,
+    "candidate_agent_executions": 0
+  },
+  "observations": [
+    {
+      "candidate_id": "ghko-RosieOh--ccStory-issue-12",
+      "repository": "RosieOh/ccStory",
+      "base_revision": "d81613addcaf7ccb3fec8b4acb5eed46dc27911e",
+      "base_tree_hash": "4294d59a871403453796c0b21687f2e129918a01",
+      "solution_revision": "c26128e887b4eeb07db401efdaa53cd5867d913b",
+      "solution_tree_hash": "9f86fb73f53ea0283b8d67aa9f3c0974fa684bb3",
+      "exact_base_resolvable": "pass",
+      "license_artifact": {
+        "path": "LICENSE",
+        "blob_sha": "b3f77c0d7f7b3073d75366a2c50625a21adbd05e",
+        "content_sha256": "454e2724162f19f4d252993dfbf7525109666cec86eb1c83798b829e20a64fe0",
+        "byte_count": 1082
+      },
+      "classified_spdx_id": "MIT",
+      "license_artifact_unchanged_at_solution": true,
+      "notice_artifact": null,
+      "notice_artifact_unchanged_at_solution": true,
+      "license_or_use_basis_decision": "pass",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_tree_instruction_inventory"
+    },
+    {
+      "candidate_id": "ghko-dungsil-ai--intellij-plugin-egovframe-issue-5",
+      "repository": "dungsil-ai/intellij-plugin-egovframe",
+      "base_revision": "c588d65cfc545f81faf0ccf93ccdab1db923833a",
+      "base_tree_hash": "1a4bfda183b7cfe53ae7424e36a2987e8ee6952d",
+      "solution_revision": "36d6e62dbbe4c72f9cc4f01c87aa142bced302c9",
+      "solution_tree_hash": "28f9a487485f9c35bd8dab8018b9c5e08472a799",
+      "exact_base_resolvable": "pass",
+      "license_artifact": {
+        "path": "LICENSE",
+        "blob_sha": "4c9ad980682246bd6ab0d2bae82232be6dbdcbd4",
+        "content_sha256": "7382b1cf711e7a7c7af9816e0e07b49b91e7149b7c6d347225f98800fcb1f1c2",
+        "byte_count": 11356
+      },
+      "classified_spdx_id": "Apache-2.0",
+      "license_artifact_unchanged_at_solution": true,
+      "notice_artifact": {
+        "path": "NOTICE",
+        "blob_sha": "aafb5fd8da712713613e5361f5282fbe738cdd8b",
+        "content_sha256": "9bbf29889f11329cc0a36ecc543d1356c032936a8419a8e3ff52c1c0045f5ae7",
+        "byte_count": 2943
+      },
+      "notice_artifact_unchanged_at_solution": true,
+      "license_or_use_basis_decision": "pass",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_tree_instruction_inventory"
+    },
+    {
+      "candidate_id": "ghko-Lyainc--filme-issue-417",
+      "repository": "Lyainc/filme",
+      "base_revision": "b6bc851c93474e6dd674b3c2506ef1ac0a65d8d7",
+      "base_tree_hash": "811be3bf3e2f84f430776225b8fb1766723c8c5f",
+      "solution_revision": "17696fbcc1058f89423a3e36491b8b305faeb5a8",
+      "solution_tree_hash": "760eac60c460ab27eb97d0f92207e01fd188edbb",
+      "exact_base_resolvable": "pass",
+      "license_artifact": {
+        "path": "LICENSE",
+        "blob_sha": "14b65fcb94cbce31c5d86d5437c7f2ba5c1cd935",
+        "content_sha256": "a159c455581e8789b89eec48fd2bfde4d226bcefa64babf092b0004497494a0a",
+        "byte_count": 1063
+      },
+      "classified_spdx_id": "MIT",
+      "license_artifact_unchanged_at_solution": true,
+      "notice_artifact": null,
+      "notice_artifact_unchanged_at_solution": true,
+      "license_or_use_basis_decision": "pass",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_tree_instruction_inventory"
+    },
+    {
+      "candidate_id": "ghko-RosieOh--ccStory-issue-11",
+      "repository": "RosieOh/ccStory",
+      "base_revision": "e207c658fc05a6297e943e239ffd1da394a0cbc4",
+      "base_tree_hash": "a7dfe9054c6577f7c3f7fd84b942acd4f46f1cc9",
+      "solution_revision": "7c0d24407f432ca230fd34be0c0097256b29746d",
+      "solution_tree_hash": "37134165407f6bf5a4879294328a4c968741448d",
+      "exact_base_resolvable": "pass",
+      "license_artifact": {
+        "path": "LICENSE",
+        "blob_sha": "b3f77c0d7f7b3073d75366a2c50625a21adbd05e",
+        "content_sha256": "454e2724162f19f4d252993dfbf7525109666cec86eb1c83798b829e20a64fe0",
+        "byte_count": 1082
+      },
+      "classified_spdx_id": "MIT",
+      "license_artifact_unchanged_at_solution": true,
+      "notice_artifact": null,
+      "notice_artifact_unchanged_at_solution": true,
+      "license_or_use_basis_decision": "pass",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_tree_instruction_inventory"
+    },
+    {
+      "candidate_id": "ghko-RosieOh--ccStory-issue-10",
+      "repository": "RosieOh/ccStory",
+      "base_revision": "dc68091e4c5576e9307fbab1217061ba17905ca5",
+      "base_tree_hash": "f364a09c85e70acabdc0471fa2b16d8e62356dc0",
+      "solution_revision": "c26128e887b4eeb07db401efdaa53cd5867d913b",
+      "solution_tree_hash": "9f86fb73f53ea0283b8d67aa9f3c0974fa684bb3",
+      "exact_base_resolvable": "pass",
+      "license_artifact": {
+        "path": "LICENSE",
+        "blob_sha": "b3f77c0d7f7b3073d75366a2c50625a21adbd05e",
+        "content_sha256": "454e2724162f19f4d252993dfbf7525109666cec86eb1c83798b829e20a64fe0",
+        "byte_count": 1082
+      },
+      "classified_spdx_id": "MIT",
+      "license_artifact_unchanged_at_solution": true,
+      "notice_artifact": null,
+      "notice_artifact_unchanged_at_solution": true,
+      "license_or_use_basis_decision": "pass",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_tree_instruction_inventory"
+    },
+    {
+      "candidate_id": "ghmix-jinwon-int--a2a-nexus-issue-1190",
+      "repository": "jinwon-int/a2a-nexus",
+      "base_revision": "83450ca4d4ad1e41bd8bd3ea29942474792fc534",
+      "base_tree_hash": "ec0767628380b622eda2466d07ab53f321f6269e",
+      "solution_revision": "95bf8310d0d05d7154cf5b3122c50d30fc720712",
+      "solution_tree_hash": "894cfc4e2de65cc99bb7903a16edd156a9212a55",
+      "exact_base_resolvable": "pass",
+      "license_artifact": {
+        "path": "LICENSE",
+        "blob_sha": "94b071fc53b89cbdc0a1253ce3b143fd5acec9b8",
+        "content_sha256": "98147a9e96bc47b0e4630d090d37908f5d9494a5592ab873b8cd3f5f5d64720e",
+        "byte_count": 1084
+      },
+      "classified_spdx_id": "MIT",
+      "license_artifact_unchanged_at_solution": true,
+      "notice_artifact": null,
+      "notice_artifact_unchanged_at_solution": true,
+      "license_or_use_basis_decision": "pass",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_tree_instruction_inventory"
+    },
+    {
+      "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-173",
+      "repository": "Ootzk/Wor-chain-dle",
+      "base_revision": "b4a8b32dd9ff454c1e5b3a8ab438b6d2815853f1",
+      "base_tree_hash": "bec3e84e8c1e7846616557016bb6832b4d7eea6d",
+      "solution_revision": "ef7701c662050117f47b043751fb07f253719064",
+      "solution_tree_hash": "28cfa5d1ea53e9339b73ba70dffc64ea08c27e19",
+      "exact_base_resolvable": "pass",
+      "license_artifact": {
+        "path": "LICENSE",
+        "blob_sha": "e07933db4bf0c2868f1381a795d262e0fb89e271",
+        "content_sha256": "a31fedb7ac3825a8a9f0df37cbdb688b05d1fd4ad5d8e9c1c290c230ab4db67a",
+        "byte_count": 1068
+      },
+      "classified_spdx_id": "MIT",
+      "license_artifact_unchanged_at_solution": true,
+      "notice_artifact": null,
+      "notice_artifact_unchanged_at_solution": true,
+      "license_or_use_basis_decision": "pass",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_tree_instruction_inventory"
+    },
+    {
+      "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-130",
+      "repository": "Ootzk/Wor-chain-dle",
+      "base_revision": "2346913bc1347718e9d2deba2ef6cf5f91193b3b",
+      "base_tree_hash": "3053e0e69685f0a4f1d17becea18c690fcfdc599",
+      "solution_revision": "9adbad4b98b0c78faf1f309067a3cca88a1d5157",
+      "solution_tree_hash": "66aa453f4b5a1008bab5e7a170d9a5f8b636b039",
+      "exact_base_resolvable": "pass",
+      "license_artifact": {
+        "path": "LICENSE",
+        "blob_sha": "e07933db4bf0c2868f1381a795d262e0fb89e271",
+        "content_sha256": "a31fedb7ac3825a8a9f0df37cbdb688b05d1fd4ad5d8e9c1c290c230ab4db67a",
+        "byte_count": 1068
+      },
+      "classified_spdx_id": "MIT",
+      "license_artifact_unchanged_at_solution": true,
+      "notice_artifact": null,
+      "notice_artifact_unchanged_at_solution": true,
+      "license_or_use_basis_decision": "pass",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_tree_instruction_inventory"
+    },
+    {
+      "candidate_id": "ghmix-115dkk--Impulcifer-pip313-issue-79",
+      "repository": "115dkk/Impulcifer-pip313",
+      "base_revision": "f360f86b94a95e5332028b93f8f9d800f4d5e8e3",
+      "base_tree_hash": "ddfc04be70a0d1f6e707c9b3f4a99ca21de7113b",
+      "solution_revision": "4a0f61318d64631c531c060a7fe6533ff5bccbf8",
+      "solution_tree_hash": "31febf619e635a490d3131a0b04075d25666604f",
+      "exact_base_resolvable": "pass",
+      "license_artifact": {
+        "path": "LICENSE",
+        "blob_sha": "5afb5a862080377864474df7cb17ead46d073f36",
+        "content_sha256": "d3e5fcada7a95b8f1701d737355375b3352649cc525f56db2b546aa22df94f2d",
+        "byte_count": 1166
+      },
+      "classified_spdx_id": "MIT",
+      "license_artifact_unchanged_at_solution": true,
+      "notice_artifact": null,
+      "notice_artifact_unchanged_at_solution": true,
+      "license_or_use_basis_decision": "pass",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_tree_instruction_inventory"
+    },
+    {
+      "candidate_id": "ghmix-pillip--realtime-en2ko-captions-issue-15",
+      "repository": "pillip/realtime-en2ko-captions",
+      "base_revision": "8cb5c00c9cbb0b839f06e97881f48ac4d0e66ad9",
+      "base_tree_hash": "25cf43a870f5ac9b067128cffa5c9c61e1bacaca",
+      "solution_revision": "94ee457c19d08461a9eac6dd828e200dfacec0da",
+      "solution_tree_hash": "a38c164424d1af484d0756b85213c55bd585b3a3",
+      "exact_base_resolvable": "pass",
+      "license_artifact": {
+        "path": "LICENSE",
+        "blob_sha": "21ddcc51bae50c5da4ede5590f822be5b488e857",
+        "content_sha256": "9e55f1a314f02ff35553769654065cc282ee0416d23a503015b33ae92a66f312",
+        "byte_count": 1068
+      },
+      "classified_spdx_id": "MIT",
+      "license_artifact_unchanged_at_solution": true,
+      "notice_artifact": null,
+      "notice_artifact_unchanged_at_solution": true,
+      "license_or_use_basis_decision": "pass",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_tree_instruction_inventory"
+    },
+    {
+      "candidate_id": "ghmix-pillip--realtime-en2ko-captions-issue-13",
+      "repository": "pillip/realtime-en2ko-captions",
+      "base_revision": "032cb8fea944a1419d8e1b03de4aae390821d0a1",
+      "base_tree_hash": "f4bd49d2137ca53e1abed22353038e554bdb0db0",
+      "solution_revision": "02127b3dd66a9a5e9541c413930a2c826faf9ae7",
+      "solution_tree_hash": "f3c2a9cdb37d2083c7e66a8cc4b00f58e51b1e52",
+      "exact_base_resolvable": "pass",
+      "license_artifact": {
+        "path": "LICENSE",
+        "blob_sha": "21ddcc51bae50c5da4ede5590f822be5b488e857",
+        "content_sha256": "9e55f1a314f02ff35553769654065cc282ee0416d23a503015b33ae92a66f312",
+        "byte_count": 1068
+      },
+      "classified_spdx_id": "MIT",
+      "license_artifact_unchanged_at_solution": true,
+      "notice_artifact": null,
+      "notice_artifact_unchanged_at_solution": true,
+      "license_or_use_basis_decision": "pass",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_tree_instruction_inventory"
+    },
+    {
+      "candidate_id": "ghmix-B-TING--bu-ting-mobile-issue-75",
+      "repository": "B-TING/bu-ting-mobile",
+      "base_revision": "0c8689a8444972d33fcbed0b505ea33b767d2ba7",
+      "base_tree_hash": "fb7faa78dc27a72c82e4da0c8223c6f29ecc52e4",
+      "solution_revision": "59950e531ea17680d2b71d2fb3ffb2e4fcb81e5d",
+      "solution_tree_hash": "2ffd992e0cc5fd43cb728816582dfbc1321e5cf8",
+      "exact_base_resolvable": "pass",
+      "license_artifact": {
+        "path": "LICENSE",
+        "blob_sha": "4e5933c3899c7488e4331b036d6ea9b22f345d71",
+        "content_sha256": "c923eb6815775d471f7117d1612f14fed86b9bd51deb7dd16a7311694a233d86",
+        "byte_count": 1063
+      },
+      "classified_spdx_id": "MIT",
+      "license_artifact_unchanged_at_solution": true,
+      "notice_artifact": null,
+      "notice_artifact_unchanged_at_solution": true,
+      "license_or_use_basis_decision": "pass",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_tree_instruction_inventory"
+    }
+  ],
+  "next_queue": [
+    "ghko-RosieOh--ccStory-issue-12",
+    "ghko-dungsil-ai--intellij-plugin-egovframe-issue-5",
+    "ghko-Lyainc--filme-issue-417",
+    "ghko-RosieOh--ccStory-issue-11",
+    "ghko-RosieOh--ccStory-issue-10",
+    "ghmix-jinwon-int--a2a-nexus-issue-1190",
+    "ghmix-Ootzk--Wor-chain-dle-issue-173",
+    "ghmix-Ootzk--Wor-chain-dle-issue-130",
+    "ghmix-115dkk--Impulcifer-pip313-issue-79",
+    "ghmix-pillip--realtime-en2ko-captions-issue-15",
+    "ghmix-pillip--realtime-en2ko-captions-issue-13",
+    "ghmix-B-TING--bu-ting-mobile-issue-75"
+  ],
+  "known_limitations": [
+    "License eligibility does not settle project-instruction parity, evaluator feasibility, isolation, or reproducibility.",
+    "This artifact records license evidence but does not redistribute third-party code, patches, or license files. If fixtures are later redistributed, the license and NOTICE obligations must be re-evaluated at that boundary."
+  ]
+}

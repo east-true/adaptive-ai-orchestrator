@@ -1,0 +1,527 @@
+{
+  "artifact_id": "phase2b-scope-review-solution-segmentation-2026-07-24",
+  "protocol_version": "phase2b-pilot-prereg-v1.1",
+  "created_at": "2026-07-24",
+  "purpose": "Choose exact task-relevant Git segments for the twelve bounded source survivors before pinned-license, instruction, or runtime work.",
+  "terminal_status": false,
+  "terminal_status_note": "Solution breadth and incorrect closing references route exact lineage but do not create a preregistered terminal exclusion by themselves.",
+  "agent_results_observed": false,
+  "design_change_required": false,
+  "input_artifacts": [
+    {
+      "path": "experiments/phase2b-scope-review-source-semantic-2026-07-24.json",
+      "sha256": "9ab7a488ce64d4bdccf6513d605147d8bbf5b8a31711e238644b7de49174f5f3"
+    },
+    {
+      "path": "experiments/phase2b-linked-solution-prefilter-2026-07-24.json",
+      "sha256": "6fdc6e69bbd0e38795c472bfa457ce496715f36e7d2a57274ea29dfe410abcfa"
+    }
+  ],
+  "collection": {
+    "method": "Blobless fetch of only required public PR refs into an untracked temporary bare Git directory; inspect commit objects, parentage, trees, messages, and path deltas without copying third-party source into version control.",
+    "temporary_path_tracked": false,
+    "repository_count": 8,
+    "candidate_count": 12,
+    "all_base_ancestor_checks_passed": true,
+    "all_task_relevant_paths_present_in_segment": true,
+    "note": "The temporary checkout path is intentionally not a durable input. This artifact retains every revision, tree, PR hash, task-path set, and task-relevant diff hash needed to refetch and verify the observations."
+  },
+  "method": [
+    "Keep the frozen twelve-row survivor order.",
+    "Prefer an issue-specific atomic commit, direct task PR, or contiguous task tail over a release PR head.",
+    "Treat a PR closing an issue as non-authoritative when its title and changed paths address a different task; retain it as an ignored linked reference.",
+    "For unavoidable broad commits, hash and record only the source-derived task paths while preserving the exact broad commit and parent as lineage evidence.",
+    "Advance all resolved segments to exact pinned-license review; do not infer license or instruction state from current default branches."
+  ],
+  "summary": {
+    "candidate_count": 12,
+    "atomic_or_direct_segments": 8,
+    "contiguous_task_tail_segments": 1,
+    "broad_single_commit_path_segments": 2,
+    "noncontiguous_task_relevant_segments": 1,
+    "terminal_exclusion_rows": 0,
+    "advance_exact_base_and_pinned_license_rows": 12,
+    "selected_rows_created": 0,
+    "candidate_agent_executions": 0
+  },
+  "assessments": [
+    {
+      "candidate_id": "ghko-RosieOh--ccStory-issue-12",
+      "repository": "RosieOh/ccStory",
+      "solution_reference": "https://github.com/RosieOh/ccStory/pull/13",
+      "ignored_linked_solution_references": [],
+      "segment_type": "noncontiguous-task-relevant-commits",
+      "base_revision": "d81613addcaf7ccb3fec8b4acb5eed46dc27911e",
+      "base_tree_hash": "4294d59a871403453796c0b21687f2e129918a01",
+      "solution_revision": "c26128e887b4eeb07db401efdaa53cd5867d913b",
+      "solution_tree_hash": "9f86fb73f53ea0283b8d67aa9f3c0974fa684bb3",
+      "base_is_first_segment_commit_parent": true,
+      "segment_commit_revisions": [
+        "bd9ef4a5cc12bce6a2473dc1f7bb2516368f7339",
+        "6013a8d4761e35000f358599a8ae5f823d2eeea3",
+        "c2e5dea5d6a749f409f646b3b52cadcb2b59563c",
+        "a9bf0b1562af0563144056ee48d6512076e60be2",
+        "b71453ec60c0f778e594795c8aa8100d06ddca66",
+        "e0e1ea6eb04c543a47fd9c1568b910facbadd305",
+        "bf08d7d83170e1b95c0c4c3162168d9acda24d06",
+        "da34e48986d7210820c1122abed4fd40c57e74bb",
+        "e207c658fc05a6297e943e239ffd1da394a0cbc4",
+        "7c0d24407f432ca230fd34be0c0097256b29746d",
+        "32156e0397bb12f585d1b83397773511c7909e33",
+        "a39cc456626f148739d25b814cb2cfa8b50e0d79",
+        "dc68091e4c5576e9307fbab1217061ba17905ca5",
+        "c26128e887b4eeb07db401efdaa53cd5867d913b"
+      ],
+      "task_relevant_commit_revisions": [
+        "bd9ef4a5cc12bce6a2473dc1f7bb2516368f7339",
+        "c26128e887b4eeb07db401efdaa53cd5867d913b"
+      ],
+      "task_relevant_paths": [
+        "tsconfig.node.json",
+        "electron/main.ts"
+      ],
+      "task_relevant_path_count": 2,
+      "full_segment_changed_path_count": 14,
+      "task_relevant_diff_sha256": "944915fef2d23c49f4d62b9938fae1e188482b3339238518f808d441bb43012c",
+      "linked_pr_html_sha256": "26d3d9329430da1747da2a6fc2b4c7b4b06e3008737dcef79601ae51e026d14d",
+      "linked_pr_diff_sha256": "693a3e93ff0047361f55242b79aa36f778e43007bf2a48e4d5d64fe0a2cde5f7",
+      "linked_pr_head_revision": "fd4bb9978a1fb624e51dca547e9e5cfd2f543d8b",
+      "linked_pr_commit_list_complete": true,
+      "reason": "The ES2022 target/lib change is atomic at bd9ef4a, while the required db null narrowing appears in c26128e alongside the separate chokidar/template/progress main-process change. The exact d81613a..c26128e segment is reproducible, but the protected evaluator must restrict itself to the two source-derived invariants and paths.",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_base_and_pinned_license"
+    },
+    {
+      "candidate_id": "ghko-dungsil-ai--intellij-plugin-egovframe-issue-5",
+      "repository": "dungsil-ai/intellij-plugin-egovframe",
+      "solution_reference": "https://github.com/dungsil-ai/intellij-plugin-egovframe/pull/9",
+      "ignored_linked_solution_references": [
+        "https://github.com/dungsil-ai/intellij-plugin-egovframe/pull/8"
+      ],
+      "segment_type": "contiguous-task-tail-after-overlapping-pr",
+      "base_revision": "c588d65cfc545f81faf0ccf93ccdab1db923833a",
+      "base_tree_hash": "1a4bfda183b7cfe53ae7424e36a2987e8ee6952d",
+      "solution_revision": "36d6e62dbbe4c72f9cc4f01c87aa142bced302c9",
+      "solution_tree_hash": "28f9a487485f9c35bd8dab8018b9c5e08472a799",
+      "base_is_first_segment_commit_parent": true,
+      "segment_commit_revisions": [
+        "76b4c01fe9064548c64b49ebd4ecbc77e789baa9",
+        "e5d571f3b76f24ec03e923546b05190e20eb4746",
+        "6d9f935c63dcc489b4ce2ac73a4e61eb90cb388b",
+        "2ac915d0374ad72aa116255815b932dd9fcfcd16",
+        "36d6e62dbbe4c72f9cc4f01c87aa142bced302c9"
+      ],
+      "task_relevant_commit_revisions": [
+        "76b4c01fe9064548c64b49ebd4ecbc77e789baa9",
+        "e5d571f3b76f24ec03e923546b05190e20eb4746",
+        "6d9f935c63dcc489b4ce2ac73a4e61eb90cb388b",
+        "2ac915d0374ad72aa116255815b932dd9fcfcd16",
+        "36d6e62dbbe4c72f9cc4f01c87aa142bced302c9"
+      ],
+      "task_relevant_paths": [
+        "src/main/kotlin/kr/kyg/ijplugin/egovframe/crud/CrudEditorModel.kt",
+        "src/main/kotlin/kr/kyg/ijplugin/egovframe/crud/CrudPanel.kt",
+        "src/main/kotlin/kr/kyg/ijplugin/egovframe/crud/CrudSampleCatalog.kt",
+        "src/main/kotlin/kr/kyg/ijplugin/egovframe/crud/CrudSqlEditorAdapter.kt",
+        "src/main/kotlin/kr/kyg/ijplugin/egovframe/crud/SqlDialect.kt",
+        "src/main/kotlin/kr/kyg/ijplugin/egovframe/ddl/DdlAnalysis.kt",
+        "src/main/kotlin/kr/kyg/ijplugin/egovframe/ddl/DdlSyntaxDiagnostics.kt",
+        "src/main/resources/egovframe/samples/board-mysql.sql",
+        "src/main/resources/egovframe/samples/board-pgsql.sql",
+        "src/main/resources/egovframe/samples/comment-mysql.sql",
+        "src/main/resources/egovframe/samples/comment-pgsql.sql",
+        "src/main/resources/egovframe/samples/order-mysql.sql",
+        "src/main/resources/egovframe/samples/order-pgsql.sql",
+        "src/main/resources/egovframe/samples/product-mysql.sql",
+        "src/main/resources/egovframe/samples/product-pgsql.sql",
+        "src/main/resources/egovframe/samples/user-mysql.sql",
+        "src/main/resources/egovframe/samples/user-pgsql.sql",
+        "src/test/kotlin/kr/kyg/ijplugin/egovframe/crud/CrudEditorModelTest.kt",
+        "src/test/kotlin/kr/kyg/ijplugin/egovframe/crud/CrudSqlEditorAdapterTest.kt",
+        "src/test/kotlin/kr/kyg/ijplugin/egovframe/ddl/DdlAnalysisTest.kt",
+        "src/test/kotlin/kr/kyg/ijplugin/egovframe/ddl/DdlSyntaxDiagnosticsTest.kt"
+      ],
+      "task_relevant_path_count": 21,
+      "full_segment_changed_path_count": 21,
+      "task_relevant_diff_sha256": "e244175b315ca756438fe50d4cc72df84100a5c98de4788372484d45a8070e2a",
+      "linked_pr_html_sha256": "e2a076058c61e3c55cc691fb82d744b5d43260f8786c523329c40b55e5e592b6",
+      "linked_pr_diff_sha256": "c9ef4f8454b0fb956d7de0b9ff5b64654334b775a2e91d15a0e5ca3caa50039a",
+      "linked_pr_head_revision": "36d6e62dbbe4c72f9cc4f01c87aa142bced302c9",
+      "linked_pr_commit_list_complete": true,
+      "reason": "PR #9 begins with the nine-commit PR #8/issue-4 history. The five commits after c588d65 are a contiguous CRUD SQL editor tail and end at the PR #9 head, so issue #5 can use that exact tail without importing issue #4 into its task identity.",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_base_and_pinned_license"
+    },
+    {
+      "candidate_id": "ghko-Lyainc--filme-issue-417",
+      "repository": "Lyainc/filme",
+      "solution_reference": "https://github.com/Lyainc/filme/pull/426",
+      "ignored_linked_solution_references": [],
+      "segment_type": "atomic-issue-commit-inside-multi-issue-pr",
+      "base_revision": "b6bc851c93474e6dd674b3c2506ef1ac0a65d8d7",
+      "base_tree_hash": "811be3bf3e2f84f430776225b8fb1766723c8c5f",
+      "solution_revision": "17696fbcc1058f89423a3e36491b8b305faeb5a8",
+      "solution_tree_hash": "760eac60c460ab27eb97d0f92207e01fd188edbb",
+      "base_is_first_segment_commit_parent": true,
+      "segment_commit_revisions": [
+        "17696fbcc1058f89423a3e36491b8b305faeb5a8"
+      ],
+      "task_relevant_commit_revisions": [
+        "17696fbcc1058f89423a3e36491b8b305faeb5a8"
+      ],
+      "task_relevant_paths": [
+        "__tests__/onTicketFieldTap.test.tsx",
+        "src/components/moods/MoodCriterion.tsx",
+        "src/components/moods/MoodEditorial.tsx"
+      ],
+      "task_relevant_path_count": 3,
+      "full_segment_changed_path_count": 3,
+      "task_relevant_diff_sha256": "a4c99999f72117a44fde852d39a05ce08bb9c5ac9ff9b3cf14eacd5c2ff68348",
+      "linked_pr_html_sha256": "3a57ba5a229873f5f7d0b624e5406705a4f123ac309248ac684075f348213244",
+      "linked_pr_diff_sha256": "98b264f7775b511385e504e4440f3ce7e1259328f5eeb6c58c7144bd72582fdd",
+      "linked_pr_head_revision": "f89d458c9839f065bac6e6df62d5bd0983358f21",
+      "linked_pr_commit_list_complete": true,
+      "reason": "Commit 17696fb is explicitly scoped to #417 and changes only the signature caret implementation paths. The preceding #414-#416 commits stay in the base history but are not part of the task delta.",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_base_and_pinned_license"
+    },
+    {
+      "candidate_id": "ghko-RosieOh--ccStory-issue-11",
+      "repository": "RosieOh/ccStory",
+      "solution_reference": "https://github.com/RosieOh/ccStory/pull/13",
+      "ignored_linked_solution_references": [],
+      "segment_type": "atomic-issue-commit-inside-multi-issue-pr",
+      "base_revision": "e207c658fc05a6297e943e239ffd1da394a0cbc4",
+      "base_tree_hash": "a7dfe9054c6577f7c3f7fd84b942acd4f46f1cc9",
+      "solution_revision": "7c0d24407f432ca230fd34be0c0097256b29746d",
+      "solution_tree_hash": "37134165407f6bf5a4879294328a4c968741448d",
+      "base_is_first_segment_commit_parent": true,
+      "segment_commit_revisions": [
+        "7c0d24407f432ca230fd34be0c0097256b29746d"
+      ],
+      "task_relevant_commit_revisions": [
+        "7c0d24407f432ca230fd34be0c0097256b29746d"
+      ],
+      "task_relevant_paths": [
+        "electron/indexer.ts"
+      ],
+      "task_relevant_path_count": 1,
+      "full_segment_changed_path_count": 1,
+      "task_relevant_diff_sha256": "f2d941d259721221c38b83e1e972dfd42660505160f32a1cb5bde032c967a588",
+      "linked_pr_html_sha256": "26d3d9329430da1747da2a6fc2b4c7b4b06e3008737dcef79601ae51e026d14d",
+      "linked_pr_diff_sha256": "693a3e93ff0047361f55242b79aa36f778e43007bf2a48e4d5d64fe0a2cde5f7",
+      "linked_pr_head_revision": "fd4bb9978a1fb624e51dca547e9e5cfd2f543d8b",
+      "linked_pr_commit_list_complete": true,
+      "reason": "Commit 7c0d244 is a one-path indexer change containing the stale project/session prune behavior. Its sole parent is the exact pre-task base.",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_base_and_pinned_license"
+    },
+    {
+      "candidate_id": "ghko-RosieOh--ccStory-issue-10",
+      "repository": "RosieOh/ccStory",
+      "solution_reference": "https://github.com/RosieOh/ccStory/pull/13",
+      "ignored_linked_solution_references": [],
+      "segment_type": "single-commit-path-segment-with-cohabiting-changes",
+      "base_revision": "dc68091e4c5576e9307fbab1217061ba17905ca5",
+      "base_tree_hash": "f364a09c85e70acabdc0471fa2b16d8e62356dc0",
+      "solution_revision": "c26128e887b4eeb07db401efdaa53cd5867d913b",
+      "solution_tree_hash": "9f86fb73f53ea0283b8d67aa9f3c0974fa684bb3",
+      "base_is_first_segment_commit_parent": true,
+      "segment_commit_revisions": [
+        "c26128e887b4eeb07db401efdaa53cd5867d913b"
+      ],
+      "task_relevant_commit_revisions": [
+        "c26128e887b4eeb07db401efdaa53cd5867d913b"
+      ],
+      "task_relevant_paths": [
+        "electron/main.ts"
+      ],
+      "task_relevant_path_count": 1,
+      "full_segment_changed_path_count": 1,
+      "task_relevant_diff_sha256": "4e0407c5d68199a4a32bb4a45a0845bf083da2535c3010f1cf67794691d64263",
+      "linked_pr_html_sha256": "26d3d9329430da1747da2a6fc2b4c7b4b06e3008737dcef79601ae51e026d14d",
+      "linked_pr_diff_sha256": "693a3e93ff0047361f55242b79aa36f778e43007bf2a48e4d5d64fe0a2cde5f7",
+      "linked_pr_head_revision": "fd4bb9978a1fb624e51dca547e9e5cfd2f543d8b",
+      "linked_pr_commit_list_complete": true,
+      "reason": "The chokidar-v4 root-watch/filter correction is in one commit and one file, but that commit also connects template handlers, progress events, and the #12 null narrowing. Exact lineage is available; later evaluator construction must isolate the source-derived watcher behavior.",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_base_and_pinned_license"
+    },
+    {
+      "candidate_id": "ghmix-jinwon-int--a2a-nexus-issue-1190",
+      "repository": "jinwon-int/a2a-nexus",
+      "solution_reference": "https://github.com/jinwon-int/a2a-nexus/pull/1191",
+      "ignored_linked_solution_references": [],
+      "segment_type": "broad-single-commit-path-segment",
+      "base_revision": "83450ca4d4ad1e41bd8bd3ea29942474792fc534",
+      "base_tree_hash": "ec0767628380b622eda2466d07ab53f321f6269e",
+      "solution_revision": "95bf8310d0d05d7154cf5b3122c50d30fc720712",
+      "solution_tree_hash": "894cfc4e2de65cc99bb7903a16edd156a9212a55",
+      "base_is_first_segment_commit_parent": true,
+      "segment_commit_revisions": [
+        "95bf8310d0d05d7154cf5b3122c50d30fc720712"
+      ],
+      "task_relevant_commit_revisions": [
+        "95bf8310d0d05d7154cf5b3122c50d30fc720712"
+      ],
+      "task_relevant_paths": [
+        "docs/release-readiness.md",
+        "CONTRIBUTING.md"
+      ],
+      "task_relevant_path_count": 2,
+      "full_segment_changed_path_count": 360,
+      "task_relevant_diff_sha256": "4f21a3e1928b04fdfef3d0bda3558fed030f1af268df98b0d9ae45adf982e3ba",
+      "linked_pr_html_sha256": "57ab13b4570cbc5b33ea32adf5b4bd7ba5236d1ed9626a78eabee51aa8f612ca",
+      "linked_pr_diff_sha256": "4f7fb6912b71812a1990980d1996d43e051db78d7bdaf0422128ebac2915d224",
+      "linked_pr_head_revision": "95bf8310d0d05d7154cf5b3122c50d30fc720712",
+      "linked_pr_commit_list_complete": true,
+      "reason": "The sole PR commit closes eight issues and changes hundreds of paths, but #1190 maps exactly to new version/stability policy in docs/release-readiness.md and public-language policy in CONTRIBUTING.md. The source task and two-path delta are independently identifiable.",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_base_and_pinned_license"
+    },
+    {
+      "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-173",
+      "repository": "Ootzk/Wor-chain-dle",
+      "solution_reference": "https://github.com/Ootzk/Wor-chain-dle/pull/248",
+      "ignored_linked_solution_references": [],
+      "segment_type": "atomic-issue-commit-inside-release-pr",
+      "base_revision": "b4a8b32dd9ff454c1e5b3a8ab438b6d2815853f1",
+      "base_tree_hash": "bec3e84e8c1e7846616557016bb6832b4d7eea6d",
+      "solution_revision": "ef7701c662050117f47b043751fb07f253719064",
+      "solution_tree_hash": "28cfa5d1ea53e9339b73ba70dffc64ea08c27e19",
+      "base_is_first_segment_commit_parent": true,
+      "segment_commit_revisions": [
+        "ef7701c662050117f47b043751fb07f253719064"
+      ],
+      "task_relevant_commit_revisions": [
+        "ef7701c662050117f47b043751fb07f253719064"
+      ],
+      "task_relevant_paths": [
+        "src/App.tsx",
+        "src/components/achievements/AchievementList.tsx",
+        "src/components/pages/CreatePuzzlePage.tsx",
+        "src/lib/gameMode.ts"
+      ],
+      "task_relevant_path_count": 4,
+      "full_segment_changed_path_count": 4,
+      "task_relevant_diff_sha256": "208c75435b5a1b55ad7b0144f2d2a3bb71e41b1e033370e34aa0193ff54c8ba1",
+      "linked_pr_html_sha256": "1fb36283e81204b70485fabfbbc013172ab93ea2ac674fcd0ffb73c34b38c90e",
+      "linked_pr_diff_sha256": "fd2e8190de46efa06cdb9de2cc53722efdeda1f680d32265a71bc324e4937f87",
+      "linked_pr_head_revision": "639a299de4e4fa4bc0e76e94e7d2466f6fb3faf3",
+      "linked_pr_commit_list_complete": true,
+      "reason": "Commit ef7701c is explicitly #206 standardize mode labels, has one parent, and changes four task-relevant application paths. The rest of release PR #248 is outside the segment.",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_base_and_pinned_license"
+    },
+    {
+      "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-130",
+      "repository": "Ootzk/Wor-chain-dle",
+      "solution_reference": "https://github.com/Ootzk/Wor-chain-dle/pull/144",
+      "ignored_linked_solution_references": [
+        "https://github.com/Ootzk/Wor-chain-dle/pull/147",
+        "https://github.com/Ootzk/Wor-chain-dle/pull/149"
+      ],
+      "segment_type": "direct-multi-commit-task-pr",
+      "base_revision": "2346913bc1347718e9d2deba2ef6cf5f91193b3b",
+      "base_tree_hash": "3053e0e69685f0a4f1d17becea18c690fcfdc599",
+      "solution_revision": "9adbad4b98b0c78faf1f309067a3cca88a1d5157",
+      "solution_tree_hash": "66aa453f4b5a1008bab5e7a170d9a5f8b636b039",
+      "base_is_first_segment_commit_parent": true,
+      "segment_commit_revisions": [
+        "e448c5fc6320e8b0e034f85e53f5ddf5adad0e86",
+        "ff3de507beff3c9f85752be18b48383f48ef12da",
+        "9adbad4b98b0c78faf1f309067a3cca88a1d5157"
+      ],
+      "task_relevant_commit_revisions": [
+        "e448c5fc6320e8b0e034f85e53f5ddf5adad0e86",
+        "ff3de507beff3c9f85752be18b48383f48ef12da",
+        "9adbad4b98b0c78faf1f309067a3cca88a1d5157"
+      ],
+      "task_relevant_paths": [
+        "e2e/modals.spec.ts",
+        "src/components/modals/InfoModal.tsx",
+        "src/components/modals/PatchNotesContent.tsx",
+        "src/components/modals/PatchNotesModal.tsx",
+        "src/locales/de/translation.json",
+        "src/locales/en/translation.json",
+        "src/locales/es/translation.json",
+        "src/locales/ja/translation.json",
+        "src/locales/ko/translation.json",
+        "src/locales/sw/translation.json",
+        "src/locales/zh/translation.json"
+      ],
+      "task_relevant_path_count": 11,
+      "full_segment_changed_path_count": 11,
+      "task_relevant_diff_sha256": "710b2438b8e99e47d7ed7db73e73125417a8de1e5465d06270da405c9b5f336c",
+      "linked_pr_html_sha256": "673088ce1a408d24e577efd03def05a56cc96bf00a1407fb201b517d3e45f9ca",
+      "linked_pr_diff_sha256": "bf7876b60ff0c1b27586560ab34e4890c25ada21457430be61032b2d42079124",
+      "linked_pr_head_revision": "9adbad4b98b0c78faf1f309067a3cca88a1d5157",
+      "linked_pr_commit_list_complete": true,
+      "reason": "PR #144 is the direct three-commit implementation of the Information modal patch-notes tab. PR #147 is a later release-date docs change and PR #149 is a release aggregation, so neither is part of the candidate solution lineage.",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_base_and_pinned_license"
+    },
+    {
+      "candidate_id": "ghmix-115dkk--Impulcifer-pip313-issue-79",
+      "repository": "115dkk/Impulcifer-pip313",
+      "solution_reference": "https://github.com/115dkk/Impulcifer-pip313/pull/81",
+      "ignored_linked_solution_references": [],
+      "segment_type": "broad-single-commit-path-segment",
+      "base_revision": "f360f86b94a95e5332028b93f8f9d800f4d5e8e3",
+      "base_tree_hash": "ddfc04be70a0d1f6e707c9b3f4a99ca21de7113b",
+      "solution_revision": "4a0f61318d64631c531c060a7fe6533ff5bccbf8",
+      "solution_tree_hash": "31febf619e635a490d3131a0b04075d25666604f",
+      "base_is_first_segment_commit_parent": true,
+      "segment_commit_revisions": [
+        "4a0f61318d64631c531c060a7fe6533ff5bccbf8"
+      ],
+      "task_relevant_commit_revisions": [
+        "4a0f61318d64631c531c060a7fe6533ff5bccbf8"
+      ],
+      "task_relevant_paths": [
+        ".github/workflows/test.yml",
+        "tests/test_i18n_locales.py"
+      ],
+      "task_relevant_path_count": 2,
+      "full_segment_changed_path_count": 35,
+      "task_relevant_diff_sha256": "88d6945e050d7b72909d403699026d84dbf6b90cf7c630c843bc9294635430d6",
+      "linked_pr_html_sha256": "03318e57cbd88aeb7ad7b79f5929dffbd09015860fa480c04547332255fcf26d",
+      "linked_pr_diff_sha256": "7f55c3aebb8178efdfd85401035594d4a0d5b77ccc1115a9875035351e8ee101",
+      "linked_pr_head_revision": "4a0f61318d64631c531c060a7fe6533ff5bccbf8",
+      "linked_pr_commit_list_complete": true,
+      "reason": "The sole commit resolves issues #68-#80, but #79 has an exact two-path implementation: the workflow parity gate and its matching unit test. All 11 locale files already have equal key sets at both base and solution, so unrelated locale edits are not prerequisites for this task.",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_base_and_pinned_license"
+    },
+    {
+      "candidate_id": "ghmix-pillip--realtime-en2ko-captions-issue-15",
+      "repository": "pillip/realtime-en2ko-captions",
+      "solution_reference": "https://github.com/pillip/realtime-en2ko-captions/pull/39",
+      "ignored_linked_solution_references": [
+        "https://github.com/pillip/realtime-en2ko-captions/pull/38"
+      ],
+      "segment_type": "direct-atomic-task-pr",
+      "base_revision": "8cb5c00c9cbb0b839f06e97881f48ac4d0e66ad9",
+      "base_tree_hash": "25cf43a870f5ac9b067128cffa5c9c61e1bacaca",
+      "solution_revision": "94ee457c19d08461a9eac6dd828e200dfacec0da",
+      "solution_tree_hash": "a38c164424d1af484d0756b85213c55bd585b3a3",
+      "base_is_first_segment_commit_parent": true,
+      "segment_commit_revisions": [
+        "94ee457c19d08461a9eac6dd828e200dfacec0da"
+      ],
+      "task_relevant_commit_revisions": [
+        "94ee457c19d08461a9eac6dd828e200dfacec0da"
+      ],
+      "task_relevant_paths": [
+        "tests/test_multilang_translation.py",
+        "translation.py"
+      ],
+      "task_relevant_path_count": 2,
+      "full_segment_changed_path_count": 2,
+      "task_relevant_diff_sha256": "ea40bfd4a17c6025e33860c8fcd9f1698e10d15d441138dfe5ce3f7c653067c2",
+      "linked_pr_html_sha256": "a8297017066f3ca268be883b4690686426f0592423db6a152f1fc0644b39b6c7",
+      "linked_pr_diff_sha256": "466e2f9d20553bf023fc74d9bd504171eca0cbcb9f2054ccfb29170bc5f407d7",
+      "linked_pr_head_revision": "94ee457c19d08461a9eac6dd828e200dfacec0da",
+      "linked_pr_commit_list_complete": true,
+      "reason": "PR #39 is the exact two-path Chinese/Vietnamese translation-functionality change with its unit test. PR #38 removes an unrelated dependency and only closes #15 by an incorrect reference; it remains in base history but is not a solution PR.",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_base_and_pinned_license"
+    },
+    {
+      "candidate_id": "ghmix-pillip--realtime-en2ko-captions-issue-13",
+      "repository": "pillip/realtime-en2ko-captions",
+      "solution_reference": "https://github.com/pillip/realtime-en2ko-captions/pull/34",
+      "ignored_linked_solution_references": [
+        "https://github.com/pillip/realtime-en2ko-captions/pull/25"
+      ],
+      "segment_type": "direct-atomic-task-pr",
+      "base_revision": "032cb8fea944a1419d8e1b03de4aae390821d0a1",
+      "base_tree_hash": "f4bd49d2137ca53e1abed22353038e554bdb0db0",
+      "solution_revision": "02127b3dd66a9a5e9541c413930a2c826faf9ae7",
+      "solution_tree_hash": "f3c2a9cdb37d2083c7e66a8cc4b00f58e51b1e52",
+      "base_is_first_segment_commit_parent": true,
+      "segment_commit_revisions": [
+        "02127b3dd66a9a5e9541c413930a2c826faf9ae7"
+      ],
+      "task_relevant_commit_revisions": [
+        "02127b3dd66a9a5e9541c413930a2c826faf9ae7"
+      ],
+      "task_relevant_paths": [
+        "components/webrtc.html"
+      ],
+      "task_relevant_path_count": 1,
+      "full_segment_changed_path_count": 1,
+      "task_relevant_diff_sha256": "04b885d93d403e2ec2a510a1c944d1c3476aaafc2c3b6c4fbce0cfa4cede4cd4",
+      "linked_pr_html_sha256": "1aa3cfcc5dc2c65389772a1a72145c674de682987c2f78026881deedb87bb970",
+      "linked_pr_diff_sha256": "b3231416a3bb3a4f3cf9be12bd50deb482748b36230fd68bf10dd86f33486379",
+      "linked_pr_head_revision": "02127b3dd66a9a5e9541c413930a2c826faf9ae7",
+      "linked_pr_commit_list_complete": true,
+      "reason": "PR #34 is the exact one-file language-selection UI change. PR #25 adds database indexes and only closes #13 through an incorrect issue reference, so it is not part of the task solution.",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_base_and_pinned_license"
+    },
+    {
+      "candidate_id": "ghmix-B-TING--bu-ting-mobile-issue-75",
+      "repository": "B-TING/bu-ting-mobile",
+      "solution_reference": "https://github.com/B-TING/bu-ting-mobile/pull/81",
+      "ignored_linked_solution_references": [],
+      "segment_type": "atomic-issue-commit-inside-multi-issue-pr",
+      "base_revision": "0c8689a8444972d33fcbed0b505ea33b767d2ba7",
+      "base_tree_hash": "fb7faa78dc27a72c82e4da0c8223c6f29ecc52e4",
+      "solution_revision": "59950e531ea17680d2b71d2fb3ffb2e4fcb81e5d",
+      "solution_tree_hash": "2ffd992e0cc5fd43cb728816582dfbc1321e5cf8",
+      "base_is_first_segment_commit_parent": true,
+      "segment_commit_revisions": [
+        "59950e531ea17680d2b71d2fb3ffb2e4fcb81e5d"
+      ],
+      "task_relevant_commit_revisions": [
+        "59950e531ea17680d2b71d2fb3ffb2e4fcb81e5d"
+      ],
+      "task_relevant_paths": [
+        "src/components/plan/schedule/RouteItemCard.tsx",
+        "src/components/plan/schedule/RouteMemoEditor.tsx",
+        "src/components/plan/schedule/ScheduleRouteDetailPanel.tsx",
+        "src/components/plan/tabs/PlanScheduleTab.tsx",
+        "src/constants/plan/planDetail.ts",
+        "src/screens/plan/PlanDetailScreen.tsx",
+        "src/services/travel/planPlaceSync.ts",
+        "src/services/travel/travelMapper.ts",
+        "src/services/travel/travelService.ts",
+        "src/stores/usePlanStore.ts",
+        "src/types/travelApi.ts",
+        "src/types/travelPlan.ts",
+        "src/utils/travel/travelPlanApiLogger.ts"
+      ],
+      "task_relevant_path_count": 13,
+      "full_segment_changed_path_count": 13,
+      "task_relevant_diff_sha256": "21a5f29f640ce2182c654f78669927a5784939770a21225dbc390a47c3f037e8",
+      "linked_pr_html_sha256": "86a1d2f91f4c3fbfc2247d37131aa1f2e0c9acd71dd33b9473bd18b68f764a28",
+      "linked_pr_diff_sha256": "1edc6480208d5f05bfe05c8b1e8b9eea52a3719256e28a96cf0d18ccc2c19f89",
+      "linked_pr_head_revision": "c13a2a76af8056b51f0db2a98e4d15ddcd5d7d99",
+      "linked_pr_commit_list_complete": true,
+      "reason": "Commit 59950e5 is explicitly #75, has one parent, and its 13-path delta is the destination-memo vertical feature. Later #76-#80 commits are outside the segment.",
+      "terminal_exclusion_ids": [],
+      "next_route": "advance_exact_base_and_pinned_license"
+    }
+  ],
+  "next_queue": [
+    "ghko-RosieOh--ccStory-issue-12",
+    "ghko-dungsil-ai--intellij-plugin-egovframe-issue-5",
+    "ghko-Lyainc--filme-issue-417",
+    "ghko-RosieOh--ccStory-issue-11",
+    "ghko-RosieOh--ccStory-issue-10",
+    "ghmix-jinwon-int--a2a-nexus-issue-1190",
+    "ghmix-Ootzk--Wor-chain-dle-issue-173",
+    "ghmix-Ootzk--Wor-chain-dle-issue-130",
+    "ghmix-115dkk--Impulcifer-pip313-issue-79",
+    "ghmix-pillip--realtime-en2ko-captions-issue-15",
+    "ghmix-pillip--realtime-en2ko-captions-issue-13",
+    "ghmix-B-TING--bu-ting-mobile-issue-75"
+  ],
+  "known_limitations": [
+    "ccStory #12 spans two task-relevant commits with unrelated intervening commits; its evaluator must prove only the source-derived ES2022 and null-narrowing invariants.",
+    "ccStory #10 shares its one-file commit with template/progress and #12 changes; a future control must demonstrate watcher-specific base-negative/solution-positive behavior.",
+    "a2a-nexus #1190 and Impulcifer #79 use path-level deltas inside broad single commits; exact-tree controls must show that unrelated paths are not prerequisites.",
+    "No license, project-instruction, evaluator, or runtime decision is made by this artifact."
+  ]
+}

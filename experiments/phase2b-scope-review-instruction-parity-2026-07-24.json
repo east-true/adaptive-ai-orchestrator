@@ -1,0 +1,447 @@
+{
+  "artifact_id": "phase2b-scope-review-instruction-parity-2026-07-24",
+  "created_at": "2026-07-24",
+  "protocol_version": "phase2b-pilot-prereg-v1.1",
+  "purpose": "Resolve exact-tree project-instruction parity for the 12 scope-review rows that passed source semantics, solution segmentation, and pinned-license review without observing agent results.",
+  "terminal_status": true,
+  "terminal_status_note": "This artifact is terminal only for instruction parity. It neither selects candidates nor settles boundedness, evaluator feasibility, isolation, or reproduction.",
+  "agent_results_observed": false,
+  "design_change_required": false,
+  "input_artifacts": [
+    {
+      "path": "experiments/phase2b-scope-review-solution-segmentation-2026-07-24.json",
+      "sha256": "8930853eca14324a25472b08a4a1f54ab954a0e5f0c9720132b0a8f454831e76"
+    },
+    {
+      "path": "experiments/phase2b-scope-review-exact-revision-license-2026-07-24.json",
+      "sha256": "fb58ac9269c6c28e3aa6ad53a1634d3f64eac0592c406f51414ed7cb2cae7460"
+    },
+    {
+      "path": "experiments/phase2b-agent-instruction-parity-2026-07-20.json",
+      "sha256": "4d5cdd55c13c9d38c82419b7e159e79eba936ca22ab8a3c7bdfca24b9113ba1d",
+      "role": "frozen behavioral discovery contract"
+    },
+    {
+      "path": "experiments/phase2b-rank6-instruction-parity-2026-07-24.json",
+      "sha256": "c73e3a9d7886f5686f7446f6bc1c08b6111e182fb4b1e62d1b66c78b28c58279",
+      "role": "precedent for the same exact-tree semantic-equivalence rule"
+    },
+    {
+      "path": "experiments/phase2b-candidate-ledger-v1.json",
+      "sha256": "7cca33b5d318f17b661cac29f2e406ab899389f09d9cad20286ca7c2ac3772ec",
+      "state": "post-source-review, pre-exact-revision/parity application working snapshot"
+    }
+  ],
+  "discovery_contract": {
+    "claude_code": "Claude Code 2.1.215 behavioral discovery/import observations: applicable CLAUDE.md, explicit imports, symlinks, and path rules; no automatic AGENTS.md discovery.",
+    "codex": "Codex 0.144.6 root-AGENTS behavioral observation plus official root-to-task discovery and empty project_doc_fallback_filenames.",
+    "global_instruction_context": "separate unresolved run-authorization gate"
+  },
+  "method": [
+    "Enumerate the exact base tree for every row and verify revision^{tree} against the solution-segmentation base_tree_hash.",
+    "Inventory AGENTS.override.md, AGENTS.md, CLAUDE.md, CLAUDE.local.md, and .claude/rules Markdown entries; record active Git blob and decoded-content SHA-256 values without copying full instruction bodies.",
+    "Resolve root-to-changed-path scope and explicit imports. Files inside .claude/skills are opt-in and inactive unless an automatically loaded instruction imports or invokes them.",
+    "Apply the preregistered semantic-equivalence rule: no guidance on either side and explicit byte/semantic adapters pass; any material one-sided active instruction fails."
+  ],
+  "review_provenance": {
+    "primary": "Codex exact-content review against the frozen discovery contract",
+    "claude_cli_cross_review": "One bounded read-only, tools-disabled call independently reviewed the two Wor-chain-dle adapter cases and agreed that both pass because @AGENTS.md supplies the identical shared guidance and the remaining text documents dormant opt-in slash commands. Claude made no file changes."
+  },
+  "collection_integrity": {
+    "requested_candidates": 12,
+    "observed_candidates": 12,
+    "failures": 0,
+    "exact_tree_hash_matches": 12
+  },
+  "summary": {
+    "candidate_count": 12,
+    "no_discovered_instruction_rows": 2,
+    "explicit_semantic_adapter_rows": 2,
+    "material_one_sided_instruction_rows": 8,
+    "instruction_parity_pass_rows": 4,
+    "instruction_parity_fail_rows": 8,
+    "instruction_parity_unknown_rows": 0,
+    "advance_boundedness_evaluator_reproduction_rows": 4,
+    "terminal_instruction_parity_exclusion_rows": 8,
+    "candidate_agent_executions": 0
+  },
+  "assessments": [
+    {
+      "candidate_id": "ghko-RosieOh--ccStory-issue-12",
+      "ledger_index": 350,
+      "repository_id": "RosieOh--ccStory",
+      "base_revision": "d81613addcaf7ccb3fec8b4acb5eed46dc27911e",
+      "base_tree_hash": "4294d59a871403453796c0b21687f2e129918a01",
+      "tree_entry_count": 56,
+      "changed_path_count": 2,
+      "full_tree_instruction_entry_count": 1,
+      "task_active_instruction_entries": [
+        {
+          "path": "CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "92b3a4fb03e3a99ef361c1ecf7692863b58ac0e8",
+          "content_sha256": "39a3a965039d51ed99ab821ddcb3824061ed93ea8e58083cb2d7680019a894db",
+          "content_bytes": 1453,
+          "symlink_target": null,
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": ["CLAUDE.md"],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "Root CLAUDE.md supplies material commands, layout, safety invariants, and issue-routing guidance with no Codex-discovered adapter.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Claude receives material project, safety, architecture, command, or testing constraints for the changed paths.",
+      "evidence_basis": ["materialized-pinned-full-tree-inventory", "pinned-semantic-instruction-review", "frozen-behavioral-discovery"],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghko-dungsil-ai--intellij-plugin-egovframe-issue-5",
+      "ledger_index": 400,
+      "repository_id": "dungsil-ai--intellij-plugin-egovframe",
+      "base_revision": "c588d65cfc545f81faf0ccf93ccdab1db923833a",
+      "base_tree_hash": "1a4bfda183b7cfe53ae7424e36a2987e8ee6952d",
+      "tree_entry_count": 291,
+      "changed_path_count": 21,
+      "full_tree_instruction_entry_count": 1,
+      "task_active_instruction_entries": [
+        {
+          "path": "AGENTS.md",
+          "mode": "100644",
+          "object_sha": "e3d1040c3e1a67b37484337dc1f4e49aec765f35",
+          "content_sha256": "a26e800ec10e4c96718a9fbab056dfa1fbd7e058d54aed4b0eee4cbcecf03ab6",
+          "content_bytes": 10487,
+          "symlink_target": null,
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [],
+      "effective_codex_chain": ["AGENTS.md"],
+      "project_instruction_profile": "Root AGENTS.md supplies material architecture, compatibility, safety, toolchain, and test guidance with no Claude-discovered adapter.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Codex receives material project, safety, architecture, command, or testing constraints for the changed paths.",
+      "evidence_basis": ["materialized-pinned-full-tree-inventory", "pinned-semantic-instruction-review", "frozen-behavioral-discovery"],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghko-Lyainc--filme-issue-417",
+      "ledger_index": 488,
+      "repository_id": "Lyainc--filme",
+      "base_revision": "b6bc851c93474e6dd674b3c2506ef1ac0a65d8d7",
+      "base_tree_hash": "811be3bf3e2f84f430776225b8fb1766723c8c5f",
+      "tree_entry_count": 451,
+      "changed_path_count": 3,
+      "full_tree_instruction_entry_count": 2,
+      "task_active_instruction_entries": [
+        {
+          "path": "CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "2f8ba0d3b4c17d6341d2137495404e5c67eea688",
+          "content_sha256": "eeb075f89b710d13d526ede9cc0ae629f7dab5136634c891c55efec63323db11",
+          "content_bytes": 15827,
+          "symlink_target": null,
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [".claude/skills/react-best-practices/AGENTS.md"],
+      "effective_claude_chain": ["CLAUDE.md"],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "Root CLAUDE.md supplies extensive material workflow, architecture, test, review, and implementation invariants. The descendant skill AGENTS.md is not automatically active.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Claude receives material project, safety, architecture, command, or testing constraints for the changed paths.",
+      "evidence_basis": ["materialized-pinned-full-tree-inventory", "pinned-semantic-instruction-review", "frozen-behavioral-discovery"],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghko-RosieOh--ccStory-issue-11",
+      "ledger_index": 710,
+      "repository_id": "RosieOh--ccStory",
+      "base_revision": "e207c658fc05a6297e943e239ffd1da394a0cbc4",
+      "base_tree_hash": "a7dfe9054c6577f7c3f7fd84b942acd4f46f1cc9",
+      "tree_entry_count": 59,
+      "changed_path_count": 1,
+      "full_tree_instruction_entry_count": 1,
+      "task_active_instruction_entries": [
+        {
+          "path": "CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "92b3a4fb03e3a99ef361c1ecf7692863b58ac0e8",
+          "content_sha256": "39a3a965039d51ed99ab821ddcb3824061ed93ea8e58083cb2d7680019a894db",
+          "content_bytes": 1453,
+          "symlink_target": null,
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": ["CLAUDE.md"],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "Root CLAUDE.md supplies material commands, layout, safety invariants, and issue-routing guidance with no Codex-discovered adapter.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Claude receives material project, safety, architecture, command, or testing constraints for the changed paths.",
+      "evidence_basis": ["materialized-pinned-full-tree-inventory", "pinned-semantic-instruction-review", "frozen-behavioral-discovery"],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghko-RosieOh--ccStory-issue-10",
+      "ledger_index": 711,
+      "repository_id": "RosieOh--ccStory",
+      "base_revision": "dc68091e4c5576e9307fbab1217061ba17905ca5",
+      "base_tree_hash": "f364a09c85e70acabdc0471fa2b16d8e62356dc0",
+      "tree_entry_count": 59,
+      "changed_path_count": 1,
+      "full_tree_instruction_entry_count": 1,
+      "task_active_instruction_entries": [
+        {
+          "path": "CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "92b3a4fb03e3a99ef361c1ecf7692863b58ac0e8",
+          "content_sha256": "39a3a965039d51ed99ab821ddcb3824061ed93ea8e58083cb2d7680019a894db",
+          "content_bytes": 1453,
+          "symlink_target": null,
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": ["CLAUDE.md"],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "Root CLAUDE.md supplies material commands, layout, safety invariants, and issue-routing guidance with no Codex-discovered adapter.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Claude receives material project, safety, architecture, command, or testing constraints for the changed paths.",
+      "evidence_basis": ["materialized-pinned-full-tree-inventory", "pinned-semantic-instruction-review", "frozen-behavioral-discovery"],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-jinwon-int--a2a-nexus-issue-1190",
+      "ledger_index": 773,
+      "repository_id": "jinwon-int--a2a-nexus",
+      "base_revision": "83450ca4d4ad1e41bd8bd3ea29942474792fc534",
+      "base_tree_hash": "ec0767628380b622eda2466d07ab53f321f6269e",
+      "tree_entry_count": 1923,
+      "changed_path_count": 2,
+      "full_tree_instruction_entry_count": 0,
+      "task_active_instruction_entries": [],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "No project instruction file is discovered by either agent in the exact base tree.",
+      "result": "pass",
+      "terminal_evidence": true,
+      "reason": "Neither agent receives project-specific guidance, so the project-instruction context is symmetric.",
+      "evidence_basis": ["materialized-pinned-full-tree-inventory", "frozen-behavioral-discovery"],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-173",
+      "ledger_index": 811,
+      "repository_id": "Ootzk--Wor-chain-dle",
+      "base_revision": "b4a8b32dd9ff454c1e5b3a8ab438b6d2815853f1",
+      "base_tree_hash": "bec3e84e8c1e7846616557016bb6832b4d7eea6d",
+      "tree_entry_count": 130,
+      "changed_path_count": 4,
+      "full_tree_instruction_entry_count": 2,
+      "task_active_instruction_entries": [
+        {
+          "path": "AGENTS.md",
+          "mode": "100644",
+          "object_sha": "4dd6aba025a73c72e1e57f35d3937542405d7b6f",
+          "content_sha256": "a06fbcf15d47cc0113643bcd4e5bf5b442d8b8efcecc39e126c9bfccfdaf68d2",
+          "content_bytes": 18050,
+          "symlink_target": null,
+          "scope_root": ""
+        },
+        {
+          "path": "CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "33f22d18b792cbd25a719c99f8845136e0b4bbfe",
+          "content_sha256": "b9a91fb354e7d280661cec1a6a0d7c134e8afb08607e3b07e0accac32a3c8ce4",
+          "content_bytes": 730,
+          "symlink_target": null,
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": ["CLAUDE.md -> @AGENTS.md"],
+      "effective_codex_chain": ["AGENTS.md"],
+      "project_instruction_profile": "CLAUDE.md explicitly imports the same root AGENTS.md that Codex reads. Its remaining text only locates dormant opt-in slash-command wrappers.",
+      "result": "pass",
+      "terminal_evidence": true,
+      "reason": "The explicit Claude adapter and root AGENTS.md deliver identical task-relevant guidance; uninvoked slash-command metadata does not alter ordinary issue work.",
+      "evidence_basis": ["materialized-pinned-full-tree-inventory", "pinned-semantic-instruction-review", "claude-cli-read-only-cross-review", "frozen-behavioral-discovery"],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-130",
+      "ledger_index": 824,
+      "repository_id": "Ootzk--Wor-chain-dle",
+      "base_revision": "2346913bc1347718e9d2deba2ef6cf5f91193b3b",
+      "base_tree_hash": "3053e0e69685f0a4f1d17becea18c690fcfdc599",
+      "tree_entry_count": 124,
+      "changed_path_count": 11,
+      "full_tree_instruction_entry_count": 2,
+      "task_active_instruction_entries": [
+        {
+          "path": "AGENTS.md",
+          "mode": "100644",
+          "object_sha": "3af57e6837e387131a6aae89f93ee96df4d02a65",
+          "content_sha256": "ac7b1f54cbf73c05879811cc1faf693169d34b01830f37e580c819b4f8b4cbbe",
+          "content_bytes": 16514,
+          "symlink_target": null,
+          "scope_root": ""
+        },
+        {
+          "path": "CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "64adb067a4e97cee69cf62de0f2b683f720eeb98",
+          "content_sha256": "21f7d5352627ebcece24e0b8d5714e1bd9c183465966e53effa8dd11c3575bff",
+          "content_bytes": 745,
+          "symlink_target": null,
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": ["CLAUDE.md -> @AGENTS.md"],
+      "effective_codex_chain": ["AGENTS.md"],
+      "project_instruction_profile": "CLAUDE.md explicitly imports the same root AGENTS.md that Codex reads. Its remaining text only locates dormant opt-in slash-command wrappers.",
+      "result": "pass",
+      "terminal_evidence": true,
+      "reason": "The explicit Claude adapter and root AGENTS.md deliver identical task-relevant guidance; uninvoked slash-command metadata does not alter ordinary issue work.",
+      "evidence_basis": ["materialized-pinned-full-tree-inventory", "pinned-semantic-instruction-review", "claude-cli-read-only-cross-review", "frozen-behavioral-discovery"],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    },
+    {
+      "candidate_id": "ghmix-115dkk--Impulcifer-pip313-issue-79",
+      "ledger_index": 830,
+      "repository_id": "115dkk--Impulcifer-pip313",
+      "base_revision": "f360f86b94a95e5332028b93f8f9d800f4d5e8e3",
+      "base_tree_hash": "ddfc04be70a0d1f6e707c9b3f4a99ca21de7113b",
+      "tree_entry_count": 149,
+      "changed_path_count": 2,
+      "full_tree_instruction_entry_count": 1,
+      "task_active_instruction_entries": [
+        {
+          "path": "CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "dc992ab0d69678873df20c726af566c6899be403",
+          "content_sha256": "485bb19126f52cfac20c3696e31ae6a00e2938710bc23e404b9d96fc12702215",
+          "content_bytes": 20512,
+          "symlink_target": null,
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": ["CLAUDE.md"],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "Root CLAUDE.md supplies material localization, versioning, changelog, dependency, validation, and algorithm-integrity requirements with no Codex-discovered adapter.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Claude receives material project, safety, architecture, command, or testing constraints for the changed paths.",
+      "evidence_basis": ["materialized-pinned-full-tree-inventory", "pinned-semantic-instruction-review", "frozen-behavioral-discovery"],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-pillip--realtime-en2ko-captions-issue-15",
+      "ledger_index": 840,
+      "repository_id": "pillip--realtime-en2ko-captions",
+      "base_revision": "8cb5c00c9cbb0b839f06e97881f48ac4d0e66ad9",
+      "base_tree_hash": "25cf43a870f5ac9b067128cffa5c9c61e1bacaca",
+      "tree_entry_count": 62,
+      "changed_path_count": 2,
+      "full_tree_instruction_entry_count": 1,
+      "task_active_instruction_entries": [
+        {
+          "path": "CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "1f8e94a7e0e08bfd00fa93267ea898a87d310b89",
+          "content_sha256": "5b7c6b2583a529b265eb349cd4d9c4d93e68ac3f593334151fd189ea4e1d5130",
+          "content_bytes": 3978,
+          "symlink_target": null,
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": ["CLAUDE.md"],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "Root CLAUDE.md supplies material security, architecture, environment, WebRTC sequencing, UI behavior, and test commands with no Codex-discovered adapter.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Claude receives material project, safety, architecture, command, or testing constraints for the changed paths.",
+      "evidence_basis": ["materialized-pinned-full-tree-inventory", "pinned-semantic-instruction-review", "frozen-behavioral-discovery"],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-pillip--realtime-en2ko-captions-issue-13",
+      "ledger_index": 841,
+      "repository_id": "pillip--realtime-en2ko-captions",
+      "base_revision": "032cb8fea944a1419d8e1b03de4aae390821d0a1",
+      "base_tree_hash": "f4bd49d2137ca53e1abed22353038e554bdb0db0",
+      "tree_entry_count": 62,
+      "changed_path_count": 1,
+      "full_tree_instruction_entry_count": 1,
+      "task_active_instruction_entries": [
+        {
+          "path": "CLAUDE.md",
+          "mode": "100644",
+          "object_sha": "1f8e94a7e0e08bfd00fa93267ea898a87d310b89",
+          "content_sha256": "5b7c6b2583a529b265eb349cd4d9c4d93e68ac3f593334151fd189ea4e1d5130",
+          "content_bytes": 3978,
+          "symlink_target": null,
+          "scope_root": ""
+        }
+      ],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": ["CLAUDE.md"],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "Root CLAUDE.md supplies material security, architecture, environment, WebRTC sequencing, UI behavior, and test commands with no Codex-discovered adapter.",
+      "result": "fail",
+      "terminal_evidence": true,
+      "reason": "Only Claude receives material project, safety, architecture, command, or testing constraints for the changed paths.",
+      "evidence_basis": ["materialized-pinned-full-tree-inventory", "pinned-semantic-instruction-review", "frozen-behavioral-discovery"],
+      "next_route": "terminal_instruction_parity_exclusion"
+    },
+    {
+      "candidate_id": "ghmix-B-TING--bu-ting-mobile-issue-75",
+      "ledger_index": 1077,
+      "repository_id": "B-TING--bu-ting-mobile",
+      "base_revision": "0c8689a8444972d33fcbed0b505ea33b767d2ba7",
+      "base_tree_hash": "fb7faa78dc27a72c82e4da0c8223c6f29ecc52e4",
+      "tree_entry_count": 378,
+      "changed_path_count": 13,
+      "full_tree_instruction_entry_count": 0,
+      "task_active_instruction_entries": [],
+      "inactive_instruction_paths": [],
+      "effective_claude_chain": [],
+      "effective_codex_chain": [],
+      "project_instruction_profile": "No project instruction file is discovered by either agent in the exact base tree.",
+      "result": "pass",
+      "terminal_evidence": true,
+      "reason": "Neither agent receives project-specific guidance, so the project-instruction context is symmetric.",
+      "evidence_basis": ["materialized-pinned-full-tree-inventory", "frozen-behavioral-discovery"],
+      "next_route": "advance_boundedness_evaluator_reproduction"
+    }
+  ],
+  "next_queues": {
+    "advance_boundedness_evaluator_reproduction": [
+      "ghmix-jinwon-int--a2a-nexus-issue-1190",
+      "ghmix-Ootzk--Wor-chain-dle-issue-173",
+      "ghmix-Ootzk--Wor-chain-dle-issue-130",
+      "ghmix-B-TING--bu-ting-mobile-issue-75"
+    ],
+    "terminal_instruction_parity_exclusion": [
+      "ghko-RosieOh--ccStory-issue-12",
+      "ghko-dungsil-ai--intellij-plugin-egovframe-issue-5",
+      "ghko-Lyainc--filme-issue-417",
+      "ghko-RosieOh--ccStory-issue-11",
+      "ghko-RosieOh--ccStory-issue-10",
+      "ghmix-115dkk--Impulcifer-pip313-issue-79",
+      "ghmix-pillip--realtime-en2ko-captions-issue-15",
+      "ghmix-pillip--realtime-en2ko-captions-issue-13"
+    ]
+  },
+  "next_boundary": "Apply exact revision, pinned license, and instruction-parity outcomes to the ledger in one bound mutation, then advance only the four parity-pass rows to boundedness/evaluator/reproduction review."
+}

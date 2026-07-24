@@ -1,0 +1,256 @@
+{
+  "artifact_id": "phase2b-scope-review-survivor-agent-free-reproduction-2026-07-24",
+  "protocol_version": "phase2b-pilot-prereg-v1.1",
+  "created_at": "2026-07-24",
+  "purpose": "Bind exact base-negative and solution-positive controls for the four scope-review semantic survivors without running either candidate agent.",
+  "terminal_status": "reproducibility-evidence",
+  "terminal_status_note": "This artifact settles reproducible-within-budget for the four listed candidates and routes them only to selected-for-task-authoring. It is not final task wording, final protected-evaluator approval, a pilot manifest, or candidate-agent execution authorization.",
+  "agent_results_observed": false,
+  "input_artifacts": [
+    {
+      "path": "experiments/phase2b-candidate-ledger-v1.json",
+      "sha256": "6f7206d5775fe21ac0a0e555bb1f016361f3aa5865dcb343715473b6016ea444",
+      "state": "post-exact-revision/parity, pre-survivor-semantic working snapshot"
+    },
+    {
+      "path": "experiments/phase2b-scope-review-survivor-semantic-2026-07-24.json",
+      "sha256": "d1c5bfb63c33aa43049d2e01ff7256fce5d78a2be7d9c12d42c614ee58c37528"
+    }
+  ],
+  "local_environment_snapshot": {
+    "tracked": false,
+    "materialization": "Ephemeral detached exact-base and exact-solution worktrees were created from locally cached bare repositories. Protected screening evaluators were stored outside each checkout, copied in only for the control command, and were not committed.",
+    "toolchains": [
+      {
+        "id": "system-cpython-3.10.12",
+        "executable_sha256": "7d51cd6b48b521277f5caa4610a82126e315fa2be4df069823a8b1eeb5bd4a86",
+        "used_by": [
+          "ghmix-jinwon-int--a2a-nexus-issue-1190"
+        ]
+      },
+      {
+        "id": "node-v24.18.0-npm-11.16.0",
+        "node_executable_sha256": "41a74efb34cbde5c7632cdac0cf8bd1a14d0b8d73dc1e82755014d9a9ce70f5c",
+        "dependency_installs": [
+          {
+            "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-130",
+            "package_lock_sha256": "03f87be1b74ec51745c5fcdb7449a1862c04ce8f084161ade0ebbe85bde78b7d",
+            "command": "npm ci --ignore-scripts --no-audit --no-fund with an isolated temporary npm cache",
+            "installed_packages": 1543,
+            "wall_time_seconds": 47
+          },
+          {
+            "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-173",
+            "package_lock_sha256": "7def0f12e93fa527dd8f84f5f5144f2ab3a3131249c95068bb369ec81ebd8aad",
+            "command": "npm ci --ignore-scripts --no-audit --no-fund with an isolated temporary npm cache",
+            "installed_packages": 1543,
+            "wall_time_seconds": 47
+          },
+          {
+            "candidate_id": "ghmix-B-TING--bu-ting-mobile-issue-75",
+            "package_lock_sha256": "91fa72f03cc571495fa507441fc2cd125b38d6d912601bc447dc74026889a1bc",
+            "command": "npm ci --ignore-scripts --no-audit --no-fund with an isolated temporary npm cache",
+            "installed_packages": 979,
+            "wall_time_seconds": 48
+          }
+        ]
+      }
+    ],
+    "network_during_evaluator_controls": false,
+    "credentials_used_by_evaluator_controls": false,
+    "candidate_agent_executions": 0
+  },
+  "control_policy": [
+    "Use byte-identical protected evaluator content for the exact base and exact solution of each candidate.",
+    "Require the exact base to fail for a task-relevant reason and the exact solution to pass.",
+    "Run a repository-owned health seam on both revisions when practical; symmetric pre-existing health failures are recorded and cannot count as solution evidence.",
+    "Use only offline, non-destructive controls with no candidate agent, secret, push, publish, or production action.",
+    "A screening evaluator proves an authorable seam, not final evaluator validity. Final authoring must independently inspect shortcut resistance and behavioral coverage."
+  ],
+  "summary": {
+    "candidate_count": 4,
+    "base_negative_expected_rows": 4,
+    "solution_positive_rows": 4,
+    "reproducible_within_budget_pass_rows": 4,
+    "selected_for_task_authoring_rows": 4,
+    "candidate_agent_executions": 0
+  },
+  "controls": [
+    {
+      "candidate_id": "ghmix-jinwon-int--a2a-nexus-issue-1190",
+      "base_revision": "83450ca4d4ad1e41bd8bd3ea29942474792fc534",
+      "base_tree_hash": "ec0767628380b622eda2466d07ab53f321f6269e",
+      "solution_revision": "95bf8310d0d05d7154cf5b3122c50d30fc720712",
+      "solution_tree_hash": "894cfc4e2de65cc99bb7903a16edd156a9212a55",
+      "screening_evaluator": {
+        "kind": "protected Python Markdown property evaluator",
+        "sha256": "33543b669987eb466363d256191819ee78d382944722e395b9a90c6fd01a97d5",
+        "assertion_count": 10,
+        "tracked": false,
+        "final_evaluator_approved": false
+      },
+      "base_control": {
+        "command": "python3 <protected-evaluator> <exact-base-worktree>",
+        "exit_code": 1,
+        "wall_time_seconds_upper_bound": 0.01,
+        "result": "expected-negative",
+        "observation": "FAIL 10/10 because the source-derived versioning, stability-tier, changelog, and public-language policy clauses are absent."
+      },
+      "solution_control": {
+        "command": "python3 <protected-evaluator> <exact-solution-worktree>",
+        "exit_code": 0,
+        "wall_time_seconds_upper_bound": 0.01,
+        "result": "pass",
+        "observation": "PASS 10/10 source-derived policy assertions."
+      },
+      "repository_health_control": {
+        "command": "node scripts/check-markdown-links.mjs",
+        "base_exit_code": 0,
+        "solution_exit_code": 0,
+        "base_observation": "markdown link check ok",
+        "solution_observation": "markdown link check ok"
+      },
+      "screening_updates": {
+        "reproducible_within_budget": "pass"
+      },
+      "next_route": "selected_for_task_authoring"
+    },
+    {
+      "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-173",
+      "base_revision": "b4a8b32dd9ff454c1e5b3a8ab438b6d2815853f1",
+      "base_tree_hash": "bec3e84e8c1e7846616557016bb6832b4d7eea6d",
+      "solution_revision": "ef7701c662050117f47b043751fb07f253719064",
+      "solution_tree_hash": "28cfa5d1ea53e9339b73ba70dffc64ea08c27e19",
+      "screening_evaluator": {
+        "kind": "protected Jest and React Testing Library behavior evaluator",
+        "sha256": "a6b6cbf4a07604d799104069d1aa1645e856080f66fdd3ce69b9750f0126aa5b",
+        "test_count": 2,
+        "tracked": false,
+        "final_evaluator_approved": false
+      },
+      "base_control": {
+        "command": "CI=true npm test -- --watchAll=false --runInBand --runTestsByPath <protected-evaluator>",
+        "exit_code": 1,
+        "wall_time_seconds": 5.275,
+        "result": "expected-negative",
+        "observation": "The shared English label export is absent and the Korean Daily link remains localized."
+      },
+      "solution_control": {
+        "command": "CI=true npm test -- --watchAll=false --runInBand --runTestsByPath <protected-evaluator>",
+        "exit_code": 0,
+        "wall_time_seconds": 6.375,
+        "jest_reported_seconds": 5.213,
+        "result": "pass",
+        "observation": "Two fixed-label behavior tests passed under the Korean locale."
+      },
+      "repository_health_control": {
+        "command": "CI=true npm test -- --watchAll=false --runInBand --runTestsByPath src/App.test.tsx",
+        "base_exit_code": 0,
+        "solution_exit_code": 0,
+        "base_tests_passed": 4,
+        "solution_tests_passed": 4,
+        "base_wall_time_seconds": 6.05,
+        "solution_wall_time_seconds": 6.136
+      },
+      "screening_updates": {
+        "reproducible_within_budget": "pass"
+      },
+      "next_route": "selected_for_task_authoring"
+    },
+    {
+      "candidate_id": "ghmix-Ootzk--Wor-chain-dle-issue-130",
+      "base_revision": "2346913bc1347718e9d2deba2ef6cf5f91193b3b",
+      "base_tree_hash": "3053e0e69685f0a4f1d17becea18c690fcfdc599",
+      "solution_revision": "9adbad4b98b0c78faf1f309067a3cca88a1d5157",
+      "solution_tree_hash": "66aa453f4b5a1008bab5e7a170d9a5f8b636b039",
+      "screening_evaluator": {
+        "kind": "protected Jest and React Testing Library interaction evaluator",
+        "sha256": "05013130210c4ecaff86633c1fc94d4b4d5f99e4adc02c52a467a8b89b2518af",
+        "test_count": 1,
+        "tracked": false,
+        "final_evaluator_approved": false
+      },
+      "base_control": {
+        "command": "CI=true npm test -- --watchAll=false --runInBand --runTestsByPath <protected-evaluator>",
+        "exit_code": 1,
+        "wall_time_seconds": 3.731,
+        "result": "expected-negative",
+        "observation": "The Information modal exposes only three buttons rather than the source-required fourth Patch Notes tab."
+      },
+      "solution_control": {
+        "command": "CI=true npm test -- --watchAll=false --runInBand --runTestsByPath <protected-evaluator>",
+        "exit_code": 0,
+        "wall_time_seconds": 3.297,
+        "jest_reported_seconds": 2.091,
+        "result": "pass",
+        "observation": "The modal exposes Patch Notes and expands the reused v1.4.0 entry."
+      },
+      "repository_health_control": {
+        "command": "CI=true npm test -- --watchAll=false --runInBand --runTestsByPath src/App.test.tsx",
+        "base_exit_code": 0,
+        "solution_exit_code": 0,
+        "base_tests_passed": 4,
+        "solution_tests_passed": 4,
+        "base_wall_time_seconds": 7.89,
+        "solution_wall_time_seconds": 7.749
+      },
+      "screening_updates": {
+        "reproducible_within_budget": "pass"
+      },
+      "next_route": "selected_for_task_authoring"
+    },
+    {
+      "candidate_id": "ghmix-B-TING--bu-ting-mobile-issue-75",
+      "base_revision": "0c8689a8444972d33fcbed0b505ea33b767d2ba7",
+      "base_tree_hash": "fb7faa78dc27a72c82e4da0c8223c6f29ecc52e4",
+      "solution_revision": "59950e531ea17680d2b71d2fb3ffb2e4fcb81e5d",
+      "solution_tree_hash": "2ffd992e0cc5fd43cb728816582dfbc1321e5cf8",
+      "screening_evaluator": {
+        "kind": "protected Jest, React Test Renderer, mocked API, and structural rollback screening evaluator",
+        "sha256": "a8df0369102edaa7eda373eb34742dbf9bfa2bea5045eee1e3f1d774f510246a",
+        "test_count": 4,
+        "tracked": false,
+        "final_evaluator_approved": false,
+        "authoring_requirement": "Replace the rollback structural assertion with a behavioral failure-and-restore control before final protected-evaluator approval."
+      },
+      "base_control": {
+        "command": "CI=true npm test -- --watchAll=false --runInBand --runTestsByPath <protected-evaluator>",
+        "exit_code": 1,
+        "wall_time_seconds": 1.167,
+        "result": "expected-negative",
+        "observation": "The destination memo editor module is absent at the exact base."
+      },
+      "solution_control": {
+        "command": "CI=true npm test -- --watchAll=false --runInBand --runTestsByPath <protected-evaluator>",
+        "exit_code": 0,
+        "wall_time_seconds": 2.1,
+        "jest_reported_seconds": 1.065,
+        "result": "pass",
+        "observation": "Four controls passed for mapper/store behavior, editor normalization, mocked API normalization, rollback structure, and preview exposure."
+      },
+      "repository_health_control": {
+        "preparation": "Generated ignored API and Kakao config stubs with an empty environment and repository-owned sync scripts because install scripts were deliberately disabled.",
+        "command": "CI=true npm test -- --watchAll=false --runInBand --runTestsByPath __tests__/App.test.tsx",
+        "base_exit_code": 1,
+        "solution_exit_code": 1,
+        "symmetric_failure": true,
+        "observation": "Both exact revisions fail during collection because RNCWebViewModule is unavailable in the host Node/Jest environment. This pre-existing native-module limitation is not counted as solution evidence; the isolated protected seam mocks unrelated native dependencies."
+      },
+      "screening_updates": {
+        "reproducible_within_budget": "pass"
+      },
+      "next_route": "selected_for_task_authoring"
+    }
+  ],
+  "integrity": {
+    "tracked_worktree_status_after_controls": "clean for all eight exact worktrees when untracked protected evaluator copies and ignored dependency/config material are excluded",
+    "candidate_agent_executions": 0,
+    "network_secret_push_or_production_actions_during_controls": 0
+  },
+  "invariants": [
+    "The same evaluator bytes produced each base-negative and solution-positive pair.",
+    "All four evaluators complete far below the preregistered per-task budget.",
+    "No symmetric repository-health failure was used as evidence of task success.",
+    "Selection here means selected-for-task-authoring only; final task wording, evaluator validity review, leakage audit, and pilot-manifest construction remain pending."
+  ]
+}

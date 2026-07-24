@@ -60,8 +60,95 @@
     {
       "path": "experiments/phase2b-rank7-ledger-application-2026-07-24.json",
       "sha256": "a6483444eb1dc40dbfe6f89bf41121c4220908bdd02485b5887c1a0a492d8acc"
+    },
+    {
+      "path": "experiments/phase2b-scope-review-source-semantic-2026-07-24.json",
+      "sha256": "9ab7a488ce64d4bdccf6513d605147d8bbf5b8a31711e238644b7de49174f5f3"
+    },
+    {
+      "path": "experiments/phase2b-scope-review-ledger-application-2026-07-24.json",
+      "sha256": "cdcb3c5407ba5268c399fe3f24385efbb6b3555f723650bf84d6fe239a1073e9"
+    },
+    {
+      "path": "experiments/phase2b-scope-review-solution-segmentation-2026-07-24.json",
+      "sha256": "8930853eca14324a25472b08a4a1f54ab954a0e5f0c9720132b0a8f454831e76"
+    },
+    {
+      "path": "experiments/phase2b-scope-review-exact-revision-license-2026-07-24.json",
+      "sha256": "fb58ac9269c6c28e3aa6ad53a1634d3f64eac0592c406f51414ed7cb2cae7460"
+    },
+    {
+      "path": "experiments/phase2b-scope-review-instruction-parity-2026-07-24.json",
+      "sha256": "1eaedbe8efe316e15649a7f60eb07d1a2900da899d48acc4557099085a643a9b"
+    },
+    {
+      "path": "experiments/phase2b-scope-review-survivor-semantic-2026-07-24.json",
+      "sha256": "d1c5bfb63c33aa43049d2e01ff7256fce5d78a2be7d9c12d42c614ee58c37528"
+    },
+    {
+      "path": "experiments/phase2b-scope-review-survivor-agent-free-reproduction-2026-07-24.json",
+      "sha256": "63f77f4914f406f07f47bbee400ed473beb8ca3d849ff5ddcb6ef32d96500997"
+    },
+    {
+      "path": "experiments/phase2b-scope-review-survivor-ledger-application-2026-07-24.json",
+      "sha256": "fdfd4e8a07744c9c446a92c0db2c83035c9a297eecf3dee5b3e7d4ed99eec458"
+    },
+    {
+      "path": "experiments/phase2b-swebench-license-terms-2026-07-24.json",
+      "sha256": "9f28bd5e881b8ab0cc17321ef5d65c51d7f2307f2789078cccfb1f64b42a71f9"
+    },
+    {
+      "path": "experiments/phase2b-swebench-license-terms-ledger-application-2026-07-24.json",
+      "sha256": "fa768f106c5f8d3c88acb97438be737ce889019dd01d2a70a188952552573982"
+    },
+    {
+      "path": "experiments/phase2b-swebench-instruction-parity-2026-07-24.json",
+      "sha256": "e2e420657edd5bf32c3235a33abc517543185cd61a2f82dd1b94ece47d6dd3b3"
+    },
+    {
+      "path": "experiments/phase2b-swebench-instruction-parity-ledger-application-2026-07-24.json",
+      "sha256": "a9dae068c311fd15917385260f1446be0ad24484e17e56af4f0fb4e4138203df"
+    },
+    {
+      "path": "experiments/phase2b-swebench-native-source-fidelity-2026-07-24.json",
+      "sha256": "c6b4962bce47a5a721a04dcced5db62d03db2d0cffca23cef5cbb4e00cfa6a8e"
+    },
+    {
+      "path": "experiments/phase2b-swebench-native-source-fidelity-ledger-application-2026-07-24.json",
+      "sha256": "098cd852b2f8b23d7da6391b2eede57c99846818bf0f8d3db21f3b8b48e5b4ed"
+    },
+    {
+      "path": "experiments/phase2b-swebench-semantic-triage-2026-07-24.json",
+      "sha256": "4a13dd68aea4d932ee38c242481bbad52485c52472d7be8dc40fd0f28b055578"
+    },
+    {
+      "path": "experiments/phase2b-swebench-semantic-review-2026-07-24.json",
+      "sha256": "d5efa6bcf1e587993ef62ed663fcee296113669b33bc0a826ee96b146e63ca8a"
+    },
+    {
+      "path": "experiments/phase2b-swebench-semantic-review-ledger-application-2026-07-24.json",
+      "sha256": "eb12d3c7509ae5bd81e233e20f6ef5cc0276a16f9c59555c6c720d639c3bdaf7"
     }
   ],
+  "current_ledger_snapshot": {
+    "sha256": "d7344dfab4805cdb73fd3c814109be5ff7497eed80747c7b93c00d7b9dc66aad",
+    "screening": 967,
+    "excluded": 146,
+    "selected_for_task_authoring": 17
+  },
+  "scope_review_continuation": {
+    "input_rows": 19,
+    "source_terminal_rows": 7,
+    "advance_exact_segmentation_rows": 12,
+    "exact_license_pass_rows": 12,
+    "instruction_parity_terminal_rows": 8,
+    "advance_agent_free_reproduction_rows": 4,
+    "intended_base_negative_rows": 4,
+    "solution_positive_rows": 4,
+    "new_selected_for_task_authoring_rows": 4,
+    "pending_rows": 0,
+    "candidate_agent_executions": 0
+  },
   "cost_scale": {
     "kind": "ordinal",
     "meaning": "A higher rank is expected to require strictly more remote data, repository materialization, environment work, or human semantic judgment. Ranks are ordering constraints, not measured dollar or wall-clock estimates."
@@ -173,10 +260,15 @@
         "exact_license_fail_rows": 4,
         "advance_remaining_rule_review_rows": 26,
         "return_to_solution_scope_review_rows": 1,
-        "swebench_rows_with_recorded_base_but_missing_tree_and_upstream_license": 300,
-        "swebench_upstream_repositories": 41
+        "swebench_input_rows": 300,
+        "swebench_upstream_repositories": 41,
+        "swebench_dataset_terms_pass_rows": 300,
+        "swebench_exact_bases_resolved": 300,
+        "swebench_exact_license_pass_rows": 291,
+        "swebench_exact_license_fail_rows": 9,
+        "swebench_advance_instruction_inventory_rows": 291
       },
-      "action": "Completed for the 31-row GitHub work queue. All source lineages and changed-path sets validated; 27 exact licenses pass, three copyleft licenses and one no-license base fail, and one current-HEAD PolyForm signal is rescued by an MIT candidate base but returns to scope review."
+      "action": "Completed for both exact-license queues. The 31-row GitHub queue produced 27 passes and four failures; the 300-row SWE-bench queue resolved every exact base and dataset term, then produced 291 upstream-license passes and nine terminal failures."
     },
     {
       "rank": 6,
@@ -191,9 +283,15 @@
         "new_exact_tree_instruction_inventories_completed": 25,
         "new_instruction_parity_pass_rows": 9,
         "new_instruction_parity_fail_rows": 16,
-        "advance_boundedness_evaluator_reproduction_rows": 10
+        "advance_boundedness_evaluator_reproduction_rows": 10,
+        "swebench_input_rows": 291,
+        "swebench_exact_tree_instruction_inventories_completed": 291,
+        "swebench_no_discovered_instruction_rows": 291,
+        "swebench_new_instruction_parity_pass_rows": 291,
+        "swebench_instruction_parity_fail_rows": 0,
+        "swebench_advance_native_source_fidelity_and_instance_review_rows": 291
       },
-      "action": "Completed for all 25 newly advanced exact trees. Five trees have no discovered project instruction, three use byte-equivalent CLAUDE.md-to-AGENTS.md symlinks, one uses an explicit semantic adapter, and sixteen contain material one-sided active guidance. Nine pass and sixteen terminate on instruction parity; with previously-passed doc_parser #288, ten rows advance."
+      "action": "Completed for both instruction-inventory queues. The 25-row GitHub queue produced nine passes and sixteen terminal mismatches. All 291 SWE-bench license-pass exact trees contained no discovered project instruction entry, so all pass candidate-tree instruction parity and advance to native-source fidelity and instance review."
     },
     {
       "rank": 7,
@@ -203,7 +301,7 @@
       "manual_semantic_review_required": true,
       "terminal": true,
       "input_rows": 10,
-      "action": "Completed for all ten parity-passing rows. Source semantics terminally exclude three translation-only tasks and one multi-optimization issue; all six survivors reproduce with intended base-negative and solution-positive controls and advance to selected-for-task-authoring without candidate-agent execution.",
+      "action": "Completed for all ten GitHub parity-passing rows. Source semantics terminally exclude three translation-only tasks and one multi-optimization issue; all six survivors reproduce with intended base-negative and solution-positive controls and advance to selected-for-task-authoring. Separately, semantic review resolves boundedness for all 291 SWE-bench native-source-pass rows and objective-evaluator feasibility for 290; one alternative API contract remains unknown. No candidate agent was executed.",
       "observed": {
         "source_semantic_rows_completed": 10,
         "translation_only_terminal_rows": 3,
@@ -215,7 +313,19 @@
         "small_bucket_rows": 4,
         "medium_bucket_rows": 2,
         "new_selected_for_task_authoring_rows": 6,
-        "boundedness_evaluator_reproduction_pending": 0
+        "boundedness_evaluator_reproduction_pending": 0,
+        "swebench_native_source_fidelity_rows_completed": 291,
+        "swebench_native_language_source_pass_rows": 291,
+        "swebench_native_language_source_fail_rows": 0,
+        "swebench_native_language_source_unknown_rows": 0,
+        "swebench_advance_instance_task_semantics_rows": 291,
+        "swebench_semantic_triage_rows_retained": 291,
+        "swebench_single_bounded_task_reviewed": 291,
+        "swebench_single_bounded_task_pass_rows": 291,
+        "swebench_objective_evaluator_feasible_pass_rows": 290,
+        "swebench_objective_evaluator_feasible_unknown_rows": 1,
+        "swebench_advance_isolation_hideability_reproducibility_review_rows": 290,
+        "swebench_semantic_adjudication_rows": 1
       }
     }
   ],
@@ -237,6 +347,11 @@
       "exact_license_terminal_exclusion": 4,
       "remaining_rule_review_after_rank5": 26,
       "eligible_solution_scope_review_deferred": 19,
+      "eligible_solution_scope_review_completed": 19,
+      "scope_review_source_terminal_exclusion": 7,
+      "scope_review_instruction_parity_terminal_exclusion": 8,
+      "scope_review_new_selected_for_task_authoring": 4,
+      "scope_review_pending": 0,
       "eligible_no_test_touch_deferred": 57,
       "deferred_none_observed": 585,
       "rank6_instruction_inventory_completed": 25,
@@ -249,10 +364,31 @@
       "rank7_pending": 0
     },
     "swebench-multilingual-at-2b7aced": {
-      "screening_rows": 300,
+      "input_rows": 300,
+      "screening_rows": 291,
+      "excluded_rows": 9,
       "upstream_repositories": 41,
-      "route": "dataset-terms-and-pinned-upstream-license-before-task-review",
-      "reason": "The dataset card license does not establish upstream code rights at each recorded base revision."
+      "dataset_terms_pass": 300,
+      "exact_base_resolved": 300,
+      "exact_upstream_license_pass": 291,
+      "exact_upstream_license_terminal_exclusion": 9,
+      "exact_tree_instruction_inventory_completed": 291,
+      "no_discovered_project_instruction": 291,
+      "instruction_parity_pass": 291,
+      "instruction_parity_terminal_exclusion": 0,
+      "native_source_fidelity_completed": 291,
+      "native_language_source_pass": 291,
+      "native_language_source_fail": 0,
+      "native_language_source_unknown": 0,
+      "route": "isolation-hideability-reproducibility-review",
+      "reason": "Pinned terms, bases, license scope, project-instruction parity, native-source fidelity, and boundedness pass for 291 rows. Objective-evaluator feasibility passes for 290; those advance to isolation, hiding, fixture, reproducibility, and resource review, while one alternative API contract remains in semantic adjudication.",
+      "semantic_triage_rows_retained": 291,
+      "single_bounded_task_reviewed": 291,
+      "single_bounded_task_pass": 291,
+      "objective_evaluator_feasible_pass": 290,
+      "objective_evaluator_feasible_unknown": 1,
+      "advance_isolation_hideability_reproducibility_review": 290,
+      "semantic_adjudication": 1
     }
   },
   "nonterminal_priority_signals": [
@@ -270,13 +406,14 @@
     "exact pre-solution revision and tree",
     "license or use basis read at the exact revision",
     "exact-tree effective project-instruction inventory",
+    "official source provenance plus exact public issue title/body reconstruction",
     "manual boundedness and safety judgment tied to the source statement",
     "agent-free evaluator and reproduction controls"
   ],
   "next_actions": [
-    "Review solution scope for the rescued MIT-at-base row after the existing 18 scope-review rows; keep 57 no-test-touch rows deferred.",
-    "Freeze independent final evaluator assertions and validity-review roles for the 13 selected-for-task-authoring rows only after enough language/category yield exists; do not run candidate agents yet.",
-    "After the current signal-positive queues, screen the 300 SWE-bench rows by 41 upstream repositories for pinned license and dataset terms before deeper task review."
+    "Review isolation, evaluator hiding, fixture health, reproducibility, and resource budget for the 290 SWE-bench semantic-pass rows; separately adjudicate the one Faker alternative API contract without inferring an implementation-specific oracle.",
+    "Keep the 57 no-test-touch GitHub rows deferred; absence of solution test changes is an authoring-cost signal, not a terminal exclusion.",
+    "Freeze independent final evaluator assertions and validity-review roles for the 17 selected-for-task-authoring rows only after enough language/category yield exists; do not run candidate agents yet."
   ],
   "known_limitations": [
     "Rank-3 license classifications observe current default-branch HEAD and remain priority signals only; rank 5 separately resolved exact candidate revisions for the 31-row priority batch.",
@@ -284,6 +421,7 @@
     "Git and GitHub rendered diff bytes can differ for binary/index metadata; exact-base scope uses the complete changed-path set, which matched for all 31 rank-5 rows.",
     "Ordinal cost ranks encode an intended order, not measured latency or API usage. Actual measurements should be appended without reordering stages after outcomes are known.",
     "No cheap signal or parity result is allowed to relax the 60-task language/category quotas or select a candidate after observing agent performance.",
-    "Rank 7 proves screening controls, not final evaluator validity. In particular, small-village #54 still requires an independent reviewer to confirm that offline roster invariants cover the source's hosted three-client E2E sentence without narrowing the task."
+    "Rank 7 and the scope-review continuation prove screening controls, not final evaluator validity. Small-village #54 still requires an independent reviewer to confirm that offline roster invariants cover the source's hosted three-client E2E sentence without narrowing the task; B-TING #75 must replace structural rollback screening with behavioral failure-and-restore coverage.",
+    "SWE-bench exact-base, license, candidate-tree instruction parity, native-source fidelity, and boundedness are complete for all 291 survivors; evaluator feasibility passes 290 and remains unknown for one. All 291 still lack isolation and no-network safety, hiding, fixture-health, reproduction, and resource-budget decisions."
   ]
 }
