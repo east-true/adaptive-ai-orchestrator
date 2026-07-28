@@ -1,6 +1,8 @@
 import contextlib
 import io
 import json
+import signal
+import shlex
 import sys
 import tempfile
 import unittest
@@ -10,11 +12,78 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
 from adaptive_orchestrator.execution.agents import default_agent_ids
+from adaptive_orchestrator.infrastructure.configuration import (
+    ProjectConfig,
+    config_path,
+    load_project_config,
+)
+from adaptive_orchestrator.interfaces import shell as shell_interface
 from adaptive_orchestrator.interfaces.shell import OrchestratorShell
 from adaptive_orchestrator.operations.usage import CodexUsage
 
 
+def _write_project_config(
+    workspace: Path,
+    *,
+    agent: str = "auto",
+    claude_model: str | None = None,
+    codex_model: str | None = None,
+    codex_reasoning_effort: str | None = None,
+) -> Path:
+    path = config_path(workspace)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "agent": agent,
+                "models": {
+                    "claude": claude_model,
+                    "codex": codex_model,
+                    "codex_reasoning_effort": codex_reasoning_effort,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
 class ShellStateTests(unittest.TestCase):
+    def test_startup_banner_contains_wordmark_version_and_quick_help(self) -> None:
+        banner = shell_interface._shell_banner("9.8.7", "4.2")
+
+        self.assertIn("/ _ \\", banner)
+        self.assertIn("Adaptive AI Orchestrator", banner)
+        self.assertIn("Shell v9.8.7 | Kernel v4.2", banner)
+        self.assertIn("Type help or ?; task <request>", banner)
+
+    def test_source_checkout_version_takes_priority_over_stale_installed_metadata(self) -> None:
+        with (
+            patch.object(shell_interface, "_source_tree_version", return_value="1.2.3"),
+            patch.object(shell_interface.metadata, "version", return_value="0.0.1") as installed_version,
+        ):
+            self.assertEqual(shell_interface._package_version(), "1.2.3")
+        installed_version.assert_not_called()
+
+    def test_installed_version_is_used_outside_a_source_checkout(self) -> None:
+        with (
+            patch.object(shell_interface, "_source_tree_version", return_value=None),
+            patch.object(shell_interface.metadata, "version", return_value="2.3.4"),
+        ):
+            self.assertEqual(shell_interface._package_version(), "2.3.4")
+
+    def test_development_version_is_used_without_source_or_installed_metadata(self) -> None:
+        with (
+            patch.object(shell_interface, "_source_tree_version", return_value=None),
+            patch.object(
+                shell_interface.metadata,
+                "version",
+                side_effect=shell_interface.metadata.PackageNotFoundError,
+            ),
+        ):
+            self.assertEqual(shell_interface._package_version(), "dev")
+
     def test_workspace_command_sets_and_shows_session_workspace(self) -> None:
         shell = OrchestratorShell()
         with tempfile.TemporaryDirectory() as directory:
@@ -43,7 +112,7 @@ class ShellStateTests(unittest.TestCase):
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
             shell.onecmd("agent")
-        self.assertEqual(stdout.getvalue().strip(), "codex")
+        self.assertEqual(stdout.getvalue().strip(), "codex (session override)")
 
     def test_invalid_agent_is_rejected_without_changing_state(self) -> None:
         shell = OrchestratorShell()
@@ -52,7 +121,85 @@ class ShellStateTests(unittest.TestCase):
         with contextlib.redirect_stdout(stdout):
             shell.onecmd("agent llama")
         self.assertEqual(shell.agent, "claude-code")
-        self.assertIn("Error: agent must be one of auto, claude-code, codex", stdout.getvalue())
+        self.assertIn("Error: agent must be one of inherit, auto, claude-code, codex", stdout.getvalue())
+
+    def test_agent_inherits_active_profile_and_accepts_exact_variants(self) -> None:
+        shell = OrchestratorShell()
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            _write_project_config(
+                workspace,
+                agent="codex:gpt-5.5:high",
+                claude_model="opus",
+                codex_model="gpt-5.5",
+                codex_reasoning_effort="high",
+            )
+            with contextlib.redirect_stdout(io.StringIO()):
+                shell.onecmd(f"workspace {workspace}")
+
+            self.assertIsNone(shell.agent_override)
+            self.assertEqual(shell.agent, "codex:gpt-5.5:high")
+            self.assertIn("codex:gpt-5.5:high", shell.prompt)
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("agent")
+            self.assertEqual(
+                stdout.getvalue().strip(),
+                "inherit (effective: codex:gpt-5.5:high)",
+            )
+            self.assertEqual(
+                shell.complete_agent("c", "agent c", 6, 7),
+                ["claude-code:opus", "codex:gpt-5.5:high"],
+            )
+
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("agent codex")
+                shell.onecmd("agent codex:gpt-5.5:high")
+            self.assertIn("agent must be one of", stdout.getvalue())
+            self.assertEqual(shell.agent, "codex:gpt-5.5:high")
+            self.assertIn("Agent set to codex:gpt-5.5:high", stdout.getvalue())
+
+            with contextlib.redirect_stdout(io.StringIO()):
+                shell.onecmd("agent inherit")
+            self.assertIsNone(shell.agent_override)
+
+    def test_workspace_warns_when_agent_override_is_not_in_new_profile(self) -> None:
+        shell = OrchestratorShell()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            first = root / "first"
+            second = root / "second"
+            first.mkdir()
+            second.mkdir()
+            _write_project_config(second, codex_model="gpt-5.5")
+            with contextlib.redirect_stdout(io.StringIO()):
+                shell.onecmd(f"workspace {first}")
+                shell.onecmd("agent codex")
+
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd(f"workspace {second}")
+                shell.onecmd("status")
+            self.assertEqual(shell.agent, "codex")
+            self.assertIn("session agent 'codex' is unavailable", stdout.getvalue())
+            self.assertIn("unavailable in active profile", stdout.getvalue())
+
+    def test_invalid_profile_does_not_break_agent_status_or_completion(self) -> None:
+        shell = OrchestratorShell()
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            path = config_path(workspace)
+            path.parent.mkdir(parents=True)
+            path.write_text("not-json", encoding="utf-8")
+            shell.workspace = workspace
+
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("agent")
+                shell.onecmd("status")
+            self.assertIn("profile error", stdout.getvalue())
+            self.assertEqual(shell.complete_agent("", "agent ", 6, 6), ["inherit"])
 
     def test_workspace_expands_quoted_directory_and_cd_is_an_alias(self) -> None:
         shell = OrchestratorShell()
@@ -66,6 +213,19 @@ class ShellStateTests(unittest.TestCase):
             with contextlib.redirect_stdout(io.StringIO()):
                 shell.onecmd(f"cd {directory}")
             self.assertEqual(shell.workspace, Path(directory).resolve())
+
+    def test_relative_workspace_is_resolved_from_current_session_workspace(self) -> None:
+        shell = OrchestratorShell()
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory) / "parent"
+            child = parent / "child"
+            child.mkdir(parents=True)
+            shell.workspace = parent.resolve()
+
+            with contextlib.redirect_stdout(io.StringIO()):
+                shell.onecmd("cd child")
+
+            self.assertEqual(shell.workspace, child.resolve())
 
     def test_workspace_rejects_missing_path_and_regular_file(self) -> None:
         shell = OrchestratorShell()
@@ -81,6 +241,18 @@ class ShellStateTests(unittest.TestCase):
         self.assertIn("workspace does not exist", stdout.getvalue())
         self.assertIn("workspace is not a directory", stdout.getvalue())
 
+    def test_workspace_rejects_unresolvable_home_without_escaping_shell(self) -> None:
+        shell = OrchestratorShell()
+        original = shell.workspace
+        stdout = io.StringIO()
+        with (
+            patch.object(Path, "expanduser", side_effect=RuntimeError("unknown home")),
+            contextlib.redirect_stdout(stdout),
+        ):
+            shell.onecmd("workspace ~/project")
+        self.assertEqual(shell.workspace, original)
+        self.assertIn("could not resolve workspace", stdout.getvalue())
+
     def test_status_shows_current_session_state(self) -> None:
         shell = OrchestratorShell()
         shell.workspace = Path("/tmp/session-workspace")
@@ -90,7 +262,7 @@ class ShellStateTests(unittest.TestCase):
             shell.onecmd("status")
         self.assertEqual(stdout.getvalue().splitlines(), [
             "Workspace: /tmp/session-workspace",
-            "Agent: codex",
+            "Agent: codex (session override)",
         ])
 
     def test_empty_line_does_not_repeat_last_command(self) -> None:
@@ -111,19 +283,194 @@ class ShellStateTests(unittest.TestCase):
         self.assertEqual(shell.complete_agent("c", "agent c", 6, 7), ["claude-code", "codex"])
         self.assertEqual(shell.complete_set("v", "set v", 4, 5), ["verbose", "verify"])
         self.assertEqual(shell.complete_set("o", "set verbose o", 12, 13), ["on", "off"])
+        self.assertEqual(shell.complete_set("i", "set verbose i", 12, 13), ["inherit"])
         with tempfile.TemporaryDirectory() as directory:
+            shell.workspace = Path(directory)
             workspace = Path(directory) / "worktree"
             workspace.mkdir()
             (Path(directory) / "plan.json").write_text("[]", encoding="utf-8")
+            plans = Path(directory) / "plans"
+            plans.mkdir()
+            (plans / "task.json").write_text("[]", encoding="utf-8")
             path_prefix = f"{directory}/"
             self.assertEqual(
                 shell.complete_workspace(path_prefix, f"workspace {path_prefix}", 10, 10 + len(path_prefix)),
-                [f"{workspace}/"],
+                [f"{plans}/", f"{workspace}/"],
             )
             self.assertIn(
                 f"{directory}/plan.json",
                 shell.complete_run_plan(path_prefix, f"run_plan {path_prefix}", 9, 9 + len(path_prefix)),
             )
+            self.assertEqual(
+                shell.complete_workspace("w", "workspace w", 10, 11),
+                ["worktree/"],
+            )
+            self.assertEqual(
+                shell.complete_run_plan("p", "run_plan p", 9, 10),
+                ["plan.json", "plans/"],
+            )
+            self.assertEqual(
+                shell.complete_run_plan("plans/", "run_plan plans/", 9, 15),
+                ["plans/task.json"],
+            )
+
+    def test_readline_completion_receives_whole_hyphenated_and_nested_tokens(self) -> None:
+        import readline
+
+        shell = OrchestratorShell()
+        with tempfile.TemporaryDirectory() as directory:
+            shell.workspace = Path(directory)
+            plans = shell.workspace / "plans"
+            plans.mkdir()
+            (plans / "task.json").write_text("[]", encoding="utf-8")
+            spaced = shell.workspace / "space dir"
+            spaced.mkdir()
+            nested = shell.workspace / "foo" / "space dir"
+            nested.mkdir(parents=True)
+            apostrophe = shell.workspace / "weird file's"
+            apostrophe.mkdir()
+
+            with (
+                patch.object(readline, "get_line_buffer", return_value="run_plan plans/t"),
+                patch.object(readline, "get_begidx", return_value=9),
+                patch.object(readline, "get_endidx", return_value=16),
+            ):
+                self.assertEqual(shell.complete("plans/t", 0), "plans/task.json")
+
+            with (
+                patch.object(readline, "get_line_buffer", return_value="agent claude-c"),
+                patch.object(readline, "get_begidx", return_value=6),
+                patch.object(readline, "get_endidx", return_value=14),
+            ):
+                self.assertEqual(shell.complete("claude-c", 0), "claude-code")
+
+            for line, expected in (
+                ("run_plan 'space d", "run_plan 'space dir/'"),
+                ('run_plan "space d', 'run_plan "space dir/"'),
+                ("run_plan space\\ d", "run_plan space\\ dir/"),
+                ("run_plan './space d", "run_plan './space dir/'"),
+                ("run_plan foo/'space d", "run_plan foo/'space dir/'"),
+                ("run_plan weird\\ f", "run_plan weird\\ file\\'s/"),
+            ):
+                begidx = line.rfind(" ") + 1
+                endidx = len(line)
+                text = line[begidx:endidx]
+                with (
+                    patch.object(readline, "get_line_buffer", return_value=line),
+                    patch.object(readline, "get_begidx", return_value=begidx),
+                    patch.object(readline, "get_endidx", return_value=endidx),
+                ):
+                    completion = shell.complete(text, 0)
+                completed = line[:begidx] + completion
+                self.assertEqual(completed, expected)
+                self.assertEqual(len(shlex.split(completed)), 2)
+
+    def test_cmdloop_restores_process_global_readline_delimiters_on_interrupt(self) -> None:
+        import readline
+
+        shell = OrchestratorShell()
+        original_delimiters = readline.get_completer_delims()
+        original_completer = readline.get_completer()
+        observed_delimiters: list[str] = []
+        observed_completers: list[object] = []
+
+        def interrupt(_shell: object, intro: str | None = None) -> None:
+            del _shell, intro
+            observed_delimiters.append(readline.get_completer_delims())
+            observed_completers.append(readline.get_completer())
+            raise KeyboardInterrupt
+
+        with patch.object(
+            shell_interface.cmd.Cmd,
+            "cmdloop",
+            autospec=True,
+            side_effect=interrupt,
+        ):
+            with self.assertRaises(KeyboardInterrupt):
+                shell.cmdloop()
+
+        self.assertEqual(observed_delimiters, [" \t\n"])
+        self.assertEqual(observed_completers, [shell.complete])
+        self.assertEqual(readline.get_completer_delims(), original_delimiters)
+        self.assertEqual(readline.get_completer(), original_completer)
+
+    def test_cmdloop_keeps_cmds_tab_completion_binding(self) -> None:
+        import readline
+
+        shell = OrchestratorShell()
+        with (
+            patch.object(readline, "parse_and_bind") as parse_and_bind,
+            patch("builtins.input", return_value="exit"),
+            contextlib.redirect_stdout(io.StringIO()),
+        ):
+            shell.cmdloop(intro="")
+
+        parse_and_bind.assert_called_once_with("tab: complete")
+
+    def test_main_recovers_from_interrupt_at_prompt_without_repeating_intro(self) -> None:
+        with patch.object(shell_interface, "OrchestratorShell") as shell_type:
+            shell = shell_type.return_value
+            shell.cmdloop.side_effect = [KeyboardInterrupt(), None]
+            with contextlib.redirect_stdout(io.StringIO()):
+                shell_interface.main()
+
+        self.assertEqual(shell.cmdloop.call_count, 2)
+        self.assertIsNone(shell.cmdloop.call_args_list[0].kwargs["intro"])
+        self.assertEqual(shell.cmdloop.call_args_list[1].kwargs["intro"], "")
+
+    def test_main_translates_sigterm_to_exit_143_and_restores_handler(self) -> None:
+        installed: list[tuple[signal.Signals, object]] = []
+
+        def install(signum: signal.Signals, handler: object) -> None:
+            installed.append((signum, handler))
+
+        with (
+            patch.object(shell_interface.signal, "getsignal", return_value=signal.SIG_DFL),
+            patch.object(shell_interface.signal, "signal", side_effect=install),
+            patch.object(shell_interface, "OrchestratorShell") as shell_type,
+        ):
+            shell = shell_type.return_value
+
+            def terminate_from_loop(*, intro: str | None = None) -> None:
+                del intro
+                installed[0][1](signal.SIGTERM, None)  # type: ignore[operator]
+
+            shell.cmdloop.side_effect = terminate_from_loop
+            with self.assertRaises(SystemExit) as raised:
+                shell_interface.main()
+
+        self.assertEqual(raised.exception.code, 143)
+        self.assertEqual(installed[-1], (signal.SIGTERM, signal.SIG_DFL))
+
+    @unittest.skipUnless(hasattr(signal, "SIGHUP"), "POSIX hangup signal")
+    def test_main_unwinds_on_hangup_and_restores_every_installed_handler(self) -> None:
+        installed: list[tuple[signal.Signals, object]] = []
+
+        def install(signum: signal.Signals, handler: object) -> None:
+            installed.append((signum, handler))
+
+        with (
+            patch.object(shell_interface.signal, "getsignal", return_value=signal.SIG_DFL),
+            patch.object(shell_interface.signal, "signal", side_effect=install),
+            patch.object(shell_interface, "OrchestratorShell") as shell_type,
+        ):
+            shell = shell_type.return_value
+
+            def hangup_from_loop(*, intro: str | None = None) -> None:
+                del intro
+                handlers = dict(installed)
+                handlers[signal.SIGHUP](signal.SIGHUP, None)  # type: ignore[operator]
+
+            shell.cmdloop.side_effect = hangup_from_loop
+            with self.assertRaises(SystemExit) as raised:
+                shell_interface.main()
+
+        self.assertEqual(raised.exception.code, 128 + signal.SIGHUP)
+        restored = installed[-len({signal.SIGTERM, signal.SIGHUP, signal.SIGQUIT}) :]
+        self.assertEqual(
+            {signum for signum, handler in restored if handler is signal.SIG_DFL},
+            {signal.SIGTERM, signal.SIGHUP, signal.SIGQUIT},
+        )
 
 
 class ShellCliDispatchTests(unittest.TestCase):
@@ -166,6 +513,27 @@ class ShellCliDispatchTests(unittest.TestCase):
             "Run the unit tests and fix failures",
         ])
 
+    def test_inherited_agent_is_omitted_so_project_profile_remains_authoritative(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            _write_project_config(
+                workspace,
+                agent="codex:gpt-5.5:high",
+                codex_model="gpt-5.5",
+                codex_reasoning_effort="high",
+            )
+            self.shell.workspace = workspace
+            self.shell.agent_override = None
+            with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+                self.shell.onecmd("task Run tests")
+
+            argv = main.call_args.args[0]
+            self.assertNotIn("--agent", argv)
+            parsed = shell_interface.cli.build_parser(
+                load_project_config(workspace)
+            ).parse_args(argv)
+            self.assertEqual(parsed.agent, "codex:gpt-5.5:high")
+
     def test_task_without_request_prints_usage_error(self) -> None:
         stdout = io.StringIO()
         with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
@@ -198,6 +566,28 @@ class ShellCliDispatchTests(unittest.TestCase):
         stdout = io.StringIO()
         with (
             patch("builtins.input", side_effect=["."]),
+            patch("adaptive_orchestrator.interfaces.shell.cli.main") as main,
+            contextlib.redirect_stdout(stdout),
+        ):
+            self.shell.onecmd("compose")
+        main.assert_not_called()
+        self.assertIn("Compose cancelled", stdout.getvalue())
+
+    def test_compose_interrupt_discards_partial_request(self) -> None:
+        stdout = io.StringIO()
+        with (
+            patch("builtins.input", side_effect=["Run all tests.", KeyboardInterrupt()]),
+            patch("adaptive_orchestrator.interfaces.shell.cli.main") as main,
+            contextlib.redirect_stdout(stdout),
+        ):
+            self.shell.onecmd("compose")
+        main.assert_not_called()
+        self.assertIn("Compose cancelled", stdout.getvalue())
+
+    def test_compose_eof_discards_partial_request(self) -> None:
+        stdout = io.StringIO()
+        with (
+            patch("builtins.input", side_effect=["Run all tests.", EOFError()]),
             patch("adaptive_orchestrator.interfaces.shell.cli.main") as main,
             contextlib.redirect_stdout(stdout),
         ):
@@ -239,27 +629,92 @@ class ShellCliDispatchTests(unittest.TestCase):
             self.shell.onecmd("run_plan plan.json")
         main.assert_called_once_with([
             "run-plan",
-            "plan.json",
             "--workspace",
             "/tmp/session-workspace",
             "--agent",
             "claude-code",
             "--verbose",
+            "plan.json",
         ])
 
     def test_settings_show_and_clear_defaults(self) -> None:
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
-            self.shell.onecmd('set verify "python3 -m unittest"')
+            self.shell.onecmd("set verify python3 -m unittest")
             self.shell.onecmd("set time_limit 12.5")
             self.shell.onecmd("settings")
             self.shell.onecmd("set verify off")
             self.shell.onecmd("set time_limit off")
+            self.shell.onecmd("settings")
         output = stdout.getvalue()
+        self.assertIn("Verbose: inherit", output)
+        self.assertIn("No escalation: inherit", output)
         self.assertIn("Time limit: 12.5s", output)
         self.assertIn("Verify command: python3 -m unittest", output)
+        self.assertIn("Time limit: off", output)
+        self.assertIn("Verify command: off", output)
         self.assertIsNone(self.shell.default_verify_command)
         self.assertIsNone(self.shell.default_time_limit)
+        self.assertTrue(self.shell.default_verify_commands_disabled)
+        self.assertTrue(self.shell.default_time_limit_disabled)
+
+    def test_verify_setting_preserves_a_quoted_executable_as_one_token(self) -> None:
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.shell.onecmd('set verify "/tmp/check tool"')
+
+        self.assertEqual(self.shell.default_verify_command, "'/tmp/check tool'")
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+            self.shell.onecmd("task Run tests")
+        argv = main.call_args.args[0]
+        stored = argv[argv.index("--verify-command") + 1]
+        self.assertEqual(shlex.split(stored), ["/tmp/check tool"])
+
+    def test_explicit_off_defaults_override_profiles_and_can_return_to_inherit(self) -> None:
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.shell.onecmd("set verbose off")
+            self.shell.onecmd("set no_escalation off")
+            self.shell.onecmd("set time_limit off")
+            self.shell.onecmd("set verify off")
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+            self.shell.onecmd("task Run tests")
+        argv = main.call_args.args[0]
+        self.assertIn("--no-verbose", argv)
+        self.assertIn("--escalation", argv)
+        self.assertIn("--no-time-limit", argv)
+        self.assertIn("--clear-verify-commands", argv)
+        profile = ProjectConfig(
+            verbose=True,
+            escalation_enabled=False,
+            time_limit_seconds=90,
+            verify_commands=("configured-check",),
+        )
+        parsed = shell_interface.cli.build_parser(profile).parse_args(argv)
+        self.assertFalse(parsed.verbose)
+        self.assertFalse(parsed.no_escalation)
+        self.assertIsNone(parsed.time_limit)
+        self.assertEqual(parsed.verify_command, [])
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.shell.onecmd("set verbose inherit")
+            self.shell.onecmd("set no_escalation unset")
+            self.shell.onecmd("set time_limit inherit")
+            self.shell.onecmd("set verify unset")
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+            self.shell.onecmd("task Run tests")
+        inherited_argv = main.call_args.args[0]
+        self.assertNotIn("--verbose", inherited_argv)
+        self.assertNotIn("--no-verbose", inherited_argv)
+        self.assertNotIn("--escalation", inherited_argv)
+        self.assertNotIn("--no-escalation", inherited_argv)
+        self.assertNotIn("--time-limit", inherited_argv)
+        self.assertNotIn("--no-time-limit", inherited_argv)
+        self.assertNotIn("--verify-command", inherited_argv)
+        self.assertNotIn("--clear-verify-commands", inherited_argv)
+        inherited = shell_interface.cli.build_parser(profile).parse_args(inherited_argv)
+        self.assertTrue(inherited.verbose)
+        self.assertTrue(inherited.no_escalation)
+        self.assertEqual(inherited.time_limit, 90)
+        self.assertEqual(inherited.verify_command, ["configured-check"])
 
     def test_invalid_setting_does_not_change_defaults(self) -> None:
         stdout = io.StringIO()
@@ -268,17 +723,19 @@ class ShellCliDispatchTests(unittest.TestCase):
             self.shell.onecmd("set time_limit -1")
             self.shell.onecmd("set time_limit nan")
             self.shell.onecmd("set unknown value")
-        self.assertFalse(self.shell.default_verbose)
+        self.assertIsNone(self.shell.default_verbose)
         self.assertIsNone(self.shell.default_time_limit)
-        self.assertIn("verbose must be on or off", stdout.getvalue())
+        self.assertIn("verbose must be on, off, or inherit", stdout.getvalue())
         self.assertIn("unknown setting", stdout.getvalue())
 
-    def test_run_plan_builds_expected_argv(self) -> None:
+    def test_run_plan_preserves_flags_first_argv(self) -> None:
         with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
-            self.shell.onecmd('run_plan plan.json --workspace /override --agent auto --continue-on-failure')
+            self.shell.onecmd(
+                "run_plan --workspace /override --agent auto "
+                "--continue-on-failure plan.json"
+            )
         main.assert_called_once_with([
             "run-plan",
-            "plan.json",
             "--workspace",
             "/tmp/session-workspace",
             "--agent",
@@ -288,15 +745,23 @@ class ShellCliDispatchTests(unittest.TestCase):
             "--agent",
             "auto",
             "--continue-on-failure",
+            "plan.json",
         ])
+        parsed = shell_interface.cli.build_parser(ProjectConfig()).parse_args(
+            main.call_args.args[0]
+        )
+        self.assertEqual(parsed.plan_file, Path("plan.json"))
+        self.assertEqual(parsed.workspace, Path("/override"))
+        self.assertEqual(parsed.agent, "auto")
 
-    def test_plan_generate_builds_expected_argv(self) -> None:
+    def test_plan_generate_preserves_flags_first_argv(self) -> None:
         with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
-            self.shell.onecmd('plan_generate "Add a dark mode toggle" --output x.json --agent codex')
+            self.shell.onecmd(
+                'plan_generate --output x.json --agent codex "Add a dark mode toggle"'
+            )
         main.assert_called_once_with([
             "plan",
             "generate",
-            "Add a dark mode toggle",
             "--workspace",
             "/tmp/session-workspace",
             "--agent",
@@ -305,12 +770,84 @@ class ShellCliDispatchTests(unittest.TestCase):
             "x.json",
             "--agent",
             "codex",
+            "Add a dark mode toggle",
         ])
+        parsed = shell_interface.cli.build_parser(ProjectConfig()).parse_args(
+            main.call_args.args[0]
+        )
+        self.assertEqual(parsed.request, "Add a dark mode toggle")
+        self.assertEqual(parsed.output, Path("x.json"))
+        self.assertEqual(parsed.agent, "codex")
 
     def test_plan_validate_builds_expected_argv(self) -> None:
         with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
             self.shell.onecmd("plan_validate plan.json")
-        main.assert_called_once_with(["plan", "validate", "plan.json"])
+        main.assert_called_once_with(["plan", "validate", "/tmp/session-workspace/plan.json"])
+
+    def test_show_uses_session_workspace_and_recent_number(self) -> None:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+            self.shell.onecmd("show #7")
+        main.assert_called_once_with([
+            "show",
+            "--workspace",
+            "/tmp/session-workspace",
+            "#7",
+        ])
+
+    def test_retry_uses_session_defaults_and_recent_number(self) -> None:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+            self.shell.onecmd("retry #7")
+        main.assert_called_once_with([
+            "retry",
+            "--workspace",
+            "/tmp/session-workspace",
+            "--agent",
+            "claude-code",
+            "#7",
+        ])
+
+    def test_report_uses_session_workspace_and_preserves_options(self) -> None:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+            self.shell.onecmd("report #7 --output report.md --include-diff")
+        main.assert_called_once_with([
+            "report",
+            "--workspace",
+            "/tmp/session-workspace",
+            "#7",
+            "--output",
+            "report.md",
+            "--include-diff",
+        ])
+
+    def test_plan_validate_rejects_extra_arguments_instead_of_ignoring_them(self) -> None:
+        stdout = io.StringIO()
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+            with contextlib.redirect_stdout(stdout):
+                self.shell.onecmd("plan_validate plan.json ignored.json")
+        main.assert_not_called()
+        self.assertIn("Usage: plan_validate <plan_file>", stdout.getvalue())
+
+    def test_plan_commands_preserve_help_options_instead_of_resolving_them_as_paths(self) -> None:
+        with patch(
+            "adaptive_orchestrator.interfaces.shell.cli.main",
+            side_effect=SystemExit(0),
+        ) as main:
+            self.shell.onecmd("run_plan --help")
+        self.assertEqual(main.call_args.args[0], [
+            "run-plan",
+            "--workspace",
+            "/tmp/session-workspace",
+            "--agent",
+            "claude-code",
+            "--help",
+        ])
+
+        with patch(
+            "adaptive_orchestrator.interfaces.shell.cli.main",
+            side_effect=SystemExit(0),
+        ) as main:
+            self.shell.onecmd("plan_validate -h")
+        main.assert_called_once_with(["plan", "validate", "-h"])
 
     def test_memory_record_builds_expected_argv(self) -> None:
         with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
@@ -353,6 +890,35 @@ class ShellCliDispatchTests(unittest.TestCase):
         self.assertEqual(main.call_count, 2)
         self.assertIn("Error: run failed with exit code 2", stderr.getvalue())
 
+    def test_nonzero_cli_return_is_reported(self) -> None:
+        stderr = io.StringIO()
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main", return_value=2):
+            with contextlib.redirect_stderr(stderr):
+                self.shell.onecmd('run --description "Build it" --objective "Ship it"')
+        self.assertIn("Error: run failed with exit code 2", stderr.getvalue())
+
+    def test_keyboard_interrupt_cancels_command_without_escaping_shell(self) -> None:
+        stderr = io.StringIO()
+        with patch(
+            "adaptive_orchestrator.interfaces.shell.cli.main",
+            side_effect=[KeyboardInterrupt(), 0],
+        ) as main:
+            with contextlib.redirect_stderr(stderr):
+                self.shell.onecmd("task Build it")
+                self.shell.onecmd("memory_search --keyword cache")
+        self.assertEqual(main.call_count, 2)
+        self.assertIn("Interrupted: task", stderr.getvalue())
+
+    def test_sigterm_unwind_is_not_swallowed_by_embedded_cli_boundary(self) -> None:
+        original_program = sys.argv[0]
+        with patch(
+            "adaptive_orchestrator.interfaces.shell.cli.main",
+            side_effect=shell_interface._ShellTermination(signal.SIGTERM),
+        ):
+            with self.assertRaises(shell_interface._ShellTermination):
+                self.shell.onecmd("task Build it")
+        self.assertEqual(sys.argv[0], original_program)
+
     def test_successful_system_exit_from_cli_help_is_not_reported_as_an_error(self) -> None:
         stderr = io.StringIO()
         with patch("adaptive_orchestrator.interfaces.shell.cli.main", side_effect=SystemExit(0)):
@@ -364,8 +930,86 @@ class ShellCliDispatchTests(unittest.TestCase):
         original_program = sys.argv[0]
         with patch("adaptive_orchestrator.interfaces.shell.cli.main", side_effect=SystemExit(0)) as main:
             self.shell.onecmd("help run")
-        main.assert_called_once_with(["run", "--help"])
+        main.assert_called_once_with([
+            "run",
+            "--workspace",
+            "/tmp/session-workspace",
+            "--help",
+        ])
         self.assertEqual(sys.argv[0], original_program)
+
+    def test_config_sensitive_help_uses_the_active_session_workspace(self) -> None:
+        with patch(
+            "adaptive_orchestrator.interfaces.shell.cli.main",
+            side_effect=SystemExit(0),
+        ) as main:
+            self.shell.onecmd("help run_plan")
+            self.shell.onecmd("help plan_generate")
+
+        self.assertEqual(main.call_args_list[0].args[0], [
+            "run-plan",
+            "--workspace",
+            "/tmp/session-workspace",
+            "--help",
+        ])
+        self.assertEqual(main.call_args_list[1].args[0], [
+            "plan",
+            "generate",
+            "--workspace",
+            "/tmp/session-workspace",
+            "--help",
+        ])
+
+    def test_help_show_delegates_to_existing_cli_help(self) -> None:
+        with patch(
+            "adaptive_orchestrator.interfaces.shell.cli.main",
+            side_effect=SystemExit(0),
+        ) as main:
+            self.shell.onecmd("help show")
+        main.assert_called_once_with(["show", "--help"])
+
+    def test_help_retry_and_report_delegate_to_existing_cli_help(self) -> None:
+        with patch(
+            "adaptive_orchestrator.interfaces.shell.cli.main",
+            side_effect=SystemExit(0),
+        ) as main:
+            self.shell.onecmd("help retry")
+            self.shell.onecmd("help report")
+
+        self.assertEqual(main.call_args_list[0].args[0], [
+            "retry",
+            "--workspace",
+            "/tmp/session-workspace",
+            "--help",
+        ])
+        self.assertEqual(main.call_args_list[1].args[0], ["report", "--help"])
+
+    def test_inline_help_uses_canonical_program_name_and_restores_argv(self) -> None:
+        original_program = sys.argv[0]
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            self.shell.onecmd("show --help")
+        self.assertIn("usage: adaptive-orchestrator show", stdout.getvalue())
+        self.assertNotIn("adaptive-ai-orchestrator-shell", stdout.getvalue())
+        self.assertEqual(sys.argv[0], original_program)
+
+    def test_show_without_identifier_prints_usage_error(self) -> None:
+        stdout = io.StringIO()
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+            with contextlib.redirect_stdout(stdout):
+                self.shell.onecmd("show")
+        main.assert_not_called()
+        self.assertIn("Usage: show <execution-id|attempt-id|#number>", stdout.getvalue())
+
+    def test_retry_and_report_without_identifier_print_usage_errors(self) -> None:
+        stdout = io.StringIO()
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+            with contextlib.redirect_stdout(stdout):
+                self.shell.onecmd("retry")
+                self.shell.onecmd("report")
+        main.assert_not_called()
+        self.assertIn("Usage: retry <execution-id|attempt-id|#number>", stdout.getvalue())
+        self.assertIn("Usage: report <execution-id|attempt-id|#number>", stdout.getvalue())
 
     def test_run_plan_without_plan_file_prints_usage_error(self) -> None:
         stdout = io.StringIO()
@@ -385,6 +1029,104 @@ class ShellCliDispatchTests(unittest.TestCase):
 
 
 class ShellHistoryTests(unittest.TestCase):
+    def test_execution_identifier_completion_covers_recent_execution_and_attempt_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell()
+            shell.workspace = Path(directory)
+            log = shell.workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir()
+            records = [
+                {
+                    "execution_id": "execution-1",
+                    "attempt_id": "attempt-1",
+                    "parent_attempt_id": None,
+                },
+                {
+                    "execution_id": "execution-1",
+                    "attempt_id": "attempt-2",
+                    "parent_attempt_id": "attempt-1",
+                },
+                {
+                    "execution_id": "execution-2",
+                    "attempt_id": "attempt-3",
+                    "parent_attempt_id": None,
+                },
+            ]
+            log.write_text(
+                "\n".join(json.dumps(record) for record in records),
+                encoding="utf-8",
+            )
+
+            for complete, command in (
+                (shell.complete_show, "show"),
+                (shell.complete_retry, "retry"),
+                (shell.complete_report, "report"),
+            ):
+                with self.subTest(command=command):
+                    start = len(command) + 1
+                    self.assertEqual(
+                        complete("#", f"{command} #", start, start + 1),
+                        ["#3", "#2"],
+                    )
+                    self.assertEqual(
+                        complete("execution", f"{command} execution", start, start + 9),
+                        ["execution-2", "execution-1"],
+                    )
+                    self.assertEqual(
+                        complete("attempt", f"{command} attempt", start, start + 7),
+                        ["attempt-3", "attempt-2", "attempt-1"],
+                    )
+                    self.assertEqual(
+                        complete("", f"{command} #3 ", start + 3, start + 3),
+                        [],
+                    )
+
+    def test_execution_identifier_completion_survives_history_read_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell()
+            shell.workspace = Path(directory)
+            log = shell.workspace / ".orchestrator" / "executions.jsonl"
+            log.mkdir(parents=True)
+            stderr = io.StringIO()
+
+            with contextlib.redirect_stderr(stderr):
+                completed = shell.complete_show("", "show ", 5, 5)
+
+            self.assertEqual(completed, [])
+            self.assertIn("could not read execution history", stderr.getvalue())
+
+    def test_execution_identifier_completion_survives_history_stat_failure(self) -> None:
+        shell = OrchestratorShell()
+        stderr = io.StringIO()
+        with (
+            patch.object(Path, "exists", side_effect=OSError("stat failed")),
+            contextlib.redirect_stderr(stderr),
+        ):
+            completed = shell.complete_show("", "show ", 5, 5)
+
+        self.assertEqual(completed, [])
+        self.assertIn("stat failed", stderr.getvalue())
+
+    def test_history_uses_exact_agent_variants_from_the_active_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell()
+            shell.workspace = Path(directory)
+            _write_project_config(
+                shell.workspace,
+                claude_model="opus",
+                codex_model="gpt-5.5",
+                codex_reasoning_effort="high",
+            )
+
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("history")
+
+            self.assertEqual(
+                [line.split(": 0", 1)[0] for line in stdout.getvalue().splitlines()],
+                ["claude-code:opus", "codex:gpt-5.5:high"],
+            )
+
     def test_history_prints_no_data_for_missing_execution_log(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             shell = OrchestratorShell()
@@ -409,6 +1151,48 @@ class ShellHistoryTests(unittest.TestCase):
                 shell.onecmd("history")
             output = stdout.getvalue().strip().splitlines()
             self.assertEqual([line.split(":")[0] for line in output], [*default_agent_ids(), "retired-agent"])
+
+    def test_history_read_error_does_not_escape_shell(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell()
+            shell.workspace = Path(directory)
+            log = shell.workspace / ".orchestrator" / "executions.jsonl"
+            log.mkdir(parents=True)
+            stderr = io.StringIO()
+
+            with contextlib.redirect_stderr(stderr):
+                shell.onecmd("history")
+
+            self.assertIn("could not read execution history", stderr.getvalue())
+
+    def test_invalid_utf8_history_does_not_escape_history_or_recent(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell()
+            shell.workspace = Path(directory)
+            log = shell.workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir()
+            log.write_bytes(b"\xff\xfe\n")
+            stderr = io.StringIO()
+
+            with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                shell.onecmd("history")
+                shell.onecmd("recent")
+
+            self.assertEqual(stderr.getvalue().count("could not read execution history"), 2)
+
+    def test_malformed_record_shape_does_not_escape_history(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell()
+            shell.workspace = Path(directory)
+            log = shell.workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir()
+            log.write_text(json.dumps({"routing_decision": ["not", "a", "mapping"]}))
+            stderr = io.StringIO()
+
+            with contextlib.redirect_stderr(stderr):
+                shell.onecmd("history")
+
+            self.assertIn("could not read execution history", stderr.getvalue())
 
     def test_recent_shows_newest_executions_first_and_skips_malformed_lines(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -441,6 +1225,134 @@ class ShellHistoryTests(unittest.TestCase):
             output = stdout.getvalue().strip().splitlines()
             self.assertIn("#2 codex completed verify=passed duration=1.2s — Second task", output[0])
             self.assertIn("#1 claude-code failed verify=not-run duration=0.2s — First task", output[1])
+
+    def test_recent_and_show_report_the_final_escalated_outcome(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell()
+            shell.workspace = Path(directory)
+            log = shell.workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir()
+            primary = {
+                "execution_id": "execution-1",
+                "attempt_id": "attempt-1",
+                "parent_attempt_id": None,
+                "agent_id": "codex",
+                "status": "failed",
+                "duration_ms": 500,
+                "task": {"description": "Escalated task"},
+            }
+            escalation = {
+                **primary,
+                "attempt_id": "attempt-2",
+                "parent_attempt_id": "attempt-1",
+                "agent_id": "claude-code",
+                "status": "completed",
+            }
+            log.write_text(
+                json.dumps(primary) + "\n" + json.dumps(escalation) + "\n",
+                encoding="utf-8",
+            )
+
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("recent")
+            self.assertEqual(len(stdout.getvalue().splitlines()), 1)
+            self.assertIn(
+                "#2 claude-code completed verify=not-run duration=0.5s attempts=2 — Escalated task",
+                stdout.getvalue(),
+            )
+
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("show #2")
+            self.assertIn("Execution: execution-1", stdout.getvalue())
+            self.assertIn("Agent: claude-code", stdout.getvalue())
+            self.assertIn("Status: completed", stdout.getvalue())
+            self.assertIn("Attempts: 2", stdout.getvalue())
+
+    def test_recent_matches_show_for_legacy_nested_only_escalation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell()
+            shell.workspace = Path(directory)
+            log = shell.workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir()
+            child = {
+                "attempt_id": "attempt-2",
+                "parent_attempt_id": "attempt-1",
+                "agent_id": "claude-code",
+                "status": "completed",
+                "duration_ms": 750,
+                "verification": {"status": "passed"},
+            }
+            primary = {
+                "attempt_id": "attempt-1",
+                "parent_attempt_id": None,
+                "agent_id": "codex",
+                "status": "failed",
+                "duration_ms": 250,
+                "verification": {"status": "failed"},
+                "task": {"description": "Legacy recovery"},
+                "escalation": {"record": child},
+            }
+            log.write_text(json.dumps(primary), encoding="utf-8")
+
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("recent")
+            self.assertIn(
+                "#1 claude-code completed verify=passed duration=0.8s "
+                "attempts=2 — Legacy recovery",
+                stdout.getvalue(),
+            )
+
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("show #1")
+            self.assertIn("Status: completed", stdout.getvalue())
+            self.assertIn("Agent: claude-code", stdout.getvalue())
+            self.assertIn("Attempts: 2", stdout.getvalue())
+
+    def test_recent_groups_idless_standalone_child_with_nested_primary(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell()
+            shell.workspace = Path(directory)
+            log = shell.workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir()
+            child = {
+                "agent_id": "claude-code",
+                "status": "completed",
+                "duration_ms": 750,
+                "verification": {"status": "passed"},
+            }
+            primary = {
+                "agent_id": "codex",
+                "status": "failed",
+                "duration_ms": 250,
+                "verification": {"status": "failed"},
+                "task": {"description": "Legacy standalone recovery"},
+                "escalation": {"record": dict(child)},
+            }
+            log.write_text(
+                json.dumps(child) + "\n" + json.dumps(primary),
+                encoding="utf-8",
+            )
+
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("recent")
+            self.assertEqual(len(stdout.getvalue().splitlines()), 1)
+            self.assertIn(
+                "#2 claude-code completed verify=passed duration=0.8s "
+                "attempts=2 — Legacy standalone recovery",
+                stdout.getvalue(),
+            )
+            self.assertEqual(shell.complete_show("#", "show #", 5, 6), ["#2"])
+
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("show #2")
+            self.assertIn("Status: completed", stdout.getvalue())
+            self.assertIn("Attempts: 2", stdout.getvalue())
 
     def test_recent_validates_count_and_handles_missing_log(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -510,6 +1422,41 @@ class ShellUsageTests(unittest.TestCase):
             "Codex: usage data not available",
             "Claude Code: pro subscription; logged in this project: no cost data logged yet (no live quota % available locally)",
         ])
+
+    def test_project_history_read_error_does_not_escape_usage_command(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell()
+            shell.workspace = Path(directory)
+            log = shell.workspace / ".orchestrator" / "executions.jsonl"
+            log.mkdir(parents=True)
+            stdout = io.StringIO()
+            with (
+                patch("adaptive_orchestrator.interfaces.shell.read_codex_usage", return_value=None),
+                patch("adaptive_orchestrator.interfaces.shell.read_claude_subscription", return_value="pro"),
+                contextlib.redirect_stdout(stdout),
+            ):
+                shell.onecmd("usage")
+
+            output = stdout.getvalue()
+            self.assertIn("Codex: usage data not available", output)
+            self.assertIn("Claude Code: project usage data not available", output)
+
+    def test_invalid_utf8_project_history_does_not_escape_usage_command(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell()
+            shell.workspace = Path(directory)
+            log = shell.workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir()
+            log.write_bytes(b"\xff\xfe\n")
+            stdout = io.StringIO()
+            with (
+                patch("adaptive_orchestrator.interfaces.shell.read_codex_usage", return_value=None),
+                patch("adaptive_orchestrator.interfaces.shell.read_claude_subscription", return_value="pro"),
+                contextlib.redirect_stdout(stdout),
+            ):
+                shell.onecmd("usage")
+
+            self.assertIn("Claude Code: project usage data not available", stdout.getvalue())
 
 
 if __name__ == "__main__":

@@ -16,6 +16,9 @@ from adaptive_orchestrator.infrastructure.events import JsonlEventStore, Lifecyc
 from adaptive_orchestrator.routing.state import LifecycleRecorder
 
 
+KERNEL_VERSION = "0.1"
+
+
 class ExecutionLogger(Protocol):
     def write(self, record: ExecutionRecord) -> None: ...
 

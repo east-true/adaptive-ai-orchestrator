@@ -17,10 +17,66 @@ class ExecutionBundle:
 
     @property
     def primary(self) -> dict:
+        # Pre-telemetry escalation rows have no attempt/parent IDs at all. The
+        # row carrying the nested escalation projection is their only reliable
+        # primary marker.
+        for attempt in self.attempts:
+            if _mapping(_mapping(attempt.get("escalation")).get("record")):
+                return attempt
         for attempt in self.attempts:
             if not attempt.get("parent_attempt_id"):
                 return attempt
         return self.attempts[0]
+
+    @property
+    def terminal_attempt(self) -> dict:
+        """Return the last escalation attempt without relying on JSONL order."""
+        primary = self.primary
+        nested = _mapping(_mapping(primary.get("escalation")).get("record"))
+        if nested:
+            # The primary row is written after the standalone child row and is
+            # the object used by workflow success evaluation. Its nested copy is
+            # therefore authoritative if a partial/stale child row disagrees.
+            return nested
+
+        # Older or partially normalized logs may have a separate child attempt
+        # without the primary record's nested escalation projection. Follow the
+        # parent chain rather than JSONL order: current workflow logs the child
+        # first and the primary (with its nested child) second.
+        outcome = primary
+        visited: set[str] = set()
+        while True:
+            attempt_id = outcome.get("attempt_id")
+            if not isinstance(attempt_id, str) or not attempt_id or attempt_id in visited:
+                return outcome
+            visited.add(attempt_id)
+            children = [
+                attempt
+                for attempt in self.attempts
+                if attempt.get("parent_attempt_id") == attempt_id
+                and attempt.get("attempt_id") not in visited
+            ]
+            if not children:
+                return outcome
+            outcome = children[-1]
+
+    @property
+    def outcome(self) -> dict:
+        """Return the attempt that determines the execution's effective outcome."""
+        primary = self.primary
+        terminal = self.terminal_attempt
+        # Workflow success is an OR across the primary and escalation. Prefer a
+        # successful recovery (or the final failure when neither succeeded), but
+        # do not report a failed advisory escalation as if it erased a verified
+        # successful primary attempt.
+        if _attempt_succeeded(terminal) or not _attempt_succeeded(primary):
+            return terminal
+        return primary
+
+    @property
+    def attempt_count(self) -> int:
+        """Count logical attempts, including a nested-only escalation record."""
+        return len(_display_attempts(self))
 
 
 class ExecutionReportStore:
@@ -46,50 +102,68 @@ class ExecutionReportStore:
                 records.append(item)
         return tuple(records)
 
+    def bundles(self) -> tuple[ExecutionBundle, ...]:
+        """Return canonical logical executions in first-record order."""
+        return tuple(bundle for _, bundle in self.indexed_bundles())
+
+    def indexed_bundles(self) -> tuple[tuple[int, ExecutionBundle], ...]:
+        """Return each logical execution with its last one-based physical row."""
+        return tuple(
+            (group.record_indexes[-1] + 1, group.bundle)
+            for group in _group_records(self.records())
+        )
+
     def find(self, identifier: str) -> ExecutionBundle:
         records = self.records()
         if not records:
             raise ExecutionLookupError(f"No executions are recorded in {self.path}")
 
-        attempt_matches = [item for item in records if item.get("attempt_id") == identifier]
-        if attempt_matches:
-            execution_id = _identifier(attempt_matches[-1].get("execution_id"), identifier)
-            grouped = tuple(item for item in records if item.get("execution_id") == execution_id)
-            return ExecutionBundle(execution_id, grouped or (attempt_matches[-1],))
+        groups = _group_records(records)
 
-        execution_matches = [item for item in records if item.get("execution_id") == identifier]
-        if execution_matches:
-            return ExecutionBundle(identifier, tuple(execution_matches))
+        attempt_matches = [index for index, item in enumerate(records) if item.get("attempt_id") == identifier]
+        if attempt_matches:
+            return _bundle_for_record(groups, attempt_matches[-1])
+
+        for group in groups:
+            if group.bundle.execution_id == identifier:
+                return group.bundle
 
         if identifier.startswith("#") and identifier[1:].isdigit():
             index = int(identifier[1:])
             if 1 <= index <= len(records):
-                record = records[index - 1]
-                execution_id = _identifier(record.get("execution_id"), f"legacy-{index}")
-                grouped = tuple(item for item in records if item.get("execution_id") == execution_id)
-                return ExecutionBundle(execution_id, grouped or (record,))
+                return _bundle_for_record(groups, index - 1)
         raise ExecutionLookupError(f"Execution not found: {identifier}")
 
 
 def render_text_summary(bundle: ExecutionBundle) -> str:
     primary = bundle.primary
+    outcome = bundle.outcome
+    terminal = bundle.terminal_attempt
+    attempts = _display_attempts(bundle)
     task = _mapping(primary.get("task"))
-    verification = _mapping(primary.get("verification"))
+    verification = _mapping(outcome.get("verification"))
     lines = [
         f"Execution: {bundle.execution_id}",
         f"Task: {_one_line(task.get('description')) or '(missing description)'}",
-        f"Status: {_text(primary.get('status'), 'unknown')}",
-        f"Agent: {_text(primary.get('agent_id'), 'unknown')}",
+        f"Status: {_text(outcome.get('status'), 'unknown')}",
+        f"Agent: {_text(outcome.get('agent_id'), 'unknown')}",
     ]
-    model = _model_text(primary)
+    model = _model_text(outcome)
     if model:
         lines.append(f"Model: {model}")
     lines.extend([
         f"Verification: {_text(verification.get('status'), 'not-run')}",
-        f"Attempts: {len(bundle.attempts)}",
-        f"Duration: {_duration(primary.get('duration_ms'))}",
+        f"Attempts: {len(attempts)}",
+        f"Duration: {_duration(outcome.get('duration_ms'))}",
     ])
-    modified = _string_items(primary.get("workspace_modified_files"))
+    if not _same_attempt(outcome, terminal):
+        lines.append(
+            "Terminal attempt: "
+            f"{_text(terminal.get('status'), 'unknown')} by "
+            f"{_text(terminal.get('agent_id'), 'unknown')} "
+            f"(verification: {_verification_status(terminal)})"
+        )
+    modified = _string_items(terminal.get("workspace_modified_files"))
     if modified:
         lines.append(f"Modified: {', '.join(modified)}")
     return "\n".join(lines)
@@ -97,29 +171,39 @@ def render_text_summary(bundle: ExecutionBundle) -> str:
 
 def render_markdown_report(bundle: ExecutionBundle, include_diff: bool = False) -> str:
     primary = bundle.primary
+    outcome = bundle.outcome
+    terminal = bundle.terminal_attempt
+    attempts = _display_attempts(bundle)
     task = _mapping(primary.get("task"))
     analysis = _mapping(primary.get("task_analysis"))
     decision = _mapping(primary.get("routing_decision"))
-    modified = _string_items(primary.get("workspace_modified_files"))
+    modified = _string_items(terminal.get("workspace_modified_files"))
     lines = [
         f"# Execution {bundle.execution_id}",
         "",
         "## Outcome",
         "",
-        f"- Status: `{_text(primary.get('status'), 'unknown')}`",
-        f"- Agent: `{_text(primary.get('agent_id'), 'unknown')}`",
+        f"- Status: `{_text(outcome.get('status'), 'unknown')}`",
+        f"- Agent: `{_text(outcome.get('agent_id'), 'unknown')}`",
     ]
-    model = _model_text(primary)
+    model = _model_text(outcome)
     if model:
         lines.append(f"- Model: `{model}`")
     lines.extend([
-        f"- Verification: `{_verification_status(primary)}`",
-        f"- Duration: {_duration(primary.get('duration_ms'))}",
-        f"- Attempts: {len(bundle.attempts)}",
+        f"- Verification: `{_verification_status(outcome)}`",
+        f"- Duration: {_duration(outcome.get('duration_ms'))}",
+        f"- Attempts: {len(attempts)}",
     ])
-    occurred_at = primary.get("occurred_at")
+    occurred_at = outcome.get("occurred_at")
     if isinstance(occurred_at, str) and occurred_at:
         lines.append(f"- Recorded at: `{occurred_at}`")
+    if not _same_attempt(outcome, terminal):
+        lines.append(
+            "- Terminal escalation: "
+            f"`{_text(terminal.get('status'), 'unknown')}` by "
+            f"`{_text(terminal.get('agent_id'), 'unknown')}` "
+            f"(verification `{_verification_status(terminal)}`)"
+        )
 
     lines.extend(["", "## Task", "", _text(task.get("description"), "(missing description)")])
     objective = task.get("objective")
@@ -136,7 +220,7 @@ def render_markdown_report(bundle: ExecutionBundle, include_diff: bool = False) 
         lines.append(f"- Escalation reasons: {', '.join(reasons)}")
 
     lines.extend(["", "## Attempts", ""])
-    for number, attempt in enumerate(bundle.attempts, start=1):
+    for number, attempt in enumerate(attempts, start=1):
         attempt_model = _model_text(attempt)
         model_suffix = f" ({attempt_model})" if attempt_model else ""
         lines.append(
@@ -150,14 +234,29 @@ def render_markdown_report(bundle: ExecutionBundle, include_diff: bool = False) 
     if not modified:
         lines.append("No modified files were recorded.")
 
-    result = primary.get("result")
-    error = primary.get("error")
+    result = outcome.get("result")
+    error = outcome.get("error")
     if isinstance(result, str) and result.strip():
         lines.extend(["", "## Agent result", "", result.strip()])
     if isinstance(error, str) and error.strip():
         lines.extend(["", "## Error", "", "```text", error.strip(), "```"])
 
-    diff = primary.get("workspace_git_diff")
+    if not _same_attempt(outcome, terminal):
+        terminal_result = terminal.get("result")
+        terminal_error = terminal.get("error")
+        if isinstance(terminal_result, str) and terminal_result.strip():
+            lines.extend(["", "## Terminal escalation result", "", terminal_result.strip()])
+        if isinstance(terminal_error, str) and terminal_error.strip():
+            lines.extend([
+                "",
+                "## Terminal escalation error",
+                "",
+                "```text",
+                terminal_error.strip(),
+                "```",
+            ])
+
+    diff = terminal.get("workspace_git_diff")
     if include_diff and isinstance(diff, str) and diff.strip():
         lines.extend(["", "## Recorded workspace diff", "", "```diff", diff.rstrip(), "```"])
     return "\n".join(lines).rstrip() + "\n"
@@ -176,11 +275,113 @@ def task_spec_for_retry(bundle: ExecutionBundle) -> dict:
         "capabilities": list(_string_items(task.get("required_capabilities"))),
         "priority": _text(task.get("priority"), "normal"),
         "time_limit_seconds": task.get("time_limit_seconds"),
+        "cost_limit_usd": task.get("cost_limit_usd"),
     }
     task_id = task.get("task_id") or bundle.primary.get("task_id")
     if isinstance(task_id, str) and task_id:
         spec["task_id"] = task_id
     return spec
+
+
+def _display_attempts(bundle: ExecutionBundle) -> tuple[dict, ...]:
+    """Put the primary first and include a nested-only terminal attempt once."""
+    primary = bundle.primary
+    terminal = bundle.terminal_attempt
+    if _same_attempt(primary, terminal):
+        return bundle.attempts
+
+    middle = tuple(
+        attempt
+        for attempt in bundle.attempts
+        if not _same_attempt(attempt, primary) and not _same_attempt(attempt, terminal)
+    )
+    return (primary, *middle, terminal)
+
+
+def _attempt_succeeded(record: dict) -> bool:
+    return (
+        record.get("status") == "completed"
+        and _verification_status(record) in {"passed", "skipped"}
+    )
+
+
+def _same_attempt(left: dict, right: dict) -> bool:
+    if left is right:
+        return True
+    left_id = left.get("attempt_id")
+    right_id = right.get("attempt_id")
+    if (
+        isinstance(left_id, str)
+        and bool(left_id)
+        and isinstance(right_id, str)
+    ):
+        return left_id == right_id
+    # Old escalation logs had no attempt IDs, but the standalone child and
+    # nested projection were byte-for-byte equivalent after JSON decoding.
+    return not left_id and not right_id and left == right
+
+
+@dataclass(frozen=True, slots=True)
+class _ExecutionGroup:
+    bundle: ExecutionBundle
+    record_indexes: tuple[int, ...]
+
+
+def _group_records(records: tuple[dict, ...]) -> tuple[_ExecutionGroup, ...]:
+    child_to_primary: dict[int, int] = {}
+    primary_indexes: set[int] = set()
+    for index in range(len(records) - 1):
+        child = records[index]
+        primary = records[index + 1]
+        nested = _mapping(_mapping(primary.get("escalation")).get("record"))
+        if (
+            _record_execution_id(child) is None
+            and index not in primary_indexes
+            and nested
+            and child == nested
+        ):
+            child_to_primary[index] = index + 1
+            primary_indexes.add(index + 1)
+
+    grouped_indexes: dict[tuple[str, str | int], list[int]] = {}
+    for index, record in enumerate(records):
+        execution_id = _record_execution_id(record)
+        if execution_id is not None:
+            key: tuple[str, str | int] = ("execution", execution_id)
+        elif index in child_to_primary:
+            primary_index = child_to_primary[index]
+            primary_execution_id = _record_execution_id(records[primary_index])
+            key = (
+                ("execution", primary_execution_id)
+                if primary_execution_id is not None
+                else ("legacy", primary_index)
+            )
+        elif index in primary_indexes:
+            key = ("legacy", index)
+        else:
+            key = ("legacy", index)
+        grouped_indexes.setdefault(key, []).append(index)
+
+    groups = []
+    for key, indexes in grouped_indexes.items():
+        execution_id = str(key[1]) if key[0] == "execution" else f"legacy-{int(key[1]) + 1}"
+        groups.append(_ExecutionGroup(
+            ExecutionBundle(execution_id, tuple(records[index] for index in indexes)),
+            tuple(indexes),
+        ))
+    return tuple(groups)
+
+
+def _record_execution_id(record: dict) -> str | None:
+    value = record.get("execution_id")
+    return value if isinstance(value, str) and value else None
+
+
+def _bundle_for_record(groups: tuple[_ExecutionGroup, ...], record_index: int) -> ExecutionBundle:
+    for group in groups:
+        if record_index in group.record_indexes:
+            return group.bundle
+    raise ExecutionLookupError(f"Execution record is not grouped: #{record_index + 1}")
 
 
 def _verification_status(record: dict) -> str:
@@ -216,7 +417,3 @@ def _string_items(value: object) -> tuple[str, ...]:
     if not isinstance(value, Iterable) or isinstance(value, (str, bytes, dict)):
         return ()
     return tuple(item for item in value if isinstance(item, str))
-
-
-def _identifier(value: object, fallback: str) -> str:
-    return value if isinstance(value, str) and value else fallback

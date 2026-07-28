@@ -49,7 +49,12 @@ from adaptive_orchestrator.orchestration.kernel import OrchestratorKernel
 from adaptive_orchestrator.orchestration.workflow import EngineeringWorkflow, execution_succeeded
 from adaptive_orchestrator.routing.analysis import TaskAnalyzer
 from adaptive_orchestrator.routing.policy import RoutingPolicyRouter
-from adaptive_orchestrator.routing.state import LifecycleRecorder, ReplayError, RoutingStateStore
+from adaptive_orchestrator.routing.state import (
+    LifecycleRecorder,
+    ReplayError,
+    RoutingStateStore,
+    rebuild_routing_state,
+)
 
 
 def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser:
@@ -75,14 +80,22 @@ def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser
     report.add_argument("--include-diff", action="store_true", help="Include the recorded workspace diff when available.")
     report.add_argument("--force", action="store_true", help="Replace an existing output file.")
 
-    retry = subparsers.add_parser("retry", help="run the task from a recorded execution again")
+    retry = subparsers.add_parser(
+        "retry",
+        help="run the task from a recorded execution again",
+        allow_abbrev=False,
+    )
     retry.add_argument("identifier", help="Execution ID, attempt ID, or legacy #number.")
     retry.add_argument("--workspace", type=Path, default=Path.cwd())
     _add_agent_argument(retry, config)
     retry.set_defaults(agent="same")
     _add_workflow_arguments(retry, config)
 
-    run = subparsers.add_parser("run", help="plan, execute, and optionally verify one task")
+    run = subparsers.add_parser(
+        "run",
+        help="plan, execute, and optionally verify one task",
+        allow_abbrev=False,
+    )
     run.add_argument("--workspace", type=Path, default=Path.cwd())
     _add_agent_argument(run, config)
     run.add_argument("--description")
@@ -93,10 +106,22 @@ def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser
     run.add_argument("--constraint", action="append", default=[])
     run.add_argument("--priority", choices=[item.value for item in Priority], default=Priority.NORMAL.value)
     run.add_argument("--time-limit", type=float, default=config.time_limit_seconds)
+    run.add_argument(
+        "--no-time-limit",
+        dest="time_limit",
+        action="store_const",
+        const=None,
+        default=argparse.SUPPRESS,
+        help="Disable a task time limit, including one supplied by project config.",
+    )
     _add_workflow_arguments(run, config)
     run.set_defaults(_parser=run)
 
-    run_plan = subparsers.add_parser("run-plan", help="run an explicit, ordered sequence of tasks from a JSON plan file")
+    run_plan = subparsers.add_parser(
+        "run-plan",
+        help="run an explicit, ordered sequence of tasks from a JSON plan file",
+        allow_abbrev=False,
+    )
     run_plan.add_argument(
         "plan_file",
         type=Path,
@@ -115,7 +140,11 @@ def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser
     plan_validate = plan_subparsers.add_parser("validate", help="validate a JSON plan file against the CLI plan schema")
     plan_validate.add_argument("plan_file", type=Path, help="JSON file containing a non-empty array of task specs.")
 
-    plan_generate = plan_subparsers.add_parser("generate", help="generate a JSON plan file from a human request")
+    plan_generate = plan_subparsers.add_parser(
+        "generate",
+        help="generate a JSON plan file from a human request",
+        allow_abbrev=False,
+    )
     plan_generate.add_argument("request", help="The vague human request to turn into an ordered plan.")
     plan_generate.add_argument("--workspace", type=Path, default=Path.cwd())
     plan_generate.add_argument("--output", type=Path, default=None, help="Plan file to write; defaults to plan.json in the workspace.")
@@ -226,6 +255,14 @@ def _add_workflow_arguments(parser: argparse.ArgumentParser, config: ProjectConf
         action="append",
         default=list(config.verify_commands),
         help="Constraint command parsed into argument tokens; never run through a shell. Repeatable: every check runs and the worst outcome wins. It is not task-quality evidence.",
+    )
+    parser.add_argument(
+        "--clear-verify-commands",
+        dest="verify_command",
+        action="store_const",
+        const=[],
+        default=argparse.SUPPRESS,
+        help="Clear constraint verification commands supplied by project config or earlier options.",
     )
     parser.add_argument("--verify-time-limit", type=float, default=config.verify_time_limit_seconds)
     parser.add_argument(
@@ -480,8 +517,19 @@ def _quality_evaluator_specs(args: argparse.Namespace, workspace: Path) -> tuple
     return tuple(specs)
 
 
-def _build_workflow_for_cli(args: argparse.Namespace, workspace: Path) -> EngineeringWorkflow | None:
+def _build_workflow_for_cli(
+    args: argparse.Namespace,
+    workspace: Path,
+    requested_agent_id: str | None = None,
+) -> EngineeringWorkflow | None:
     try:
+        agent_id = args.agent if requested_agent_id is None else requested_agent_id
+        if agent_id != "auto":
+            available = tuple(agent.agent_id for agent in _configured_agents(args))
+            if agent_id not in available:
+                raise ValueError(
+                    f"Unknown agent: {agent_id}. Available: {', '.join(available)}"
+                )
         return _build_workflow(args, workspace)
     except (EventLogError, ReplayError, OSError, ValueError) as exc:
         print(f"Workflow configuration failed: {exc}", file=sys.stderr)
@@ -497,8 +545,14 @@ def _verbose_output_callback(prefix: str):
 
 
 def _workspace_from_argv(argv: Sequence[str]) -> Path:
-    for index, item in enumerate(argv):
-        if item == "--workspace" and index + 1 < len(argv):
+    # argparse keeps the last occurrence of a repeated single-value option.
+    # Inspect in reverse so project configuration is loaded from the same
+    # workspace that command dispatch will ultimately use. A standalone `--`
+    # ends option parsing, so later positional text must not select a config.
+    option_end = argv.index("--") if "--" in argv else len(argv)
+    for index in range(option_end - 1, -1, -1):
+        item = argv[index]
+        if item == "--workspace" and index + 1 < option_end:
             return Path(argv[index + 1]).expanduser()
         if item.startswith("--workspace="):
             return Path(item.partition("=")[2]).expanduser()
@@ -515,6 +569,11 @@ def _config_for_argv(argv: Sequence[str]) -> ProjectConfig:
 
 def _execution_store(workspace: Path) -> ExecutionReportStore:
     return ExecutionReportStore(workspace.resolve() / ".orchestrator" / "executions.jsonl")
+
+
+def _workspace_path(path: Path, workspace: Path) -> Path:
+    expanded = path.expanduser()
+    return expanded.resolve() if expanded.is_absolute() else (workspace / expanded).resolve()
 
 
 def _write_report(path: Path, content: str, force: bool) -> None:
@@ -569,7 +628,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command in {"show", "report"}:
         try:
-            bundle = _execution_store(args.workspace).find(args.identifier)
+            workspace = args.workspace.resolve()
+            bundle = _execution_store(workspace).find(args.identifier)
             if args.command == "show":
                 print(render_text_summary(bundle))
                 return 0
@@ -577,8 +637,9 @@ def main(argv: list[str] | None = None) -> int:
             if args.output is None:
                 print(content, end="")
             else:
-                _write_report(args.output, content, args.force)
-                print(f"Report written to {args.output.expanduser().resolve()}")
+                output_path = _workspace_path(args.output, workspace)
+                _write_report(output_path, content, args.force)
+                print(f"Report written to {output_path}")
             return 0
         except (ExecutionLookupError, OSError, FileExistsError) as exc:
             print(f"{args.command.capitalize()} failed: {exc}", file=sys.stderr)
@@ -611,7 +672,9 @@ def main(argv: list[str] | None = None) -> int:
         if not isinstance(requested_agent, str):
             print("Retry failed: the original agent is not recorded; use --agent auto", file=sys.stderr)
             return 1
-        workflow = _build_workflow(args, workspace)
+        workflow = _build_workflow_for_cli(args, workspace, requested_agent)
+        if workflow is None:
+            return 2
         try:
             plan, record = workflow.run(task, requested_agent)
         except (KeyError, ValueError) as exc:
@@ -646,10 +709,14 @@ def main(argv: list[str] | None = None) -> int:
                     event.event_type.value == "execution_reconciled" for event in after_events
                 ) - sum(event.event_type.value == "execution_reconciled" for event in before_events)
             else:
-                state = replay_event_log(event_path)
                 reconciled_count = 0
                 if args.rebuild_state:
-                    RoutingStateStore(control_dir / "routing-state.json").write(state)
+                    state = rebuild_routing_state(
+                        JsonlEventStore(event_path),
+                        RoutingStateStore(control_dir / "routing-state.json"),
+                    )
+                else:
+                    state = replay_event_log(event_path)
         except (EventLogError, ReplayError, OSError, ValueError) as exc:
             print(f"Replay failed: {exc}", file=sys.stderr)
             return 1
@@ -673,7 +740,7 @@ def main(argv: list[str] | None = None) -> int:
         workflow = _build_workflow_for_cli(args, workspace)
         if workflow is None:
             return 2
-        tasks = _load_plan(args.plan_file)
+        tasks = _load_plan(_workspace_path(args.plan_file, workspace))
         result = workflow.run_plan(tasks, args.agent, stop_on_failure=not args.continue_on_failure)
         print(json.dumps({"steps": [{"plan": asdict(step.plan), "execution": asdict(step.record)} for step in result.steps], "stopped_early": result.stopped_early}, default=str, indent=2))
         if result.steps:
@@ -712,6 +779,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     run_parser = getattr(args, "_parser", None)
+    if args.description_file is not None:
+        args.description_file = _workspace_path(args.description_file, workspace)
+    if args.objective_file is not None:
+        args.objective_file = _workspace_path(args.objective_file, workspace)
     workflow = _build_workflow_for_cli(args, workspace)
     if workflow is None:
         return 2

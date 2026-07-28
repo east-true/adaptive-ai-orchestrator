@@ -58,13 +58,18 @@ That choice keeps the system inside the existing CLI-agent boundary. It does not
 
 ## Durable lifecycle and routing policy boundary
 
-`JsonlEventStore` allocates a per-execution sequence under a file lock and fsyncs
-each append. `EventProjector` treats identical duplicate IDs idempotently but
-rejects ID collisions, sequence gaps, and invalid attempt transitions. The
-materialized routing state is atomically replaceable and disposable: replaying
-the event source produces it byte-for-byte. A local started attempt is
-reconciled only when its recorded PID is no longer alive; concurrent live
-owners are not marked abandoned.
+`LifecycleRecorder` is the sole supported lifecycle mutation boundary; public
+`JsonlEventStore.append` fails closed because it cannot coordinate the routing
+projection update. The recorder's private store primitive allocates a
+per-execution sequence under a file lock, constructs the redacted JSON form,
+validates that exact prospective log, and only then fsyncs it. Thus an invalid
+attempt transition cannot poison the durable source, and stable-ID retries are
+compared against the representation actually persisted. `EventProjector` treats
+identical duplicate IDs idempotently but rejects ID collisions, sequence gaps,
+and invalid attempt transitions. The materialized routing state is atomically
+replaceable and disposable: replaying the event source produces it byte-for-byte.
+A local started attempt is reconciled only when its recorded PID is no longer
+alive; concurrent live owners are not marked abandoned.
 
 CLI workflows keep this source in a private XDG/control-state directory outside
 the agent workspace. The project-local execution JSONL remains a compatibility
@@ -177,13 +182,13 @@ The interactive shell in `adaptive_orchestrator.interfaces.shell` remains delibe
 - **Domain:** no SDK, filesystem, or subprocess dependency.
 - **Agent:** owns prompt construction, CLI syntax, and required-capability validation.
 - **Adaptive Router:** infers task signals, scores capable agents using configurable policy and local history, and emits an explainable decision.
-- **Process runner:** runs argument vectors without a shell, handles timeouts, normalizes output/state, and can optionally stream stdout as it arrives without changing what it returns.
+- **Process runner:** runs argument vectors without a shell, isolates each POSIX invocation in its own session/process group, and contains each Windows invocation in a per-run Job Object before releasing the real target. It handles timeout and interrupt cleanup, normalizes output/state, and can optionally stream stdout as it arrives without changing what it returns.
 - **Git snapshot:** best-effort collection of workspace state after execution. It does not attribute changes to an agent.
 - **Telemetry:** the protected event source records selection, started, terminal/reconciled, evaluator, and finalized lifecycle stages with task/execution/attempt IDs. Final compatibility records retain policy/config/context/environment identity, cohort, evidence eligibility, evaluator-level typed results, and role-separated projections. End-to-end workflow duration remains absent.
 
 ## Security posture of local tools
 
-The Process Runner uses argument vectors (`shell=False`). Claude defaults to `acceptEdits`; Codex defaults to `workspace-write`. Neither adapter adds a dangerous permission-bypass option. On interrupt the core runner kills and reaps its direct CLI child before preserving the exception; unlike the TUI launcher, it does not yet claim descendant process-group cleanup. CLI lifecycle state lives outside the agent workspace with private local modes, though this relies on the CLI sandbox boundary and is not a signed remote ledger. The JSONL logger masks common sensitive keys and token patterns, but is not a DLP boundary; Git diff collection is opt-in. Numeric usage-count fields such as `input_tokens` now use a narrow allowlist so resource telemetry survives while string values under token-named keys and literal credentials remain redacted. v0.1 is a local-development runtime, not a sandbox or multi-tenant security boundary.
+The Process Runner uses argument vectors (`shell=False`). Claude defaults to `acceptEdits`; Codex defaults to `workspace-write`. Neither adapter adds a dangerous permission-bypass option. On POSIX, each invocation starts in a dedicated session so timeout or interrupt cleanup can signal that invocation's whole descendant process group without touching the orchestrator or sibling shell sessions, then reap the direct CLI child. The Windows-specific runner path starts a trusted, isolated Python gate, assigns that exact process handle to a fresh kill-on-close Job Object, and only then releases the requested command; setup or protocol failure therefore fails closed instead of launching an uncontained target. Timeout, interruption, or an invalid completion marker terminates that Job. A valid normal completion disarms it only after redirected output reaches EOF, so a properly detached descendant can survive while one that retains inherited pipe handles is cleaned up after a bounded drain instead of hanging the runner. Other non-POSIX runtimes retain direct-child cleanup, and the distribution remains POSIX-classified until its persistence layers are ported. CLI lifecycle state lives outside the agent workspace with private local modes, though this relies on the CLI sandbox boundary and is not a signed remote ledger. The JSONL logger masks common sensitive keys and token patterns, but is not a DLP boundary; Git diff collection is opt-in. Numeric usage-count fields such as `input_tokens` now use a narrow allowlist so resource telemetry survives while string values under token-named keys and literal credentials remain redacted. v0.1 is a local-development runtime, not a sandbox or multi-tenant security boundary.
 
 ## Evolution path
 

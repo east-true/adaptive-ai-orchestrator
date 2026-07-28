@@ -4,9 +4,12 @@ import json
 import os
 import socket
 import tempfile
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any, Iterator, Mapping, Sequence
+
+import fcntl
 
 from adaptive_orchestrator.infrastructure.events import JsonlEventStore, LifecycleEvent, LifecycleEventType
 
@@ -196,33 +199,104 @@ class RoutingStateStore:
         return value
 
 
+def _recorder_lock_path(event_path: Path) -> Path:
+    return event_path.with_name(f".{event_path.name}.recorder.lock")
+
+
+@contextmanager
+def _exclusive_recorder_lock(lock_path: Path) -> Iterator[None]:
+    lock_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    os.chmod(lock_path.parent, 0o700)
+    with lock_path.open("a+", encoding="utf-8") as stream:
+        os.chmod(lock_path, 0o600)
+        fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+
+
+def _rebuild_routing_state_unlocked(
+    event_store: JsonlEventStore,
+    state_store: RoutingStateStore,
+) -> RoutingState:
+    state = EventProjector().replay(event_store.read())
+    state_store.write(state)
+    return state
+
+
+def rebuild_routing_state(
+    event_store: JsonlEventStore,
+    state_store: RoutingStateStore | None = None,
+) -> RoutingState:
+    """Rebuild the disposable projection under the recorder lock without appending events."""
+
+    target = state_store or RoutingStateStore(event_store.path.with_name("routing-state.json"))
+    with _exclusive_recorder_lock(_recorder_lock_path(event_store.path)):
+        return _rebuild_routing_state_unlocked(event_store, target)
+
+
 class LifecycleRecorder:
     def __init__(self, event_store: JsonlEventStore, state_store: RoutingStateStore | None = None) -> None:
         self.event_store = event_store
         self.state_store = state_store or RoutingStateStore(event_store.path.with_name("routing-state.json"))
-        self.reconcile_incomplete()
-        self.rebuild_state()
+        self._lock_path = _recorder_lock_path(event_store.path)
+        with self._exclusive_lock():
+            self._reconcile_incomplete_unlocked()
+            self._rebuild_state_unlocked()
 
     def record(self, event_type: LifecycleEventType, **kwargs: Any) -> LifecycleEvent:
-        event = self.event_store.append(event_type, **kwargs)
-        self.rebuild_state()
-        return event
+        with self._exclusive_lock():
+            event = self._append_event_unlocked(event_type, **kwargs)
+            self._rebuild_state_unlocked()
+            return event
 
     def rebuild_state(self) -> RoutingState:
-        state = EventProjector().replay(self.event_store.read())
-        self.state_store.write(state)
-        return state
+        with self._exclusive_lock():
+            return self._rebuild_state_unlocked()
+
+    def _rebuild_state_unlocked(self) -> RoutingState:
+        return _rebuild_routing_state_unlocked(self.event_store, self.state_store)
+
+    def _append_event_unlocked(
+        self,
+        event_type: LifecycleEventType,
+        **kwargs: Any,
+    ) -> LifecycleEvent:
+        """Append only after the prospective durable log replays successfully."""
+
+        return self.event_store._append_validated(
+            event_type,
+            validator=EventProjector().replay,
+            **kwargs,
+        )
 
     def reconcile_incomplete(self) -> tuple[LifecycleEvent, ...]:
+        with self._exclusive_lock():
+            reconciled = self._reconcile_incomplete_unlocked()
+            self._rebuild_state_unlocked()
+            return reconciled
+
+    def _reconcile_incomplete_unlocked(self) -> tuple[LifecycleEvent, ...]:
         state = EventProjector().replay(self.event_store.read())
         reconciled: list[LifecycleEvent] = []
         for execution_id, execution in state.executions.items():
             for attempt_id, attempt in execution.attempts.items():
+                if attempt.status == "reconciled":
+                    self._append_event_unlocked(
+                        LifecycleEventType.OUTCOME_FINALIZED,
+                        execution_id=execution_id,
+                        task_id=attempt.task_id,
+                        attempt_id=attempt_id,
+                        parent_attempt_id=attempt.parent_attempt_id,
+                        payload=dict(attempt.terminal),
+                    )
+                    continue
                 if attempt.status != "started":
                     continue
                 if _attempt_owner_is_active(attempt.started):
                     continue
-                reconciled.append(self.event_store.append(
+                reconciled.append(self._append_event_unlocked(
                     LifecycleEventType.EXECUTION_RECONCILED,
                     execution_id=execution_id,
                     task_id=attempt.task_id,
@@ -230,7 +304,7 @@ class LifecycleRecorder:
                     parent_attempt_id=attempt.parent_attempt_id,
                     payload={"status": "abandoned", "reason": "recovered_on_next_start"},
                 ))
-                self.event_store.append(
+                self._append_event_unlocked(
                     LifecycleEventType.OUTCOME_FINALIZED,
                     execution_id=execution_id,
                     task_id=attempt.task_id,
@@ -239,6 +313,18 @@ class LifecycleRecorder:
                     payload={"status": "abandoned", "reason": "recovered_on_next_start"},
                 )
         return tuple(reconciled)
+
+    @contextmanager
+    def _exclusive_lock(self) -> Iterator[None]:
+        """Serialize event mutation and its materialized projection across processes.
+
+        The recorder lock is always acquired before the event store's own lock.
+        Standalone event readers acquire only the latter, so there is no inverse
+        lock order that could deadlock with a recorder operation.
+        """
+
+        with _exclusive_recorder_lock(self._lock_path):
+            yield
 
 
 def _attempt_owner_is_active(started: Mapping[str, Any]) -> bool:

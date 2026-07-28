@@ -34,6 +34,14 @@ class ProjectConfig:
     notify_desktop: bool = False
 
 
+def configured_agent_ids(config: ProjectConfig) -> tuple[str, ...]:
+    """Return the concrete agent registry ids implied by one project profile."""
+    return (
+        _variant_id("claude-code", config.claude_model),
+        _variant_id("codex", config.codex_model, config.codex_reasoning_effort),
+    )
+
+
 def config_path(workspace: Path) -> Path:
     return workspace.resolve() / CONFIG_RELATIVE_PATH
 
@@ -105,11 +113,7 @@ def project_config_from_mapping(payload: object, path: Path | None = None) -> Pr
         ),
         notify_desktop=_boolean(notifications.get("desktop", False), f"{label}.notifications.desktop"),
     )
-    available_ids = {
-        "auto",
-        _variant_id("claude-code", config.claude_model),
-        _variant_id("codex", config.codex_model, config.codex_reasoning_effort),
-    }
+    available_ids = {"auto", *configured_agent_ids(config)}
     if config.agent not in available_ids:
         raise ProjectConfigError(
             f"{label}.agent: {config.agent!r} does not match the configured model variants; "

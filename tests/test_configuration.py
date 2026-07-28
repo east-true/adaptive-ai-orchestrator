@@ -8,9 +8,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
+from adaptive_orchestrator.execution.agents import ClaudeCodeAgent, CodexAgent
 from adaptive_orchestrator.infrastructure.configuration import (
     ProjectConfigError,
     config_path,
+    configured_agent_ids,
     detect_verification_commands,
     initialize_project_config,
     load_project_config,
@@ -45,6 +47,13 @@ class ProjectConfigTests(unittest.TestCase):
         self.assertFalse(config.escalation_enabled)
         self.assertTrue(config.notify_terminal_bell)
         self.assertTrue(config.notify_desktop)
+        self.assertEqual(
+            configured_agent_ids(config),
+            (
+                ClaudeCodeAgent(model="opus").agent_id,
+                CodexAgent(model="gpt-5.5", reasoning_effort="high").agent_id,
+            ),
+        )
 
     def test_rejects_unknown_fields_and_invalid_values(self) -> None:
         with self.assertRaisesRegex(ProjectConfigError, "unknown field"):

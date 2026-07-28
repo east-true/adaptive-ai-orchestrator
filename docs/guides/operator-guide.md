@@ -163,7 +163,9 @@ The precedence is built-in defaults, then the local project profile, then
 explicit CLI options. Repeatable `--verify-command` options extend the configured
 command list. Boolean profile values can be overridden in either direction with
 `--verbose`/`--no-verbose`, `--include-git-diff`/`--no-include-git-diff`, and
-`--escalation`/`--no-escalation`.
+`--escalation`/`--no-escalation`. Use `--no-time-limit` to clear a configured
+task limit and `--clear-verify-commands` to clear configured constraint checks;
+later `--time-limit` or `--verify-command` options can then add explicit values.
 
 `doctor` validates the profile, checks the Python version, and asks installed
 Claude Code and Codex CLIs for their local login status. Missing optional agents
@@ -311,7 +313,11 @@ Replay rejects sequence gaps, event-ID collisions, invalid transitions, and
 malformed rows. Duplicate identical event IDs are idempotent. On the next local
 startup, a `started` attempt whose PID is no longer alive is reconciled as
 abandoned and finalized; a live concurrent owner is left alone. Interrupting a
-subprocess kills and reaps it before re-raising the interrupt. Legacy execution
+subprocess kills its isolated POSIX process group, its per-invocation Windows
+Job Object, or the direct child on another non-POSIX fallback, then reaps the
+owned root before re-raising the interrupt. The Windows runner uses a launch
+gate so the requested command cannot start before Job assignment; this does not
+yet make the POSIX-classified persistence layers Windows-compatible. Legacy execution
 JSONL is reported only for schema/record reproduction and explicitly never as
 counterfactual support.
 
@@ -449,7 +455,14 @@ If you want to set the workspace and agent once, then issue short commands repea
 
 ```bash
 PYTHONPATH=src python3 -m adaptive_orchestrator.shell
-Adaptive Orchestrator shell. Type help or ? for commands; task <request> for a quick run.
+    _        _        ___
+   / \      / \      / _ \
+  / _ \    / _ \    | | | |
+ /_/ \_\  /_/ \_\    \___/
+
+ Adaptive AI Orchestrator
+ Shell v0.1.0 | Kernel v0.1
+ Type help or ?; task <request> starts a quick run.
 adaptive[auto:adaptive-ai-orchestrator]> workspace .
 Workspace set to /path/to/adaptive-ai-orchestrator
 adaptive[auto:adaptive-ai-orchestrator]> agent codex
@@ -467,6 +480,16 @@ Enter request. Finish with a line containing only '.'
 adaptive[codex:adaptive-ai-orchestrator]> recent 2
 #10 codex completed verify=passed duration=14.2s — Run the unit tests. Fix any failures and explain their cause.
 #9 claude-code completed verify=skipped duration=8.1s — Review the implementation
+adaptive[codex:adaptive-ai-orchestrator]> show #10
+Execution: <execution-id>
+Task: Run the unit tests. Fix any failures and explain their cause.
+Status: completed
+Agent: codex
+...
+adaptive[codex:adaptive-ai-orchestrator]> report #10 --output execution-10.md
+... report written by the canonical CLI ...
+adaptive[codex:adaptive-ai-orchestrator]> retry #10 --agent same
+{ ... existing cli.main JSON output ... }
 adaptive[codex:adaptive-ai-orchestrator]> history
 claude-code: ... legacy execution/verification metrics ...
 codex: ... legacy execution/verification metrics ...
@@ -476,9 +499,16 @@ Claude Code: ... subscription and logged project-cost summary ...
 adaptive[codex:adaptive-ai-orchestrator]> exit
 ```
 
-The shell keeps session state only for the lifetime of the process. The prompt and `status` command show the active workspace and agent; `cd` aliases `workspace`, and `q` aliases `quit`. `task <request>` is the shortest execution path: it sends the rest of the line as both `--description` and `--objective`. `compose` does the same for a multiline request, ending input with a line containing only `.`. Use `run` when description and objective or other CLI flags need to differ.
+The shell version in the banner is the distribution/shell release from package
+metadata (or the source tree's `[project].version` during `PYTHONPATH=src`
+development). `Kernel v0.1` is a separate milestone for the orchestration core;
+the two axes are shown independently even when they happen to advance together.
 
-`set` stores frequently repeated options for the current session. `verbose` and `no_escalation` accept `on` or `off`, `time_limit` accepts positive seconds or `off`, and `verify` accepts command text or `off`. `settings` shows the active values:
+The shell keeps session state only for the lifetime of the process. Agent selection starts as `inherit`: the prompt shows the effective agent from the active workspace profile, while `agent` and `status` show both the inheritance mode and effective value. `agent auto` explicitly overrides a profile-pinned agent with automatic routing, `agent inherit` returns control to the profile, and `agent <exact-id>` accepts the registry IDs implied by that profile, including configured variants such as `claude-code:opus` and `codex:gpt-5.5:high`. Switching workspaces preserves an explicit override but warns if the new profile does not register it.
+
+The prompt and `status` also show the active workspace; `cd` aliases `workspace`, and `q` aliases `quit`. Relative `cd`/`workspace` arguments, plan-file paths, and their completions are resolved from the active workspace rather than the directory where the shell was launched. `task <request>` is the shortest execution path: it sends the rest of the line as both `--description` and `--objective`. `compose` does the same for a multiline request, ending input with a line containing only `.`; Ctrl-C or end-of-file discards any partial request. Use `run` when description and objective or other CLI flags need to differ.
+
+`set` stores frequently repeated options for the current session. Every setting begins as `inherit`, taking its value from the active project's config. `verbose` and `no_escalation` accept `on`, `off`, or `inherit`; `time_limit` accepts positive seconds, `off`, or `inherit`; and `verify` accepts command text, `off`, or `inherit`. For `time_limit` and `verify`, `off` explicitly disables a profile value while `inherit` restores it. A verify command is parsed as shell-style tokens and stored in a canonical quoted form, so `set verify "/tmp/check tool" --strict` preserves the spaced executable path as one token while `set verify python3 -m unittest` preserves three ordinary tokens. `settings` shows the session override modes and values:
 
 ```text
 set verbose on
@@ -488,11 +518,17 @@ set verify python3 -m unittest
 settings
 ```
 
-The defaults are translated back into normal CLI argv. A time limit applies only to `task`/`run`, because `run-plan` and `plan generate` do not expose that task-level flag; the other workflow defaults apply to all routed shell commands. Options then follow their existing argparse behavior: a later single-value option such as `--time-limit` wins, repeatable `--verify-command` values accumulate with the session default, and a session-level `no_escalation` must be turned off with `set no_escalation off` before a command because the CLI has no inverse flag.
+The defaults are translated back into normal CLI argv. A time limit applies only to `task`/`run`, because `run-plan` and `plan generate` do not expose that task-level flag; the other workflow defaults apply to all routed shell commands. The shell prepends its workspace and session defaults, then forwards every entered `run_plan`, `plan_generate`, `retry`, or other wrapper token to the canonical argparse command, including flags entered before a required positional. Options then follow their existing argparse behavior: a later single-value option such as `--time-limit` wins, and repeatable `--verify-command` values accumulate with the session default. Explicit `off` values emit `--no-verbose`, `--escalation`, `--no-time-limit`, or `--clear-verify-commands` as appropriate, while `inherit` emits no session override and restores project-config behavior.
 
-`recent [count]` reads the compatibility workspace execution JSONL and shows the last appended final records first with agent, execution status, verification status, agent-process duration, and a compact task description. It does not read or summarize the protected lifecycle source; use `replay` for lifecycle validation. `help run`, `help run_plan`, `help plan_generate`, and the corresponding plan/memory topics delegate to the existing argparse help, keeping shell help aligned with CLI flags.
+`set verify` treats its value as command-line syntax and preserves the parsed token boundaries when it forwards that value through the CLI. Quote only tokens that require it—for example, `set verify "/opt/check tool" --fast` keeps `/opt/check tool` as one executable path while passing `--fast` as its argument.
 
-Command names, `agent` values, workspace directories, and plan-file paths support tab completion. Invalid workspace paths are rejected without losing the current session state, command typos suggest a close match, and a blank line is a no-op rather than `cmd.Cmd`'s default behavior of repeating the previous command.
+`recent [count]` reads the compatibility workspace execution JSONL and shows the newest logical executions first with the effective outcome's agent, execution status, verification status, agent-process duration, attempt count after escalation, and a compact task description. Pass the displayed legacy number directly to `show #N`, `retry #N`, or `report #N`; the wrappers also accept execution and attempt IDs. `show` opens the grouped execution through the canonical human-readable summary, `retry` reuses the original task and current session workflow defaults, and `report` renders the canonical Markdown report. If escalation recovers an execution, `recent`, `show`, and Markdown reports therefore show the recovered outcome while retry still uses the original task definition. A failed advisory escalation does not erase an already verified successful primary attempt, although the report still exposes its terminal status/error and uses the terminal attempt's changed-file snapshot and optional diff so later workspace effects are not hidden. Nested-only legacy escalation records receive the same logical attempt count and outcome treatment. `recent` does not read or summarize the protected lifecycle source; use the CLI `replay` command for lifecycle validation. `help show`, `help retry`, `help report`, `help run`, `help run_plan`, `help plan_generate`, and the corresponding plan/memory topics delegate to the existing argparse help; config-sensitive help uses the active session workspace.
+
+Command names, exact configured `agent` values, workspace directories, nested plan-file paths, and the first identifier passed to `show`, `retry`, or `report` support tab completion. Identifier completion includes deduplicated execution IDs, attempt IDs, and the logical `#N` references printed by `recent`; an unreadable history file simply yields no matches. The shell treats only whitespace as a readline token boundary, so IDs containing `-` or `:` and paths containing `/` complete as one value; its quote-aware path completer preserves partial single/double quotes or backslash escapes, including `./`, quoted intermediate components, and names that themselves contain quote characters. It restores the process-global completer and token-delimiter settings when the loop exits or is interrupted. Invalid workspace paths are rejected without losing the current session state, command typos suggest a close match, and a blank line is a no-op rather than `cmd.Cmd`'s default behavior of repeating the previous command.
+
+Ctrl-C while composing discards the partial request. During a routed command it interrupts the current work, lets the execution layer clean up the invocation's isolated process boundary, and returns to the same shell session; at the prompt it clears the current input without repeating the banner. SIGTERM, and POSIX terminal hangup/quit signals when available, similarly unwind embedded CLI work so cleanup finalizers run, restore the shell's previous signal handlers, and exit with the conventional `128 + signal` status without a Python traceback. Non-zero return codes from the embedded CLI are also surfaced before the next prompt.
+
+Independent shell processes can target the same workspace. Recorder-managed lifecycle append, abandoned-attempt reconciliation, and materialized-state projection are serialized under one inter-process lock so one session cannot duplicate reconciliation events or overwrite a newer projection from another session. Each prospective recorder append is replay-validated before it becomes durable, so a bad transition cannot leave every later shell startup stuck on a poisoned event row.
 
 Most commands still only build an argv list and call the canonical `adaptive_orchestrator.interfaces.cli.main` dispatch, so they stay aligned with normal CLI flags and output conventions. Shell-native convenience commands include session views (`status`, `settings`) and read-only local-data views (`history`, `recent`, `usage`). `history` currently exposes legacy operational metrics, not objective task-quality or unbiased policy estimates; do not use its percentages to rank agents.
 

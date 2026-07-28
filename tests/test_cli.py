@@ -4,6 +4,7 @@ import io
 import json
 import sys
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -14,6 +15,7 @@ from adaptive_orchestrator.interfaces import cli
 from adaptive_orchestrator.infrastructure.configuration import ProjectConfig, config_path
 from adaptive_orchestrator.core.domain import Capability, EvaluatorRole, MemoryEntryType, Priority
 from adaptive_orchestrator.infrastructure.events import JsonlEventStore, LifecycleEventType
+from adaptive_orchestrator.routing.state import LifecycleRecorder, RoutingStateStore
 
 
 class BuildWorkflowTests(unittest.TestCase):
@@ -137,6 +139,56 @@ class ProjectConfigCliTests(unittest.TestCase):
         self.assertFalse(overridden.verbose)
         self.assertFalse(overridden.no_escalation)
 
+    def test_cli_can_clear_configured_time_limit_and_verification_commands(self) -> None:
+        config = ProjectConfig(
+            time_limit_seconds=90,
+            verify_commands=("configured-check",),
+        )
+        parser = cli.build_parser(config)
+
+        cleared = parser.parse_args([
+            "run",
+            "--description",
+            "Do it",
+            "--objective",
+            "Done",
+            "--no-time-limit",
+            "--clear-verify-commands",
+        ])
+        self.assertIsNone(cleared.time_limit)
+        self.assertEqual(cleared.verify_command, [])
+
+        overridden_later = parser.parse_args([
+            "run",
+            "--description",
+            "Do it",
+            "--objective",
+            "Done",
+            "--no-time-limit",
+            "--time-limit",
+            "30",
+            "--clear-verify-commands",
+            "--verify-command",
+            "explicit-check",
+        ])
+        self.assertEqual(overridden_later.time_limit, 30)
+        self.assertEqual(overridden_later.verify_command, ["explicit-check"])
+
+    def test_configured_commands_reject_abbreviated_workspace_options(self) -> None:
+        parser = cli.build_parser()
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr), self.assertRaises(SystemExit):
+            parser.parse_args([
+                "run",
+                "--work",
+                "/override",
+                "--description",
+                "Do it",
+                "--objective",
+                "Done",
+            ])
+        self.assertIn("unrecognized arguments", stderr.getvalue())
+
     def test_config_for_argv_uses_explicit_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory)
@@ -145,6 +197,63 @@ class ProjectConfigCliTests(unittest.TestCase):
             path.write_text(json.dumps({"version": 1, "agent": "codex"}), encoding="utf-8")
             config = cli._config_for_argv(["run", "--workspace", str(workspace)])
         self.assertEqual(config.agent, "codex")
+
+    def test_config_for_argv_uses_last_repeated_workspace_like_argparse(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            first = root / "first"
+            second = root / "second"
+            for workspace, agent in ((first, "claude-code"), (second, "codex")):
+                path = config_path(workspace)
+                path.parent.mkdir(parents=True)
+                path.write_text(json.dumps({"version": 1, "agent": agent}), encoding="utf-8")
+
+            argv = [
+                "run",
+                "--workspace",
+                str(first),
+                f"--workspace={second}",
+                "--description",
+                "Do it",
+                "--objective",
+                "Done",
+            ]
+            config = cli._config_for_argv(argv)
+            args = cli.build_parser(config).parse_args(argv)
+
+        self.assertEqual(config.agent, "codex")
+        self.assertEqual(args.workspace, second)
+
+    def test_config_for_argv_ignores_workspace_text_after_option_terminator(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            first = root / "first"
+            second = root / "second"
+            ignored = root / "ignored"
+            for workspace, agent in (
+                (first, "claude-code"),
+                (second, "codex"),
+                (ignored, "claude-code:ignored"),
+            ):
+                path = config_path(workspace)
+                path.parent.mkdir(parents=True)
+                path.write_text(json.dumps({"version": 1, "agent": agent}), encoding="utf-8")
+
+            argv = [
+                "plan",
+                "generate",
+                "--workspace",
+                str(first),
+                f"--workspace={second}",
+                "--",
+                f"--workspace={ignored}",
+            ]
+            config = cli._config_for_argv(argv)
+            args = cli.build_parser(config).parse_args(argv)
+
+        self.assertEqual(config.agent, "codex")
+        self.assertEqual(args.workspace, second)
+        self.assertEqual(args.request, f"--workspace={ignored}")
 
     def test_init_dispatch_writes_config(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -205,6 +314,43 @@ class ProjectConfigCliTests(unittest.TestCase):
             self.assertEqual(exit_code, 1)
             self.assertEqual(output.read_text(encoding="utf-8"), "keep")
             self.assertIn("already exists", stderr.getvalue())
+
+    def test_report_resolves_relative_output_from_final_workspace(self) -> None:
+        record = {
+            "execution_id": "exec-1",
+            "attempt_id": "attempt-1",
+            "task": {"description": "Fix it", "objective": "It works"},
+            "agent_id": "codex",
+            "status": "completed",
+            "verification": {"status": "passed"},
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            first = root / "first"
+            workspace = root / "final"
+            first.mkdir()
+            log = workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir(parents=True)
+            log.write_text(json.dumps(record), encoding="utf-8")
+            stdout = io.StringIO()
+
+            with contextlib.redirect_stdout(stdout):
+                exit_code = cli.main([
+                    "report",
+                    "exec-1",
+                    "--workspace",
+                    str(first),
+                    "--workspace",
+                    str(workspace),
+                    "--output",
+                    "reports/result.md",
+                ])
+
+            output = workspace / "reports" / "result.md"
+            self.assertEqual(exit_code, 0)
+            self.assertTrue(output.is_file())
+            self.assertIn("# Execution exec-1", output.read_text(encoding="utf-8"))
+            self.assertIn(str(output.resolve()), stdout.getvalue())
 
     def test_quality_evaluator_specs_are_versioned_and_protected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -350,8 +496,10 @@ class ReplayDispatchTests(unittest.TestCase):
             workspace.mkdir()
             control = root / "control"
             store = JsonlEventStore(control / "events.jsonl")
+            state_path = control / "routing-state.json"
+            seed = LifecycleRecorder(store, RoutingStateStore(state_path))
             common = {"execution_id": "execution", "task_id": "task", "attempt_id": "attempt"}
-            store.append(
+            seed.record(
                 LifecycleEventType.SELECTION_MADE,
                 payload={
                     "selected_agent": "codex",
@@ -362,9 +510,10 @@ class ReplayDispatchTests(unittest.TestCase):
                 },
                 **common,
             )
-            store.append(LifecycleEventType.EXECUTION_STARTED, **common)
-            store.append(LifecycleEventType.EXECUTION_TERMINAL, payload={"status": "completed"}, **common)
-            store.append(LifecycleEventType.OUTCOME_FINALIZED, payload={"status": "completed"}, **common)
+            seed.record(LifecycleEventType.EXECUTION_STARTED, **common)
+            seed.record(LifecycleEventType.EXECUTION_TERMINAL, payload={"status": "completed"}, **common)
+            seed.record(LifecycleEventType.OUTCOME_FINALIZED, payload={"status": "completed"}, **common)
+            state_path.unlink()
             stdout = io.StringIO()
 
             with contextlib.redirect_stdout(stdout):
@@ -383,6 +532,167 @@ class ReplayDispatchTests(unittest.TestCase):
             self.assertTrue(payload["state_rebuilt"])
             self.assertFalse(payload["legacy_execution_log"]["counterfactual_supported"])
             self.assertTrue((control / "routing-state.json").exists())
+
+    def test_rebuild_state_does_not_reconcile_incomplete_attempts(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            control = root / "control"
+            store = JsonlEventStore(control / "events.jsonl")
+            state_path = control / "routing-state.json"
+            seed = LifecycleRecorder(store, RoutingStateStore(state_path))
+            common = {"execution_id": "execution", "task_id": "task", "attempt_id": "attempt"}
+            seed.record(
+                LifecycleEventType.SELECTION_MADE,
+                payload={
+                    "selected_agent": "codex",
+                    "eligible_candidates": ["codex"],
+                    "ineligible_reasons": {},
+                    "candidate_probabilities": {"codex": 1.0},
+                    "selected_probability": 1.0,
+                },
+                **common,
+            )
+            seed.record(LifecycleEventType.EXECUTION_STARTED, **common)
+            state_path.unlink()
+            stdout = io.StringIO()
+
+            with contextlib.redirect_stdout(stdout):
+                exit_code = cli.main([
+                    "replay", "--workspace", str(workspace),
+                    "--control-state-dir", str(control), "--rebuild-state",
+                ])
+
+            payload = json.loads(stdout.getvalue())
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(payload["reconciled_count"], 0)
+            self.assertEqual(payload["attempt_status_counts"], {"started": 1})
+            self.assertEqual(len(store.read()), 2)
+            materialized = RoutingStateStore(control / "routing-state.json").read()
+            self.assertIsNotNone(materialized)
+            self.assertEqual(
+                materialized["executions"]["execution"]["attempts"]["attempt"]["status"],
+                "started",
+            )
+
+    def test_rebuild_state_cannot_overwrite_a_concurrent_recorder_projection(self) -> None:
+        class SignalingAppendStore(JsonlEventStore):
+            def __init__(self, path: Path, append_entered: threading.Event) -> None:
+                super().__init__(path)
+                self.append_entered = append_entered
+
+            def _append_validated(self, *args, **kwargs):
+                self.append_entered.set()
+                return super()._append_validated(*args, **kwargs)
+
+        class BlockingReadStore(JsonlEventStore):
+            def __init__(self, path: Path, entered: threading.Event, release: threading.Event) -> None:
+                super().__init__(path)
+                self.entered = entered
+                self.release = release
+
+            def read(self):
+                events = super().read()
+                self.entered.set()
+                if not self.release.wait(5):
+                    raise RuntimeError("timed out waiting to release CLI event snapshot")
+                return events
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            control = root / "control"
+            event_path = control / "events.jsonl"
+            state_path = control / "routing-state.json"
+            append_entered = threading.Event()
+            recorder = LifecycleRecorder(
+                SignalingAppendStore(event_path, append_entered),
+                RoutingStateStore(state_path),
+            )
+            selection = {
+                "selected_agent": "codex",
+                "eligible_candidates": ["codex"],
+                "ineligible_reasons": {},
+                "candidate_probabilities": {"codex": 1.0},
+                "selected_probability": 1.0,
+            }
+            recorder.record(
+                LifecycleEventType.SELECTION_MADE,
+                execution_id="execution-a",
+                task_id="task-a",
+                attempt_id="attempt-a",
+                payload=selection,
+            )
+            append_entered.clear()
+
+            entered = threading.Event()
+            release = threading.Event()
+            writer_started = threading.Event()
+            writer_finished = threading.Event()
+            errors: list[BaseException] = []
+            exit_codes: list[int] = []
+            stdout = io.StringIO()
+            blocking_events = BlockingReadStore(event_path, entered, release)
+
+            def rebuild_from_cli() -> None:
+                try:
+                    with contextlib.redirect_stdout(stdout):
+                        exit_codes.append(cli.main([
+                            "replay", "--workspace", str(workspace),
+                            "--control-state-dir", str(control), "--rebuild-state",
+                        ]))
+                except BaseException as exc:
+                    errors.append(exc)
+
+            def record_new_execution() -> None:
+                try:
+                    writer_started.set()
+                    recorder.record(
+                        LifecycleEventType.SELECTION_MADE,
+                        execution_id="execution-b",
+                        task_id="task-b",
+                        attempt_id="attempt-b",
+                        payload=selection,
+                    )
+                except BaseException as exc:
+                    errors.append(exc)
+                finally:
+                    writer_finished.set()
+
+            with patch.object(cli, "JsonlEventStore", return_value=blocking_events):
+                rebuild_thread = threading.Thread(target=rebuild_from_cli)
+                writer_thread = threading.Thread(target=record_new_execution)
+                rebuild_thread.start()
+                rebuild_entered = entered.wait(5)
+                if rebuild_entered:
+                    writer_thread.start()
+                    writer_did_start = writer_started.wait(5)
+                    append_was_blocked = not append_entered.wait(0.5)
+                else:
+                    writer_did_start = False
+                    append_was_blocked = False
+                release.set()
+                rebuild_thread.join(5)
+                if writer_thread.ident is not None:
+                    writer_thread.join(5)
+
+            self.assertTrue(rebuild_entered)
+            self.assertTrue(writer_did_start)
+            self.assertTrue(append_was_blocked)
+            self.assertFalse(rebuild_thread.is_alive())
+            self.assertFalse(writer_thread.is_alive())
+            self.assertEqual(errors, [])
+            self.assertEqual(exit_codes, [0])
+            self.assertTrue(append_entered.is_set())
+            self.assertTrue(writer_finished.is_set())
+            event_execution_ids = {
+                event.execution_id for event in JsonlEventStore(event_path).read()
+            }
+            materialized = RoutingStateStore(state_path).read()
+            self.assertIsNotNone(materialized)
+            self.assertEqual(set(materialized["executions"]), event_execution_ids)
 
     def test_replay_reports_invalid_event_log_without_traceback(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -476,6 +786,28 @@ class PairedDispatchTests(unittest.TestCase):
 
 
 class WorkflowConfigurationDispatchTests(unittest.TestCase):
+    def test_unknown_model_variant_fails_cleanly_before_agent_execution(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            control = root / "control"
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                exit_code = cli.main([
+                    "run",
+                    "--workspace", str(workspace),
+                    "--control-state-dir", str(control),
+                    "--agent", "codex:old",
+                    "--codex-model", "new",
+                    "--description", "Do work",
+                    "--objective", "Done",
+                ])
+
+            self.assertEqual(exit_code, 2)
+            self.assertIn("Unknown agent: codex:old", stderr.getvalue())
+            self.assertFalse(control.exists())
+
     def test_static_policy_without_baseline_fails_cleanly_before_agent_execution(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -494,6 +826,125 @@ class WorkflowConfigurationDispatchTests(unittest.TestCase):
 
             self.assertEqual(exit_code, 2)
             self.assertIn("requires --routing-baseline-agent", stderr.getvalue())
+
+    def test_retry_unknown_original_agent_uses_clean_preflight_exit(self) -> None:
+        record = {
+            "execution_id": "exec-1",
+            "attempt_id": "attempt-1",
+            "task": {
+                "description": "Do work",
+                "objective": "Done",
+                "cost_limit_usd": 1.5,
+            },
+            "agent_id": "codex:old",
+            "status": "failed",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workspace = root / "workspace"
+            log = workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir(parents=True)
+            log.write_text(json.dumps(record), encoding="utf-8")
+            control = root / "control"
+            stderr = io.StringIO()
+
+            with contextlib.redirect_stderr(stderr):
+                exit_code = cli.main([
+                    "retry",
+                    "exec-1",
+                    "--workspace",
+                    str(workspace),
+                    "--control-state-dir",
+                    str(control),
+                ])
+
+            self.assertEqual(exit_code, 2)
+            self.assertIn("Workflow configuration failed", stderr.getvalue())
+            self.assertIn("Unknown agent: codex:old", stderr.getvalue())
+            self.assertFalse(control.exists())
+
+
+class WorkspaceRelativeDispatchTests(unittest.TestCase):
+    def test_run_plan_resolves_relative_plan_from_final_workspace(self) -> None:
+        class Workflow:
+            tasks = None
+
+            def run_plan(self, tasks, requested_agent, stop_on_failure=True):
+                self.tasks = tasks
+                return type("Result", (), {
+                    "steps": (),
+                    "stopped_early": False,
+                    "succeeded": True,
+                })()
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            first = root / "first"
+            workspace = root / "final"
+            first.mkdir()
+            plan_path = workspace / "plans" / "plan.json"
+            plan_path.parent.mkdir(parents=True)
+            plan_path.write_text(json.dumps([
+                {"description": "From final workspace", "objective": "Done"},
+            ]), encoding="utf-8")
+            workflow = Workflow()
+
+            with (
+                patch.object(cli, "_build_workflow_for_cli", return_value=workflow),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                exit_code = cli.main([
+                    "run-plan",
+                    "--workspace",
+                    str(first),
+                    "--workspace",
+                    str(workspace),
+                    "plans/plan.json",
+                ])
+
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(workflow.tasks[0].description, "From final workspace")
+
+    def test_run_resolves_relative_text_files_from_final_workspace(self) -> None:
+        class Workflow:
+            task = None
+
+            def run(self, task, requested_agent):
+                self.task = task
+                return object(), object()
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            first = root / "first"
+            workspace = root / "final"
+            first.mkdir()
+            inputs = workspace / "inputs"
+            inputs.mkdir(parents=True)
+            (inputs / "description.txt").write_text("Workspace description\n", encoding="utf-8")
+            (inputs / "objective.txt").write_text("Workspace objective\n", encoding="utf-8")
+            workflow = Workflow()
+
+            with (
+                patch.object(cli, "_build_workflow_for_cli", return_value=workflow),
+                patch.object(cli, "asdict", return_value={}),
+                patch.object(cli, "execution_succeeded", return_value=True),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                exit_code = cli.main([
+                    "run",
+                    "--workspace",
+                    str(first),
+                    "--workspace",
+                    str(workspace),
+                    "--description-file",
+                    "inputs/description.txt",
+                    "--objective-file",
+                    "inputs/objective.txt",
+                ])
+
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(workflow.task.description, "Workspace description")
+            self.assertEqual(workflow.task.objective, "Workspace objective")
 
 
 class ValidatePlanFileTests(unittest.TestCase):

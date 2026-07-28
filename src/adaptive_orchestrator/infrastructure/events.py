@@ -6,7 +6,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 from uuid import uuid4
 
 import fcntl
@@ -83,7 +83,7 @@ class EventLogError(ValueError):
 
 
 class JsonlEventStore:
-    """Durable append-only event source with locked sequence allocation."""
+    """Durable event source; lifecycle mutation is coordinated by LifecycleRecorder."""
 
     def __init__(self, path: Path) -> None:
         self.path = path
@@ -100,7 +100,26 @@ class JsonlEventStore:
         event_id: str | None = None,
         occurred_at: str | None = None,
     ) -> LifecycleEvent:
-        """Allocate the next execution sequence and fsync one event atomically.
+        """Fail closed because direct append cannot update the routing projection safely."""
+
+        raise EventLogError(
+            "Direct lifecycle append is unsupported; use LifecycleRecorder.record()."
+        )
+
+    def _append_validated(
+        self,
+        event_type: LifecycleEventType,
+        *,
+        validator: Callable[[Sequence[LifecycleEvent]], object],
+        execution_id: str,
+        task_id: str,
+        attempt_id: str,
+        parent_attempt_id: str | None = None,
+        payload: Mapping[str, Any] | None = None,
+        event_id: str | None = None,
+        occurred_at: str | None = None,
+    ) -> LifecycleEvent:
+        """Validate and append while the caller holds the recorder lock.
 
         Reusing an event ID is idempotent: the existing event is returned and
         no second line is appended.
@@ -115,25 +134,10 @@ class JsonlEventStore:
             try:
                 stream.seek(0)
                 events = _parse_lines(stream.read().splitlines(), self.path)
-                for existing in events:
-                    if existing.event_id == requested_event_id:
-                        same_request = (
-                            existing.event_type is event_type
-                            and existing.execution_id == execution_id
-                            and existing.task_id == task_id
-                            and existing.attempt_id == attempt_id
-                            and existing.parent_attempt_id == parent_attempt_id
-                            and dict(existing.payload) == dict(payload or {})
-                            and (occurred_at is None or existing.occurred_at == occurred_at)
-                        )
-                        if not same_request:
-                            raise EventLogError(f"Event id collision with different content: {requested_event_id}")
-                        return existing
-                next_sequence = max((item.sequence for item in events if item.execution_id == execution_id), default=0) + 1
-                event = LifecycleEvent(
+                draft = LifecycleEvent(
                     event_type=event_type,
                     execution_id=execution_id,
-                    sequence=next_sequence,
+                    sequence=1,
                     task_id=task_id,
                     attempt_id=attempt_id,
                     event_id=requested_event_id,
@@ -141,12 +145,63 @@ class JsonlEventStore:
                     parent_attempt_id=parent_attempt_id,
                     payload=payload or {},
                 )
-                serialized = json.dumps(redact(asdict(event)), default=str, sort_keys=True, separators=(",", ":"))
+                # Round-trip through the exact JSON encoding before validation.
+                # ``default=str`` can otherwise make the object validated here
+                # differ from the object parsed back from the durable row.
+                persisted_value = json.loads(
+                    json.dumps(
+                        redact(asdict(draft)),
+                        default=str,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    )
+                )
+                if not isinstance(persisted_value, Mapping):  # pragma: no cover - redact preserves mappings
+                    raise EventLogError("Persisted lifecycle event must be an object.")
+                persisted_request = LifecycleEvent.from_dict(persisted_value)
+                for existing in events:
+                    if existing.event_id == persisted_request.event_id:
+                        same_request = (
+                            existing.event_type is persisted_request.event_type
+                            and existing.execution_id == persisted_request.execution_id
+                            and existing.task_id == persisted_request.task_id
+                            and existing.attempt_id == persisted_request.attempt_id
+                            and existing.parent_attempt_id == persisted_request.parent_attempt_id
+                            and dict(existing.payload) == dict(persisted_request.payload)
+                            and (occurred_at is None or existing.occurred_at == persisted_request.occurred_at)
+                        )
+                        if not same_request:
+                            raise EventLogError(
+                                f"Event id collision with different content: {persisted_request.event_id}"
+                            )
+                        validator(events)
+                        return existing
+                next_sequence = max(
+                    (
+                        item.sequence
+                        for item in events
+                        if item.execution_id == persisted_request.execution_id
+                    ),
+                    default=0,
+                ) + 1
+                persisted_value = dict(persisted_value)
+                persisted_value["sequence"] = next_sequence
+                persisted = LifecycleEvent.from_dict(persisted_value)
+                serialized = json.dumps(
+                    persisted_value,
+                    default=str,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+                # Validate the exact representation that will become the source
+                # of truth. In particular, redaction must not make preflight and
+                # replay observe different event shapes.
+                validator((*events, persisted))
                 stream.seek(0, os.SEEK_END)
                 stream.write(serialized + "\n")
                 stream.flush()
                 os.fsync(stream.fileno())
-                return event
+                return persisted
             finally:
                 fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
 

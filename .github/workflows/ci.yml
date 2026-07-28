@@ -50,3 +50,36 @@ jobs:
       - name: Build wheel
         if: matrix.python-version == '3.10'
         run: python -m pip wheel --no-deps --wheel-dir /tmp/aao-wheels .
+
+  windows-process-boundary:
+    name: Windows process boundary (Python ${{ matrix.python-version }})
+    runs-on: windows-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.10"
+          - "3.13"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install project
+        run: |
+          python -m pip install --upgrade "pip>=24"
+          python -m pip install -e .
+      - name: Verify isolated process boundaries
+        run: >-
+          python -m unittest
+          tests.test_windows_job
+          tests.test_windows_process
+          tests.test_process_runner
+          -v

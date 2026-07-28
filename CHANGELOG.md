@@ -10,10 +10,14 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Public contribution, conduct, support, and issue-reporting guidance.
 - Installable console entry points and continuous-integration checks.
+- An interactive-shell startup wordmark with independently sourced shell and
+  kernel versions.
 
 ### Changed
 
 - Package metadata now matches the public repository name.
+- Process cleanup now isolates each POSIX invocation and uses a guarded Windows
+  Job Object launch path so timeout or interruption stays within the owned tree.
 - Repository licensing changes from MIT to Apache License 2.0 from this change
   forward; previously published MIT-licensed revisions remain available under
   their original terms.
