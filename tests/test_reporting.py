@@ -84,6 +84,21 @@ class ExecutionReportStoreTests(unittest.TestCase):
         self.assertIn("# Execution exec-1", markdown)
         self.assertIn("## Agent result", markdown)
         self.assertNotIn("Recorded workspace diff", markdown)
+        self.assertNotIn("Model", summary)
+        self.assertNotIn("Model", markdown)
+
+    def test_surfaces_the_agent_model_when_recorded(self) -> None:
+        record = _record("claude-code", "attempt-1")
+        record["metadata"] = {"model": "claude-opus-4-8"}
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "executions.jsonl"
+            path.write_text(json.dumps(record), encoding="utf-8")
+            bundle = ExecutionReportStore(path).find("exec-1")
+        summary = render_text_summary(bundle)
+        markdown = render_markdown_report(bundle)
+        self.assertIn("Model: claude-opus-4-8", summary)
+        self.assertIn("- Model: `claude-opus-4-8`", markdown)
+        self.assertIn("`claude-code` (claude-opus-4-8) —", markdown)
 
     def test_extracts_retry_task_without_prompt_or_output(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

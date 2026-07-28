@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import shutil
 import sys
+import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
@@ -18,13 +21,17 @@ from adaptive_orchestrator.interfaces.tui import (
     TaskManager,
     build_task_command,
     clamp_offset,
+    condense_path,
     dashboard_rows,
     display_width,
     elapsed_text,
     filter_rows,
     fit_to_width,
+    main,
+    markdown_heading,
     scroll_offset,
     status_category,
+    wrap_text,
 )
 from adaptive_orchestrator.infrastructure.events import LifecycleEvent, LifecycleEventType
 from adaptive_orchestrator.routing.state import EventProjector
@@ -180,6 +187,70 @@ class WidthTests(unittest.TestCase):
     def test_short_text_is_returned_unchanged(self) -> None:
         self.assertEqual(fit_to_width("abc", 10), "abc")
 
+    def test_ellipsis_marks_real_truncation_only(self) -> None:
+        self.assertEqual(fit_to_width("abcdef", 4, ellipsis=True), "abc…")
+        self.assertEqual(fit_to_width("abc", 10, ellipsis=True), "abc")
+        self.assertEqual(display_width(fit_to_width("abcdef", 4, ellipsis=True)), 4)
+
+    def test_ellipsis_is_skipped_when_the_budget_is_too_tight(self) -> None:
+        self.assertEqual(fit_to_width("abcdef", 1, ellipsis=True), "a")
+        self.assertEqual(fit_to_width("abcdef", 0, ellipsis=True), "")
+
+
+class CondensePathTests(unittest.TestCase):
+    def test_short_paths_are_unchanged(self) -> None:
+        self.assertEqual(condense_path("/tmp/work", 40), "/tmp/work")
+
+    def test_long_paths_keep_the_meaningful_tail(self) -> None:
+        result = condense_path("/home/user/very/deeply/nested/orchestrator", 20)
+        self.assertTrue(result.startswith("…/"))
+        self.assertTrue(result.endswith("orchestrator"))
+        self.assertLessEqual(display_width(result), 20)
+
+    def test_a_single_oversized_segment_falls_back_to_tail_truncation(self) -> None:
+        result = condense_path("/home/user/very/deeply/nested/adaptive-ai-orchestrator", 24)
+        self.assertTrue(result.startswith("…"))
+        self.assertLessEqual(display_width(result), 24)
+
+    def test_degenerate_budget_never_crashes(self) -> None:
+        self.assertEqual(condense_path("/a/b/c", 0), "")
+        condense_path("/a/b/c", 1)  # must not raise
+
+
+class MarkdownHeadingTests(unittest.TestCase):
+    def test_hash_prefixed_lines_are_headings(self) -> None:
+        self.assertEqual(markdown_heading("# Execution exec-1"), ("Execution exec-1", 1))
+        self.assertEqual(markdown_heading("## Outcome"), ("Outcome", 2))
+
+    def test_body_text_is_unaffected(self) -> None:
+        self.assertEqual(markdown_heading("Attempts: 1"), ("Attempts: 1", 0))
+        self.assertEqual(markdown_heading("#nospace"), ("#nospace", 0))
+        self.assertEqual(markdown_heading(""), ("", 0))
+
+
+class WrapTextTests(unittest.TestCase):
+    def test_short_text_is_returned_as_a_single_line(self) -> None:
+        self.assertEqual(wrap_text("short line", 40), ["short line"])
+
+    def test_blank_lines_are_preserved(self) -> None:
+        self.assertEqual(wrap_text("", 40), [""])
+
+    def test_long_prose_wraps_on_word_boundaries_within_budget(self) -> None:
+        lines = wrap_text("Migrate the config loader from YAML to TOML", 12)
+        self.assertGreater(len(lines), 1)
+        for line in lines:
+            self.assertLessEqual(display_width(line), 12)
+        self.assertEqual(" ".join(lines), "Migrate the config loader from YAML to TOML")
+
+    def test_a_single_overlong_word_is_hard_broken_not_dropped(self) -> None:
+        lines = wrap_text("a" * 30, 10)
+        self.assertEqual("".join(lines), "a" * 30)
+        for line in lines:
+            self.assertLessEqual(display_width(line), 10)
+
+    def test_zero_budget_returns_text_unchanged(self) -> None:
+        self.assertEqual(wrap_text("anything", 0), ["anything"])
+
 
 class LineEditorTests(unittest.TestCase):
     def test_types_unicode_and_submits(self) -> None:
@@ -281,11 +352,35 @@ class PresentationTests(unittest.TestCase):
         self.assertEqual(status_category("started"), "active")
         self.assertEqual(status_category("something-new"), "idle")
 
+    def test_domain_terminal_statuses_are_categorized_correctly(self) -> None:
+        # These spellings come from ExecutionStatus/VerificationStatus in core/domain.py.
+        self.assertEqual(status_category("timed_out"), "fail")
+        self.assertEqual(status_category("spawn_error"), "fail")
+
     def test_elapsed_text_scales_units(self) -> None:
         self.assertEqual(elapsed_text(9), "9s")
         self.assertEqual(elapsed_text(75), "1m15s")
         self.assertEqual(elapsed_text(3725), "1h02m")
         self.assertEqual(elapsed_text(-5), "0s")
+
+
+class MainCleanupTests(unittest.TestCase):
+    def test_running_tasks_are_force_cancelled_if_the_ui_loop_crashes(self) -> None:
+        workspace = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, workspace, ignore_errors=True)
+        captured: dict[str, object] = {}
+
+        def fake_wrapper(run_method):
+            app = run_method.__self__
+            app.tasks = TaskManager(limit=2, factory=FakeTask)
+            captured["task"] = app.tasks.start(workspace, "live")
+            raise KeyboardInterrupt
+
+        with mock.patch("adaptive_orchestrator.interfaces.tui.curses.wrapper", side_effect=fake_wrapper):
+            with self.assertRaises(KeyboardInterrupt):
+                main(["--workspace", str(workspace)])
+
+        self.assertEqual(captured["task"].signals, [True])
 
 
 if __name__ == "__main__":

@@ -51,9 +51,14 @@ EDITOR_IGNORED = "ignored"
 _OK_STATUS = {"completed", "complete", "passed", "success", "succeeded", "verified", "ok"}
 _FAIL_STATUS = {
     "failed", "failure", "error", "errored", "abandoned", "cancelled", "canceled",
-    "timeout", "timed-out", "rejected", "blocked",
+    "timeout", "timed-out", "timed_out", "spawn_error", "rejected", "blocked",
 }
 _ACTIVE_STATUS = {"selected", "started", "running", "terminal", "reconciled", "evaluated", "in-progress"}
+
+_STATUS_GLYPH = {"ok": "✓", "fail": "✗", "active": "●", "idle": "·"}
+_SPINNER_FRAMES = "|/-\\"
+_DASHBOARD_ROW_FORMAT = "{marker}{glyph} {status:<10} {agent:<16} {description}"
+_TASK_ROW_FORMAT = "{marker}{spinner} #{index:<3} {status:<11} {elapsed:>7}  {request}"
 
 
 # --------------------------------------------------------------------------- rows
@@ -183,25 +188,33 @@ def display_width(text: str) -> int:
     return sum(character_width(character) for character in text)
 
 
-def fit_to_width(text: str, columns: int) -> str:
-    """Truncate on display columns so CJK text cannot overflow its pane."""
+def fit_to_width(text: str, columns: int, ellipsis: bool = False) -> str:
+    """Truncate on display columns so CJK text cannot overflow its pane.
+
+    ``ellipsis`` marks real truncation with a trailing "…" so cut text is never
+    mistaken for the whole value.
+    """
     if columns <= 0:
         return ""
     if display_width(text) <= columns:
         return text
+    budget = columns - 1 if ellipsis and columns > 1 else columns
     kept: list[str] = []
     used = 0
     for character in text:
         width = character_width(character)
-        if used + width > columns:
+        if used + width > budget:
             break
         kept.append(character)
         used += width
-    return "".join(kept)
+    truncated = "".join(kept)
+    if ellipsis and columns > 1:
+        truncated += "…"
+    return truncated
 
 
-def pad_to_width(text: str, columns: int) -> str:
-    trimmed = fit_to_width(text, columns)
+def pad_to_width(text: str, columns: int, ellipsis: bool = False) -> str:
+    trimmed = fit_to_width(text, columns, ellipsis=ellipsis)
     return trimmed + " " * max(columns - display_width(trimmed), 0)
 
 
@@ -212,6 +225,74 @@ def elapsed_text(seconds: float) -> str:
     if total < 3600:
         return f"{total // 60}m{total % 60:02d}s"
     return f"{total // 3600}h{(total % 3600) // 60:02d}m"
+
+
+def condense_path(path: str, columns: int) -> str:
+    """Right-anchor an overlong filesystem path: keep trailing segments, since the tail
+    (repo/workspace name) usually matters more than the shared prefix a user already knows.
+    """
+    if display_width(path) <= columns:
+        return path
+    if columns <= 2:
+        return fit_to_width(path, columns)
+    parts = [segment for segment in path.split("/") if segment]
+    budget = columns - 2  # room for the leading "…/"
+    kept: list[str] = []
+    used = 0
+    for segment in reversed(parts):
+        width = display_width(segment) + (1 if kept else 0)
+        if used + width > budget:
+            break
+        kept.insert(0, segment)
+        used += width
+    if not kept:
+        return "…" + _tail_to_width(path, max(columns - 1, 0))
+    return "…/" + "/".join(kept)
+
+
+def wrap_text(text: str, columns: int) -> list[str]:
+    """Word-wrap ``text`` on display columns; blank lines are preserved as-is.
+
+    A single "word" wider than the whole budget (a long path, a hash) is hard-broken
+    rather than left to overflow, so nothing ever gets silently cut off.
+    """
+    if columns <= 0 or display_width(text) <= columns:
+        return [text]
+    wrapped: list[str] = []
+    current = ""
+    current_width = 0
+    for word in text.split(" "):
+        word_width = display_width(word)
+        if word_width > columns:
+            if current:
+                wrapped.append(current)
+                current, current_width = "", 0
+            remainder = word
+            while display_width(remainder) > columns:
+                piece = fit_to_width(remainder, columns)
+                wrapped.append(piece)
+                remainder = remainder[len(piece):]
+            current, current_width = remainder, display_width(remainder)
+            continue
+        candidate_width = current_width + (1 if current else 0) + word_width
+        if candidate_width > columns:
+            wrapped.append(current)
+            current, current_width = word, word_width
+        else:
+            current = f"{current} {word}" if current else word
+            current_width = candidate_width
+    if current or not wrapped:
+        wrapped.append(current)
+    return wrapped
+
+
+def markdown_heading(line: str) -> tuple[str, int]:
+    """Split a ``#``-prefixed markdown line into (text, level); level 0 is body text."""
+    stripped = line.lstrip("#")
+    level = len(line) - len(stripped)
+    if level == 0 or (stripped and not stripped.startswith(" ")):
+        return line, 0
+    return stripped.strip(), level
 
 
 # -------------------------------------------------------------------- line editor
@@ -497,6 +578,15 @@ class Theme:
         return self.attribute(status_category(status))
 
 
+_MESSAGE_FALLBACK_ATTRIBUTE = {
+    "info": curses.A_DIM,
+    "ok": curses.A_BOLD,
+    "warn": curses.A_BOLD,
+    "error": curses.A_BOLD,
+}
+_MESSAGE_COLOR = {"ok": "ok", "warn": "idle", "error": "fail"}
+
+
 # ---------------------------------------------------------------------- the screen
 
 
@@ -531,11 +621,16 @@ class OrchestratorTui:
         self.log_follow = True
 
         self.message = "?:help  n:new task  /:filter  Tab:tasks  Enter:detail  q:quit"
+        self._message_kind = "info"
         self.load_error = ""
         self._announced: set[int] = set()
         self._detail_key = ""
         self._signature: tuple = ()
         self._last_poll = 0.0
+
+    def _set_message(self, text: str, kind: str = "info") -> None:
+        self.message = text
+        self._message_kind = kind
 
     # -- lifecycle ---------------------------------------------------------
 
@@ -561,7 +656,8 @@ class OrchestratorTui:
             if task.running or task.index in self._announced:
                 continue
             self._announced.add(task.index)
-            self.message = f"Task #{task.index} finished ({task.status_text})."
+            kind = "ok" if task.status_text == "exit 0" else "error"
+            self._set_message(f"Task #{task.index} finished ({task.status_text}).", kind)
             self._refresh()
 
     def _maybe_auto_refresh(self) -> None:
@@ -596,7 +692,7 @@ class OrchestratorTui:
         except (EventLogError, LookupError, OSError, UnicodeError, ValueError) as exc:
             self.rows = ()
             self.load_error = f"Could not read execution history: {exc}"
-            self.message = self.load_error
+            self._set_message(self.load_error, "error")
         self._apply_filter()
 
     def _apply_filter(self) -> None:
@@ -645,7 +741,7 @@ class OrchestratorTui:
             return True
         if character in ("r", "R"):
             self._refresh()
-            self.message = f"Refreshed: {len(self.rows)} executions."
+            self._set_message(f"Refreshed: {len(self.rows)} executions.")
             return True
         if character in ("n", "N"):
             self._compose(screen)
@@ -655,16 +751,16 @@ class OrchestratorTui:
             return True
         if character in ("a", "A"):
             self.auto_refresh = not self.auto_refresh
-            self.message = f"Auto-refresh {'on' if self.auto_refresh else 'off'}."
+            self._set_message(f"Auto-refresh {'on' if self.auto_refresh else 'off'}.")
             return True
         if character == "C":
             cancelled = self.tasks.cancel_all()
-            self.message = f"Cancellation requested for {cancelled} task(s)."
+            self._set_message(f"Cancellation requested for {cancelled} task(s).", "warn" if cancelled else "info")
             return True
         if character == "x":
             removed = self.tasks.clear_finished()
             self.task_selected = min(self.task_selected, max(len(self.tasks.tasks) - 1, 0))
-            self.message = f"Cleared {removed} finished task(s)."
+            self._set_message(f"Cleared {removed} finished task(s).")
             return True
 
         if self.view == VIEW_DASHBOARD:
@@ -681,7 +777,7 @@ class OrchestratorTui:
         if self.filter_text:
             self.filter_text = ""
             self._apply_filter()
-            self.message = "Filter cleared."
+            self._set_message("Filter cleared.")
         elif self.view == VIEW_DETAIL:
             self.view = VIEW_DASHBOARD
         elif self.view == VIEW_LOGS:
@@ -700,7 +796,7 @@ class OrchestratorTui:
             return True
         running = self.tasks.running_count
         if running:
-            self.message = f"{running} task(s) still running; press C to cancel them first."
+            self._set_message(f"{running} task(s) still running; press C to cancel them first.", "warn")
             return True
         return False
 
@@ -731,19 +827,20 @@ class OrchestratorTui:
         if character == "c":
             task = self.current_task
             if task is None or not task.running:
-                self.message = "No running task is selected."
+                self._set_message("No running task is selected.", "error")
                 return
             escalated = task.cancel_requested
             task.cancel()
-            self.message = (
+            self._set_message(
                 f"SIGKILL sent to task #{task.index}." if escalated
-                else f"SIGTERM sent to task #{task.index}; press c again to force."
+                else f"SIGTERM sent to task #{task.index}; press c again to force.",
+                "warn",
             )
 
     def _keys_logs(self, character: str, code: int) -> None:
         if character == "f":
             self.log_follow = not self.log_follow
-            self.message = f"Log follow {'on' if self.log_follow else 'off'}."
+            self._set_message(f"Log follow {'on' if self.log_follow else 'off'}.")
             return
         before = self.log_offset
         self._keys_scroll(character, code, "log_offset")
@@ -772,35 +869,35 @@ class OrchestratorTui:
 
     def _compose(self, screen: "curses.window") -> None:
         if not self.tasks.can_start():
-            self.message = f"{self.tasks.limit} tasks already running; cancel one first."
+            self._set_message(f"{self.tasks.limit} tasks already running; cancel one first.", "error")
             return
         request = self._prompt(screen, "Task request: ")
         if request is None:
-            self.message = "New task cancelled."
+            self._set_message("New task cancelled.")
             return
         request = request.strip()
         if not request:
-            self.message = "New task cancelled."
+            self._set_message("New task cancelled.")
             return
         try:
             task = self.tasks.start(self.workspace, request)
         except (OSError, ValueError, TaskAdmissionError) as exc:
-            self.message = f"Could not start task: {exc}"
+            self._set_message(f"Could not start task: {exc}", "error")
             return
         self.view = VIEW_TASKS
         self.task_selected = len(self.tasks.tasks) - 1
-        self.message = f"Task #{task.index} started. Enter opens its live log."
+        self._set_message(f"Task #{task.index} started. Enter opens its live log.", "ok")
 
     def _prompt_filter(self, screen: "curses.window") -> None:
         value = self._prompt(screen, "Filter: ", self.filter_text)
         if value is None:
-            self.message = "Filter unchanged."
+            self._set_message("Filter unchanged.")
             return
         self.filter_text = value.strip()
         self.selected = 0
         self.list_offset = 0
         self._apply_filter()
-        self.message = (
+        self._set_message(
             f"Filter '{self.filter_text}': {len(self.visible_rows)}/{len(self.rows)} executions."
             if self.filter_text else "Filter cleared."
         )
@@ -859,16 +956,22 @@ class OrchestratorTui:
             self._draw_logs(screen, body_top, body_height, width)
         if self.help_visible:
             self._draw_help(screen, height, width)
-        _safe_addstr(screen, height - 1, 0, self.message, width, curses.A_DIM)
+        fallback = _MESSAGE_FALLBACK_ATTRIBUTE.get(self._message_kind, curses.A_DIM)
+        color_name = _MESSAGE_COLOR.get(self._message_kind)
+        message_attribute = self.theme.attribute(color_name, fallback) if color_name else fallback
+        _safe_addstr(screen, height - 1, 0, self.message, width, message_attribute)
         screen.refresh()
 
     def _draw_header(self, screen: "curses.window", height: int, width: int) -> None:
-        title = f"Adaptive Orchestrator — {self.workspace}"
+        prefix = "Adaptive Orchestrator — "
         indicators = (
             f"{self.view}  tasks {self.tasks.running_count}/{self.tasks.limit}"
             f"  auto {'on' if self.auto_refresh else 'off'}"
         )
-        _safe_addstr(screen, 0, 0, title, max(width - display_width(indicators) - 2, 1), curses.A_BOLD)
+        title_budget = max(width - display_width(indicators) - 2, 1)
+        path_budget = max(title_budget - display_width(prefix), 1)
+        title = prefix + condense_path(str(self.workspace), path_budget)
+        _safe_addstr(screen, 0, 0, title, title_budget, curses.A_BOLD, ellipsis=False)
         _safe_addstr(
             screen, 0, max(width - display_width(indicators) - 1, 0), indicators, width,
             self.theme.attribute("accent"),
@@ -883,22 +986,44 @@ class OrchestratorTui:
 
     def _draw_dashboard(self, screen: "curses.window", top: int, body_height: int, width: int) -> None:
         list_width = max(min(width // 2, 72), 24)
-        self.list_offset = scroll_offset(self.list_offset, self.selected, len(self.visible_rows), body_height)
-        window = self.visible_rows[self.list_offset:self.list_offset + body_height]
+        divider_x = min(list_width, max(width - 1, 0))
+        for offset in range(body_height):
+            _safe_addstr(screen, top + offset, divider_x, "│", 2, curses.A_DIM, ellipsis=False)
+
+        header = _DASHBOARD_ROW_FORMAT.format(
+            marker=" ", glyph=" ", status="STATUS", agent="AGENT", description="DESCRIPTION",
+        )
+        _safe_addstr(screen, top, 0, pad_to_width(header, list_width - 1), list_width, curses.A_BOLD)
+        list_top = top + 1
+        list_height = max(body_height - 1, 0)
+        self.list_offset = scroll_offset(self.list_offset, self.selected, len(self.visible_rows), list_height)
+        window = self.visible_rows[self.list_offset:self.list_offset + list_height]
         for index, row in enumerate(window):
             absolute = self.list_offset + index
             chosen = absolute == self.selected
             marker = ">" if chosen else " "
-            text = f"{marker} {fit_to_width(row.status, 10):<10} {fit_to_width(row.agent, 16):<16} {row.description}"
+            glyph = _STATUS_GLYPH.get(status_category(row.status), " ")
+            text = _DASHBOARD_ROW_FORMAT.format(
+                marker=marker,
+                glyph=glyph,
+                status=fit_to_width(row.status, 10),
+                agent=fit_to_width(row.agent, 16),
+                description=row.description,
+            )
             attribute = self.theme.status(row.status)
             if chosen:
                 attribute |= curses.A_REVERSE
-            _safe_addstr(screen, top + index, 0, pad_to_width(text, list_width - 1), list_width, attribute)
+            _safe_addstr(
+                screen, list_top + index, 0, pad_to_width(text, list_width - 1, ellipsis=True), list_width, attribute,
+            )
 
-        detail_x = min(list_width + 1, max(width - 1, 0))
+        detail_x = min(divider_x + 2, max(width - 1, 0))
         detail_width = max(width - detail_x, 1)
-        lines = self._summary_lines()
-        for offset, line in enumerate(lines[:body_height]):
+        wrap_budget = max(detail_width - 1, 1)
+        wrapped: list[str] = []
+        for line in self._summary_lines():
+            wrapped.extend(wrap_text(line, wrap_budget))
+        for offset, line in enumerate(wrapped[:body_height]):
             _safe_addstr(screen, top + offset, detail_x, line, detail_width)
 
     def _summary_lines(self) -> list[str]:
@@ -928,11 +1053,20 @@ class OrchestratorTui:
         if row is None:
             self.view = VIEW_DASHBOARD
             return
-        lines = self._report_lines(row)
-        self.detail_offset = clamp_offset(self.detail_offset, len(lines), body_height)
-        for index, line in enumerate(lines[self.detail_offset:self.detail_offset + body_height]):
-            attribute = curses.A_BOLD if line.startswith("#") else 0
-            _safe_addstr(screen, top + index, 0, line, width, attribute)
+        wrap_budget = max(width - 1, 1)
+        rendered: list[tuple[str, int]] = []
+        for line in self._report_lines(row):
+            text, level = markdown_heading(line)
+            if level == 1:
+                attribute = curses.A_BOLD | curses.A_UNDERLINE
+            elif level >= 2:
+                attribute = curses.A_BOLD | self.theme.attribute("accent")
+            else:
+                attribute = 0
+            rendered.extend((piece, attribute) for piece in wrap_text(text, wrap_budget))
+        self.detail_offset = clamp_offset(self.detail_offset, len(rendered), body_height)
+        for index, (text, attribute) in enumerate(rendered[self.detail_offset:self.detail_offset + body_height]):
+            _safe_addstr(screen, top + index, 0, text, width, attribute)
 
     def _report_lines(self, row: DashboardRow) -> list[str]:
         if not row.attempts:
@@ -946,20 +1080,36 @@ class OrchestratorTui:
         pool = self.tasks.tasks
         if not pool:
             _safe_addstr(screen, top, 0, "No tasks launched in this session. Press n to start one.", width)
+            if self.rows:
+                hint = f"{len(self.rows)} execution(s) on the dashboard — press Tab to view them."
+                _safe_addstr(screen, top + 1, 0, hint, width, curses.A_DIM)
             return
-        list_height = max(min(len(pool), body_height // 2), 1)
+        header = _TASK_ROW_FORMAT.format(
+            marker=" ", spinner=" ", index="", status="STATUS", elapsed="ELAPSED", request="REQUEST",
+        )
+        _safe_addstr(screen, top, 0, pad_to_width(header, width - 1), width, curses.A_BOLD)
+        list_top = top + 1
+        list_height = max(min(len(pool), (body_height - 1) // 2), 1)
         self.task_offset = scroll_offset(self.task_offset, self.task_selected, len(pool), list_height)
         for index, task in enumerate(pool[self.task_offset:self.task_offset + list_height]):
             absolute = self.task_offset + index
             chosen = absolute == self.task_selected
             marker = ">" if chosen else " "
-            text = f"{marker} #{task.index:<3} {task.status_text:<11} {elapsed_text(task.elapsed):>7}  {task.request}"
+            spinner = _SPINNER_FRAMES[int(task.elapsed * 4) % len(_SPINNER_FRAMES)] if task.running else " "
+            text = _TASK_ROW_FORMAT.format(
+                marker=marker,
+                spinner=spinner,
+                index=task.index,
+                status=task.status_text,
+                elapsed=elapsed_text(task.elapsed),
+                request=task.request,
+            )
             attribute = self.theme.status("running" if task.running else _exit_status(task.return_code))
             if chosen:
                 attribute |= curses.A_REVERSE
-            _safe_addstr(screen, top + index, 0, pad_to_width(text, width - 1), width, attribute)
+            _safe_addstr(screen, list_top + index, 0, pad_to_width(text, width - 1, ellipsis=True), width, attribute)
 
-        preview_top = top + list_height + 1
+        preview_top = list_top + list_height + 1
         preview_height = max(top + body_height - preview_top, 0)
         task = self.current_task
         if task is None or preview_height <= 0:
@@ -1064,10 +1214,12 @@ def _tail_to_width(text: str, columns: int) -> str:
     return "".join(reversed(kept))
 
 
-def _safe_addstr(screen: "curses.window", y: int, x: int, value: str, width: int, attributes: int = 0) -> None:
+def _safe_addstr(
+    screen: "curses.window", y: int, x: int, value: str, width: int, attributes: int = 0, ellipsis: bool = True,
+) -> None:
     if y < 0 or x < 0 or width <= 0:
         return
-    text = fit_to_width(value, max(width - 1, 0))
+    text = fit_to_width(value, max(width - 1, 0), ellipsis=ellipsis)
     if not text:
         return
     try:
@@ -1116,7 +1268,13 @@ def main(argv: list[str] | None = None) -> int:
         application = OrchestratorTui(workspace, args.control_state_dir, args.max_tasks)
     except ValueError as exc:
         parser.error(str(exc))
-    curses.wrapper(application.run)
+    try:
+        curses.wrapper(application.run)
+    finally:
+        # A normal quit already refuses to exit with tasks running; this covers
+        # Ctrl-C and any unhandled exception in the draw/input loop, so a crash
+        # can't leave a coding-agent child orphaned.
+        application.tasks.cancel_all(force=True)
     return 0
 
 

@@ -80,10 +80,15 @@ def render_text_summary(bundle: ExecutionBundle) -> str:
         f"Task: {_one_line(task.get('description')) or '(missing description)'}",
         f"Status: {_text(primary.get('status'), 'unknown')}",
         f"Agent: {_text(primary.get('agent_id'), 'unknown')}",
+    ]
+    model = _model_text(primary)
+    if model:
+        lines.append(f"Model: {model}")
+    lines.extend([
         f"Verification: {_text(verification.get('status'), 'not-run')}",
         f"Attempts: {len(bundle.attempts)}",
         f"Duration: {_duration(primary.get('duration_ms'))}",
-    ]
+    ])
     modified = _string_items(primary.get("workspace_modified_files"))
     if modified:
         lines.append(f"Modified: {', '.join(modified)}")
@@ -103,10 +108,15 @@ def render_markdown_report(bundle: ExecutionBundle, include_diff: bool = False) 
         "",
         f"- Status: `{_text(primary.get('status'), 'unknown')}`",
         f"- Agent: `{_text(primary.get('agent_id'), 'unknown')}`",
+    ]
+    model = _model_text(primary)
+    if model:
+        lines.append(f"- Model: `{model}`")
+    lines.extend([
         f"- Verification: `{_verification_status(primary)}`",
         f"- Duration: {_duration(primary.get('duration_ms'))}",
         f"- Attempts: {len(bundle.attempts)}",
-    ]
+    ])
     occurred_at = primary.get("occurred_at")
     if isinstance(occurred_at, str) and occurred_at:
         lines.append(f"- Recorded at: `{occurred_at}`")
@@ -127,8 +137,10 @@ def render_markdown_report(bundle: ExecutionBundle, include_diff: bool = False) 
 
     lines.extend(["", "## Attempts", ""])
     for number, attempt in enumerate(bundle.attempts, start=1):
+        attempt_model = _model_text(attempt)
+        model_suffix = f" ({attempt_model})" if attempt_model else ""
         lines.append(
-            f"{number}. `{_text(attempt.get('agent_id'), 'unknown')}` — "
+            f"{number}. `{_text(attempt.get('agent_id'), 'unknown')}`{model_suffix} — "
             f"`{_text(attempt.get('status'), 'unknown')}`, verification "
             f"`{_verification_status(attempt)}`, {_duration(attempt.get('duration_ms'))}"
         )
@@ -173,6 +185,11 @@ def task_spec_for_retry(bundle: ExecutionBundle) -> dict:
 
 def _verification_status(record: dict) -> str:
     return _text(_mapping(record.get("verification")).get("status"), "not-run")
+
+
+def _model_text(record: dict) -> str:
+    model = _mapping(record.get("metadata")).get("model")
+    return model if isinstance(model, str) and model else ""
 
 
 def _duration(value: object) -> str:
