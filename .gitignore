@@ -14,3 +14,8 @@ venv/
 build/
 dist/
 *.egg-info/
+
+# Local agent/tooling state (never published)
+.claude/settings.local.json
+.agents/
+.codex/
