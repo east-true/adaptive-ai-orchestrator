@@ -19,3 +19,9 @@ dist/
 .claude/settings.local.json
 .agents/
 .codex/
+
+# Agent instruction files stay local; agents read the filesystem, not git
+CLAUDE.md
+CLAUDE.local.md
+AGENTS.md
+AGENTS.override.md
