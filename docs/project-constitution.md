@@ -310,7 +310,7 @@ orchestrator/
 > router는 일부 구현됐지만 신뢰 가능한 objective-quality evidence와 학습 정책은
 > 아직 없으며, Phase 5와 Phase 6은 미래 범위다. 현재 구현의 정확한 상태는
 > [README](../README.md), [architecture](architecture.md),
-> [adaptive-routing progress](adaptive-routing-progress.md)를 기준으로 한다.
+> adaptive-routing progress를 기준으로 한다.
 
 ### Phase 2: Task Planning Engine
 

@@ -1,11 +1,15 @@
 # Adaptive Routing v2: Evidence-First Stratified Temporal Routing
 
+
+> **연구 기록 위치.** 이 문서가 언급하는 평가 프로토콜, 문헌 검토, Phase 2b
+> 사전등록 계약, 후보 원장, 연구 작업 로그는 별도 private 저장소에 있다. 제3자
+> 공개 저장소에 대한 선별 판정을 담고 있어 이 저장소에 공개하지 않는다.
 > 상태: Phase -1/0/1과 Phase 2a v1/v2 실제 paired smoke 및 pause/resume audit 완료
 > 기준일: 2026-07-18
-> 관련 문서: [연구 검토](routing-research-review.md),
-> [평가 프로토콜](routing-evaluation-protocol.md),
-> [Claude 독립 검토](routing-claude-review.md),
-> [진행상황과 이어하기](adaptive-routing-progress.md)
+> 관련 문서: 연구 검토,
+> 평가 프로토콜,
+> Claude 독립 검토,
+> 진행상황과 이어하기
 
 ## 1. 결정
 
@@ -35,7 +39,7 @@ ESTR은 하나의 고정 학습기라기보다 다음을 결합하는 단계적 
 
 초기 연구 감사 시점의 코드와 12개 로컬 실행 기록 snapshot을 대조했다. 이후
 검토 호출까지 포함한 현재 개수와 표본 경계는
-[진행상황 문서](adaptive-routing-progress.md)에서 추적한다.
+진행상황 문서에서 추적한다.
 
 - 초기 감사 snapshot의 자동 선택은 4건뿐이고 전체는 Claude 4건, Codex 8건이다. 정책 우열을
   추정할 표본이 아니다.
@@ -75,7 +79,7 @@ argmax가 다시 그 후보를 선택하지 않는 feedback loop를 만든다. �
 low-risk/moderate-difficulty context에서는 더 좋은 Claude history가 이 격차를
 상쇄하지 못해 propensity 0이 지속될 수 있었다. 이는 표본 부족만의 문제가 아니라
 **관측을 만들 수 없게 하는 정책 구조**다. 상세 재검토는
-[Claude 독립 검토](routing-claude-review.md)에 남겼다.
+Claude 독립 검토에 남겼다.
 
 따라서 현재 로그는 재현·진단·schema migration에는 쓸 수 있지만, IPS/DR
 off-policy 평가나 Claude/Codex 정확도 순위에는 쓸 수 없다.
@@ -376,7 +380,7 @@ mode가 바뀌면 새 `environment_epoch`를 만들고 prior를 shrink한다. �
 초기 감사 시점의 legacy 12건은 선택 확률과 반사실이 없어 정책 우열에 쓰지 않는다.
 이후 설계 검토를 위한 Claude 호출은 성공·실패와 관계없이 별도 manual review
 attempt이며 이 숫자에 포함하지 않는다. 현재 호출 수와 경계는
-[진행상황 문서](adaptive-routing-progress.md)에서 추적한다. 다음 cohort를 분리한다.
+진행상황 문서에서 추적한다. 다음 cohort를 분리한다.
 
 | Cohort | 목적 | 정책 학습/평가 사용 |
 |---|---|---|
@@ -388,7 +392,7 @@ attempt이며 이 숫자에 포함하지 않는다. 현재 호출 수와 경계�
 | escalation | outcome 또는 task-analysis 조건부 복구 | trigger별 별도 모델 |
 
 paired 실험과 언어 층화, 통계·중단 규칙은
-[평가 프로토콜](routing-evaluation-protocol.md)을 따른다.
+평가 프로토콜을 따른다.
 
 현재 목표 workload의 stratum 빈도는 관측되지 않았다. 따라서 paired pilot의
 primary estimand는 **사전 정의한 stratum별 paired effect**이며 20/20/20 quota의
@@ -657,8 +661,8 @@ unlogged 실행으로 fallback하지 않고 fail closed한다. 현재의 검증�
 ## 13. 당장 구현할 범위
 
 **Phase -1/0/1의 최소 관측 기반과 Phase 2a의 v1/v2 4-task paired smoke는 완료됐다.
-60-task pilot을 위한 [일반 manifest와 독립 task/evaluator construction
-workflow](paired-pilot-preregistration.md)는 사전 등록했다. 다음은 그 계약에 따라 source
+60-task pilot을 위한 일반 manifest와 독립 task/evaluator construction
+workflow는 사전 등록했다. 다음은 그 계약에 따라 source
 candidate ledger와 역할이 분리된 task/evaluator package를 만드는 것이다.** 현재 smoke
 표본으로 VCR-UCB, neural router, prompt embedding,
 correlated surrogate, full contextual model을 바로 켜면 모델은 복잡해져도 정확도를

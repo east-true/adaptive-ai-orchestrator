@@ -62,7 +62,10 @@ inputs. Candidate-agent runs require the authorization stated by the relevant
 protocol.
 
 Tracked artifacts must not include protected evaluator bodies, credentials,
-private knowledge bases, machine-specific paths, or local execution logs. If a
+private knowledge bases, machine-specific paths, or local execution logs. They
+must also not include screening verdicts naming third-party repositories; that
+material belongs to the separate private research record, not to this
+repository. If a
 result relies on local-only protected material, document the public
 reproducibility boundary without publishing that material.
 

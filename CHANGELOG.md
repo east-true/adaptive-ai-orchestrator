@@ -15,6 +15,12 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- The Phase 2b comparative-evaluation research record—candidate ledger, stage
+  evidence artifacts, JSON schemas, preregistration, evaluation protocol, and
+  work log—moved to a separate private repository. It recorded screening
+  verdicts naming third-party public repositories. No published claim depended
+  on it: learned routing is disabled and no comparative agent run has been
+  authorized.
 - Package metadata now matches the public repository name.
 - Process cleanup now isolates each POSIX invocation and uses a guarded Windows
   Job Object launch path so timeout or interruption stays within the owned tree.

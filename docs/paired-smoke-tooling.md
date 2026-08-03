@@ -120,7 +120,7 @@ ID가 중복되지 않는지는 기계적으로 검증한다. evaluator 코드�
 allowlist에 허용하지 않는다.
 v2도 정확히 4개 task를 다루는 Phase 2a smoke schema다. 60-task pilot은 이 audit 원칙을
 이어받되 task-count/statistical contract를 일반화한
-[별도 schema와 construction workflow](paired-pilot-preregistration.md)를 사용한다.
+별도 schema와 construction workflow를 사용한다.
 
 Agent order는 seed와 task ID의 SHA-256 rank로 정하고 첫 agent를 교대로 배정한다. 따라서
 4-task smoke에서 각 agent가 정확히 두 번 먼저 실행된다. `pair_id`, `execution_id`, agent별

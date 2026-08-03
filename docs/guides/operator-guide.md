@@ -1,5 +1,10 @@
 # Operator guide
 
+
+> **Where the research record lives.** The evaluation protocol, research review,
+> Phase 2b preregistration, candidate ledger, and work log referenced here are kept
+> in a separate private repository because they record screening verdicts about
+> third-party public repositories.
 > **Documentation › Guides › Operator guide**
 
 This guide contains the detailed operating reference for the Adaptive AI
@@ -63,10 +68,10 @@ The four root entry-point modules remain intentionally thin so existing
 
 - [Architecture](../architecture.md) and [project constitution](../project-constitution.md)
 - [Evidence-first adaptive-routing design](../adaptive-routing-v2.md)
-- [Research review](../routing-research-review.md) and [evaluation protocol](../routing-evaluation-protocol.md)
+- Research review and evaluation protocol
 - [Phase 2a paired-smoke tooling](../paired-smoke-tooling.md)
-- [Phase 2b pilot preregistration](../paired-pilot-preregistration.md) and [candidate-ledger rules](../paired-pilot-candidate-ledger.md)
-- [Current research work log and resume point](../adaptive-routing-progress.md) (Korean)
+- Phase 2b pilot preregistration and candidate-ledger rules
+- Current research work log and resume point (Korean)
 - [Intra-vendor model-tier exploration](../intra-vendor-tier-routing.md) (not implemented)
 
 The repository includes the telemetry baseline, typed evaluator, lifecycle and
@@ -641,10 +646,10 @@ parity, candidate freeze, independent task/evaluator construction and review,
 and an agent-free full dry run.
 
 Exact counts, completed screening ranks, unresolved validity seams, and the
-fixed resume order live in the [current research work log](../adaptive-routing-progress.md#현재-재개-지점과-고정-작업-순서-2026-07-24).
-Normative gates remain in the [pilot preregistration
-contract](../paired-pilot-preregistration.md) and [candidate-ledger
-rules](../paired-pilot-candidate-ledger.md). If the source pool is
+fixed resume order live in the current research work log.
+Normative gates remain in the pilot preregistration
+contract and candidate-ledger
+rules. If the source pool is
 insufficient, the protocol calls for reporting that result rather than relaxing
 language or category quotas.
 

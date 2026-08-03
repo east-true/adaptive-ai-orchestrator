@@ -3,7 +3,7 @@
 > 상태: 탐색만 함, 구현 결정 아님
 > 기준일: 2026-07-20
 > 관련 문서: [architecture](architecture.md), [Evidence-First Stratified Temporal Routing](adaptive-routing-v2.md),
-> [Claude 독립 검토](routing-claude-review.md), [project-constitution](project-constitution.md) Phase 4
+> Claude 독립 검토, [project-constitution](project-constitution.md) Phase 4
 
 ## 0. 배경
 

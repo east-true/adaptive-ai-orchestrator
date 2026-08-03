@@ -81,27 +81,33 @@ then follow its child pages for progressively more detail.
 
 ### 3. Evaluate routing claims
 
-- [Research review](docs/routing-research-review.md) and [evaluation protocol](docs/routing-evaluation-protocol.md)
-  — evidence standards and measurement design
 - [Phase 2a paired-smoke tooling](docs/paired-smoke-tooling.md) — how paired
   runs are prepared and protected
-- [Phase 2b pilot preregistration](docs/paired-pilot-preregistration.md) and
-  [candidate-ledger rules](docs/paired-pilot-candidate-ledger.md) — the gates
-  that must be met before comparative agent runs
-- [Current research work log](docs/adaptive-routing-progress.md) (Korean) —
-  current state, open seams, and the resume order
+- [`experiments/`](experiments/README.md) — the preregistered smoke manifests,
+  protected evaluator sources, and recorded results
 
-### 4. Explore and reproduce
+### 4. Explore
 
 - [Intra-vendor model-tier exploration](docs/intra-vendor-tier-routing.md) —
   a not-yet-implemented extension
-- [Provisioned reproduction](docs/provisioned-reproduction.md) — environment
-  and reproduction boundaries
 
 The initial telemetry, paired-smoke rehearsals, and static L0 baseline validate
 tooling and evaluation mechanics; they do not establish an agent ranking or
 authorize learned routing. See the operator guide's [current limits](docs/guides/operator-guide.md#current-limits)
 before treating any routing result as evidence.
+
+### Where the comparative-evaluation research lives
+
+The Phase 2b candidate ledger, per-stage evidence artifacts, preregistration
+contract, evaluation protocol, and research work log are kept in a separate
+private repository. They record screening verdicts about third-party public
+repositories, so they are not published here.
+
+That separation does not weaken the claims this repository makes, because this
+repository makes none that depend on them: learned routing is disabled, and no
+comparative agent run has been authorized or performed. If a routing policy is
+ever promoted to the default, the protocol and aggregate results will be
+published here as a summary.
 
 ## Safety and privacy
 
