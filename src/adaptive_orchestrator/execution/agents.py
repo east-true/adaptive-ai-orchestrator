@@ -133,9 +133,14 @@ class CodexAgent(Agent):
             if not line:
                 continue
             try:
-                events.append(json.loads(line))
+                event = json.loads(line)
             except json.JSONDecodeError:
                 continue  # a truncated/partial line (e.g. after a timeout); skip, don't discard the rest
+            if isinstance(event, dict):
+                events.append(event)
+            # A line that parses but is not an object (a bare scalar or array) is
+            # skipped for the same reason: reading it as an event would raise and
+            # discard every remaining line, including the final agent_message.
         if not events:
             return stdout or None, None
 
