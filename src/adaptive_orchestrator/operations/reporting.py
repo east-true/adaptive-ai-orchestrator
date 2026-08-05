@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Sequence
 
 
 class ExecutionLookupError(LookupError):
@@ -128,11 +128,71 @@ class ExecutionReportStore:
             if group.bundle.execution_id == identifier:
                 return group.bundle
 
-        if identifier.startswith("#") and identifier[1:].isdigit():
+        # isdecimal, not isdigit: isdigit also accepts superscripts such as "²",
+        # which int() then rejects, leaking a ValueError from a lookup whose
+        # contract is ExecutionLookupError.
+        if identifier.startswith("#") and identifier[1:].isdecimal():
             index = int(identifier[1:])
             if 1 <= index <= len(records):
                 return _bundle_for_record(groups, index - 1)
+
+        prefixed = self._by_unique_prefix(records, groups, identifier)
+        if prefixed is not None:
+            return prefixed
         raise ExecutionLookupError(f"Execution not found: {identifier}")
+
+    _MINIMUM_PREFIX_LENGTH = 4
+
+    def _by_unique_prefix(
+        self,
+        records: Sequence[dict],
+        groups: tuple["_ExecutionGroup", ...],
+        identifier: str,
+    ) -> ExecutionBundle | None:
+        """Resolve an unambiguous leading fragment of an execution or attempt id.
+
+        Execution ids are UUIDs: the tools print all thirty-six characters and
+        used to require every one of them back. Only exact matches are tried
+        first, so a prefix can never shadow a real id, and an ambiguous fragment
+        is reported rather than silently resolved to one of its candidates.
+        """
+
+        if len(identifier) < self._MINIMUM_PREFIX_LENGTH:
+            return None
+
+        execution_matches = [
+            group for group in groups if group.bundle.execution_id.startswith(identifier)
+        ]
+        attempt_matches = [
+            index
+            for index, item in enumerate(records)
+            if isinstance(item.get("attempt_id"), str) and item["attempt_id"].startswith(identifier)
+        ]
+        # An attempt inside an already-matched execution is the same answer.
+        matched_execution_ids = {group.bundle.execution_id for group in execution_matches}
+        extra_attempts = [
+            index
+            for index in attempt_matches
+            if _bundle_for_record(groups, index).execution_id not in matched_execution_ids
+        ]
+
+        if len(execution_matches) == 1 and not extra_attempts:
+            return execution_matches[0].bundle
+        if not execution_matches and extra_attempts:
+            resolved = {_bundle_for_record(groups, index).execution_id for index in extra_attempts}
+            if len(resolved) == 1:
+                return _bundle_for_record(groups, extra_attempts[-1])
+
+        candidates = sorted(matched_execution_ids | {
+            _bundle_for_record(groups, index).execution_id for index in extra_attempts
+        })
+        if len(candidates) > 1:
+            shown = ", ".join(candidates[:5])
+            suffix = ", ..." if len(candidates) > 5 else ""
+            raise ExecutionLookupError(
+                f"Ambiguous execution prefix {identifier!r} matches {len(candidates)} executions: {shown}{suffix}"
+            )
+        return None
 
 
 def render_text_summary(bundle: ExecutionBundle) -> str:
