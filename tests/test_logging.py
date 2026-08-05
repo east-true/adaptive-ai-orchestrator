@@ -1,4 +1,6 @@
 import json
+import os
+import stat
 import sys
 import tempfile
 import unittest
@@ -27,6 +29,35 @@ class JsonlExecutionLoggerTests(unittest.TestCase):
             self.assertEqual(payload["metadata"]["input_tokens"], 12)
             self.assertEqual(payload["metadata"]["output_tokens"], 5)
             self.assertEqual(payload["metadata"]["cached_input_tokens"], 3)
+
+    @unittest.skipUnless(os.name == "posix", "POSIX file mode")
+    def test_execution_log_is_written_owner_only(self) -> None:
+        # This sink holds full prompts, agent output, and the workspace diff when
+        # it is enabled, so it must not be left at the umask's world-readable
+        # default while the lifecycle log and routing state are owner-only.
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "executions.jsonl"
+            record = ExecutionRecord(
+                Task("Describe", "Test"), "agent", "prompt", (), ExecutionStatus.COMPLETED,
+                "result", None, 0, 1.0,
+            )
+            JsonlExecutionLogger(path).write(record)
+
+            self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
+
+    @unittest.skipUnless(os.name == "posix", "POSIX file mode")
+    def test_existing_world_readable_execution_log_is_tightened_on_write(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "executions.jsonl"
+            path.write_text("", encoding="utf-8")
+            os.chmod(path, 0o644)
+            record = ExecutionRecord(
+                Task("Describe", "Test"), "agent", "prompt", (), ExecutionStatus.COMPLETED,
+                "result", None, 0, 1.0,
+            )
+            JsonlExecutionLogger(path).write(record)
+
+            self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
 
     def test_token_named_string_values_are_still_redacted(self) -> None:
         self.assertEqual(redact({"input_tokens": "secret-value", "access_token": "secret-value"}), {
