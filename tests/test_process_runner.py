@@ -580,6 +580,74 @@ class SubprocessRunnerTests(unittest.TestCase):
                     os.killpg(sibling.pid, signal.SIGKILL)
                 sibling.wait()
 
+    @unittest.skipUnless(os.name == "posix", "POSIX session-detachment behavior")
+    def test_timeout_is_bounded_when_a_detached_descendant_holds_the_pipes(self) -> None:
+        # A descendant in its own session keeps the inherited stdout/stderr open
+        # and is outside the group we kill, so waiting for EOF would extend the
+        # run for as long as that process lives, defeating the timeout.
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            detached_pid_path = workspace / "detached.pid"
+            detached_code = (
+                "import os, time\n"
+                "from pathlib import Path\n"
+                f"Path({str(detached_pid_path)!r}).write_text(str(os.getpid()), encoding='utf-8')\n"
+                "time.sleep(60)\n"
+            )
+            parent_code = (
+                "import os, subprocess, sys, time\n"
+                "from pathlib import Path\n"
+                # start_new_session detaches the grandchild from the group the
+                # runner owns, while it keeps the inherited pipes.
+                f"subprocess.Popen([sys.executable, '-c', {detached_code!r}], start_new_session=True)\n"
+                f"ready = Path({str(detached_pid_path)!r})\n"
+                "while not ready.exists():\n"
+                "    time.sleep(0.01)\n"
+                "print('parent-ready', flush=True)\n"
+                "time.sleep(60)\n"
+            )
+
+            detached_pid: int | None = None
+            try:
+                started = time.monotonic()
+                result = SubprocessRunner().run(
+                    (sys.executable, "-c", parent_code),
+                    workspace,
+                    1.0,
+                )
+                elapsed = time.monotonic() - started
+                detached_pid = int(detached_pid_path.read_text(encoding="utf-8"))
+
+                self.assertEqual(result.status, ExecutionStatus.TIMED_OUT)
+                # Bounded by the timeout plus the drain grace, not by the
+                # detached descendant's own 60s lifetime.
+                self.assertLess(
+                    elapsed,
+                    1.0 + process_runner_module._DETACHED_OUTPUT_DRAIN_GRACE_SECONDS + 8.0,
+                )
+                # Output collected before the cut-off is kept, and the result
+                # says the capture was stopped early rather than hiding it.
+                self.assertIn("parent-ready", result.stdout)
+                self.assertIn("may be incomplete", result.stderr)
+            finally:
+                if detached_pid is not None:
+                    try:
+                        os.kill(detached_pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+
+    def test_normal_completion_keeps_full_output_and_adds_no_truncation_note(self) -> None:
+        result = SubprocessRunner().run(
+            (sys.executable, "-c", "import sys; print('out'); print('err', file=sys.stderr)"),
+            Path(tempfile.gettempdir()),
+            30.0,
+        )
+
+        self.assertEqual(result.status, ExecutionStatus.COMPLETED)
+        self.assertIn("out", result.stdout)
+        self.assertIn("err", result.stderr)
+        self.assertNotIn("may be incomplete", result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

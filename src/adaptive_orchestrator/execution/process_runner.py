@@ -14,6 +14,14 @@ from adaptive_orchestrator.core.domain import ExecutionStatus
 
 _WINDOWS_OUTPUT_DRAIN_GRACE_SECONDS = 1.0
 
+# A descendant that placed itself in its own session keeps the inherited stdout
+# and stderr pipes open, so the reader threads never observe EOF and killing the
+# owned process group cannot reach it. Without a bound, the final drain would
+# hold `run` open for as long as that detached process lives, which defeats the
+# caller's timeout entirely. Completing normally closes the pipes at once, so
+# this grace only elapses when something really is still holding them.
+_DETACHED_OUTPUT_DRAIN_GRACE_SECONDS = 2.0
+
 
 @dataclass(frozen=True, slots=True)
 class ProcessResult:
@@ -141,6 +149,7 @@ class SubprocessRunner:
         stdout_chunks: list[str] = []
         stderr_chunks: list[str] = []
         launch_error: str | None = None
+        output_truncated = False
         # Two reader threads keep stdout and stderr draining concurrently so neither pipe can block the child.
         stdout_reader = threading.Thread(
             target=self._read_stream,
@@ -203,24 +212,42 @@ class SubprocessRunner:
                 pass
             raise
         finally:
-            stdout_reader.join()
-            stderr_reader.join()
+            output_truncated = not self._readers_finished_within(
+                (stdout_reader, stderr_reader),
+                _DETACHED_OUTPUT_DRAIN_GRACE_SECONDS,
+            )
             if windows_launch is not None:
                 try:
                     windows_launch.close()
                 except OSError:
                     pass
 
-        stderr = "".join(stderr_chunks)
-        if launch_error is not None:
+        # The reader threads are daemons and may still be appending to a pipe an
+        # abandoned descendant holds; copy before joining so the result is built
+        # from one stable snapshot.
+        stdout = "".join(tuple(stdout_chunks))
+        stderr = "".join(tuple(stderr_chunks))
+        notes = [note for note in (launch_error, self._truncation_note(output_truncated)) if note]
+        for note in notes:
             if stderr and not stderr.endswith("\n"):
                 stderr += "\n"
-            stderr += launch_error
+            stderr += note
         return ProcessResult(
             command,
             status,
-            "".join(stdout_chunks),
+            stdout,
             stderr,
             return_code,
             (perf_counter() - started) * 1000,
+        )
+
+    @staticmethod
+    def _truncation_note(output_truncated: bool) -> str | None:
+        """Say so when output capture was cut short, rather than silently truncating."""
+        if not output_truncated:
+            return None
+        return (
+            "adaptive-orchestrator: stopped collecting output after "
+            f"{_DETACHED_OUTPUT_DRAIN_GRACE_SECONDS:g}s because a detached descendant still holds "
+            "this command's output pipes; the captured output may be incomplete."
         )
