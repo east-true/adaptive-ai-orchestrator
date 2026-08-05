@@ -58,31 +58,78 @@ class ShellStateTests(unittest.TestCase):
         self.assertIn("Shell v9.8.7 | Kernel v4.2", banner)
         self.assertIn("Type help or ?; task <request>", banner)
 
-    def test_source_checkout_version_takes_priority_over_stale_installed_metadata(self) -> None:
-        with (
-            patch.object(shell_interface, "_source_tree_version", return_value="1.2.3"),
-            patch.object(shell_interface.metadata, "version", return_value="0.0.1") as installed_version,
-        ):
-            self.assertEqual(shell_interface._package_version(), "1.2.3")
-        installed_version.assert_not_called()
+    def test_banner_reports_the_shared_package_version(self) -> None:
+        # The version helpers moved to infrastructure.version so the CLI can
+        # report --version too; the banner must still read from that one source.
+        with patch.object(shell_interface, "package_version", return_value="7.7.7"):
+            self.assertIn("Shell v7.7.7", shell_interface._shell_banner())
 
-    def test_installed_version_is_used_outside_a_source_checkout(self) -> None:
-        with (
-            patch.object(shell_interface, "_source_tree_version", return_value=None),
-            patch.object(shell_interface.metadata, "version", return_value="2.3.4"),
-        ):
-            self.assertEqual(shell_interface._package_version(), "2.3.4")
+    def test_settings_reports_the_effective_value_behind_each_inherited_row(self) -> None:
+        # "inherit" alone does not say what will happen; only the agent row used
+        # to reveal the profile value it falls back to.
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            path = config_path(workspace)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(
+                json.dumps({
+                    "version": 1,
+                    "agent": "auto",
+                    "execution": {"verbose": True, "time_limit_seconds": 600},
+                    "verification": {"commands": ["python3 -m unittest"]},
+                    "escalation": {"enabled": False},
+                }),
+                encoding="utf-8",
+            )
+            shell = OrchestratorShell()
+            shell.workspace = workspace
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("settings")
 
-    def test_development_version_is_used_without_source_or_installed_metadata(self) -> None:
-        with (
-            patch.object(shell_interface, "_source_tree_version", return_value=None),
-            patch.object(
-                shell_interface.metadata,
-                "version",
-                side_effect=shell_interface.metadata.PackageNotFoundError,
-            ),
-        ):
-            self.assertEqual(shell_interface._package_version(), "dev")
+        output = stdout.getvalue()
+        self.assertIn("Verbose: inherit (effective: on)", output)
+        self.assertIn("No escalation: inherit (effective: on)", output)
+        self.assertIn("Time limit: inherit (effective: 600s)", output)
+        self.assertIn("Verify command: inherit (effective: python3 -m unittest)", output)
+
+    def test_settings_shows_explicit_overrides_without_an_effective_suffix(self) -> None:
+        shell = OrchestratorShell()
+        shell.default_verbose = False
+        shell.default_time_limit = 30.0
+        shell.default_verify_commands_disabled = True
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            shell.onecmd("settings")
+
+        output = stdout.getvalue()
+        self.assertIn("Verbose: off", output)
+        self.assertNotIn("Verbose: inherit", output)
+        self.assertIn("Time limit: 30s", output)
+        self.assertIn("Verify command: off", output)
+
+    def test_settings_survives_an_invalid_project_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            path = config_path(workspace)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("{broken", encoding="utf-8")
+            shell = OrchestratorShell()
+            shell.workspace = workspace
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("settings")
+
+        self.assertIn("profile error", stdout.getvalue())
+
+    def test_unknown_setting_lists_the_valid_names(self) -> None:
+        shell = OrchestratorShell()
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            shell.onecmd("set nope on")
+
+        for name in shell_interface._SETTING_NAMES:
+            self.assertIn(name, stdout.getvalue())
 
     def test_workspace_command_sets_and_shows_session_workspace(self) -> None:
         shell = OrchestratorShell()
@@ -897,6 +944,43 @@ class ShellCliDispatchTests(unittest.TestCase):
                 self.shell.onecmd('run --description "Build it" --objective "Ship it"')
         self.assertIn("Error: run failed with exit code 2", stderr.getvalue())
 
+    def test_failure_that_explained_itself_is_not_restated_as_an_exit_code(self) -> None:
+        # Every CLI failure path prints its own reason first; repeating it as
+        # "failed with exit code 1" gave one problem two lines and pushed the
+        # useful half up the scrollback.
+        def explain_and_fail(argv: list[str]) -> int:
+            print("Show failed: No executions are recorded in /w/executions.jsonl", file=sys.stderr)
+            return 1
+
+        stderr = io.StringIO()
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main", side_effect=explain_and_fail):
+            with contextlib.redirect_stderr(stderr):
+                self.shell.onecmd("show #1")
+
+        output = stderr.getvalue()
+        self.assertIn("Show failed: No executions are recorded", output)
+        self.assertNotIn("failed with exit code", output)
+
+    def test_silent_nonzero_exit_is_still_announced(self) -> None:
+        stderr = io.StringIO()
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main", return_value=3):
+            with contextlib.redirect_stderr(stderr):
+                self.shell.onecmd("show #1")
+
+        self.assertIn("Error: show failed with exit code 3", stderr.getvalue())
+
+    def test_command_output_still_reaches_the_terminal(self) -> None:
+        def emit(argv: list[str]) -> int:
+            print("Execution: abc123")
+            return 0
+
+        stdout = io.StringIO()
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main", side_effect=emit):
+            with contextlib.redirect_stdout(stdout):
+                self.shell.onecmd("show #1")
+
+        self.assertIn("Execution: abc123", stdout.getvalue())
+
     def test_keyboard_interrupt_cancels_command_without_escaping_shell(self) -> None:
         stderr = io.StringIO()
         with patch(
@@ -989,9 +1073,21 @@ class ShellCliDispatchTests(unittest.TestCase):
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
             self.shell.onecmd("show --help")
-        self.assertIn("usage: adaptive-orchestrator show", stdout.getvalue())
+        self.assertIn(
+            f"usage: {shell_interface.cli.PROGRAM_NAME} show",
+            stdout.getvalue(),
+        )
         self.assertNotIn("adaptive-ai-orchestrator-shell", stdout.getvalue())
         self.assertEqual(sys.argv[0], original_program)
+
+    def test_canonical_program_name_matches_the_installed_console_script(self) -> None:
+        # Usage text told users to run "adaptive-orchestrator", which is not the
+        # name pyproject installs. Pin the two together so they cannot drift.
+        pyproject = Path(__file__).parents[1] / "pyproject.toml"
+        self.assertIn(
+            f"{shell_interface.cli.PROGRAM_NAME} = ",
+            pyproject.read_text(encoding="utf-8"),
+        )
 
     def test_show_without_identifier_prints_usage_error(self) -> None:
         stdout = io.StringIO()
@@ -1026,6 +1122,238 @@ class ShellCliDispatchTests(unittest.TestCase):
                 self.shell.onecmd("plan_generate")
         main.assert_not_called()
         self.assertIn("Usage: plan_generate <request>", stdout.getvalue())
+
+    def test_workspace_scoped_commands_prepend_the_session_workspace(self) -> None:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+            self.shell.onecmd("doctor")
+            self.shell.onecmd("init --force")
+            self.shell.onecmd("replay --rebuild-state")
+
+        self.assertEqual(main.call_args_list[0].args[0], [
+            "doctor",
+            "--workspace",
+            "/tmp/session-workspace",
+        ])
+        self.assertEqual(main.call_args_list[1].args[0], [
+            "init",
+            "--workspace",
+            "/tmp/session-workspace",
+            "--force",
+        ])
+        self.assertEqual(main.call_args_list[2].args[0], [
+            "replay",
+            "--workspace",
+            "/tmp/session-workspace",
+            "--rebuild-state",
+        ])
+
+    def test_workspace_scoped_commands_do_not_receive_session_workflow_defaults(self) -> None:
+        self.shell.default_verbose = True
+        self.shell.default_time_limit = 30.0
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+            self.shell.onecmd("doctor")
+
+        argv = main.call_args.args[0]
+        self.assertNotIn("--verbose", argv)
+        self.assertNotIn("--time-limit", argv)
+        self.assertNotIn("--agent", argv)
+
+    def test_paired_commands_supply_source_repository_only_where_defined(self) -> None:
+        parser = shell_interface.cli.build_parser()
+        expected_source_repository = {
+            "paired_validate": True,
+            "paired_plan": False,
+            "paired_dry_run": True,
+            "paired_analyze": False,
+            "paired_run": True,
+            "paired_resume": True,
+        }
+        extra_arguments = {
+            "paired_validate": "",
+            "paired_plan": " --workspace-root /tmp/root",
+            "paired_dry_run": " --workspace-root /tmp/root",
+            "paired_analyze": " --control-state-dir /tmp/state",
+            "paired_run": " --workspace-root /tmp/root --control-state-dir /tmp/state",
+            "paired_resume": " --workspace-root /tmp/root --control-state-dir /tmp/state",
+        }
+
+        for command, supplies_source in expected_source_repository.items():
+            with self.subTest(command=command):
+                with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+                    self.shell.onecmd(f"{command} manifest.json{extra_arguments[command]}")
+
+                argv = main.call_args.args[0]
+                self.assertEqual(argv[0], "paired")
+                self.assertEqual(
+                    "--source-repository" in argv,
+                    supplies_source,
+                    msg=f"{command} produced {argv}",
+                )
+                if supplies_source:
+                    index = argv.index("--source-repository")
+                    self.assertEqual(argv[index + 1], "/tmp/session-workspace")
+                # The generated argv must remain acceptable to the canonical parser.
+                parser.parse_args(argv)
+
+    def test_paired_manifest_resolves_against_the_session_workspace(self) -> None:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+            self.shell.onecmd("paired_validate manifests/smoke.json")
+
+        self.assertIn("/tmp/session-workspace/manifests/smoke.json", main.call_args.args[0])
+
+    def test_paired_leading_option_leaves_following_tokens_untouched(self) -> None:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+            self.shell.onecmd("paired_plan --workspace-root relative/root manifest.json")
+
+        argv = main.call_args.args[0]
+        self.assertIn("relative/root", argv)
+        self.assertIn("manifest.json", argv)
+
+    def test_paired_run_never_injects_agent_execution_confirmation(self) -> None:
+        parser = shell_interface.cli.build_parser()
+        for command in ("paired_run", "paired_resume"):
+            with self.subTest(command=command):
+                with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+                    self.shell.onecmd(
+                        f"{command} manifest.json --workspace-root /tmp/root "
+                        "--control-state-dir /tmp/state"
+                    )
+
+                argv = main.call_args.args[0]
+                self.assertNotIn("--confirm-agent-execution", argv)
+                self.assertFalse(parser.parse_args(argv).confirm_agent_execution)
+
+    def test_explicit_paired_source_repository_overrides_the_session_default(self) -> None:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+            self.shell.onecmd("paired_validate manifest.json --source-repository /explicit")
+
+        parsed = shell_interface.cli.build_parser().parse_args(main.call_args.args[0])
+        self.assertEqual(parsed.source_repository, Path("/explicit"))
+
+    def test_paired_commands_without_a_manifest_print_usage_errors(self) -> None:
+        stdout = io.StringIO()
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+            with contextlib.redirect_stdout(stdout):
+                self.shell.onecmd("paired_validate")
+                self.shell.onecmd("paired_run")
+        main.assert_not_called()
+        self.assertIn("Usage: paired_validate <manifest>", stdout.getvalue())
+        self.assertIn("Usage: paired_run <manifest>", stdout.getvalue())
+
+    def test_new_commands_delegate_help_to_the_existing_cli_help(self) -> None:
+        expected = {
+            "doctor": ["doctor", "--workspace", "/tmp/session-workspace", "--help"],
+            "init": ["init", "--workspace", "/tmp/session-workspace", "--help"],
+            "replay": ["replay", "--workspace", "/tmp/session-workspace", "--help"],
+            "paired_validate": ["paired", "validate", "--help"],
+            "paired_dry_run": ["paired", "dry-run", "--help"],
+            "paired_resume": ["paired", "resume", "--help"],
+        }
+        for command, argv in expected.items():
+            with self.subTest(command=command):
+                with patch(
+                    "adaptive_orchestrator.interfaces.shell.cli.main",
+                    side_effect=SystemExit(0),
+                ) as main:
+                    self.shell.onecmd(f"help {command}")
+                main.assert_called_once_with(argv)
+
+
+class ShellHelpOverviewTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.shell = OrchestratorShell()
+
+    def _capture(self, line: str) -> str:
+        # cmd.Cmd writes a command's own docstring to the stdout it bound at
+        # construction, while the shell's own output uses print; capture both.
+        stdout = io.StringIO()
+        self.shell.stdout = stdout
+        with contextlib.redirect_stdout(stdout):
+            self.shell.onecmd(line)
+        return stdout.getvalue()
+
+    def _overview(self) -> str:
+        return self._capture("help")
+
+    def test_overview_groups_commands_under_task_oriented_headings(self) -> None:
+        overview = self._overview()
+
+        for heading in (
+            "Session:",
+            "Project:",
+            "Run:",
+            "History:",
+            "Memory:",
+            "Paired experiments:",
+            "Shell:",
+        ):
+            self.assertIn(heading, overview)
+        self.assertIn("Type `help <command>` for one command's full options.", overview)
+
+    def test_overview_shows_usage_and_summary_for_every_command(self) -> None:
+        overview = self._overview()
+
+        for name, arguments in (
+            entry for _title, entries in shell_interface._COMMAND_GROUPS for entry in entries
+        ):
+            with self.subTest(command=name):
+                self.assertIn(f"{name} {arguments}".strip(), overview)
+                self.assertIn(self.shell.command_summary(name), overview)
+
+    def test_summaries_come_from_docstrings_so_they_cannot_drift(self) -> None:
+        # The group table stores no summary text; `help <command>` and the
+        # overview must therefore describe each command identically.
+        for name, _arguments in (
+            entry for _title, entries in shell_interface._COMMAND_GROUPS for entry in entries
+        ):
+            with self.subTest(command=name):
+                docstring = getattr(self.shell, f"do_{name}").__doc__
+                self.assertTrue(docstring, msg=f"do_{name} needs a docstring to summarize")
+                self.assertEqual(
+                    self.shell.command_summary(name),
+                    docstring.strip().splitlines()[0].strip(),
+                )
+
+    def test_every_command_is_reachable_from_the_overview(self) -> None:
+        # A command added without a group entry must still surface, so the
+        # overview can never silently omit part of the shell's surface.
+        self.assertEqual(self.shell._ungrouped_commands(), [])
+
+        grouped = {
+            name
+            for _title, entries in shell_interface._COMMAND_GROUPS
+            for name, _arguments in entries
+        }
+        commands = {
+            name[3:] for name in self.shell.get_names() if name.startswith("do_")
+        }
+        self.assertEqual(commands - grouped, set(shell_interface._HELP_COVERED_ALIASES))
+
+    def test_every_grouped_entry_names_a_real_command(self) -> None:
+        for name, _arguments in (
+            entry for _title, entries in shell_interface._COMMAND_GROUPS for entry in entries
+        ):
+            with self.subTest(command=name):
+                self.assertTrue(callable(getattr(self.shell, f"do_{name}", None)))
+
+    def test_ungrouped_commands_are_listed_under_other(self) -> None:
+        with patch.object(
+            OrchestratorShell,
+            "do_experimental",
+            lambda self, arg: None,
+            create=True,
+        ):
+            self.assertEqual(self.shell._ungrouped_commands(), ["experimental"])
+            overview = self._overview()
+
+        self.assertIn("Other:", overview)
+        self.assertIn("experimental", overview)
+
+    def test_help_for_one_command_still_shows_its_own_documentation(self) -> None:
+        output = self._capture("help compose")
+
+        self.assertIn("Compose a multiline task", output)
+        self.assertNotIn("Paired experiments:", output)
 
 
 class ShellHistoryTests(unittest.TestCase):
@@ -1149,8 +1477,57 @@ class ShellHistoryTests(unittest.TestCase):
             stdout = io.StringIO()
             with contextlib.redirect_stdout(stdout):
                 shell.onecmd("history")
-            output = stdout.getvalue().strip().splitlines()
+            output = [
+                line
+                for line in stdout.getvalue().strip().splitlines()
+                if line != shell_interface._HISTORY_CAVEAT
+            ]
             self.assertEqual([line.split(":")[0] for line in output], [*default_agent_ids(), "retired-agent"])
+
+    def test_history_warns_against_ranking_agents_when_it_prints_rates(self) -> None:
+        # The percentages come from whichever agent was selected, not from a
+        # controlled assignment, so the output itself has to say so.
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell()
+            shell.workspace = Path(directory)
+            log = shell.workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir()
+            log.write_text(
+                json.dumps({"agent_id": "codex", "status": "completed", "duration_ms": 1}) + "\n",
+                encoding="utf-8",
+            )
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("history")
+
+            output = stdout.getvalue()
+            self.assertIn("% success", output)
+            self.assertIn("Do not use them to rank agents.", output)
+
+    def test_history_omits_the_ranking_caveat_when_there_are_no_rates(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell()
+            shell.workspace = Path(directory)
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("history")
+
+            self.assertNotIn("rank agents", stdout.getvalue())
+
+    def test_history_read_error_does_not_print_a_caveat_for_absent_rates(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell()
+            shell.workspace = Path(directory)
+            log = shell.workspace / ".orchestrator" / "executions.jsonl"
+            log.mkdir(parents=True)
+            stdout = io.StringIO()
+            stderr = io.StringIO()
+
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                shell.onecmd("history")
+
+            self.assertIn("could not read execution history", stderr.getvalue())
+            self.assertNotIn("rank agents", stdout.getvalue())
 
     def test_history_read_error_does_not_escape_shell(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -1403,6 +1780,17 @@ class ShellUsageTests(unittest.TestCase):
             "Codex: plus plan, 12.5% used (resets in 5d)",
             "Claude Code: pro subscription; logged in this project: $1.45 across 2 executions with cost data (no live quota % available locally)",
         ])
+
+    def test_reset_delay_uses_a_resolution_the_number_actually_has(self) -> None:
+        # Whole-day truncation showed every reset inside the next 24 hours as
+        # "0d", which reads as "already reset" exactly when the wait matters.
+        shell = OrchestratorShell()
+        self.assertEqual(shell._format_reset_delay(5 * 86400), "5d")
+        self.assertEqual(shell._format_reset_delay(86400), "1d")
+        self.assertEqual(shell._format_reset_delay(5 * 3600), "5h")
+        self.assertEqual(shell._format_reset_delay(90 * 60), "1h")
+        self.assertEqual(shell._format_reset_delay(120), "2m")
+        self.assertEqual(shell._format_reset_delay(5), "under a minute")
 
     def test_codex_unavailable_but_claude_available(self) -> None:
         executions = [{"agent_id": "claude-code", "metadata": {"cost_usd": 0.5}}]

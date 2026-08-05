@@ -7,16 +7,17 @@ import signal
 import shlex
 import sys
 import time
-from importlib import metadata
 from pathlib import Path
 
 from adaptive_orchestrator.execution.agents import ClaudeCodeAgent, default_agent_ids
 from adaptive_orchestrator.infrastructure.configuration import (
+    ProjectConfig,
     ProjectConfigError,
     configured_agent_ids,
     load_project_config,
 )
 from adaptive_orchestrator.infrastructure.history import ExecutionHistory
+from adaptive_orchestrator.infrastructure.version import package_version
 from adaptive_orchestrator.interfaces import cli
 from adaptive_orchestrator.operations.reporting import (
     ExecutionBundle,
@@ -35,48 +36,42 @@ class _ShellTermination(BaseException):
         self.signum = signum
 
 
-def _source_tree_version() -> str | None:
-    """Read this checkout's project version when the module lives in a source tree."""
-    pyproject = Path(__file__).parents[3] / "pyproject.toml"
-    try:
-        lines = pyproject.read_text(encoding="utf-8").splitlines()
-    except (OSError, UnicodeError):
-        return None
+class _TrackedStream:
+    """Pass output straight through while recording that something was written."""
 
-    project_values: dict[str, str] = {}
-    in_project = False
-    for line in lines:
-        stripped = line.strip()
-        if stripped.startswith("[") and stripped.endswith("]"):
-            in_project = stripped == "[project]"
-            continue
-        key, separator, raw_value = stripped.partition("=")
-        value = raw_value.strip()
-        if (
-            in_project
-            and separator
-            and len(value) >= 2
-            and value[0] == value[-1]
-            and value[0] in {"'", '"'}
-        ):
-            project_values[key.strip()] = value[1:-1]
+    def __init__(self, stream: object, witness: "_OutputWitness") -> None:
+        self._stream = stream
+        self._witness = witness
 
-    if project_values.get("name") != "adaptive-ai-orchestrator":
-        return None
-    return project_values.get("version")
+    def write(self, text: str) -> int:
+        if text:
+            self._witness.wrote = True
+        return self._stream.write(text)  # type: ignore[attr-defined]
+
+    def __getattr__(self, name: str) -> object:
+        return getattr(self._stream, name)
 
 
-def _package_version() -> str:
-    """Return the active source release, then installed distribution metadata."""
-    # Prefer a verified checkout over possibly stale installed metadata when
-    # the documented ``PYTHONPATH=src`` development entry point is in use.
-    source_version = _source_tree_version()
-    if source_version:
-        return source_version
-    try:
-        return metadata.version("adaptive-ai-orchestrator")
-    except metadata.PackageNotFoundError:
-        return "dev"
+class _OutputWitness:
+    """Context manager that reports whether embedded work produced any output."""
+
+    def __init__(self, stdout: object, stderr: object) -> None:
+        self.wrote = False
+        self._stdout = stdout
+        self._stderr = stderr
+        self._restore: tuple[object, object] | None = None
+
+    def __enter__(self) -> "_OutputWitness":
+        self._restore = (sys.stdout, sys.stderr)
+        sys.stdout = _TrackedStream(self._stdout, self)  # type: ignore[assignment]
+        sys.stderr = _TrackedStream(self._stderr, self)  # type: ignore[assignment]
+        return self
+
+    def __exit__(self, exc_type: object, exc_value: object, traceback: object) -> bool:
+        if self._restore is not None:
+            sys.stdout, sys.stderr = self._restore  # type: ignore[assignment]
+            self._restore = None
+        return False
 
 
 def _shell_banner(
@@ -84,7 +79,7 @@ def _shell_banner(
     kernel_version: str = KERNEL_VERSION,
 ) -> str:
     """Render the compact, color-free startup wordmark."""
-    resolved_version = version or _package_version()
+    resolved_version = version or package_version()
     return "\n".join((
         "    _        _        ___",
         "   / \\      / \\      / _ \\",
@@ -95,6 +90,93 @@ def _shell_banner(
         f" Shell v{resolved_version} | Kernel v{kernel_version}",
         " Type help or ?; task <request> starts a quick run.",
     ))
+
+
+# Aliases and end-of-file handling are covered by the entry they alias, so the
+# grouped overview omits them without leaving them unaccounted for.
+_HELP_COVERED_ALIASES = frozenset({"cd", "quit", "q", "EOF"})
+
+#: Session defaults `set` accepts, in the order `help set` and its errors list them.
+_SETTING_NAMES = ("verbose", "no_escalation", "time_limit", "verify")
+
+_HISTORY_CAVEAT = (
+    "Note: these are legacy operational counts from whichever agent was selected "
+    "at the time, not a controlled comparison. Do not use them to rank agents."
+)
+
+# The grouped `help` overview: for each group, the command name and the argument
+# shape it accepts. Summaries are not stored here—they are read from each
+# command's own docstring, so the overview cannot drift away from `help
+# <command>`. Every name must resolve to a real ``do_`` method, and anything a
+# group forgets still lists under "Other", so a command can never silently
+# disappear from the overview.
+_COMMAND_GROUPS: tuple[tuple[str, tuple[tuple[str, str], ...]], ...] = (
+    (
+        "Session",
+        (
+            ("workspace", "[<dir>]"),
+            ("agent", "[<id>|auto|inherit]"),
+            ("status", ""),
+            ("settings", ""),
+            ("set", "<name> <value>"),
+        ),
+    ),
+    (
+        "Project",
+        (
+            ("init", "[args...]"),
+            ("doctor", "[args...]"),
+            ("replay", "[args...]"),
+        ),
+    ),
+    (
+        "Run",
+        (
+            ("task", "<request>"),
+            ("compose", ""),
+            ("run", "[args...]"),
+            ("run_plan", "<plan_file> [args...]"),
+            ("plan_generate", "<request> [args...]"),
+            ("plan_validate", "<plan_file>"),
+            ("retry", "<id|#N> [args...]"),
+        ),
+    ),
+    (
+        "History",
+        (
+            ("recent", "[count]"),
+            ("show", "<id|#N> [args...]"),
+            ("report", "<id|#N> [args...]"),
+            ("history", ""),
+            ("usage", ""),
+        ),
+    ),
+    (
+        "Memory",
+        (
+            ("memory_record", "[args...]"),
+            ("memory_search", "[args...]"),
+        ),
+    ),
+    (
+        "Paired experiments",
+        (
+            ("paired_validate", "<manifest> [args...]"),
+            ("paired_plan", "<manifest> [args...]"),
+            ("paired_dry_run", "<manifest> [args...]"),
+            ("paired_analyze", "<manifest> [args...]"),
+            ("paired_run", "<manifest> [args...]"),
+            ("paired_resume", "<manifest> [args...]"),
+        ),
+    ),
+    (
+        "Shell",
+        (
+            ("help", "[<command>]"),
+            ("exit", ""),
+        ),
+    ),
+)
 
 
 class OrchestratorShell(cmd.Cmd):
@@ -150,7 +232,7 @@ class OrchestratorShell(cmd.Cmd):
             readline.set_completer_delims(original_delimiters)
 
     def do_workspace(self, arg: str) -> None:
-        """Set or show the session workspace."""
+        """Set or show the session workspace (alias: cd)."""
         text = arg.strip()
         if not text:
             print(self.workspace)
@@ -220,28 +302,55 @@ class OrchestratorShell(cmd.Cmd):
     def do_settings(self, arg: str) -> None:
         """Show session overrides applied to task and plan commands."""
         del arg
+        # "inherit" alone does not say what will actually happen, so each
+        # inherited row also reports the value the active profile supplies —
+        # the same shape the agent row has always used.
+        try:
+            config: ProjectConfig | None = load_project_config(self.workspace)
+            profile_error: str | None = None
+        except ProjectConfigError as exc:
+            config, profile_error = None, str(exc)
+
+        def inherited(effective: str) -> str:
+            if profile_error is not None:
+                return f"inherit (profile error: {profile_error})"
+            return f"inherit (effective: {effective})"
+
         print(f"Agent: {self._format_agent_state()}")
-        print(f"Verbose: {self._format_toggle(self.default_verbose)}")
-        print(f"No escalation: {self._format_toggle(self.default_no_escalation)}")
+        print(
+            f"Verbose: {self._format_toggle(self.default_verbose)}"
+            if self.default_verbose is not None
+            else f"Verbose: {inherited(self._format_toggle(bool(config and config.verbose)))}"
+        )
+        if self.default_no_escalation is not None:
+            print(f"No escalation: {self._format_toggle(self.default_no_escalation)}")
+        else:
+            # The project profile stores escalation_enabled; this row is its inverse.
+            effective = self._format_toggle(not config.escalation_enabled) if config else "unknown"
+            print(f"No escalation: {inherited(effective)}")
+
         if self.default_time_limit_disabled:
-            time_limit = "off"
+            print("Time limit: off")
         elif self.default_time_limit is not None:
-            time_limit = f"{self.default_time_limit:g}s"
+            print(f"Time limit: {self.default_time_limit:g}s")
         else:
-            time_limit = "inherit"
-        print(f"Time limit: {time_limit}")
+            seconds = config.time_limit_seconds if config else None
+            print(f"Time limit: {inherited(f'{seconds:g}s' if seconds is not None else 'none')}")
+
         if self.default_verify_commands_disabled:
-            verify = "off"
+            print("Verify command: off")
+        elif self.default_verify_command is not None:
+            print(f"Verify command: {self.default_verify_command}")
         else:
-            verify = self.default_verify_command or "inherit"
-        print(f"Verify command: {verify}")
+            commands = config.verify_commands if config else ()
+            print(f"Verify command: {inherited('; '.join(commands) if commands else 'none')}")
 
     def do_set(self, arg: str) -> None:
         """Set a session default: verbose, no_escalation, time_limit, or verify."""
         text = arg.strip()
         parts = text.split(maxsplit=1)
         if len(parts) != 2:
-            print("Usage: set <verbose|no_escalation|time_limit|verify> <value>")
+            print(f"Usage: set <{'|'.join(_SETTING_NAMES)}> <value>")
             return
         name, value = parts
 
@@ -311,7 +420,26 @@ class OrchestratorShell(cmd.Cmd):
             print(f"verify set to {self.default_verify_command}")
             return
 
-        print(f"Error: unknown setting: {name}")
+        print(f"Error: unknown setting: {name}. Choose one of {', '.join(_SETTING_NAMES)}")
+
+    def do_init(self, arg: str) -> None:
+        """Create a project config with detected verification commands."""
+        self._invoke_workspace_command("init", arg)
+
+    def do_doctor(self, arg: str) -> None:
+        """Check project config, agent login, and runtime prerequisites."""
+        self._invoke_workspace_command("doctor", arg)
+
+    def do_replay(self, arg: str) -> None:
+        """Validate lifecycle events and optionally rebuild derived routing state."""
+        self._invoke_workspace_command("replay", arg)
+
+    def _invoke_workspace_command(self, command: str, arg: str) -> None:
+        """Forward a workspace-scoped CLI command that takes no session defaults."""
+        tokens = self._split(arg, command)
+        if tokens is None:
+            return
+        self._invoke_cli([command, "--workspace", str(self.workspace), *tokens], command)
 
     def do_task(self, arg: str) -> None:
         """Run a request using it as both the task description and objective."""
@@ -361,7 +489,7 @@ class OrchestratorShell(cmd.Cmd):
         self._invoke_cli(argv, label)
 
     def do_run(self, arg: str) -> None:
-        """Run one task through the existing CLI dispatch."""
+        """Run one task with the full CLI flag set."""
         tokens = self._split(arg, "run")
         if tokens is None:
             return
@@ -450,8 +578,10 @@ class OrchestratorShell(cmd.Cmd):
         del arg
         history = ExecutionHistory(self.workspace / ".orchestrator" / "executions.jsonl")
         try:
+            comparable = False
             for agent_id in self._history_agent_ids(history):
                 metrics = history.metrics_for(agent_id)
+                comparable = comparable or metrics.executions > 0
                 print(
                     self._format_history_line(
                         agent_id,
@@ -462,6 +592,14 @@ class OrchestratorShell(cmd.Cmd):
                 )
         except (OSError, UnicodeError, AttributeError, TypeError, ValueError) as exc:
             print(f"Error: could not read execution history: {exc}", file=sys.stderr)
+            return
+        if comparable:
+            # Printing several agents' percentages side by side invites exactly
+            # the comparison these numbers cannot support: the rows come from
+            # whichever agent happened to be selected, not from a controlled
+            # assignment. Keeping the caveat in the docs alone left the output
+            # looking like a ranking.
+            print(_HISTORY_CAVEAT)
 
     def do_recent(self, arg: str) -> None:
         """Show recent executions for the current workspace (default: 5)."""
@@ -479,7 +617,7 @@ class OrchestratorShell(cmd.Cmd):
         if executions is None:
             return
         if not executions:
-            print("No executions logged yet")
+            print("No executions logged yet. Start one with: task <request>")
             return
         for index, bundle in reversed(executions[-count:]):
             primary = bundle.primary
@@ -566,8 +704,70 @@ class OrchestratorShell(cmd.Cmd):
             clauses.append("logged in this project: no cost data logged yet")
         print(f"Claude Code: {'; '.join(clauses)} (no live quota % available locally)")
 
+    def do_paired_validate(self, arg: str) -> None:
+        """Validate a paired manifest and its pinned environment."""
+        self._invoke_paired("validate", arg, "paired_validate", source_repository=True)
+
+    def do_paired_plan(self, arg: str) -> None:
+        """Project deterministic paired workspace identities without creating them."""
+        self._invoke_paired("plan", arg, "paired_plan", source_repository=False)
+
+    def do_paired_dry_run(self, arg: str) -> None:
+        """Create and verify independent exact-base checkouts without invoking agents."""
+        self._invoke_paired("dry-run", arg, "paired_dry_run", source_repository=True)
+
+    def do_paired_analyze(self, arg: str) -> None:
+        """Project paired outcomes from a lifecycle event source."""
+        self._invoke_paired("analyze", arg, "paired_analyze", source_repository=False)
+
+    def do_paired_run(self, arg: str) -> None:
+        """Execute a preregistered paired smoke; you must pass --confirm-agent-execution."""
+        self._invoke_paired("run", arg, "paired_run", source_repository=True)
+
+    def do_paired_resume(self, arg: str) -> None:
+        """Continue only the unmaterialized suffix of a paused paired smoke."""
+        self._invoke_paired("resume", arg, "paired_resume", source_repository=True)
+
+    def _invoke_paired(
+        self,
+        subcommand: str,
+        arg: str,
+        label: str,
+        *,
+        source_repository: bool,
+    ) -> None:
+        """Forward one `paired` subcommand, which is scoped by source repository.
+
+        The paired commands predate the session workspace and never accept
+        ``--workspace``; only some of them accept ``--source-repository``, so the
+        session default is supplied exactly where the parser defines it. No
+        confirmation flag is ever injected: authorizing agent execution stays an
+        explicit act by the operator.
+        """
+        tokens = self._split(arg, label)
+        if tokens is None:
+            return
+        if not tokens:
+            print(f"Usage: {label} <manifest> [args...]")
+            return
+
+        # Only a leading bare manifest is resolved against the workspace. Once
+        # options come first, a following token is likelier an option value than
+        # the positional, and rewriting it would corrupt the command.
+        if not tokens[0].startswith("-"):
+            try:
+                tokens = [str(self._resolve_workspace_path(tokens[0])), *tokens[1:]]
+            except (OSError, RuntimeError) as exc:
+                print(f"Error: {label}: could not resolve manifest: {exc}", file=sys.stderr)
+                return
+
+        argv = ["paired", subcommand]
+        if source_repository:
+            argv.extend(("--source-repository", str(self.workspace)))
+        self._invoke_cli([*argv, *tokens], label)
+
     def do_exit(self, arg: str) -> bool:
-        """Exit the shell."""
+        """Exit the shell (aliases: quit, q, Ctrl-D)."""
         del arg
         return True
 
@@ -628,7 +828,7 @@ class OrchestratorShell(cmd.Cmd):
         if len(words) <= 1:
             return [
                 item
-                for item in ("verbose", "no_escalation", "time_limit", "verify")
+                for item in _SETTING_NAMES
                 if item.startswith(text)
             ]
         if len(words) == 2 and words[1] in {"verbose", "no_escalation"}:
@@ -653,6 +853,30 @@ class OrchestratorShell(cmd.Cmd):
         """Complete plan file paths."""
         return self._complete_path(text, line, begidx, endidx)
 
+    def complete_paired_validate(self, text: str, line: str, begidx: int, endidx: int) -> list[str]:
+        """Complete paired manifest paths."""
+        return self._complete_path(text, line, begidx, endidx)
+
+    def complete_paired_plan(self, text: str, line: str, begidx: int, endidx: int) -> list[str]:
+        """Complete paired manifest paths."""
+        return self._complete_path(text, line, begidx, endidx)
+
+    def complete_paired_dry_run(self, text: str, line: str, begidx: int, endidx: int) -> list[str]:
+        """Complete paired manifest paths."""
+        return self._complete_path(text, line, begidx, endidx)
+
+    def complete_paired_analyze(self, text: str, line: str, begidx: int, endidx: int) -> list[str]:
+        """Complete paired manifest paths."""
+        return self._complete_path(text, line, begidx, endidx)
+
+    def complete_paired_run(self, text: str, line: str, begidx: int, endidx: int) -> list[str]:
+        """Complete paired manifest paths."""
+        return self._complete_path(text, line, begidx, endidx)
+
+    def complete_paired_resume(self, text: str, line: str, begidx: int, endidx: int) -> list[str]:
+        """Complete paired manifest paths."""
+        return self._complete_path(text, line, begidx, endidx)
+
     def complete_show(self, text: str, line: str, begidx: int, endidx: int) -> list[str]:
         """Complete the first execution identifier."""
         return self._complete_execution_identifier(text, line, begidx, endidx)
@@ -665,9 +889,91 @@ class OrchestratorShell(cmd.Cmd):
         """Complete the first execution identifier."""
         return self._complete_execution_identifier(text, line, begidx, endidx)
 
+    def do_help(self, arg: str) -> None:
+        """Show grouped commands, or one command's detailed help."""
+        if arg.strip():
+            super().do_help(arg)
+            return
+        print(self._grouped_help())
+
+    def _grouped_help(self) -> str:
+        """Render the command overview grouped by what the operator is doing."""
+        usages = {
+            name: f"{name} {arguments}".strip()
+            for _title, entries in _COMMAND_GROUPS
+            for name, arguments in entries
+        }
+        width = max(len(usage) for usage in usages.values())
+        lines = ["Type `help <command>` for one command's full options.", ""]
+        for title, entries in _COMMAND_GROUPS:
+            lines.append(f"{title}:")
+            lines.extend(
+                f"  {usages[name].ljust(width)}  {self.command_summary(name)}"
+                for name, _arguments in entries
+            )
+            lines.append("")
+        ungrouped = self._ungrouped_commands()
+        if ungrouped:
+            lines.append("Other:")
+            lines.append(f"  {', '.join(ungrouped)}")
+            lines.append("")
+        return "\n".join(lines).rstrip()
+
+    def command_summary(self, name: str) -> str:
+        """Return one command's first docstring line, the source `help <name>` uses."""
+        documentation = getattr(getattr(self, f"do_{name}", None), "__doc__", None) or ""
+        summary = documentation.strip().splitlines()
+        return summary[0].strip() if summary else "(undocumented)"
+
+    def _ungrouped_commands(self) -> list[str]:
+        """Return commands no group lists, so the overview stays complete."""
+        grouped = {
+            name
+            for _title, entries in _COMMAND_GROUPS
+            for name, _arguments in entries
+        }
+        commands = {name[3:] for name in self.get_names() if name.startswith("do_")}
+        return sorted(commands - grouped - _HELP_COVERED_ALIASES)
+
     def help_run(self) -> None:
         """Show the existing CLI help for run."""
         self._show_cli_help("run", use_workspace=True)
+
+    def help_init(self) -> None:
+        """Show the existing CLI help for init."""
+        self._show_cli_help("init", use_workspace=True)
+
+    def help_doctor(self) -> None:
+        """Show the existing CLI help for doctor."""
+        self._show_cli_help("doctor", use_workspace=True)
+
+    def help_replay(self) -> None:
+        """Show the existing CLI help for replay."""
+        self._show_cli_help("replay", use_workspace=True)
+
+    def help_paired_validate(self) -> None:
+        """Show the existing CLI help for paired validate."""
+        self._show_cli_help("paired", "validate")
+
+    def help_paired_plan(self) -> None:
+        """Show the existing CLI help for paired plan."""
+        self._show_cli_help("paired", "plan")
+
+    def help_paired_dry_run(self) -> None:
+        """Show the existing CLI help for paired dry-run."""
+        self._show_cli_help("paired", "dry-run")
+
+    def help_paired_analyze(self) -> None:
+        """Show the existing CLI help for paired analyze."""
+        self._show_cli_help("paired", "analyze")
+
+    def help_paired_run(self) -> None:
+        """Show the existing CLI help for paired run."""
+        self._show_cli_help("paired", "run")
+
+    def help_paired_resume(self) -> None:
+        """Show the existing CLI help for paired resume."""
+        self._show_cli_help("paired", "resume")
 
     def help_show(self) -> None:
         """Show the existing CLI help for show."""
@@ -710,25 +1016,45 @@ class OrchestratorShell(cmd.Cmd):
 
     def _invoke_cli(self, argv: list[str], label: str) -> None:
         original_program = sys.argv[0]
-        sys.argv[0] = "adaptive-orchestrator"
+        sys.argv[0] = cli.PROGRAM_NAME
+        witness = _OutputWitness(sys.stdout, sys.stderr)
         try:
-            exit_code = cli.main(argv)
-            if isinstance(exit_code, int) and exit_code != 0:
-                print(f"Error: {label} failed with exit code {exit_code}", file=sys.stderr)
+            with witness:
+                exit_code = cli.main(argv)
+            self._report_exit_code(exit_code, label, witness)
         except KeyboardInterrupt:
             print(f"Interrupted: {label}", file=sys.stderr)
         except SystemExit as exc:
-            if exc.code not in (None, 0):
-                print(f"Error: {label} failed with exit code {exc.code}", file=sys.stderr)
+            self._report_exit_code(exc.code, label, witness)
         except Exception as exc:  # noqa: BLE001 - shell boundary: keep the loop alive on any failure.
             print(f"Error: {label} failed: {exc}", file=sys.stderr)
         finally:
             sys.argv[0] = original_program
 
+    @staticmethod
+    def _report_exit_code(exit_code: object, label: str, witness: "_OutputWitness") -> None:
+        """Announce a failure only when the command did not explain itself.
+
+        Every CLI failure path prints its own reason first, so restating it as
+        "failed with exit code 1" gave one problem two lines and buried the part
+        that says what went wrong. The generic line still appears when the
+        command exits non-zero silently, which would otherwise look like success.
+        """
+
+        if not isinstance(exit_code, int) or isinstance(exit_code, bool):
+            # A string SystemExit code is its own message and cannot duplicate
+            # one the command printed. Any other non-integer is not a status.
+            if isinstance(exit_code, str) and exit_code:
+                print(f"Error: {label} failed: {exit_code}", file=sys.stderr)
+            return
+        if exit_code == 0 or witness.wrote:
+            return
+        print(f"Error: {label} failed with exit code {exit_code}", file=sys.stderr)
+
     def _show_cli_help(self, *command: str, use_workspace: bool = False) -> None:
         original_program = sys.argv[0]
         try:
-            sys.argv[0] = "adaptive-orchestrator"
+            sys.argv[0] = cli.PROGRAM_NAME
             try:
                 argv = [*command]
                 if use_workspace:
@@ -1074,6 +1400,22 @@ class OrchestratorShell(cmd.Cmd):
     def _format_percentage(self, value: float) -> str:
         return f"{round(value * 100)}%"
 
+    @staticmethod
+    def _format_reset_delay(seconds: float) -> str:
+        """Report a quota reset at a resolution the number actually has.
+
+        Truncating to whole days rendered every reset inside the next 24 hours
+        as "0d", which reads as "already reset" exactly when the wait matters.
+        """
+
+        if seconds >= 86400:
+            return f"{int(seconds // 86400)}d"
+        if seconds >= 3600:
+            return f"{int(seconds // 3600)}h"
+        if seconds >= 60:
+            return f"{int(seconds // 60)}m"
+        return "under a minute"
+
     def _format_codex_usage(self, usage: CodexUsage | None) -> str:
         if usage is None:
             return "Codex: usage data not available"
@@ -1086,7 +1428,7 @@ class OrchestratorShell(cmd.Cmd):
         if usage.resets_at is not None:
             seconds = usage.resets_at - time.time()
             if seconds >= 0:
-                reset_text = f" (resets in {int(seconds // 86400)}d)"
+                reset_text = f" (resets in {self._format_reset_delay(seconds)})"
         return f"Codex: {', '.join(clauses)}{reset_text}" if clauses else "Codex: usage data not available"
 
 

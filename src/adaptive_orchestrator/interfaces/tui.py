@@ -270,6 +270,13 @@ def wrap_text(text: str, columns: int) -> list[str]:
             remainder = word
             while display_width(remainder) > columns:
                 piece = fit_to_width(remainder, columns)
+                if not piece:
+                    # One character can be wider than the entire budget: a
+                    # double-width CJK glyph in a one-column pane. Emitting it
+                    # alone overflows by a column, which the renderer clips,
+                    # whereas keeping it back would leave the remainder
+                    # unchanged and loop forever.
+                    piece = remainder[0]
                 wrapped.append(piece)
                 remainder = remainder[len(piece):]
             current, current_width = remainder, display_width(remainder)
@@ -996,6 +1003,14 @@ class OrchestratorTui:
         _safe_addstr(screen, top, 0, pad_to_width(header, list_width - 1), list_width, curses.A_BOLD)
         list_top = top + 1
         list_height = max(body_height - 1, 0)
+        if not self.visible_rows and list_height > 0:
+            # An empty table under a header reads as "broken", and a filter that
+            # matches nothing looks identical to having no data at all.
+            for offset, line in enumerate(self._dashboard_empty_lines()):
+                if offset >= list_height:
+                    break
+                _safe_addstr(screen, list_top + offset, 0, line, list_width, curses.A_DIM)
+            return
         self.list_offset = scroll_offset(self.list_offset, self.selected, len(self.visible_rows), list_height)
         window = self.visible_rows[self.list_offset:self.list_offset + list_height]
         for index, row in enumerate(window):
@@ -1067,6 +1082,18 @@ class OrchestratorTui:
         self.detail_offset = clamp_offset(self.detail_offset, len(rendered), body_height)
         for index, (text, attribute) in enumerate(rendered[self.detail_offset:self.detail_offset + body_height]):
             _safe_addstr(screen, top + index, 0, text, width, attribute)
+
+    def _dashboard_empty_lines(self) -> tuple[str, ...]:
+        """Explain an empty execution list, distinguishing no data from no match."""
+        if self.rows and self.filter_text:
+            return (
+                f"No execution matches {self.filter_text!r}.",
+                f"{len(self.rows)} hidden by the filter — press / to change it, Esc to clear.",
+            )
+        return (
+            "No executions recorded in this workspace yet.",
+            "Press n to run a task, or q to quit.",
+        )
 
     def _report_lines(self, row: DashboardRow) -> list[str]:
         if not row.attempts:
@@ -1162,7 +1189,12 @@ class OrchestratorTui:
         left = max((width - box_width) // 2, 0)
         for index in range(box_height):
             _safe_addstr(screen, top + index, left, " " * box_width, box_width + 1, curses.A_REVERSE)
-        for index, item in enumerate(entries[:max(box_height - 2, 0)]):
+        visible = list(entries[:max(box_height - 2, 0)])
+        if len(visible) < len(entries) and visible:
+            # A short terminal used to drop the remaining bindings silently, so
+            # the overlay looked like the complete list of what the UI can do.
+            visible[-1] = f"… {len(entries) - len(visible) + 1} more; enlarge the terminal"
+        for index, item in enumerate(visible):
             _safe_addstr(screen, top + 1 + index, left + 2, item, box_width - 3, curses.A_REVERSE)
 
 

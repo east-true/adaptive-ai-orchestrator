@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import shutil
 import subprocess
 import sys
@@ -8,6 +9,11 @@ from pathlib import Path
 from typing import Sequence
 
 from adaptive_orchestrator.infrastructure.configuration import ProjectConfigError, config_path, load_project_config
+
+# A login check only needs to say whether the CLI is usable. Account identifiers
+# are not part of that answer, and `doctor` output is routinely pasted into bug
+# reports and screenshots, so only these keys are echoed from a JSON status.
+_STATUS_SUMMARY_KEYS = ("loggedIn", "subscriptionType", "authMethod", "apiProvider", "plan", "planType")
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,6 +83,38 @@ def _run_status_command(command: Sequence[str], timeout_seconds: float) -> tuple
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         return False, str(exc)
-    output = (result.stdout or result.stderr).strip().replace("\n", " ")
-    detail = output[:240] if output else f"exit code {result.returncode}"
+    output = (result.stdout or result.stderr).strip()
+    detail = _summarize_status_output(output) or f"exit code {result.returncode}"
     return result.returncode == 0, detail
+
+
+def _summarize_status_output(output: str) -> str:
+    """Condense a status command's output, dropping account identifiers.
+
+    Claude Code answers `auth status` with a JSON object that includes the
+    account email, organization ID, and organization name. Echoing it raw both
+    reads badly—one status line becomes a wall of JSON cut off mid-object—and
+    puts identifying details into output people paste into issues. Only the keys
+    that describe whether the CLI is usable are kept; any other shape falls back
+    to the previous flattened, truncated text.
+    """
+
+    if not output:
+        return ""
+    try:
+        payload = json.loads(output)
+    except json.JSONDecodeError:
+        return output.replace("\n", " ")[:240]
+    if not isinstance(payload, dict):
+        return output.replace("\n", " ")[:240]
+
+    clauses = [
+        f"{key}={payload[key]}"
+        for key in _STATUS_SUMMARY_KEYS
+        if key in payload and not isinstance(payload[key], (dict, list))
+    ]
+    if not clauses:
+        # A JSON status with nothing recognizable is still a successful call;
+        # say so without echoing fields that were deliberately not allowlisted.
+        return "status reported (no recognized fields)"
+    return ", ".join(clauses)

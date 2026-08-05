@@ -43,6 +43,17 @@ class OrchestratorKernel:
         include_git_diff: bool = False,
         lifecycle_recorder: LifecycleRecorder | None = None,
     ) -> None:
+        """Coordinate one agent registry over one workspace.
+
+        Supply ``lifecycle_recorder`` for anything but a throwaway embedding. The
+        fallback below keeps the lifecycle log under the workspace, which is
+        self-contained and creates nothing outside the directory the caller
+        handed over, but leaves that log where the agent being orchestrated can
+        write. Both shipped entry points—the CLI and the paired runner—pass a
+        recorder rooted at ``resolve_control_state_directory``, which refuses any
+        path inside the workspace.
+        """
+
         self._agents = agents
         self._logger = logger
         self._workspace = workspace.resolve()

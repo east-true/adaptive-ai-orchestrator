@@ -34,6 +34,7 @@ from adaptive_orchestrator.infrastructure.history import ExecutionHistory
 from adaptive_orchestrator.infrastructure.logging import JsonlExecutionLogger
 from adaptive_orchestrator.infrastructure.memory import EngineeringMemoryStore
 from adaptive_orchestrator.infrastructure.state_paths import resolve_control_state_directory
+from adaptive_orchestrator.infrastructure.version import package_version
 from adaptive_orchestrator.operations.diagnostics import diagnose_project, diagnostics_succeeded
 from adaptive_orchestrator.operations.notifications import notify_execution
 from adaptive_orchestrator.operations.replay import replay_digest, replay_event_log, summarize_attempts, validate_legacy_execution_log
@@ -45,7 +46,7 @@ from adaptive_orchestrator.operations.reporting import (
     task_spec_for_retry,
 )
 from adaptive_orchestrator.orchestration.escalation import EscalationPolicy
-from adaptive_orchestrator.orchestration.kernel import OrchestratorKernel
+from adaptive_orchestrator.orchestration.kernel import KERNEL_VERSION, OrchestratorKernel
 from adaptive_orchestrator.orchestration.workflow import EngineeringWorkflow, execution_succeeded
 from adaptive_orchestrator.routing.analysis import TaskAnalyzer
 from adaptive_orchestrator.routing.policy import RoutingPolicyRouter
@@ -57,56 +58,76 @@ from adaptive_orchestrator.routing.state import (
 )
 
 
+#: The installed console script (see ``[project.scripts]``). Naming the parser
+#: explicitly keeps every usage line identical whether the CLI is reached through
+#: that script, through ``python3 -m adaptive_orchestrator.cli``—which would
+#: otherwise report ``cli.py``—or embedded in the interactive shell.
+PROGRAM_NAME = "adaptive-ai-orchestrator"
+
+#: Module path behind the documented ``python3 -m ...`` development entry point.
+MODULE_ENTRY_POINT = "adaptive_orchestrator.cli"
+
+#: Basenames that mean "started as a module", not as the installed script.
+_MODULE_INVOCATION_NAMES = frozenset({"cli.py", "__main__.py"})
+
+
+def resolve_program_name() -> str:
+    """Name the command the way the caller actually reached it.
+
+    Printing a fixed name is wrong in both directions: someone running from a
+    source checkout does not have the console script on PATH, and argparse's own
+    default reports ``cli.py``, which is not a command at all. Anything
+    unrecognized—a test runner, an embedding host—falls back to the installed
+    script name.
+    """
+
+    if Path(sys.argv[0]).name in _MODULE_INVOCATION_NAMES:
+        return f"{Path(sys.executable).name} -m {MODULE_ENTRY_POINT}"
+    return PROGRAM_NAME
+
+
 def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser:
     config = config or ProjectConfig()
-    parser = argparse.ArgumentParser(description="Run one coding-agent task through the Orchestrator Kernel.")
+    parser = argparse.ArgumentParser(
+        prog=resolve_program_name(),
+        description="Run one coding-agent task through the Orchestrator Kernel.",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"{PROGRAM_NAME} {package_version()} (kernel {KERNEL_VERSION})",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     init = subparsers.add_parser("init", help="create a project config with detected verification commands")
-    init.add_argument("--workspace", type=Path, default=Path.cwd())
+    init.add_argument("--workspace", type=Path, default=Path.cwd(), help="Repository the agent may modify. Defaults to the current directory.")
     init.add_argument("--force", action="store_true", help="Replace an existing project config.")
 
     doctor = subparsers.add_parser("doctor", help="check project config, agent login, and runtime prerequisites")
-    doctor.add_argument("--workspace", type=Path, default=Path.cwd())
-
-    show = subparsers.add_parser("show", help="show a human-readable execution summary")
-    show.add_argument("identifier", help="Execution ID, attempt ID, or legacy #number.")
-    show.add_argument("--workspace", type=Path, default=Path.cwd())
-
-    report = subparsers.add_parser("report", help="render a Markdown execution report")
-    report.add_argument("identifier", help="Execution ID, attempt ID, or legacy #number.")
-    report.add_argument("--workspace", type=Path, default=Path.cwd())
-    report.add_argument("--output", type=Path, help="Write Markdown to this path instead of stdout.")
-    report.add_argument("--include-diff", action="store_true", help="Include the recorded workspace diff when available.")
-    report.add_argument("--force", action="store_true", help="Replace an existing output file.")
-
-    retry = subparsers.add_parser(
-        "retry",
-        help="run the task from a recorded execution again",
-        allow_abbrev=False,
-    )
-    retry.add_argument("identifier", help="Execution ID, attempt ID, or legacy #number.")
-    retry.add_argument("--workspace", type=Path, default=Path.cwd())
-    _add_agent_argument(retry, config)
-    retry.set_defaults(agent="same")
-    _add_workflow_arguments(retry, config)
+    doctor.add_argument("--workspace", type=Path, default=Path.cwd(), help="Repository the agent may modify. Defaults to the current directory.")
 
     run = subparsers.add_parser(
         "run",
         help="plan, execute, and optionally verify one task",
         allow_abbrev=False,
     )
-    run.add_argument("--workspace", type=Path, default=Path.cwd())
+    run.add_argument("--workspace", type=Path, default=Path.cwd(), help="Repository the agent may modify. Defaults to the current directory.")
     _add_agent_argument(run, config)
-    run.add_argument("--description")
-    run.add_argument("--description-file", type=Path)
-    run.add_argument("--objective")
-    run.add_argument("--objective-file", type=Path)
-    run.add_argument("--capability", choices=[item.value for item in Capability], action="append", default=[])
-    run.add_argument("--constraint", action="append", default=[])
-    run.add_argument("--priority", choices=[item.value for item in Priority], default=Priority.NORMAL.value)
-    run.add_argument("--time-limit", type=float, default=config.time_limit_seconds)
-    run.add_argument(
+    task_group = run.add_argument_group("task definition")
+    task_group.add_argument(
+        "--task",
+        help="Shorthand: use this text as both the description and the objective. "
+        "Mutually exclusive with the four options below.",
+    )
+    task_group.add_argument("--description", help="What to do. Required unless --description-file is given.")
+    task_group.add_argument("--description-file", type=Path, help="Read the description from a UTF-8 file instead.")
+    task_group.add_argument("--objective", help="What done looks like. Required unless --objective-file is given.")
+    task_group.add_argument("--objective-file", type=Path, help="Read the objective from a UTF-8 file instead.")
+    task_group.add_argument("--capability", choices=[item.value for item in Capability], action="append", default=[], help="Capability the task requires. Repeatable.")
+    task_group.add_argument("--constraint", action="append", default=[], help="Constraint text passed to the agent. Repeatable.")
+    task_group.add_argument("--priority", choices=[item.value for item in Priority], default=Priority.NORMAL.value, help="Task priority; high and critical raise analyzed difficulty.")
+    task_group.add_argument("--time-limit", type=float, default=config.time_limit_seconds, help="Seconds the agent process may run.")
+    task_group.add_argument(
         "--no-time-limit",
         dest="time_limit",
         action="store_const",
@@ -115,6 +136,7 @@ def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser
         help="Disable a task time limit, including one supplied by project config.",
     )
     _add_workflow_arguments(run, config)
+    _add_summary_argument(run)
     run.set_defaults(_parser=run)
 
     run_plan = subparsers.add_parser(
@@ -129,10 +151,11 @@ def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser
         '"capabilities": [...], "priority", "time_limit_seconds", "cost_limit_usd"}. '
         'Only description/objective are required.',
     )
-    run_plan.add_argument("--workspace", type=Path, default=Path.cwd())
+    run_plan.add_argument("--workspace", type=Path, default=Path.cwd(), help="Repository the agent may modify. Defaults to the current directory.")
     _add_agent_argument(run_plan, config)
     run_plan.add_argument("--continue-on-failure", action="store_true", help="Run every step even if an earlier one failed (default: stop at the first failure).")
     _add_workflow_arguments(run_plan, config)
+    _add_summary_argument(run_plan)
 
     plan = subparsers.add_parser("plan", help="generate or validate a JSON plan file")
     plan_subparsers = plan.add_subparsers(dest="plan_command", required=True)
@@ -146,32 +169,55 @@ def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser
         allow_abbrev=False,
     )
     plan_generate.add_argument("request", help="The vague human request to turn into an ordered plan.")
-    plan_generate.add_argument("--workspace", type=Path, default=Path.cwd())
+    plan_generate.add_argument("--workspace", type=Path, default=Path.cwd(), help="Repository the agent may modify. Defaults to the current directory.")
     plan_generate.add_argument("--output", type=Path, default=None, help="Plan file to write; defaults to plan.json in the workspace.")
     _add_agent_argument(plan_generate, config)
     _add_workflow_arguments(plan_generate, config)
+
+    show = subparsers.add_parser("show", help="show a human-readable execution summary")
+    show.add_argument("identifier", help="Execution ID, attempt ID, or legacy #number.")
+    show.add_argument("--workspace", type=Path, default=Path.cwd(), help="Repository the agent may modify. Defaults to the current directory.")
+
+    report = subparsers.add_parser("report", help="render a Markdown execution report")
+    report.add_argument("identifier", help="Execution ID, attempt ID, or legacy #number.")
+    report.add_argument("--workspace", type=Path, default=Path.cwd(), help="Repository the agent may modify. Defaults to the current directory.")
+    report.add_argument("--output", type=Path, help="Write Markdown to this path instead of stdout.")
+    report.add_argument("--include-diff", action="store_true", help="Include the recorded workspace diff when available.")
+    report.add_argument("--force", action="store_true", help="Replace an existing output file.")
+
+    retry = subparsers.add_parser(
+        "retry",
+        help="run the task from a recorded execution again",
+        allow_abbrev=False,
+    )
+    retry.add_argument("identifier", help="Execution ID, attempt ID, or legacy #number.")
+    retry.add_argument("--workspace", type=Path, default=Path.cwd(), help="Repository the agent may modify. Defaults to the current directory.")
+    _add_agent_argument(retry, config)
+    retry.set_defaults(agent="same")
+    _add_workflow_arguments(retry, config)
+    _add_summary_argument(retry)
 
     memory = subparsers.add_parser("memory", help="record or query engineering memory")
     memory_subparsers = memory.add_subparsers(dest="memory_command", required=True)
 
     memory_record = memory_subparsers.add_parser("record", help="append one engineering memory entry")
-    memory_record.add_argument("--workspace", type=Path, default=Path.cwd())
-    memory_record.add_argument("--type", required=True, choices=[item.value.lower() for item in MemoryEntryType])
-    memory_record.add_argument("--title", required=True)
-    memory_record.add_argument("--summary", required=True)
-    memory_record.add_argument("--rationale", default="")
-    memory_record.add_argument("--alternative", action="append", default=[])
-    memory_record.add_argument("--tag", action="append", default=[])
-    memory_record.add_argument("--related-task", dest="related_task", default=None)
+    memory_record.add_argument("--workspace", type=Path, default=Path.cwd(), help="Repository the agent may modify. Defaults to the current directory.")
+    memory_record.add_argument("--type", required=True, choices=[item.value.lower() for item in MemoryEntryType], help="Kind of engineering memory being recorded.")
+    memory_record.add_argument("--title", required=True, help="Short name for the entry.")
+    memory_record.add_argument("--summary", required=True, help="What was decided or learned.")
+    memory_record.add_argument("--rationale", default="", help="Why it was decided that way.")
+    memory_record.add_argument("--alternative", action="append", default=[], help="An option considered and not taken. Repeatable.")
+    memory_record.add_argument("--tag", action="append", default=[], help="Tag for later filtering. Repeatable.")
+    memory_record.add_argument("--related-task", dest="related_task", default=None, help="Task description this entry came out of.")
 
     memory_search = memory_subparsers.add_parser("search", help="query engineering memory entries")
-    memory_search.add_argument("--workspace", type=Path, default=Path.cwd())
-    memory_search.add_argument("--type", choices=[item.value.lower() for item in MemoryEntryType])
-    memory_search.add_argument("--tag")
-    memory_search.add_argument("--keyword")
+    memory_search.add_argument("--workspace", type=Path, default=Path.cwd(), help="Repository the agent may modify. Defaults to the current directory.")
+    memory_search.add_argument("--type", choices=[item.value.lower() for item in MemoryEntryType], help="Only entries of this kind.")
+    memory_search.add_argument("--tag", help="Only entries carrying this tag.")
+    memory_search.add_argument("--keyword", help="Case-insensitive match across title, summary, and rationale.")
 
     replay = subparsers.add_parser("replay", help="validate lifecycle events and optionally rebuild derived routing state")
-    replay.add_argument("--workspace", type=Path, default=Path.cwd())
+    replay.add_argument("--workspace", type=Path, default=Path.cwd(), help="Repository the agent may modify. Defaults to the current directory.")
     replay.add_argument("--control-state-dir", type=Path, help="Protected event/state directory; defaults to an XDG state path keyed by workspace.")
     replay.add_argument("--rebuild-state", action="store_true", help="Rewrite routing-state.json solely from the event log.")
     replay.add_argument(
@@ -188,35 +234,35 @@ def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser
 
     paired_validate = paired_subparsers.add_parser("validate", help="validate a paired manifest and its pinned environment")
     paired_validate.add_argument("manifest", type=Path)
-    paired_validate.add_argument("--source-repository", type=Path, default=Path.cwd())
+    paired_validate.add_argument("--source-repository", type=Path, default=Path.cwd(), help="Repository the pinned base commits are read from.")
 
     paired_plan = paired_subparsers.add_parser(
         "plan",
         help="project deterministic workspace identities without reading or creating them",
     )
     paired_plan.add_argument("manifest", type=Path)
-    paired_plan.add_argument("--workspace-root", type=Path, required=True)
+    paired_plan.add_argument("--workspace-root", type=Path, required=True, help="Directory the per-attempt workspaces are projected under.")
 
     paired_dry_run = paired_subparsers.add_parser(
         "dry-run",
         help="create and verify independent exact-base checkouts without invoking either agent",
     )
     paired_dry_run.add_argument("manifest", type=Path)
-    paired_dry_run.add_argument("--source-repository", type=Path, default=Path.cwd())
-    paired_dry_run.add_argument("--workspace-root", type=Path, required=True)
+    paired_dry_run.add_argument("--source-repository", type=Path, default=Path.cwd(), help="Repository the pinned base commits are read from.")
+    paired_dry_run.add_argument("--workspace-root", type=Path, required=True, help="Directory the per-attempt checkouts are created under.")
 
     paired_analyze = paired_subparsers.add_parser("analyze", help="project paired outcomes from a lifecycle event source")
     paired_analyze.add_argument("manifest", type=Path)
-    paired_analyze.add_argument("--control-state-dir", type=Path, required=True)
+    paired_analyze.add_argument("--control-state-dir", type=Path, required=True, help="Protected lifecycle event directory to project outcomes from.")
 
     paired_run = paired_subparsers.add_parser(
         "run",
         help="execute a pre-registered paired smoke (requires explicit confirmation)",
     )
     paired_run.add_argument("manifest", type=Path)
-    paired_run.add_argument("--source-repository", type=Path, default=Path.cwd())
-    paired_run.add_argument("--workspace-root", type=Path, required=True)
-    paired_run.add_argument("--control-state-dir", type=Path, required=True)
+    paired_run.add_argument("--source-repository", type=Path, default=Path.cwd(), help="Repository the pinned base commits are read from.")
+    paired_run.add_argument("--workspace-root", type=Path, required=True, help="Directory the per-attempt checkouts are created under.")
+    paired_run.add_argument("--control-state-dir", type=Path, required=True, help="Protected lifecycle event directory, outside every agent workspace.")
     paired_run.add_argument(
         "--confirm-agent-execution",
         action="store_true",
@@ -228,9 +274,9 @@ def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser
         help="continue only the unmaterialized suffix of a paused paired smoke",
     )
     paired_resume.add_argument("manifest", type=Path)
-    paired_resume.add_argument("--source-repository", type=Path, default=Path.cwd())
-    paired_resume.add_argument("--workspace-root", type=Path, required=True)
-    paired_resume.add_argument("--control-state-dir", type=Path, required=True)
+    paired_resume.add_argument("--source-repository", type=Path, default=Path.cwd(), help="Repository the pinned base commits are read from.")
+    paired_resume.add_argument("--workspace-root", type=Path, required=True, help="Directory the per-attempt checkouts are created under.")
+    paired_resume.add_argument("--control-state-dir", type=Path, required=True, help="Protected lifecycle event directory, outside every agent workspace.")
     paired_resume.add_argument(
         "--confirm-agent-execution",
         action="store_true",
@@ -242,21 +288,44 @@ def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser
 
 def _add_agent_argument(parser: argparse.ArgumentParser, config: ProjectConfig) -> None:
     """The --agent flag, shared by every subcommand that routes a task."""
-    parser.add_argument("--agent", default=config.agent, help="Agent id from the configured registry, or auto.")
-    parser.add_argument("--claude-model", default=config.claude_model)
-    parser.add_argument("--codex-model", default=config.codex_model)
-    parser.add_argument("--codex-reasoning-effort", default=config.codex_reasoning_effort)
+    # `run --help` lists more than thirty options. Grouping them costs nothing at
+    # parse time and is the difference between a wall of flags and a readable
+    # page, so each helper files its options under what they configure.
+    group = parser.add_argument_group("agent selection")
+    group.add_argument("--agent", default=config.agent, help="Agent id from the configured registry, or auto.")
+    group.add_argument("--claude-model", default=config.claude_model, help="Claude Code model, forming the agent id claude-code:<model>.")
+    group.add_argument("--codex-model", default=config.codex_model, help="Codex model, forming the agent id codex:<model>.")
+    group.add_argument("--codex-reasoning-effort", default=config.codex_reasoning_effort, help="Codex reasoning effort, appended to the Codex agent id.")
+
+
+def _add_summary_argument(parser: argparse.ArgumentParser) -> None:
+    """Offer the readable rendering for commands whose default output is JSON.
+
+    The JSON record is the scriptable contract and stays the default. Reading
+    the result of a run you just started otherwise means finding the execution
+    id inside that dump and calling `show` with it, even though the renderer
+    `show` uses is already available here.
+    """
+
+    parser.add_argument_group("output").add_argument(
+        "--summary",
+        action="store_true",
+        help="Print the human-readable summary shown by `show` instead of the JSON record.",
+    )
 
 
 def _add_workflow_arguments(parser: argparse.ArgumentParser, config: ProjectConfig) -> None:
     """Verification and escalation flags shared by `run` and `run-plan` (the same policy applies to every step)."""
-    parser.add_argument(
+    verification = parser.add_argument_group("verification and evaluators")
+    routing = parser.add_argument_group("routing and telemetry")
+    escalation_group = parser.add_argument_group("escalation")
+    verification.add_argument(
         "--verify-command",
         action="append",
         default=list(config.verify_commands),
         help="Constraint command parsed into argument tokens; never run through a shell. Repeatable: every check runs and the worst outcome wins. It is not task-quality evidence.",
     )
-    parser.add_argument(
+    verification.add_argument(
         "--clear-verify-commands",
         dest="verify_command",
         action="store_const",
@@ -264,46 +333,46 @@ def _add_workflow_arguments(parser: argparse.ArgumentParser, config: ProjectConf
         default=argparse.SUPPRESS,
         help="Clear constraint verification commands supplied by project config or earlier options.",
     )
-    parser.add_argument("--verify-time-limit", type=float, default=config.verify_time_limit_seconds)
-    parser.add_argument(
+    verification.add_argument("--verify-time-limit", type=float, default=config.verify_time_limit_seconds, help="Seconds each constraint verification command may run.")
+    verification.add_argument(
         "--quality-evaluator-command",
         action="append",
         default=[],
         help="Task-specific objective-quality command. Repeatable and shell-free; requires protected evaluator artifact(s).",
     )
-    parser.add_argument(
+    verification.add_argument(
         "--quality-evaluator-artifact",
         action="append",
         type=Path,
         default=[],
         help="Read-only evaluator or golden-fixture path outside the agent workspace. Repeatable and shared by quality commands.",
     )
-    parser.add_argument("--quality-evaluator-time-limit", type=float)
-    parser.add_argument(
+    verification.add_argument("--quality-evaluator-time-limit", type=float, help="Seconds each quality evaluator command may run.")
+    routing.add_argument(
         "--routing-policy",
         choices=("legacy", "static"),
         default="legacy",
         help="Active deterministic policy. 'static' is corrected L0 and requires an explicit baseline agent.",
     )
-    parser.add_argument("--routing-baseline-agent", help="Configured baseline agent used by corrected static routing and its shadow.")
-    parser.add_argument("--routing-shadow", action="store_true", help="Record execution-free baseline decisions without changing the selected agent.")
-    parser.add_argument("--routing-seed", type=int, default=0, help="Seed used only for deterministic shadow assignments; exploration remains disabled.")
-    parser.add_argument("--environment-epoch", default="default-v1", help="Version boundary for model/CLI/permission/cache evidence.")
-    parser.add_argument("--control-state-dir", type=Path, help="Protected event/state directory outside the agent workspace.")
-    parser.add_argument(
+    routing.add_argument("--routing-baseline-agent", help="Configured baseline agent used by corrected static routing and its shadow.")
+    routing.add_argument("--routing-shadow", action="store_true", help="Record execution-free baseline decisions without changing the selected agent.")
+    routing.add_argument("--routing-seed", type=int, default=0, help="Seed used only for deterministic shadow assignments; exploration remains disabled.")
+    routing.add_argument("--environment-epoch", default="default-v1", help="Version boundary for model/CLI/permission/cache evidence.")
+    routing.add_argument("--control-state-dir", type=Path, help="Protected event/state directory outside the agent workspace.")
+    routing.add_argument(
         "--include-git-diff",
         action=argparse.BooleanOptionalAction,
         default=config.include_git_diff,
         help="Log the full workspace diff; use only when it contains no sensitive data.",
     )
-    escalation = parser.add_mutually_exclusive_group()
+    escalation = escalation_group.add_mutually_exclusive_group()
     escalation.add_argument("--escalation", dest="no_escalation", action="store_false", help="Enable escalation when warranted.")
     escalation.add_argument("--no-escalation", dest="no_escalation", action="store_true", help="Disable escalating to a second agent on failure, high risk, or high uncertainty.")
     parser.set_defaults(no_escalation=not config.escalation_enabled)
-    parser.add_argument("--escalation-risk-threshold", type=int, default=config.escalation_risk_threshold, help="Minimum analyzed risk (0-5) that triggers escalation.")
-    parser.add_argument("--escalation-uncertainty-threshold", type=int, default=config.escalation_uncertainty_threshold, help="Minimum analyzed uncertainty (0-5) that triggers escalation.")
-    parser.add_argument("--escalation-difficulty-threshold", type=int, default=config.escalation_difficulty_threshold, help="Minimum analyzed difficulty (1-5) that triggers escalation.")
-    parser.add_argument(
+    escalation_group.add_argument("--escalation-risk-threshold", type=int, default=config.escalation_risk_threshold, help="Minimum analyzed risk (0-5) that triggers escalation.")
+    escalation_group.add_argument("--escalation-uncertainty-threshold", type=int, default=config.escalation_uncertainty_threshold, help="Minimum analyzed uncertainty (0-5) that triggers escalation.")
+    escalation_group.add_argument("--escalation-difficulty-threshold", type=int, default=config.escalation_difficulty_threshold, help="Minimum analyzed difficulty (1-5) that triggers escalation.")
+    routing.add_argument(
         "--verbose",
         action=argparse.BooleanOptionalAction,
         default=config.verbose,
@@ -426,9 +495,49 @@ def _resolve_text_argument(
             parser.error(message)
         raise ValueError(message)
     if path is not None:
-        text = path.read_text(encoding="utf-8")
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError) as exc:
+            # Same class as an unreadable plan file: report the bad argument
+            # value on one line instead of unwinding a traceback at the user.
+            message = f"could not read --{file_name.replace('_', '-')} {path}: {exc}"
+            if parser is not None:
+                parser.error(message)
+            raise ValueError(message) from exc
         return text[:-1] if text.endswith("\n") else text
     return value
+
+
+def _apply_task_shorthand(
+    args: argparse.Namespace,
+    parser: argparse.ArgumentParser | None = None,
+) -> bool:
+    """Expand `--task TEXT` into an identical description and objective.
+
+    The interactive shell has always offered this as `task <request>`, and it is
+    the shortest honest way to state a small job. Without it the CLI—the primary
+    interface—makes you type the same sentence twice.
+    """
+
+    request = getattr(args, "task", None)
+    if request is None:
+        return True
+
+    conflicting = [
+        f"--{name.replace('_', '-')}"
+        for name in ("description", "description_file", "objective", "objective_file")
+        if getattr(args, name, None) is not None
+    ]
+    if conflicting:
+        message = f"--task cannot be combined with {', '.join(conflicting)}"
+        if parser is not None:
+            parser.error(message)
+        print(f"Error: {message}", file=sys.stderr)
+        return False
+
+    args.description = request
+    args.objective = request
+    return True
 
 
 def _resolve_description(args: argparse.Namespace, parser: argparse.ArgumentParser | None = None) -> str:
@@ -567,6 +676,114 @@ def _config_for_argv(argv: Sequence[str]) -> ProjectConfig:
     return load_project_config(_workspace_from_argv(argv))
 
 
+def _print_execution_result(
+    plan: object,
+    record: object,
+    workspace: Path,
+    summary: bool,
+) -> None:
+    """Render one finished execution as JSON, or as the summary `show` prints."""
+    if summary:
+        rendered = _rendered_summary(record, workspace)
+        if rendered is not None:
+            print(rendered)
+            return
+    print(json.dumps({"plan": asdict(plan), "execution": asdict(record)}, default=str, indent=2))
+
+
+def _print_plan_result(result: object, workspace: Path, summary: bool) -> None:
+    """Render every step of a plan run, numbered so the order stays legible."""
+    steps = getattr(result, "steps", ())
+    if summary:
+        rendered = [_rendered_summary(step.record, workspace) for step in steps]
+        if all(item is not None for item in rendered):
+            for index, item in enumerate(rendered, start=1):
+                print(f"--- step {index} of {len(rendered)} ---")
+                print(item)
+            if getattr(result, "stopped_early", False):
+                print("Stopped early: a step did not succeed.")
+            return
+    print(json.dumps(
+        {
+            "steps": [
+                {"plan": asdict(step.plan), "execution": asdict(step.record)}
+                for step in steps
+            ],
+            "stopped_early": getattr(result, "stopped_early", False),
+        },
+        default=str,
+        indent=2,
+    ))
+
+
+def _rendered_summary(record: object, workspace: Path) -> str | None:
+    """Read the execution back through the same lookup `show` uses.
+
+    Going through the recorded log rather than the in-memory record keeps this
+    output identical to `show <id>`, including escalation grouping. A workspace
+    whose log could not be read falls back to the JSON record.
+    """
+
+    execution_id = getattr(record, "execution_id", None)
+    if not isinstance(execution_id, str) or not execution_id:
+        return None
+    try:
+        return render_text_summary(_execution_store(workspace).find(execution_id))
+    except (ExecutionLookupError, OSError, UnicodeError):
+        return None
+
+
+def _print_failure_reason(record: object, label: str) -> None:
+    """State on stderr why a command is exiting non-zero.
+
+    The JSON record on stdout is complete but not readable at a glance, so a
+    failed run used to communicate nothing except a non-zero status and a wall
+    of output to search. stdout keeps its exact contract; this line is stderr
+    only, so piping the record stays unaffected.
+    """
+
+    def _name(value: object) -> str:
+        return str(getattr(value, "value", value))
+
+    parts = [f"status={_name(getattr(record, 'status', 'unknown'))}"]
+    verification = getattr(record, "verification", None)
+    if verification is not None:
+        parts.append(f"verification={_name(getattr(verification, 'status', 'unknown'))}")
+    print(f"{label} did not succeed ({', '.join(parts)}).", file=sys.stderr)
+
+    error = getattr(record, "error", None)
+    if error:
+        first_line = str(error).strip().splitlines()
+        if first_line:
+            print(f"  {first_line[0][:300]}", file=sys.stderr)
+
+    execution_id = getattr(record, "execution_id", None)
+    if isinstance(execution_id, str) and execution_id:
+        print(
+            f"  Details: {resolve_program_name()} show {execution_id}",
+            file=sys.stderr,
+        )
+
+
+def _print_no_executions_hint(workspace: Path) -> None:
+    """Point a first-time user at the command that produces something to inspect.
+
+    `show`, `report`, and `retry` all read recorded executions, so in a fresh
+    workspace they are a dead end: the error is accurate but leaves nothing to
+    do next. Only say this when the log really is absent, so it never appears
+    alongside an ordinary bad-identifier failure.
+    """
+
+    if _execution_store(workspace).path.exists():
+        return
+    print(
+        f"No task has run in this workspace yet. Start one with:\n"
+        f"  {resolve_program_name()} run --workspace {workspace} "
+        '--description "<what to do>" --objective "<what done looks like>"',
+        file=sys.stderr,
+    )
+
+
 def _execution_store(workspace: Path) -> ExecutionReportStore:
     return ExecutionReportStore(workspace.resolve() / ".orchestrator" / "executions.jsonl")
 
@@ -643,6 +860,7 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         except (ExecutionLookupError, OSError, FileExistsError) as exc:
             print(f"{args.command.capitalize()} failed: {exc}", file=sys.stderr)
+            _print_no_executions_hint(workspace)
             return 1
 
     # `plan validate` takes an explicit file path and has no --workspace of its own; it must be
@@ -667,6 +885,7 @@ def main(argv: list[str] | None = None) -> int:
             task = _task_from_spec(task_spec_for_retry(bundle))
         except (ExecutionLookupError, KeyError, TypeError, ValueError) as exc:
             print(f"Retry failed: {exc}", file=sys.stderr)
+            _print_no_executions_hint(workspace)
             return 1
         requested_agent = bundle.primary.get("agent_id") if args.agent == "same" else args.agent
         if not isinstance(requested_agent, str):
@@ -680,7 +899,7 @@ def main(argv: list[str] | None = None) -> int:
         except (KeyError, ValueError) as exc:
             print(f"Retry failed: {exc}; use --agent auto or configure the original model variant", file=sys.stderr)
             return 1
-        print(json.dumps({"plan": asdict(plan), "execution": asdict(record)}, default=str, indent=2))
+        _print_execution_result(plan, record, workspace, args.summary)
         _deliver_notifications(record, config)
         return 0 if execution_succeeded(record) else 1
 
@@ -694,6 +913,18 @@ def main(argv: list[str] | None = None) -> int:
         entry_type, tag, keyword = _memory_search_filters_from_args(args)
         entries = store.search(entry_type=entry_type, tag=tag, keyword=keyword)
         print(json.dumps([asdict(entry) for entry in entries], default=str, indent=2))
+        if not entries:
+            # Keep stdout valid JSON for callers that parse it, and say on stderr
+            # whether "[]" means an empty store or filters that matched nothing.
+            filters = {"--type": entry_type, "--tag": tag, "--keyword": keyword}
+            applied = ", ".join(name for name, value in filters.items() if value)
+            if not store.path.exists():
+                detail = "no engineering memory has been recorded in this workspace yet"
+            elif applied:
+                detail = f"nothing matched {applied}"
+            else:
+                detail = "the memory store is empty"
+            print(f"No entries: {detail}.", file=sys.stderr)
         return 0
 
     if args.command == "replay":
@@ -737,15 +968,31 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "run-plan":
+        # Read the plan before building the workflow. Constructing the workflow
+        # opens the lifecycle recorder, which reconciles abandoned attempts and
+        # rewrites the routing projection; an unreadable plan file should not
+        # cause that protected-state work for a run that cannot start.
+        plan_path = _workspace_path(args.plan_file, workspace)
+        try:
+            tasks = _load_plan(plan_path)
+        except Exception as exc:  # noqa: BLE001 - deliberate CLI boundary: one-line error, not a traceback.
+            print(f"Invalid plan file {plan_path}: {exc}", file=sys.stderr)
+            return 1
         workflow = _build_workflow_for_cli(args, workspace)
         if workflow is None:
             return 2
-        tasks = _load_plan(_workspace_path(args.plan_file, workspace))
         result = workflow.run_plan(tasks, args.agent, stop_on_failure=not args.continue_on_failure)
-        print(json.dumps({"steps": [{"plan": asdict(step.plan), "execution": asdict(step.record)} for step in result.steps], "stopped_early": result.stopped_early}, default=str, indent=2))
+        _print_plan_result(result, workspace, args.summary)
         if result.steps:
             _deliver_notifications(result.steps[-1].record, config)
-        return 0 if result.succeeded else 1
+        if result.succeeded:
+            return 0
+        for index, step in enumerate(result.steps, start=1):
+            if not execution_succeeded(step.record):
+                _print_failure_reason(step.record, f"Plan step {index} of {len(result.steps)}")
+        if result.stopped_early:
+            print("Stopped before the remaining steps ran.", file=sys.stderr)
+        return 1
 
     if args.command == "plan":
         output = args.output or Path("plan.json")
@@ -758,7 +1005,10 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         plan, record = workflow.run(task, args.agent)
         if not execution_succeeded(record):
-            print(json.dumps({"plan": asdict(plan), "execution": asdict(record)}, default=str, indent=2))
+            # `plan generate` has no --summary flag: its success path prints the
+            # written plan, so only this failure branch reports the record.
+            _print_execution_result(plan, record, workspace, summary=False)
+            _print_failure_reason(record, "Plan generation")
             return 1
         try:
             tasks = _load_plan(resolved_output)
@@ -774,11 +1024,13 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Warning: workspace modified files other than the generated plan: {', '.join(unexpected)}", file=sys.stderr)
         print(f"Plan written to {resolved_output}")
         print(f"Steps: {len(tasks)}")
-        print(f"Next: PYTHONPATH=src python3 -m adaptive_orchestrator.cli run-plan {resolved_output} --workspace {workspace} ...")
+        print(f"Next: {resolve_program_name()} run-plan {resolved_output} --workspace {workspace} ...")
         _deliver_notifications(record, config)
         return 0
 
     run_parser = getattr(args, "_parser", None)
+    if not _apply_task_shorthand(args, run_parser):
+        return 2
     if args.description_file is not None:
         args.description_file = _workspace_path(args.description_file, workspace)
     if args.objective_file is not None:
@@ -797,9 +1049,12 @@ def main(argv: list[str] | None = None) -> int:
         time_limit_seconds=args.time_limit,
     )
     plan, record = workflow.run(task, args.agent)
-    print(json.dumps({"plan": asdict(plan), "execution": asdict(record)}, default=str, indent=2))
+    _print_execution_result(plan, record, workspace, args.summary)
     _deliver_notifications(record, config)
-    return 0 if execution_succeeded(record) else 1
+    if execution_succeeded(record):
+        return 0
+    _print_failure_reason(record, "Run")
+    return 1
 
 
 def _run_paired_command(args: argparse.Namespace) -> int:
