@@ -12,13 +12,12 @@ sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 import curses
 
 from adaptive_orchestrator.interfaces.tui import (
-    COMPOSE_COMMANDS,
     EDITOR_CANCEL,
     EDITOR_EDIT,
     EDITOR_IGNORED,
     EDITOR_SUBMIT,
-    VIEW_COMPOSE,
     VIEW_DASHBOARD,
+    VIEW_TASKS,
     LineEditor,
     DashboardRow,
     TaskAdmissionError,
@@ -36,7 +35,6 @@ from adaptive_orchestrator.interfaces.tui import (
     main,
     OrchestratorTui,
     markdown_heading,
-    parse_compose_command,
     scroll_offset,
     status_category,
     wrap_text,
@@ -452,40 +450,26 @@ class FakeScreen:
 
 
 class PromptRenderTest(unittest.TestCase):
-    """The draw sites themselves, where hiding the suffix was visible."""
+    """The one-line prompt, where hiding the text after the cursor was visible."""
 
     def _tui(self) -> OrchestratorTui:
         return OrchestratorTui.__new__(OrchestratorTui)
 
-    def test_input_box_draws_the_whole_request_from_any_cursor_position(self) -> None:
-        request = "refactor the routing policy"
-        for cursor in (0, 8, len(request)):
-            screen = FakeScreen()
-            editor = LineEditor(request)
-            editor.cursor = cursor
-            row, _ = OrchestratorTui._draw_input_box(self._tui(), screen, editor, "placeholder")
-            self.assertIn(request, screen.row(row))
-
-    def test_input_box_shows_the_placeholder_only_while_empty(self) -> None:
-        screen = FakeScreen()
-        row, _ = OrchestratorTui._draw_input_box(self._tui(), screen, LineEditor(""), "Describe the task")
-        self.assertIn("Describe the task", screen.row(row))
-
-    def test_filter_line_draws_the_whole_value_from_any_cursor_position(self) -> None:
-        for cursor in (0, 2, 5):
-            screen = FakeScreen()
-            editor = LineEditor("codex")
-            editor.cursor = cursor
-            row, _ = OrchestratorTui._draw_input_line(self._tui(), screen, "Filter: ", editor)
-            self.assertIn("codex", screen.row(row))
+    def test_draws_the_whole_value_from_any_cursor_position(self) -> None:
+        for label, value in (("Filter: ", "codex"), ("New task: ", "refactor the routing policy")):
+            for cursor in (0, 2, len(value)):
+                screen = FakeScreen()
+                editor = LineEditor(value)
+                editor.cursor = cursor
+                row, _ = OrchestratorTui._draw_input_line(self._tui(), screen, label, editor)
+                self.assertIn(value, screen.row(row))
 
 
 class FakeTask:
-    def __init__(self, workspace: Path, request: str, index: int, agent: str | None = None) -> None:
+    def __init__(self, workspace: Path, request: str, index: int) -> None:
         self.workspace = workspace
         self.request = request
         self.index = index
-        self.agent = agent
         self.alive = True
         self.signals: list[bool] = []
 
@@ -498,92 +482,6 @@ class FakeTask:
             return False
         self.signals.append(force)
         return True
-
-
-class ParseComposeCommandTest(unittest.TestCase):
-    def test_a_leading_slash_marks_a_command(self) -> None:
-        self.assertEqual(parse_compose_command("/help"), ("/help", ""))
-        self.assertEqual(parse_compose_command("/agent codex"), ("/agent", "codex"))
-
-    def test_ordinary_requests_are_not_commands(self) -> None:
-        self.assertIsNone(parse_compose_command("refactor the routing policy"))
-        self.assertIsNone(parse_compose_command("fix /etc/hosts handling"))
-
-    def test_a_doubled_slash_escapes_a_literal_leading_slash(self) -> None:
-        self.assertIsNone(parse_compose_command("//etc/hosts is stale"))
-
-
-class ComposeCommandTest(unittest.TestCase):
-    def setUp(self) -> None:
-        self.workspace = Path(tempfile.mkdtemp())
-        self.addCleanup(shutil.rmtree, self.workspace, ignore_errors=True)
-        self.tui = OrchestratorTui(self.workspace)
-        self.tui.tasks = TaskManager(limit=3, factory=FakeTask)
-
-    def _submit(self, text: str) -> None:
-        self.tui.compose_editor = LineEditor(text)
-        self.tui._submit_compose()
-
-    def test_help_lists_every_command(self) -> None:
-        self._submit("/help")
-        rendered = "\n".join(self.tui.compose_notice)
-        for name, _, _ in COMPOSE_COMMANDS:
-            self.assertIn(name, rendered)
-        self.assertIsNone(self.tui.compose_task)
-
-    def test_an_unknown_command_is_reported_rather_than_run_as_a_task(self) -> None:
-        self._submit("/nope")
-        self.assertIn("/nope", self.tui.message)
-        self.assertIsNone(self.tui.compose_task)
-
-    def test_agent_selection_reaches_the_task_and_its_command_line(self) -> None:
-        self._submit("/agent codex")
-        self.assertEqual(self.tui.compose_agent, "codex")
-        self._submit("refactor the routing policy")
-        self.assertEqual(self.tui.compose_task.agent, "codex")
-        command = build_task_command(self.workspace, "request", "codex")
-        self.assertIn("--agent", command)
-        self.assertEqual(command[command.index("--agent") + 1], "codex")
-
-    def test_auto_clears_the_override_so_the_profile_decides(self) -> None:
-        self._submit("/agent codex")
-        self._submit("/agent auto")
-        self.assertIsNone(self.tui.compose_agent)
-        self.assertNotIn("--agent", build_task_command(self.workspace, "request", None))
-
-    def test_an_unknown_agent_is_refused(self) -> None:
-        self._submit("/agent nonsense")
-        self.assertIn("must be one of", self.tui.message)
-        self.assertIsNone(self.tui.compose_agent)
-
-    def test_cancel_signals_the_task_on_this_screen(self) -> None:
-        self._submit("refactor the routing policy")
-        task = self.tui.compose_task
-        self._submit("/cancel")
-        self.assertTrue(task.signals)
-
-    def test_cancel_without_a_running_task_says_so(self) -> None:
-        self._submit("/cancel")
-        self.assertIn("No task running", self.tui.message)
-
-    def test_clear_empties_the_view_but_keeps_the_task_running(self) -> None:
-        self._submit("refactor the routing policy")
-        task = self.tui.compose_task
-        self._submit("/clear")
-        self.assertIsNone(self.tui.compose_task)
-        self.assertEqual(self.tui.compose_notice, ())
-        self.assertTrue(task.running)
-        self.assertIn(task, self.tui.tasks.tasks)
-
-    def test_a_doubled_slash_runs_as_a_task_with_one_slash(self) -> None:
-        self._submit("//etc/hosts is stale")
-        self.assertEqual(self.tui.compose_task.request, "/etc/hosts is stale")
-
-    def test_starting_a_task_clears_a_command_reply(self) -> None:
-        self._submit("/help")
-        self.assertTrue(self.tui.compose_notice)
-        self._submit("refactor the routing policy")
-        self.assertEqual(self.tui.compose_notice, ())
 
 
 class TaskManagerTests(unittest.TestCase):
@@ -623,60 +521,50 @@ class TaskManagerTests(unittest.TestCase):
             TaskManager(limit=0)
 
 
-class ComposeViewTests(unittest.TestCase):
-    """VIEW_COMPOSE routes almost every key to the editor as literal text —
-    only Enter and Esc are reserved — so shortcuts that work on every other
-    view must not fire here.
-    """
+class TaskPromptTests(unittest.TestCase):
+    """Starting a run is one modal question that lands on the task list."""
 
     def _app(self) -> OrchestratorTui:
         workspace = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, workspace, ignore_errors=True)
         app = OrchestratorTui(workspace)
         app.tasks = TaskManager(limit=2, factory=FakeTask)
-        app.view = VIEW_COMPOSE
         return app
 
-    def test_letters_that_are_shortcuts_on_every_other_view_are_typed_literally(self) -> None:
+    def test_a_submitted_request_starts_a_task_and_lands_on_the_task_list(self) -> None:
         app = self._app()
-        for character in "n?q/aCx":
-            app._handle_key(None, character)
-        self.assertEqual(app.compose_editor.text, "n?q/aCx")
-        self.assertEqual(app.view, VIEW_COMPOSE)
-        self.assertFalse(app.help_visible)
+        with mock.patch.object(OrchestratorTui, "_prompt", return_value="do the thing"):
+            app._prompt_task(None)
+        self.assertEqual(app.view, VIEW_TASKS)
+        self.assertEqual(app.tasks.tasks[app.task_selected].request, "do the thing")
 
-    def test_enter_starts_the_task_and_stays_on_the_compose_view(self) -> None:
+    def test_cancelling_the_prompt_starts_nothing_and_stays_put(self) -> None:
         app = self._app()
-        for character in "do the thing":
-            app._handle_key(None, character)
-        app._handle_key(None, "\n")
-        self.assertEqual(app.view, VIEW_COMPOSE)
-        self.assertIsNotNone(app.compose_task)
-        self.assertEqual(app.compose_task.request, "do the thing")
-        # The editor resets so the next request can be typed immediately.
-        self.assertEqual(app.compose_editor.text, "")
-
-    def test_escape_cancels_back_to_the_dashboard_without_starting_anything(self) -> None:
-        app = self._app()
-        for character in "abandoned":
-            app._handle_key(None, character)
-        app._handle_key(None, "\x1b")
+        with mock.patch.object(OrchestratorTui, "_prompt", return_value=None):
+            app._prompt_task(None)
+        self.assertEqual(app.tasks.tasks, ())
         self.assertEqual(app.view, VIEW_DASHBOARD)
-        self.assertIsNone(app.compose_task)
 
-    def test_submitting_blank_text_does_not_start_a_task(self) -> None:
+    def test_blank_text_starts_nothing(self) -> None:
         app = self._app()
-        app._handle_key(None, "\n")
-        self.assertIsNone(app.compose_task)
-        self.assertEqual(app.view, VIEW_COMPOSE)
+        with mock.patch.object(OrchestratorTui, "_prompt", return_value="   "):
+            app._prompt_task(None)
+        self.assertEqual(app.tasks.tasks, ())
 
-    def test_n_from_another_view_opens_a_fresh_compose_screen(self) -> None:
+    def test_n_opens_the_prompt_from_the_dashboard(self) -> None:
         app = self._app()
-        app.view = VIEW_DASHBOARD
-        app.compose_editor = LineEditor("leftover text")
-        app._handle_key(None, "n")
-        self.assertEqual(app.view, VIEW_COMPOSE)
-        self.assertEqual(app.compose_editor.text, "")
+        with mock.patch.object(OrchestratorTui, "_prompt", return_value="from the key") as prompt:
+            app._handle_key(None, "n")
+        prompt.assert_called_once()
+        self.assertEqual(app.view, VIEW_TASKS)
+
+    def test_a_full_pool_refuses_rather_than_starting(self) -> None:
+        app = self._app()
+        with mock.patch.object(OrchestratorTui, "_prompt", side_effect=["one", "two", "three"]):
+            for _ in range(3):
+                app._prompt_task(None)
+        self.assertEqual(len(app.tasks.tasks), 2)
+        self.assertIn("already running", app.message)
 
 
 class PresentationTests(unittest.TestCase):

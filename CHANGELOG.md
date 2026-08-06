@@ -19,12 +19,6 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   subcommands whose parsers define it, and the shell never injects
   `--confirm-agent-execution`.
 
-- Slash commands in the terminal UI's task prompt: `/help`, `/agent`,
-  `/cancel`, and `/clear`. Anything else is still run as a task, and a request
-  that really begins with a slash is escaped by doubling it. `/agent` accepts
-  the vocabulary the interactive shell's `agent` accepts, read from the
-  workspace profile, and `auto` clears the override so the profile decides
-  again; the terminal UI previously had no way to pick an agent at all.
 - A `--version` flag reporting the distribution and kernel versions.
 - `show`, `report`, and `retry` accept an unambiguous leading fragment of an
   execution or attempt id, the way `git` accepts a short commit hash. Exact ids
@@ -109,16 +103,23 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   state store used POSIX-only `fcntl` file locking unconditionally; they now
   go through a small cross-platform lock helper that uses `msvcrt` on
   Windows.
-- The terminal UI's prompts no longer hide everything to the right of the
-  cursor. Both the task composer and the filter drew only the text before the
-  caret, so moving back into a request with an arrow key, `Home`, or `Ctrl-A`
-  blanked out the rest of it—at the caret's leftmost position the box looked
-  empty, and forward-delete gave no sight of what it was removing. The window
-  now scrolls only its left edge, keeping the caret and the following text
-  visible together.
+- The terminal UI's prompt no longer hides everything to the right of the
+  cursor. It drew only the text before the caret, so moving back into a value
+  with an arrow key, `Home`, or `Ctrl-A` blanked out the rest of it—at the
+  caret's leftmost position the line looked empty, and forward-delete gave no
+  sight of what it was removing. The window now scrolls only its left edge,
+  keeping the caret and the following text visible together.
 
 ### Changed
 
+- The terminal UI is scoped to a monitor over recorded executions. It opens on
+  the dashboard rather than a task-composition screen, and starting a run is a
+  one-line prompt that hands off to the task list instead of a full view with
+  its own transcript and boxed input. The composition screen was drifting into
+  a chat client for a pipeline that has no conversation to show: both agents
+  are invoked non-interactively (`claude --print`, `codex exec`), so a
+  submitted request produces a recorded execution, not a reply. Configuring an
+  agent stays with the CLI and the interactive shell, which already have it.
 - Every CLI option now documents itself in `--help`. Eighteen had no help text,
   including `--workspace` on all eleven commands that accept it.
 - `run --help` groups its thirty-plus options under what they configure—agent

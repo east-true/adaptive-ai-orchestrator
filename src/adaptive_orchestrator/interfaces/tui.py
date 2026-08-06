@@ -22,11 +22,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Sequence
 
-from adaptive_orchestrator.infrastructure.configuration import (
-    ProjectConfigError,
-    configured_agent_ids,
-    load_project_config,
-)
 from adaptive_orchestrator.infrastructure.events import EventLogError, JsonlEventStore
 from adaptive_orchestrator.infrastructure.state_paths import resolve_control_state_directory
 from adaptive_orchestrator.operations.reporting import (
@@ -48,21 +43,15 @@ VIEW_DASHBOARD = "dashboard"
 VIEW_DETAIL = "detail"
 VIEW_TASKS = "tasks"
 VIEW_LOGS = "logs"
-VIEW_COMPOSE = "compose"
 
 # Each view offers a different set of actions, so the hint bar names only
 # what actually works on the screen currently showing — a dashboard hint left
 # up while looking at a log was itself a source of "what can I do?" confusion.
-# VIEW_COMPOSE has no entry here on purpose: every key there is either routed
-# to the text editor or already explained on the input box's own border, so a
-# global hint would either be wrong (e.g. "?:help" — '?' just types a
-# question mark) or redundant with what the box already says.
 VIEW_HINTS = {
     VIEW_DASHBOARD: "?:help  n:new task  /:filter  Enter:report  Tab:tasks  q:quit",
     VIEW_DETAIL: "?:help  j k:scroll  Esc:back  q:quit",
     VIEW_TASKS: "?:help  n:new task  Enter:log  c:cancel  x:clear finished  Tab:dashboard  q:quit",
     VIEW_LOGS: "?:help  f:toggle follow  j k:scroll  Esc:back  q:quit",
-    VIEW_COMPOSE: "",
 }
 
 EDITOR_SUBMIT = "submit"
@@ -554,36 +543,12 @@ class TaskAdmissionError(RuntimeError):
     pass
 
 
-COMPOSE_COMMANDS: tuple[tuple[str, str, str], ...] = (
-    ("/help", "", "List these commands."),
-    ("/agent", "[id|auto]", "Set the agent for new tasks, or list the choices."),
-    ("/cancel", "", "Cancel the task running on this screen."),
-    ("/clear", "", "Clear the output area."),
-)
-
-
-def parse_compose_command(text: str) -> tuple[str, str] | None:
-    """Split a submitted line into ``(command, argument)`` when it is one.
-
-    Any leading ``/`` marks a command; ``//`` is the escape for a request that
-    really does start with a slash, such as a path. Guessing instead — a path
-    here, a command there — would make the same keystrokes mean different
-    things depending on what follows, so an unknown ``/word`` is reported as
-    an unknown command rather than quietly run as a task.
-    """
-    if not text.startswith("/") or text.startswith("//"):
-        return None
-    command, _, argument = text.partition(" ")
-    return command, argument.strip()
-
-
-def build_task_command(workspace: Path, request: str, agent: str | None = None) -> tuple[str, ...]:
+def build_task_command(workspace: Path, request: str) -> tuple[str, ...]:
     if not request.strip():
         raise ValueError("Task request cannot be empty.")
-    # No ``--agent`` at all when none was chosen, so the workspace profile keeps
-    # deciding: passing a resolved default here would silently pin the agent to
-    # whatever it happened to be when the screen opened.
-    selection = ("--agent", agent) if agent else ()
+    # No ``--agent``: this screen starts a run, it does not configure one. The
+    # workspace profile decides, and the CLI and interactive shell remain the
+    # places that override it.
     return (
         sys.executable,
         "-m",
@@ -593,7 +558,6 @@ def build_task_command(workspace: Path, request: str, agent: str | None = None) 
         str(workspace.resolve()),
         "--verbose",
         "--summary",
-        *selection,
         "--description",
         request,
         "--objective",
@@ -604,11 +568,10 @@ def build_task_command(workspace: Path, request: str, agent: str | None = None) 
 class BackgroundTask:
     """One shell-free CLI child whose combined output is safe to poll from curses."""
 
-    def __init__(self, workspace: Path, request: str, index: int = 1, agent: str | None = None) -> None:
+    def __init__(self, workspace: Path, request: str, index: int = 1) -> None:
         self.request = request
         self.index = index
-        self.agent = agent
-        self.command = build_task_command(workspace, request, agent)
+        self.command = build_task_command(workspace, request)
         self.started_at = time.monotonic()
         self.finished_at: float | None = None
         self._cancel_requested = False
@@ -699,7 +662,7 @@ class TaskManager:
     def __init__(
         self,
         limit: int = DEFAULT_TASK_LIMIT,
-        factory: Callable[[Path, str, int, str | None], BackgroundTask] | None = None,
+        factory: Callable[[Path, str, int], BackgroundTask] | None = None,
     ) -> None:
         if limit < 1:
             raise ValueError("Task limit must be at least 1.")
@@ -719,11 +682,11 @@ class TaskManager:
     def can_start(self) -> bool:
         return self.running_count < self.limit
 
-    def start(self, workspace: Path, request: str, agent: str | None = None) -> BackgroundTask:
+    def start(self, workspace: Path, request: str) -> BackgroundTask:
         if not self.can_start():
             raise TaskAdmissionError(f"{self.limit} tasks already running; cancel one first.")
         self._counter += 1
-        task = self._factory(workspace, request, self._counter, agent)
+        task = self._factory(workspace, request, self._counter)
         self._tasks.append(task)
         return task
 
@@ -822,13 +785,6 @@ class OrchestratorTui:
         self.task_offset = 0
         self.log_offset = 0
         self.log_follow = True
-        self.compose_editor = LineEditor()
-        self.compose_task: BackgroundTask | None = None
-        self.compose_agent: str | None = None
-        # Command replies share the output area with task output rather than
-        # opening a pane of their own: the box below stays the one place to
-        # type, so a reply reads as the next turn of the same transcript.
-        self.compose_notice: tuple[str, ...] = ()
 
         self.message = ""
         self._message_kind = "info"
@@ -867,10 +823,10 @@ class OrchestratorTui:
             curses.set_escdelay(ESCAPE_DELAY_MS)
         self.theme = Theme.create()
         self._refresh()
-        # Open straight into the task prompt: composing a task is what a
-        # user opening this TUI almost always came to do. Esc goes back to
-        # the ordinary dashboard, same as pressing 'n' mid-session would.
-        self.view = VIEW_COMPOSE
+        # Open on the dashboard: this is a monitor over recorded executions,
+        # so the first screen is the record. Starting a run is one 'n' away
+        # and returns here by way of the task list.
+        self.view = VIEW_DASHBOARD
         while True:
             self._draw(screen)
             key = _read_key(screen)
@@ -961,12 +917,6 @@ class OrchestratorTui:
         if self.help_visible:
             self.help_visible = False
             return True
-        if self.view == VIEW_COMPOSE:
-            # Every other view treats single characters as shortcuts, but
-            # here they are the task request being typed — '?', 'n', 'q' and
-            # the rest must land in the editor, not trigger a global action.
-            # Only Enter (submit) and Esc (back to the dashboard) are reserved.
-            return self._keys_compose(key)
         if character == "?":
             self.help_visible = True
             return True
@@ -982,8 +932,7 @@ class OrchestratorTui:
             self._set_message(f"Refreshed: {len(self.rows)} executions.")
             return True
         if character in ("n", "N"):
-            self.view = VIEW_COMPOSE
-            self.compose_editor = LineEditor()
+            self._prompt_task(screen)
             return True
         if character == "/":
             self._prompt_filter(screen)
@@ -1099,123 +1048,32 @@ class OrchestratorTui:
             return
         setattr(self, attribute, max(offset, 0))
 
-    def _keys_compose(self, key: int | str) -> bool:
-        outcome = self.compose_editor.handle(key)
-        if outcome == EDITOR_SUBMIT:
-            self._submit_compose()
-        elif outcome == EDITOR_CANCEL:
-            self.view = VIEW_DASHBOARD
-            self._set_message("New task cancelled.")
-        return True
+    # -- prompts -----------------------------------------------------------
 
-    def _submit_compose(self) -> None:
-        request = self.compose_editor.text.strip()
-        self.compose_editor = LineEditor()
-        if not request:
+    def _prompt_task(self, screen: "curses.window") -> None:
+        """Ask for one request, start it, and go watch it in the task list.
+
+        Starting a run is a single modal question, not a screen of its own:
+        the agents are invoked non-interactively (``claude --print``, ``codex
+        exec``), so there is no conversation to hold here. What follows a
+        submitted request is a recorded execution, and the task list is where
+        that is visible — so that is where this lands.
+        """
+        request = self._prompt(screen, "New task: ")
+        if request is None or not request.strip():
             self._set_message("New task cancelled.")
             return
-        command = parse_compose_command(request)
-        if command is not None:
-            self._run_compose_command(*command)
-            return
-        if request.startswith("//"):
-            request = request[1:]
         if not self.tasks.can_start():
             self._set_message(f"{self.tasks.limit} tasks already running; cancel one first.", "error")
             return
         try:
-            task = self.tasks.start(self.workspace, request, self.compose_agent)
+            task = self.tasks.start(self.workspace, request.strip())
         except (OSError, ValueError, TaskAdmissionError) as exc:
             self._set_message(f"Could not start task: {exc}", "error")
             return
-        # Stay on this same screen: the task's own live output is about to
-        # fill the space above the input box, the same way a chat reply
-        # appears without navigating away from the box you typed it in.
-        self.compose_task = task
-        self.compose_notice = ()
+        self.view = VIEW_TASKS
+        self.task_selected = self.tasks.tasks.index(task)
         self._set_message(f"Task #{task.index} started.", "ok")
-
-    # -- compose commands ---------------------------------------------------
-
-    def _run_compose_command(self, command: str, argument: str) -> None:
-        handlers = {
-            "/help": self._compose_help,
-            "/agent": self._compose_agent,
-            "/cancel": self._compose_cancel,
-            "/clear": self._compose_clear,
-        }
-        handler = handlers.get(command)
-        if handler is None:
-            names = ", ".join(name for name, _, _ in COMPOSE_COMMANDS)
-            self._set_message(f"Unknown command {command}; try {names}.", "error")
-            return
-        handler(argument)
-
-    def _compose_help(self, argument: str) -> None:
-        del argument
-        width = max(len(f"{name} {arguments}".strip()) for name, arguments, _ in COMPOSE_COMMANDS)
-        self.compose_notice = (
-            "Commands",
-            "",
-            *(
-                f"  {f'{name} {arguments}'.strip():<{width + 2}}{summary}"
-                for name, arguments, summary in COMPOSE_COMMANDS
-            ),
-            "",
-            "  Anything else is run as a task. Start a request with // to send a",
-            "  literal leading slash.",
-        )
-        self._set_message("Showing commands.")
-
-    def _compose_agent(self, argument: str) -> None:
-        # The same vocabulary the interactive shell's `agent` accepts, read
-        # from the workspace profile, so the two frontends cannot drift apart
-        # on what counts as a valid agent.
-        try:
-            allowed = ("auto", *configured_agent_ids(load_project_config(self.workspace)))
-        except ProjectConfigError as exc:
-            self._set_message(f"Cannot select an agent until the project config is valid: {exc}", "error")
-            return
-        if not argument:
-            current = self.compose_agent or "the workspace profile"
-            self.compose_notice = (
-                f"New tasks use {current}.",
-                "",
-                *(f"  {agent}" for agent in allowed),
-                "",
-                "  /agent auto restores the workspace profile.",
-            )
-            self._set_message("Showing agents.")
-            return
-        if argument not in allowed:
-            self._set_message(f"Agent must be one of {', '.join(allowed)}.", "error")
-            return
-        # "auto" is the profile's own default rather than a registry id, so it
-        # clears the override instead of being passed down as a selection.
-        self.compose_agent = None if argument == "auto" else argument
-        self._set_message(f"New tasks use {self.compose_agent or 'the workspace profile'}.", "ok")
-
-    def _compose_cancel(self, argument: str) -> None:
-        del argument
-        task = self.compose_task
-        if task is None or not task.running:
-            self._set_message("No task running on this screen.", "error")
-            return
-        if task.cancel():
-            self._set_message(f"Cancelling task #{task.index}.")
-            return
-        self._set_message(f"Could not cancel task #{task.index}.", "error")
-
-    def _compose_clear(self, argument: str) -> None:
-        del argument
-        # Only the view is cleared. A running task keeps running and stays in
-        # the task list, because a command that reads as "tidy the screen"
-        # must not be a way to silently kill work.
-        self.compose_notice = ()
-        self.compose_task = None
-        self._set_message("Output cleared.")
-
-    # -- prompts -----------------------------------------------------------
 
     def _prompt_filter(self, screen: "curses.window") -> None:
         value = self._prompt(screen, "Filter: ", self.filter_text)
@@ -1234,9 +1092,8 @@ class OrchestratorTui:
     def _prompt(self, screen: "curses.window", label: str, initial: str = "") -> str | None:
         """Own the input loop so the poll timeout cannot truncate typing.
 
-        Used only for the filter now: composing a task has its own
-        non-blocking view (VIEW_COMPOSE) so the screen can keep updating
-        with a submitted task's live output while still accepting input.
+        Background tasks keep being polled while this blocks, so a run started
+        earlier goes on collecting output behind the prompt.
         """
         editor = LineEditor(initial)
         curses.curs_set(1)
@@ -1273,48 +1130,6 @@ class OrchestratorTui:
         cursor_x = min(display_width(prefix) + caret_offset, max(width - 1, 0))
         return row, cursor_x
 
-    def _draw_input_box(self, screen: "curses.window", editor: LineEditor, placeholder: str) -> tuple[int, int]:
-        """A bordered, three-row prompt box for composing a task request.
-
-        Composing a task is the one input in this app that is really a
-        natural-language request, not a short field, so it gets a boxed
-        prompt with a `›` marker instead of a bare "Label: " status-bar line.
-        No title and no embedded state: the box is just an input, the same
-        way a chat prompt is — anything about the task itself belongs above
-        it, in the output area, not printed onto the box's own frame.
-        """
-        height, width = screen.getmaxyx()
-        left = 2 if width > 8 else 0
-        box_width = max(width - left * 2, 4)
-        top = max(height - 4, 0)
-        # A dim, plain frame reads as lighter/thinner than a bold one, and
-        # (like the title) doesn't compete with the text being typed for
-        # attention. Border rules and both side bars share this one
-        # attribute — mixing weights across the four sides read as a box
-        # that was half-rendered rather than a single deliberate shape.
-        frame_attribute = curses.A_DIM
-        for offset in range(3):
-            _safe_addstr(screen, top + offset, left, " " * box_width, box_width + 1)
-        _safe_addstr(
-            screen, top, left, _box_border(box_width, "┌", "┐"), box_width, frame_attribute, ellipsis=False,
-        )
-        _safe_addstr(
-            screen, top + 2, left, _box_border(box_width, "└", "┘"), box_width, frame_attribute, ellipsis=False,
-        )
-        prompt = "› "
-        # Two columns of padding beyond the border itself, not one — more
-        # breathing room around the typed text reads less cramped.
-        inner_left = left + 3
-        inner_width = max(box_width - 6, 1)
-        content_budget = max(inner_width - display_width(prompt), 0)
-        visible, caret_offset = _cursor_window(editor.text, editor.cursor, content_budget)
-        shown, attribute = (visible, 0) if editor.text else (fit_to_width(placeholder, content_budget), curses.A_DIM)
-        _safe_addstr(screen, top + 1, left, "│", 2, frame_attribute, ellipsis=False)
-        _safe_addstr(screen, top + 1, inner_left, prompt + shown, inner_width, attribute)
-        _safe_addstr(screen, top + 1, left + box_width - 1, "│", 2, frame_attribute, ellipsis=False)
-        cursor_x = min(inner_left + display_width(prompt) + caret_offset, left + box_width - 2)
-        return top + 1, cursor_x
-
     # -- drawing -----------------------------------------------------------
 
     def _draw(self, screen: "curses.window") -> None:
@@ -1324,12 +1139,7 @@ class OrchestratorTui:
             _safe_addstr(screen, 0, 0, "Terminal too small", width)
             screen.refresh()
             return
-        # The dashboard header (workspace title, "X/Y executions") is about
-        # execution history, which has nothing to do with composing a task —
-        # the compose view puts its own small workspace line above the input
-        # box instead, so this stays blank there.
-        if self.view != VIEW_COMPOSE:
-            self._draw_header(screen, height, width)
+        self._draw_header(screen, height, width)
         body_top = 2  # leave row 1 blank so the body doesn't crowd the header
         body_height = max(height - body_top - 1, 1)
         cursor: tuple[int, int] | None = None
@@ -1341,8 +1151,6 @@ class OrchestratorTui:
             self._draw_tasks(screen, body_top, body_height, width)
         elif self.view == VIEW_LOGS:
             self._draw_logs(screen, body_top, body_height, width)
-        elif self.view == VIEW_COMPOSE:
-            cursor = self._draw_compose(screen, body_top, body_height, width)
         if self.help_visible:
             self._draw_help(screen, height, width)
         # "running:N/M" is how many background launches from *this session*
@@ -1585,45 +1393,6 @@ class OrchestratorTui:
         for index, line in enumerate(lines[self.log_offset:self.log_offset + window_height]):
             _safe_addstr(screen, window_top + index, 0, line, width)
 
-    def _draw_compose(self, screen: "curses.window", top: int, body_height: int, width: int) -> tuple[int, int]:
-        """Blank canvas until a task is submitted, then that task's own live
-        output fills the space above the input box: no navigating to the
-        task list or its log view just to watch what you just asked for.
-
-        Status lives in that output area, not on the input box itself — the
-        box stays a plain, unlabeled prompt throughout, like the output area
-        is a transcript and the box is just where the next line gets typed.
-        """
-        height, _ = screen.getmaxyx()
-        box_top = max(height - 4, 0)
-        # Sits right against the box's own top border, indented to the box's
-        # left edge — reads as a caption for the box, not another line of
-        # the transcript above it. Terminal cells are all one size, so
-        # A_DIM (the least visually heavy attribute available) is as close
-        # to "smaller text" as a curses UI can get.
-        box_left = 2 if width > 8 else 0
-        workspace_row = max(box_top - 1, 0)
-        _safe_addstr(
-            screen, workspace_row, box_left, condense_path(str(self.workspace), width - box_left), width,
-            curses.A_DIM,
-        )
-        content_top = top
-        task = self.compose_task
-        if task is not None:
-            agent = f" · {task.agent}" if task.agent else ""
-            status = f"Task #{task.index} · {task.status_text} · {elapsed_text(task.elapsed)}{agent}"
-            _safe_addstr(screen, top, 0, status, width, curses.A_DIM)
-            content_top = top + 1
-        # A command reply is the most recent turn, so it takes the content
-        # area; the status line above it still says what is running, so
-        # asking for help never hides that a task is in flight.
-        lines = self.compose_notice or (task.output_lines() if task is not None else ())
-        output_height = max(workspace_row - content_top, 0)
-        offset = max(len(lines) - output_height, 0)
-        for index, line in enumerate(lines[offset:offset + output_height]):
-            _safe_addstr(screen, content_top + index, 0, line, width)
-        return self._draw_input_box(screen, self.compose_editor, "Describe the task to run, or /help for commands…")
-
     def _draw_help(self, screen: "curses.window", height: int, width: int) -> None:
         entries = (
             "Adaptive Orchestrator TUI",
@@ -1636,7 +1405,7 @@ class OrchestratorTui:
             "  Esc         step back / clear filter",
             "",
             "Act",
-            "  n           open the task prompt (its own screen; Esc cancels)",
+            "  n           start a task (one line; Esc cancels)",
             "  /           filter executions",
             "  c           cancel selected task (again to SIGKILL)",
             "  C           cancel every running task",
@@ -1646,14 +1415,6 @@ class OrchestratorTui:
             "  r           refresh now",
             "  a           toggle auto-refresh",
             "  f           toggle log follow (log view)",
-            "",
-            # One line, not the whole table: this overlay is already the
-            # tallest thing drawn and a short terminal truncates it. The names
-            # still come from the table the prompt dispatches on, so the two
-            # cannot drift; `/help` in the prompt spells out the arguments.
-            "Task prompt",
-            f"  {'/help':<12}commands in the prompt: "
-            f"{' '.join(name for name, _, _ in COMPOSE_COMMANDS if name != '/help')}",
             "",
             "q             quit (from any view; asks first if a task is running)",
             "",
