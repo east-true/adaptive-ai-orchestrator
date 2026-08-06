@@ -28,6 +28,13 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   forward; previously published MIT-licensed revisions remain available under
   their original terms.
 
+### Fixed
+
+- The package no longer fails to import on Windows. The event log and routing
+  state store used POSIX-only `fcntl` file locking unconditionally; they now
+  go through a small cross-platform lock helper that uses `msvcrt` on
+  Windows.
+
 The source currently identifies itself as version `0.1.0`, but no GitHub or
 package-index release has been published. A versioned section and comparison
 link will be added when the first release is tagged.
