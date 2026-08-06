@@ -37,11 +37,28 @@ ESCAPE_DELAY_MS = 25
 AUTO_REFRESH_SECONDS = 2.0
 MAX_TASK_OUTPUT_LINES = 5000
 DEFAULT_TASK_LIMIT = 3
+MESSAGE_TTL_SECONDS = 4.0
 
 VIEW_DASHBOARD = "dashboard"
 VIEW_DETAIL = "detail"
 VIEW_TASKS = "tasks"
 VIEW_LOGS = "logs"
+VIEW_COMPOSE = "compose"
+
+# Each view offers a different set of actions, so the hint bar names only
+# what actually works on the screen currently showing — a dashboard hint left
+# up while looking at a log was itself a source of "what can I do?" confusion.
+# VIEW_COMPOSE has no entry here on purpose: every key there is either routed
+# to the text editor or already explained on the input box's own border, so a
+# global hint would either be wrong (e.g. "?:help" — '?' just types a
+# question mark) or redundant with what the box already says.
+VIEW_HINTS = {
+    VIEW_DASHBOARD: "?:help  n:new task  /:filter  Enter:report  Tab:tasks  q:quit",
+    VIEW_DETAIL: "?:help  j k:scroll  Esc:back  q:quit",
+    VIEW_TASKS: "?:help  n:new task  Enter:log  c:cancel  x:clear finished  Tab:dashboard  q:quit",
+    VIEW_LOGS: "?:help  f:toggle follow  j k:scroll  Esc:back  q:quit",
+    VIEW_COMPOSE: "",
+}
 
 EDITOR_SUBMIT = "submit"
 EDITOR_CANCEL = "cancel"
@@ -57,8 +74,34 @@ _ACTIVE_STATUS = {"selected", "started", "running", "terminal", "reconciled", "e
 
 _STATUS_GLYPH = {"ok": "✓", "fail": "✗", "active": "●", "idle": "·"}
 _SPINNER_FRAMES = "|/-\\"
-_DASHBOARD_ROW_FORMAT = "{marker}{glyph} {status:<10} {agent:<16} {description}"
 _TASK_ROW_FORMAT = "{marker}{spinner} #{index:<3} {status:<11} {elapsed:>7}  {request}"
+_DASHBOARD_MARKER_WIDTH = 2  # status glyph + one column of breathing room
+_DASHBOARD_GAP_WIDTH = 2
+_DASHBOARD_EXEC_ID_COL = "exec_id"
+_DASHBOARD_ATTEMPTS_COL = "attempts"
+_DASHBOARD_AGENT_COL = "agent"
+_DASHBOARD_VERIFICATION_COL = "verification"
+_DASHBOARD_TASK_ID_COL = "task_id"
+_DASHBOARD_TASK_COL = "task"
+_DASHBOARD_EXEC_ID_LENGTH = 8  # matches the short-prefix convention `show`/`retry`/`report` accept
+# No STATUS column: the marker glyph already shows ok/fail/active/idle at a
+# glance (in color, once selected), so a text column repeating it would just
+# say the same thing twice — the exact status string is one Enter away.
+_DASHBOARD_HEADER_LABELS = {
+    _DASHBOARD_EXEC_ID_COL: "ID",
+    _DASHBOARD_TASK_ID_COL: "TASK ID",
+    _DASHBOARD_ATTEMPTS_COL: "ATTEMPTS",
+    _DASHBOARD_AGENT_COL: "AGENT",
+    _DASHBOARD_VERIFICATION_COL: "VERIFICATION",
+}
+_DASHBOARD_FIXED_COLUMNS = (
+    (_DASHBOARD_EXEC_ID_COL, _DASHBOARD_EXEC_ID_LENGTH, _DASHBOARD_EXEC_ID_LENGTH),
+    (_DASHBOARD_TASK_ID_COL, 18, 10),
+    (_DASHBOARD_ATTEMPTS_COL, 8, 5),
+    (_DASHBOARD_AGENT_COL, 16, 10),
+    (_DASHBOARD_VERIFICATION_COL, 12, 8),
+)
+_DASHBOARD_TASK_MIN_WIDTH = 16
 
 
 # --------------------------------------------------------------------------- rows
@@ -218,6 +261,11 @@ def pad_to_width(text: str, columns: int, ellipsis: bool = False) -> str:
     return trimmed + " " * max(columns - display_width(trimmed), 0)
 
 
+def _box_border(width: int, left_corner: str, right_corner: str) -> str:
+    """One plain border line of a bordered box."""
+    return f"{left_corner}{'─' * max(width - 2, 0)}{right_corner}"
+
+
 def elapsed_text(seconds: float) -> str:
     total = int(max(seconds, 0))
     if total < 60:
@@ -248,6 +296,34 @@ def condense_path(path: str, columns: int) -> str:
     if not kept:
         return "…" + _tail_to_width(path, max(columns - 1, 0))
     return "…/" + "/".join(kept)
+
+
+def _summary_field(line: str) -> tuple[str, str] | None:
+    """Split a "Label: value" summary line for grid rendering.
+
+    Returns ``None`` for blank separators and free-text hints, which are
+    drawn as a single dim line instead of being forced into the grid.
+    """
+    label, separator, value = line.partition(": ")
+    if not separator:
+        return None
+    return label, value
+
+
+def _move_task_last(lines: list[str]) -> list[str]:
+    """Put the (often long) task text after every quick-glance fact, not before them.
+
+    Status/Agent/Model/Verification/etc. are what a glance at the summary
+    panel is usually for; burying them below a multi-line task description
+    meant they could scroll out of view before Task did.
+    """
+    task_index = next(
+        (index for index, line in enumerate(lines) if (_summary_field(line) or (None, None))[0] == "Task"),
+        None,
+    )
+    if task_index is None:
+        return lines
+    return lines[:task_index] + lines[task_index + 1:] + [lines[task_index]]
 
 
 def wrap_text(text: str, columns: int) -> list[str]:
@@ -300,6 +376,91 @@ def markdown_heading(line: str) -> tuple[str, int]:
     if level == 0 or (stripped and not stripped.startswith(" ")):
         return line, 0
     return stripped.strip(), level
+
+
+def _dashboard_layout(
+    width: int, rows: Sequence[DashboardRow] = (),
+) -> tuple[int, int, int, int, int, int]:
+    """Compute column widths for the dashboard list from terminal width.
+
+    ``exec_id`` is a fixed 8-character slice of the execution id — the value
+    every follow-up CLI command (``show``/``retry``/``report``) actually
+    takes — so it always gets its full width. The other fixed columns (Task
+    ID, Attempts, Agent, Verification) shrink toward whatever is actually on
+    screen before falling back to their preferred width. The variable-width
+    ``TASK`` column receives whatever space is left over.
+    """
+    gaps = len(_DASHBOARD_FIXED_COLUMNS) * _DASHBOARD_GAP_WIDTH
+    fixed_max = {name: pref for name, pref, _ in _DASHBOARD_FIXED_COLUMNS}
+    fixed_min = {name: min_width for name, _, min_width in _DASHBOARD_FIXED_COLUMNS}
+    available = width - _DASHBOARD_MARKER_WIDTH - gaps
+    if available <= 0:
+        return tuple([0] * len(_DASHBOARD_FIXED_COLUMNS)) + (max(available, 0),)
+
+    if rows:
+        visible_width = {
+            _DASHBOARD_EXEC_ID_COL: _DASHBOARD_EXEC_ID_LENGTH,
+            _DASHBOARD_TASK_ID_COL: max(display_width(row.task_id or "-") for row in rows),
+            _DASHBOARD_ATTEMPTS_COL: max(len(str(row.attempt_count)) for row in rows),
+            _DASHBOARD_AGENT_COL: max(display_width(row.agent) for row in rows),
+            _DASHBOARD_VERIFICATION_COL: max(display_width(row.verification) for row in rows),
+        }
+        for name, pref, min_width in _DASHBOARD_FIXED_COLUMNS:
+            header_width = display_width(_DASHBOARD_HEADER_LABELS[name])
+            fixed_max[name] = max(min_width, min(max(header_width, visible_width[name]), pref))
+
+    # Keep TASK readable when possible, but still render something in very narrow
+    # terminals by reserving at least one column for it.
+    task_reserved = (
+        _DASHBOARD_TASK_MIN_WIDTH
+        if available > _DASHBOARD_TASK_MIN_WIDTH
+        else available
+    )
+    fixed_budget = max(available - task_reserved, 0)
+
+    # Shrink priority, least to most protected. TASK ID goes first: unlike
+    # exec_id, it is only useful when a caller set one explicitly. exec_id is
+    # last — it is the one column every follow-up command needs, so it gives
+    # up width only once nothing else is left to give.
+    order = (
+        _DASHBOARD_TASK_ID_COL,
+        _DASHBOARD_VERIFICATION_COL,
+        _DASHBOARD_ATTEMPTS_COL,
+        _DASHBOARD_AGENT_COL,
+        _DASHBOARD_EXEC_ID_COL,
+    )
+    fixed_used = sum(fixed_max.values())
+    while fixed_used > fixed_budget and any(
+        fixed_max[col] > fixed_min[col] for col in fixed_max
+    ):
+        for name in order:
+            if fixed_used <= fixed_budget:
+                break
+            if fixed_max[name] > fixed_min[name]:
+                fixed_max[name] -= 1
+                fixed_used -= 1
+        if fixed_used <= fixed_budget:
+            break
+
+    while fixed_used > fixed_budget:
+        for name in order:
+            if fixed_used <= fixed_budget:
+                break
+            if fixed_max[name] > 0:
+                fixed_max[name] -= 1
+                fixed_used -= 1
+        if fixed_used <= fixed_budget:
+            break
+
+    task_width = max(available - fixed_used, 0)
+    return (
+        fixed_max[_DASHBOARD_EXEC_ID_COL],
+        fixed_max[_DASHBOARD_TASK_ID_COL],
+        fixed_max[_DASHBOARD_ATTEMPTS_COL],
+        fixed_max[_DASHBOARD_AGENT_COL],
+        fixed_max[_DASHBOARD_VERIFICATION_COL],
+        task_width,
+    )
 
 
 # -------------------------------------------------------------------- line editor
@@ -399,6 +560,7 @@ def build_task_command(workspace: Path, request: str) -> tuple[str, ...]:
         "--workspace",
         str(workspace.resolve()),
         "--verbose",
+        "--summary",
         "--description",
         request,
         "--objective",
@@ -626,9 +788,12 @@ class OrchestratorTui:
         self.task_offset = 0
         self.log_offset = 0
         self.log_follow = True
+        self.compose_editor = LineEditor()
+        self.compose_task: BackgroundTask | None = None
 
-        self.message = "?:help  n:new task  /:filter  Tab:tasks  Enter:detail  q:quit"
+        self.message = ""
         self._message_kind = "info"
+        self._message_set_at = 0.0
         self.load_error = ""
         self._announced: set[int] = set()
         self._detail_key = ""
@@ -638,6 +803,19 @@ class OrchestratorTui:
     def _set_message(self, text: str, kind: str = "info") -> None:
         self.message = text
         self._message_kind = kind
+        self._message_set_at = time.monotonic()
+
+    def _status_line(self) -> tuple[str, str]:
+        """What the bottom bar shows right now: a fresh notification if there
+        is one, else a standing history-read error, else the current view's
+        own hint — computed live so switching views updates it immediately
+        instead of waiting out a stale notification's own fade timer.
+        """
+        if self.message and time.monotonic() - self._message_set_at < MESSAGE_TTL_SECONDS:
+            return self.message, self._message_kind
+        if self.load_error:
+            return self.load_error, "error"
+        return VIEW_HINTS.get(self.view, VIEW_HINTS[VIEW_DASHBOARD]), "info"
 
     # -- lifecycle ---------------------------------------------------------
 
@@ -650,6 +828,10 @@ class OrchestratorTui:
             curses.set_escdelay(ESCAPE_DELAY_MS)
         self.theme = Theme.create()
         self._refresh()
+        # Open straight into the task prompt: composing a task is what a
+        # user opening this TUI almost always came to do. Esc goes back to
+        # the ordinary dashboard, same as pressing 'n' mid-session would.
+        self.view = VIEW_COMPOSE
         while True:
             self._draw(screen)
             key = _read_key(screen)
@@ -664,7 +846,11 @@ class OrchestratorTui:
                 continue
             self._announced.add(task.index)
             kind = "ok" if task.status_text == "exit 0" else "error"
-            self._set_message(f"Task #{task.index} finished ({task.status_text}).", kind)
+            # Watching this exact task's log is the one moment "it's done, now
+            # what?" is a real question: nothing else on screen is about to
+            # change, and the hint line in the log view can be off-screen too.
+            hint = "  Press Esc to go back." if self.view == VIEW_LOGS and self.current_task is task else ""
+            self._set_message(f"Task #{task.index} finished ({task.status_text}).{hint}", kind)
             self._refresh()
 
     def _maybe_auto_refresh(self) -> None:
@@ -736,6 +922,12 @@ class OrchestratorTui:
         if self.help_visible:
             self.help_visible = False
             return True
+        if self.view == VIEW_COMPOSE:
+            # Every other view treats single characters as shortcuts, but
+            # here they are the task request being typed — '?', 'n', 'q' and
+            # the rest must land in the editor, not trigger a global action.
+            # Only Enter (submit) and Esc (back to the dashboard) are reserved.
+            return self._keys_compose(key)
         if character == "?":
             self.help_visible = True
             return True
@@ -751,7 +943,8 @@ class OrchestratorTui:
             self._set_message(f"Refreshed: {len(self.rows)} executions.")
             return True
         if character in ("n", "N"):
-            self._compose(screen)
+            self.view = VIEW_COMPOSE
+            self.compose_editor = LineEditor()
             return True
         if character == "/":
             self._prompt_filter(screen)
@@ -781,6 +974,7 @@ class OrchestratorTui:
         return True
 
     def _handle_escape(self) -> bool:
+        """Esc is the only "step back" key, so it alone owns every view's back edge."""
         if self.filter_text:
             self.filter_text = ""
             self._apply_filter()
@@ -789,18 +983,12 @@ class OrchestratorTui:
             self.view = VIEW_DASHBOARD
         elif self.view == VIEW_LOGS:
             self.view = VIEW_TASKS
+        elif self.view == VIEW_TASKS:
+            self.view = VIEW_DASHBOARD
         return True
 
     def _handle_quit(self) -> bool:
-        if self.view == VIEW_DETAIL:
-            self.view = VIEW_DASHBOARD
-            return True
-        if self.view == VIEW_LOGS:
-            self.view = VIEW_TASKS
-            return True
-        if self.view == VIEW_TASKS:
-            self.view = VIEW_DASHBOARD
-            return True
+        """q always means quit, from any view, never "step back" — Esc owns that."""
         running = self.tasks.running_count
         if running:
             self._set_message(f"{running} task(s) still running; press C to cancel them first.", "warn")
@@ -872,28 +1060,36 @@ class OrchestratorTui:
             return
         setattr(self, attribute, max(offset, 0))
 
-    # -- prompts -----------------------------------------------------------
-
-    def _compose(self, screen: "curses.window") -> None:
-        if not self.tasks.can_start():
-            self._set_message(f"{self.tasks.limit} tasks already running; cancel one first.", "error")
-            return
-        request = self._prompt(screen, "Task request: ")
-        if request is None:
+    def _keys_compose(self, key: int | str) -> bool:
+        outcome = self.compose_editor.handle(key)
+        if outcome == EDITOR_SUBMIT:
+            self._submit_compose()
+        elif outcome == EDITOR_CANCEL:
+            self.view = VIEW_DASHBOARD
             self._set_message("New task cancelled.")
-            return
-        request = request.strip()
+        return True
+
+    def _submit_compose(self) -> None:
+        request = self.compose_editor.text.strip()
+        self.compose_editor = LineEditor()
         if not request:
             self._set_message("New task cancelled.")
+            return
+        if not self.tasks.can_start():
+            self._set_message(f"{self.tasks.limit} tasks already running; cancel one first.", "error")
             return
         try:
             task = self.tasks.start(self.workspace, request)
         except (OSError, ValueError, TaskAdmissionError) as exc:
             self._set_message(f"Could not start task: {exc}", "error")
             return
-        self.view = VIEW_TASKS
-        self.task_selected = len(self.tasks.tasks) - 1
-        self._set_message(f"Task #{task.index} started. Enter opens its live log.", "ok")
+        # Stay on this same screen: the task's own live output is about to
+        # fill the space above the input box, the same way a chat reply
+        # appears without navigating away from the box you typed it in.
+        self.compose_task = task
+        self._set_message(f"Task #{task.index} started.", "ok")
+
+    # -- prompts -----------------------------------------------------------
 
     def _prompt_filter(self, screen: "curses.window") -> None:
         value = self._prompt(screen, "Filter: ", self.filter_text)
@@ -910,20 +1106,19 @@ class OrchestratorTui:
         )
 
     def _prompt(self, screen: "curses.window", label: str, initial: str = "") -> str | None:
-        """Own the input loop so the poll timeout cannot truncate typing."""
+        """Own the input loop so the poll timeout cannot truncate typing.
+
+        Used only for the filter now: composing a task has its own
+        non-blocking view (VIEW_COMPOSE) so the screen can keep updating
+        with a submitted task's live output while still accepting input.
+        """
         editor = LineEditor(initial)
         curses.curs_set(1)
         try:
             while True:
-                height, width = screen.getmaxyx()
-                row = max(height - 1, 0)
-                prefix = fit_to_width(label, max(width - 1, 1))
-                budget = max(width - display_width(prefix) - 1, 1)
-                shown = _tail_to_width(editor.text[:editor.cursor], budget)
-                _safe_addstr(screen, row, 0, pad_to_width(prefix + shown, max(width - 1, 0)), width)
-                cursor_x = min(display_width(prefix) + display_width(shown), max(width - 1, 0))
+                cursor = self._draw_input_line(screen, label, editor)
                 try:
-                    screen.move(row, cursor_x)
+                    screen.move(*cursor)
                 except curses.error:
                     pass
                 screen.refresh()
@@ -941,6 +1136,59 @@ class OrchestratorTui:
         finally:
             curses.curs_set(0)
 
+    def _draw_input_line(self, screen: "curses.window", label: str, editor: LineEditor) -> tuple[int, int]:
+        """The original one-line "Label: text" prompt, still used for the filter."""
+        height, width = screen.getmaxyx()
+        row = max(height - 1, 0)
+        prefix = fit_to_width(label, max(width - 1, 1))
+        budget = max(width - display_width(prefix) - 1, 1)
+        shown = _tail_to_width(editor.text[:editor.cursor], budget)
+        _safe_addstr(screen, row, 0, pad_to_width(prefix + shown, max(width - 1, 0)), width)
+        cursor_x = min(display_width(prefix) + display_width(shown), max(width - 1, 0))
+        return row, cursor_x
+
+    def _draw_input_box(self, screen: "curses.window", editor: LineEditor, placeholder: str) -> tuple[int, int]:
+        """A bordered, three-row prompt box for composing a task request.
+
+        Composing a task is the one input in this app that is really a
+        natural-language request, not a short field, so it gets a boxed
+        prompt with a `›` marker instead of a bare "Label: " status-bar line.
+        No title and no embedded state: the box is just an input, the same
+        way a chat prompt is — anything about the task itself belongs above
+        it, in the output area, not printed onto the box's own frame.
+        """
+        height, width = screen.getmaxyx()
+        left = 2 if width > 8 else 0
+        box_width = max(width - left * 2, 4)
+        top = max(height - 4, 0)
+        # A dim, plain frame reads as lighter/thinner than a bold one, and
+        # (like the title) doesn't compete with the text being typed for
+        # attention. Border rules and both side bars share this one
+        # attribute — mixing weights across the four sides read as a box
+        # that was half-rendered rather than a single deliberate shape.
+        frame_attribute = curses.A_DIM
+        for offset in range(3):
+            _safe_addstr(screen, top + offset, left, " " * box_width, box_width + 1)
+        _safe_addstr(
+            screen, top, left, _box_border(box_width, "┌", "┐"), box_width, frame_attribute, ellipsis=False,
+        )
+        _safe_addstr(
+            screen, top + 2, left, _box_border(box_width, "└", "┘"), box_width, frame_attribute, ellipsis=False,
+        )
+        prompt = "› "
+        # Two columns of padding beyond the border itself, not one — more
+        # breathing room around the typed text reads less cramped.
+        inner_left = left + 3
+        inner_width = max(box_width - 6, 1)
+        content_budget = max(inner_width - display_width(prompt), 0)
+        typed = _tail_to_width(editor.text[:editor.cursor], content_budget)
+        shown, attribute = (typed, 0) if editor.text else (fit_to_width(placeholder, content_budget), curses.A_DIM)
+        _safe_addstr(screen, top + 1, left, "│", 2, frame_attribute, ellipsis=False)
+        _safe_addstr(screen, top + 1, inner_left, prompt + shown, inner_width, attribute)
+        _safe_addstr(screen, top + 1, left + box_width - 1, "│", 2, frame_attribute, ellipsis=False)
+        cursor_x = min(inner_left + display_width(prompt) + display_width(typed), left + box_width - 2)
+        return top + 1, cursor_x
+
     # -- drawing -----------------------------------------------------------
 
     def _draw(self, screen: "curses.window") -> None:
@@ -950,9 +1198,15 @@ class OrchestratorTui:
             _safe_addstr(screen, 0, 0, "Terminal too small", width)
             screen.refresh()
             return
-        self._draw_header(screen, height, width)
-        body_top = 2
+        # The dashboard header (workspace title, "X/Y executions") is about
+        # execution history, which has nothing to do with composing a task —
+        # the compose view puts its own small workspace line above the input
+        # box instead, so this stays blank there.
+        if self.view != VIEW_COMPOSE:
+            self._draw_header(screen, height, width)
+        body_top = 2  # leave row 1 blank so the body doesn't crowd the header
         body_height = max(height - body_top - 1, 1)
+        cursor: tuple[int, int] | None = None
         if self.view == VIEW_DASHBOARD:
             self._draw_dashboard(screen, body_top, body_height, width)
         elif self.view == VIEW_DETAIL:
@@ -961,46 +1215,85 @@ class OrchestratorTui:
             self._draw_tasks(screen, body_top, body_height, width)
         elif self.view == VIEW_LOGS:
             self._draw_logs(screen, body_top, body_height, width)
+        elif self.view == VIEW_COMPOSE:
+            cursor = self._draw_compose(screen, body_top, body_height, width)
         if self.help_visible:
             self._draw_help(screen, height, width)
-        fallback = _MESSAGE_FALLBACK_ATTRIBUTE.get(self._message_kind, curses.A_DIM)
-        color_name = _MESSAGE_COLOR.get(self._message_kind)
+        # "running:N/M" is how many background launches from *this session*
+        # are active out of the concurrency limit — unrelated to the "X/Y
+        # executions" count in the header, which is the dashboard's
+        # historical row count, and unrelated to the TASK column, which
+        # names one row's request. It earns a permanent spot in the footer
+        # because it is the one thing not otherwise visible from every other
+        # view (e.g. while composing a new task with one already running).
+        # The view name and the auto-refresh toggle didn't clear that bar —
+        # the screen's own content already says which view you're on, and
+        # 'a' already confirms the toggle in the message bar when pressed.
+        indicators = f"running:{self.tasks.running_count}/{self.tasks.limit}"
+        status_text, status_kind = self._status_line()
+        fallback = _MESSAGE_FALLBACK_ATTRIBUTE.get(status_kind, curses.A_DIM)
+        color_name = _MESSAGE_COLOR.get(status_kind)
         message_attribute = self.theme.attribute(color_name, fallback) if color_name else fallback
-        _safe_addstr(screen, height - 1, 0, self.message, width, message_attribute)
+        status_budget = max(width - display_width(indicators) - 2, 1)
+        _safe_addstr(screen, height - 1, 0, status_text, status_budget, message_attribute)
+        _safe_addstr(
+            screen, height - 1, max(width - display_width(indicators) - 1, 0), indicators, width,
+            self.theme.attribute("accent"),
+        )
+        try:
+            curses.curs_set(1 if cursor is not None else 0)
+        except curses.error:
+            pass
+        if cursor is not None:
+            try:
+                screen.move(*cursor)
+            except curses.error:
+                pass
         screen.refresh()
 
     def _draw_header(self, screen: "curses.window", height: int, width: int) -> None:
         prefix = "Adaptive Orchestrator — "
-        indicators = (
-            f"{self.view}  tasks {self.tasks.running_count}/{self.tasks.limit}"
-            f"  auto {'on' if self.auto_refresh else 'off'}"
-        )
-        title_budget = max(width - display_width(indicators) - 2, 1)
-        path_budget = max(title_budget - display_width(prefix), 1)
-        title = prefix + condense_path(str(self.workspace), path_budget)
-        _safe_addstr(screen, 0, 0, title, title_budget, curses.A_BOLD, ellipsis=False)
-        _safe_addstr(
-            screen, 0, max(width - display_width(indicators) - 1, 0), indicators, width,
-            self.theme.attribute("accent"),
-        )
         shown = len(self.visible_rows)
         meta = f"{shown}/{len(self.rows)} executions"
         if self.filter_text:
             meta += f"  filter:'{self.filter_text}'"
         if self.load_error:
             meta += "  [history unreadable]"
-        _safe_addstr(screen, 1, 0, meta, width, curses.A_DIM)
+        title_budget = max(width - display_width(meta) - 2, 1)
+        path_budget = max(title_budget - display_width(prefix), 1)
+        title = prefix + condense_path(str(self.workspace), path_budget)
+        _safe_addstr(screen, 0, 0, title, title_budget, curses.A_BOLD, ellipsis=False)
+        _safe_addstr(screen, 0, max(width - display_width(meta) - 1, 0), meta, width, curses.A_DIM)
 
     def _draw_dashboard(self, screen: "curses.window", top: int, body_height: int, width: int) -> None:
-        list_width = max(min(width // 2, 72), 24)
-        divider_x = min(list_width, max(width - 1, 0))
-        for offset in range(body_height):
-            _safe_addstr(screen, top + offset, divider_x, "│", 2, curses.A_DIM, ellipsis=False)
-
-        header = _DASHBOARD_ROW_FORMAT.format(
-            marker=" ", glyph=" ", status="STATUS", agent="AGENT", description="DESCRIPTION",
+        list_width = max(width, 1)
+        exec_id_width, task_id_width, attempts_width, agent_width, verification_width, task_width = (
+            _dashboard_layout(width, self.visible_rows)
         )
-        _safe_addstr(screen, top, 0, pad_to_width(header, list_width - 1), list_width, curses.A_BOLD)
+
+        def format_cell(value: str, columns: int, align_right: bool = False) -> str:
+            text = fit_to_width(value, columns, ellipsis=True)
+            padding = max(columns - display_width(text), 0)
+            if align_right:
+                return " " * padding + text
+            return text + " " * padding
+
+        cell_gap = " " * _DASHBOARD_GAP_WIDTH
+
+        def join_cells(values: Sequence[str]) -> str:
+            return cell_gap.join(values)
+
+        marker = " " * _DASHBOARD_MARKER_WIDTH
+        header = marker + join_cells((
+            pad_to_width(_DASHBOARD_HEADER_LABELS[_DASHBOARD_EXEC_ID_COL], exec_id_width, ellipsis=False),
+            pad_to_width(_DASHBOARD_HEADER_LABELS[_DASHBOARD_TASK_ID_COL], task_id_width, ellipsis=False),
+            pad_to_width(_DASHBOARD_HEADER_LABELS[_DASHBOARD_ATTEMPTS_COL], attempts_width, ellipsis=False),
+            pad_to_width(_DASHBOARD_HEADER_LABELS[_DASHBOARD_AGENT_COL], agent_width, ellipsis=False),
+            pad_to_width(_DASHBOARD_HEADER_LABELS[_DASHBOARD_VERIFICATION_COL], verification_width, ellipsis=False),
+            pad_to_width("TASK", task_width, ellipsis=False),
+        ))
+        _safe_addstr(screen, top, 0, pad_to_width(header, list_width), list_width, curses.A_BOLD, ellipsis=False)
+
         list_top = top + 1
         list_height = max(body_height - 1, 0)
         if not self.visible_rows and list_height > 0:
@@ -1010,36 +1303,33 @@ class OrchestratorTui:
                 if offset >= list_height:
                     break
                 _safe_addstr(screen, list_top + offset, 0, line, list_width, curses.A_DIM)
-            return
-        self.list_offset = scroll_offset(self.list_offset, self.selected, len(self.visible_rows), list_height)
-        window = self.visible_rows[self.list_offset:self.list_offset + list_height]
-        for index, row in enumerate(window):
-            absolute = self.list_offset + index
-            chosen = absolute == self.selected
-            marker = ">" if chosen else " "
-            glyph = _STATUS_GLYPH.get(status_category(row.status), " ")
-            text = _DASHBOARD_ROW_FORMAT.format(
-                marker=marker,
-                glyph=glyph,
-                status=fit_to_width(row.status, 10),
-                agent=fit_to_width(row.agent, 16),
-                description=row.description,
-            )
-            attribute = self.theme.status(row.status)
-            if chosen:
-                attribute |= curses.A_REVERSE
-            _safe_addstr(
-                screen, list_top + index, 0, pad_to_width(text, list_width - 1, ellipsis=True), list_width, attribute,
-            )
-
-        detail_x = min(divider_x + 2, max(width - 1, 0))
-        detail_width = max(width - detail_x, 1)
-        wrap_budget = max(detail_width - 1, 1)
-        wrapped: list[str] = []
-        for line in self._summary_lines():
-            wrapped.extend(wrap_text(line, wrap_budget))
-        for offset, line in enumerate(wrapped[:body_height]):
-            _safe_addstr(screen, top + offset, detail_x, line, detail_width)
+        else:
+            self.list_offset = scroll_offset(self.list_offset, self.selected, len(self.visible_rows), list_height)
+            window = self.visible_rows[self.list_offset:self.list_offset + list_height]
+            for index, row in enumerate(window):
+                absolute = self.list_offset + index
+                chosen = absolute == self.selected
+                # No ">" marker: the whole row already goes reverse-video when
+                # selected, so a leading marker glyph on top of that would
+                # just say the same thing twice.
+                marker = " " * _DASHBOARD_MARKER_WIDTH
+                glyph = _STATUS_GLYPH.get(status_category(row.status), " ")
+                row_attribute = curses.A_REVERSE if chosen else 0
+                task_id = row.task_id or "-"
+                exec_id = row.execution_id[:_DASHBOARD_EXEC_ID_LENGTH]
+                text = marker + join_cells((
+                    pad_to_width(exec_id, exec_id_width, ellipsis=False),
+                    pad_to_width(task_id, task_id_width, ellipsis=False),
+                    format_cell(str(row.attempt_count), attempts_width, align_right=True),
+                    pad_to_width(row.agent, agent_width, ellipsis=True),
+                    pad_to_width(row.verification, verification_width, ellipsis=True),
+                    pad_to_width(row.description, task_width, ellipsis=True),
+                ))
+                full_line = pad_to_width(text, list_width, ellipsis=True)
+                _safe_addstr(screen, list_top + index, 0, full_line, list_width, row_attribute)
+                if list_width >= 1:
+                    marker_attribute = self.theme.status(row.status) if not chosen else row_attribute
+                    _safe_addstr(screen, list_top + index, 0, glyph, 1, marker_attribute)
 
     def _summary_lines(self) -> list[str]:
         row = self.current_row
@@ -1055,13 +1345,12 @@ class OrchestratorTui:
         else:
             lines.extend([
                 f"Execution: {row.execution_id}",
-                f"Task: {row.description or '(missing description)'}",
                 f"Status: {row.status}",
                 f"Agent: {row.agent}",
                 "(in flight; no terminal record yet)",
+                f"Task: {row.description or '(missing description)'}",
             ])
-        lines.extend(["", f"Attempts tracked: {row.attempt_count}", "Enter: full report"])
-        return lines
+        return _move_task_last(lines)
 
     def _draw_detail(self, screen: "curses.window", top: int, body_height: int, width: int) -> None:
         row = self.current_row
@@ -1156,7 +1445,12 @@ class OrchestratorTui:
             f"  {len(lines)} lines  follow:{'on' if self.log_follow else 'off'}  {task.request}"
         )
         _safe_addstr(screen, top, 0, header, width, curses.A_BOLD)
-        window_top = top + 1
+        # A raw log dump doesn't look like the rest of the UI, and the bottom
+        # message bar gets overwritten by later refreshes — so the way back
+        # needs to stay on screen for as long as this view is up, especially
+        # right after a task finishes and there is nothing left to watch.
+        _safe_addstr(screen, top + 1, 0, "Esc: back to tasks   f: toggle follow", width, curses.A_DIM)
+        window_top = top + 2
         window_height = max(top + body_height - window_top, 1)
         if self.log_follow:
             self.log_offset = max(len(lines) - window_height, 0)
@@ -1165,21 +1459,65 @@ class OrchestratorTui:
         for index, line in enumerate(lines[self.log_offset:self.log_offset + window_height]):
             _safe_addstr(screen, window_top + index, 0, line, width)
 
+    def _draw_compose(self, screen: "curses.window", top: int, body_height: int, width: int) -> tuple[int, int]:
+        """Blank canvas until a task is submitted, then that task's own live
+        output fills the space above the input box: no navigating to the
+        task list or its log view just to watch what you just asked for.
+
+        Status lives in that output area, not on the input box itself — the
+        box stays a plain, unlabeled prompt throughout, like the output area
+        is a transcript and the box is just where the next line gets typed.
+        """
+        height, _ = screen.getmaxyx()
+        box_top = max(height - 4, 0)
+        # Sits right against the box's own top border, indented to the box's
+        # left edge — reads as a caption for the box, not another line of
+        # the transcript above it. Terminal cells are all one size, so
+        # A_DIM (the least visually heavy attribute available) is as close
+        # to "smaller text" as a curses UI can get.
+        box_left = 2 if width > 8 else 0
+        workspace_row = max(box_top - 1, 0)
+        _safe_addstr(
+            screen, workspace_row, box_left, condense_path(str(self.workspace), width - box_left), width,
+            curses.A_DIM,
+        )
+        content_top = top
+        task = self.compose_task
+        if task is not None:
+            status = f"Task #{task.index} · {task.status_text} · {elapsed_text(task.elapsed)}"
+            _safe_addstr(screen, top, 0, status, width, curses.A_DIM)
+            content_top = top + 1
+        lines = task.output_lines() if task is not None else ()
+        output_height = max(workspace_row - content_top, 0)
+        offset = max(len(lines) - output_height, 0)
+        for index, line in enumerate(lines[offset:offset + output_height]):
+            _safe_addstr(screen, content_top + index, 0, line, width)
+        return self._draw_input_box(screen, self.compose_editor, "Describe the task to run…")
+
     def _draw_help(self, screen: "curses.window", height: int, width: int) -> None:
         entries = (
             "Adaptive Orchestrator TUI",
             "",
-            "n          compose and launch a new task (Esc cancels)",
-            "/          filter executions; Esc clears the filter",
-            "Tab        switch dashboard / tasks",
-            "Enter      open execution report, or a task's live log",
-            "j k ↑ ↓    move; PgUp PgDn g G scroll",
-            "c          cancel selected task (again to SIGKILL)",
-            "C          cancel every running task",
-            "x          drop finished tasks from the list",
-            "r          refresh now      a  toggle auto-refresh",
-            "f          toggle log follow (log view)",
-            "q / Esc    step back; q on the dashboard quits",
+            "Navigate",
+            "  j k / ↑ ↓   move selection",
+            "  PgUp PgDn   scroll a page; g G jump to top/bottom",
+            "  Tab         switch dashboard / tasks",
+            "  Enter       open execution report, or a task's live log",
+            "  Esc         step back / clear filter",
+            "",
+            "Act",
+            "  n           open the task prompt (its own screen; Esc cancels)",
+            "  /           filter executions",
+            "  c           cancel selected task (again to SIGKILL)",
+            "  C           cancel every running task",
+            "  x           drop finished tasks from the list",
+            "",
+            "View",
+            "  r           refresh now",
+            "  a           toggle auto-refresh",
+            "  f           toggle log follow (log view)",
+            "",
+            "q             quit (from any view; asks first if a task is running)",
             "",
             "press any key to close",
         )
@@ -1251,7 +1589,7 @@ def _safe_addstr(
 ) -> None:
     if y < 0 or x < 0 or width <= 0:
         return
-    text = fit_to_width(value, max(width - 1, 0), ellipsis=ellipsis)
+    text = fit_to_width(value, width, ellipsis=ellipsis)
     if not text:
         return
     try:

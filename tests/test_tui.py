@@ -16,10 +16,13 @@ from adaptive_orchestrator.interfaces.tui import (
     EDITOR_EDIT,
     EDITOR_IGNORED,
     EDITOR_SUBMIT,
+    VIEW_COMPOSE,
+    VIEW_DASHBOARD,
     LineEditor,
     DashboardRow,
     TaskAdmissionError,
     TaskManager,
+    _dashboard_layout,
     build_task_command,
     clamp_offset,
     condense_path,
@@ -115,6 +118,61 @@ class DashboardRowsTests(unittest.TestCase):
         self.assertIn("task-live", rows[0].description)
 
 
+def _dashboard_row(task_id: str = "", status: str = "completed", agent: str = "codex",
+                    verification: str = "passed", attempt_count: int = 1) -> DashboardRow:
+    return DashboardRow(
+        execution_id="e", status=status, agent=agent, verification=verification,
+        description="d", attempts=(), task_id=task_id, attempt_count=attempt_count,
+    )
+
+
+class DashboardLayoutTests(unittest.TestCase):
+    """Columns, in order: exec id, task id, attempts, agent, verification, task."""
+
+    def test_prefers_default_widths_when_there_are_no_rows_to_measure(self) -> None:
+        self.assertEqual(_dashboard_layout(120, ()), (8, 18, 8, 16, 12, 46))
+
+    def test_short_visible_values_shrink_fixed_columns_below_their_preferred_max(self) -> None:
+        # Fixed columns should shrink toward what is actually on screen (plus
+        # its header) rather than always reserving their full preferred
+        # width, leaving more room for TASK.
+        rows = (_dashboard_row(task_id="short"),)
+        widths = _dashboard_layout(120, rows)
+        self.assertEqual(widths, (8, 10, 8, 10, 12, 60))
+        self.assertGreater(widths[-1], _dashboard_layout(120, ())[-1])
+
+    def test_exec_id_column_stays_at_its_fixed_width_regardless_of_content(self) -> None:
+        # exec_id is always an 8-character slice of the execution id, not
+        # measured text, so nothing about row content should change it.
+        rows = (_dashboard_row(task_id="a-very-long-task-identifier-1234567890"),)
+        exec_id_width, task_id_width, *_ = _dashboard_layout(120, rows)
+        self.assertEqual(exec_id_width, 8)
+        # Unlike the old task-id-only special case, TASK ID now caps at its
+        # own preferred width like every other fixed column instead of
+        # growing without bound.
+        self.assertEqual(task_id_width, 18)
+
+    def test_task_keeps_its_reserved_minimum_while_every_other_column_is_squeezed(self) -> None:
+        # A narrow terminal must still show *something* of the task text: the
+        # fixed columns give up width, in priority order, before TASK does.
+        widths = _dashboard_layout(40, ())
+        self.assertEqual(widths, (2, 4, 0, 4, 2, 16))
+        self.assertEqual(widths[-1], 16)
+
+    def test_exec_id_still_gets_some_width_once_lower_priority_columns_hit_zero(self) -> None:
+        # exec_id is what every follow-up show/retry/report command needs, so
+        # it keeps *something* even once a lower-priority column (attempts)
+        # has been squeezed away entirely.
+        exec_id_width, _task_id_width, attempts_width, *_ = _dashboard_layout(40, ())
+        self.assertEqual(attempts_width, 0)
+        self.assertGreater(exec_id_width, 0)
+
+    def test_a_terminal_too_narrow_for_any_column_returns_all_zero(self) -> None:
+        for width in (8, 0, -5):
+            with self.subTest(width=width):
+                self.assertEqual(_dashboard_layout(width, ()), (0, 0, 0, 0, 0, 0))
+
+
 class BuildTaskCommandTests(unittest.TestCase):
     def test_builds_shell_free_verbose_cli_command(self) -> None:
         command = build_task_command(Path("/workspace"), "Run the tests")
@@ -122,6 +180,13 @@ class BuildTaskCommandTests(unittest.TestCase):
         self.assertIn("adaptive_orchestrator.cli", command)
         self.assertIn("--verbose", command)
         self.assertEqual(command.count("Run the tests"), 2)
+
+    def test_requests_the_readable_summary_instead_of_the_raw_json_record(self) -> None:
+        # The task's log view is meant to read like output, not a dumped
+        # execution record: without --summary, `run` prints the full
+        # {"plan": ..., "execution": ...} JSON on completion.
+        command = build_task_command(Path("/workspace"), "Run the tests")
+        self.assertIn("--summary", command)
 
     def test_rejects_empty_request(self) -> None:
         with self.assertRaises(ValueError):
@@ -390,6 +455,62 @@ class TaskManagerTests(unittest.TestCase):
     def test_rejects_a_zero_limit(self) -> None:
         with self.assertRaises(ValueError):
             TaskManager(limit=0)
+
+
+class ComposeViewTests(unittest.TestCase):
+    """VIEW_COMPOSE routes almost every key to the editor as literal text —
+    only Enter and Esc are reserved — so shortcuts that work on every other
+    view must not fire here.
+    """
+
+    def _app(self) -> OrchestratorTui:
+        workspace = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, workspace, ignore_errors=True)
+        app = OrchestratorTui(workspace)
+        app.tasks = TaskManager(limit=2, factory=FakeTask)
+        app.view = VIEW_COMPOSE
+        return app
+
+    def test_letters_that_are_shortcuts_on_every_other_view_are_typed_literally(self) -> None:
+        app = self._app()
+        for character in "n?q/aCx":
+            app._handle_key(None, character)
+        self.assertEqual(app.compose_editor.text, "n?q/aCx")
+        self.assertEqual(app.view, VIEW_COMPOSE)
+        self.assertFalse(app.help_visible)
+
+    def test_enter_starts_the_task_and_stays_on_the_compose_view(self) -> None:
+        app = self._app()
+        for character in "do the thing":
+            app._handle_key(None, character)
+        app._handle_key(None, "\n")
+        self.assertEqual(app.view, VIEW_COMPOSE)
+        self.assertIsNotNone(app.compose_task)
+        self.assertEqual(app.compose_task.request, "do the thing")
+        # The editor resets so the next request can be typed immediately.
+        self.assertEqual(app.compose_editor.text, "")
+
+    def test_escape_cancels_back_to_the_dashboard_without_starting_anything(self) -> None:
+        app = self._app()
+        for character in "abandoned":
+            app._handle_key(None, character)
+        app._handle_key(None, "\x1b")
+        self.assertEqual(app.view, VIEW_DASHBOARD)
+        self.assertIsNone(app.compose_task)
+
+    def test_submitting_blank_text_does_not_start_a_task(self) -> None:
+        app = self._app()
+        app._handle_key(None, "\n")
+        self.assertIsNone(app.compose_task)
+        self.assertEqual(app.view, VIEW_COMPOSE)
+
+    def test_n_from_another_view_opens_a_fresh_compose_screen(self) -> None:
+        app = self._app()
+        app.view = VIEW_DASHBOARD
+        app.compose_editor = LineEditor("leftover text")
+        app._handle_key(None, "n")
+        self.assertEqual(app.view, VIEW_COMPOSE)
+        self.assertEqual(app.compose_editor.text, "")
 
 
 class PresentationTests(unittest.TestCase):
