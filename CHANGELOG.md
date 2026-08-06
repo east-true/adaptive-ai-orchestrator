@@ -112,6 +112,17 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- The terminal UI's task list now shows each run's execution id, so a task
+  started there can be followed into `show`, `retry`, or `report`. A task was
+  identified only by a session-local `#N` that survived nothing and matched no
+  record; the id is read from the `Execution:` line `run --summary` already
+  prints, and rows show the same eight-character prefix the dashboard and the
+  CLI use, with the full value above the output preview.
+- The dashboard's `TASK ID` column appears only where task ids group rows.
+  `workflow.run` mints one per run unless a caller supplies it, so outside
+  paired experiments it was a second random identifier standing 1:1 with the
+  execution id—a column of noise beside the one value follow-up commands take.
+  Its width goes to `TASK` when it is not earning it.
 - The terminal UI is scoped to a monitor over recorded executions. It opens on
   the dashboard rather than a task-composition screen, and starting a run is a
   one-line prompt that hands off to the task list instead of a full view with

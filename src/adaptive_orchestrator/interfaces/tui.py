@@ -68,7 +68,7 @@ _ACTIVE_STATUS = {"selected", "started", "running", "terminal", "reconciled", "e
 
 _STATUS_GLYPH = {"ok": "✓", "fail": "✗", "active": "●", "idle": "·"}
 _SPINNER_FRAMES = "|/-\\"
-_TASK_ROW_FORMAT = "{marker}{spinner} #{index:<3} {status:<11} {elapsed:>7}  {request}"
+_TASK_ROW_FORMAT = "{marker}{spinner} #{index:<3} {exec_id:<9} {status:<11} {elapsed:>7}  {request}"
 _DASHBOARD_MARKER_WIDTH = 2  # status glyph + one column of breathing room
 _DASHBOARD_GAP_WIDTH = 2
 _DASHBOARD_EXEC_ID_COL = "exec_id"
@@ -372,6 +372,23 @@ def markdown_heading(line: str) -> tuple[str, int]:
     return stripped.strip(), level
 
 
+def task_id_groups_rows(rows: Sequence[DashboardRow]) -> bool:
+    """Whether any task id is shared by more than one row.
+
+    That sharing is the only thing a task id says that the execution id does
+    not: `workflow.run` mints one per run unless a caller supplied it, so
+    outside paired experiments the two identify the same thing.
+    """
+    seen: set[str] = set()
+    for row in rows:
+        if not row.task_id:
+            continue
+        if row.task_id in seen:
+            return True
+        seen.add(row.task_id)
+    return False
+
+
 def _dashboard_layout(
     width: int, rows: Sequence[DashboardRow] = (),
 ) -> tuple[int, int, int, int, int, int]:
@@ -402,6 +419,13 @@ def _dashboard_layout(
         for name, pref, min_width in _DASHBOARD_FIXED_COLUMNS:
             header_width = display_width(_DASHBOARD_HEADER_LABELS[name])
             fixed_max[name] = max(min_width, min(max(header_width, visible_width[name]), pref))
+        if not task_id_groups_rows(rows):
+            # A task id the workflow generated per run is a second random
+            # identifier standing 1:1 with the execution id, which is the one
+            # follow-up commands take — a column of noise. It earns its width
+            # only where it does something exec_id cannot: tie separate
+            # executions of one task together, as paired runs do.
+            fixed_max[_DASHBOARD_TASK_ID_COL] = 0
 
     # Keep TASK readable when possible, but still render something in very narrow
     # terminals by reserving at least one column for it.
@@ -565,6 +589,20 @@ def build_task_command(workspace: Path, request: str) -> tuple[str, ...]:
     )
 
 
+def _execution_id_from(line: str) -> str:
+    """Read the execution id out of ``--summary``'s first line.
+
+    ``run --summary`` opens with ``Execution: <id>``, so the id arrives in the
+    output the task is already streaming and needs no second lookup. Anything
+    that does not match leaves the id unset rather than guessing.
+    """
+    prefix = "Execution: "
+    if not line.startswith(prefix):
+        return ""
+    candidate = line[len(prefix):].strip()
+    return candidate if candidate and " " not in candidate else ""
+
+
 class BackgroundTask:
     """One shell-free CLI child whose combined output is safe to poll from curses."""
 
@@ -576,6 +614,7 @@ class BackgroundTask:
         self.finished_at: float | None = None
         self._cancel_requested = False
         self._lines: deque[str] = deque(maxlen=MAX_TASK_OUTPUT_LINES)
+        self._execution_id = ""
         self._lock = threading.Lock()
         self._process = subprocess.Popen(
             self.command,
@@ -594,10 +633,24 @@ class BackgroundTask:
         assert self._process.stdout is not None
         try:
             for line in self._process.stdout:
+                text = line.rstrip()
                 with self._lock:
-                    self._lines.append(line.rstrip())
+                    self._lines.append(text)
+                    if not self._execution_id:
+                        self._execution_id = _execution_id_from(text)
         except (OSError, ValueError):  # stream closed while the child was torn down
             pass
+
+    @property
+    def execution_id(self) -> str:
+        """The run's recorded id, once its output has named it.
+
+        This is the value ``show``, ``retry``, and ``report`` take. Without it
+        a finished task is a session-local ``#N`` with no way back to what it
+        recorded, which is the whole point of the run.
+        """
+        with self._lock:
+            return self._execution_id
 
     @property
     def running(self) -> bool:
@@ -1215,7 +1268,9 @@ class OrchestratorTui:
         cell_gap = " " * _DASHBOARD_GAP_WIDTH
 
         def join_cells(values: Sequence[str]) -> str:
-            return cell_gap.join(values)
+            # A column squeezed to zero contributes no gap either, or the row
+            # would carry a double-width space where nothing is drawn.
+            return cell_gap.join(value for value in values if value)
 
         marker = " " * _DASHBOARD_MARKER_WIDTH
         header = marker + join_cells((
@@ -1335,7 +1390,7 @@ class OrchestratorTui:
                 _safe_addstr(screen, top + 1, 0, hint, width, curses.A_DIM)
             return
         header = _TASK_ROW_FORMAT.format(
-            marker=" ", spinner=" ", index="", status="STATUS", elapsed="ELAPSED", request="REQUEST",
+            marker=" ", spinner=" ", index="", exec_id="ID", status="STATUS", elapsed="ELAPSED", request="REQUEST",
         )
         _safe_addstr(screen, top, 0, pad_to_width(header, width - 1), width, curses.A_BOLD)
         list_top = top + 1
@@ -1346,10 +1401,16 @@ class OrchestratorTui:
             chosen = absolute == self.task_selected
             marker = ">" if chosen else " "
             spinner = _SPINNER_FRAMES[int(task.elapsed * 4) % len(_SPINNER_FRAMES)] if task.running else " "
+            # The same 8-character prefix the dashboard shows and the CLI
+            # accepts, so a row here can be carried straight to `show`. A dash
+            # until the run names it, rather than a blank that reads as a
+            # rendering gap.
+            execution_id = task.execution_id
             text = _TASK_ROW_FORMAT.format(
                 marker=marker,
                 spinner=spinner,
                 index=task.index,
+                exec_id=execution_id[:_DASHBOARD_EXEC_ID_LENGTH] if execution_id else "—",
                 status=task.status_text,
                 elapsed=elapsed_text(task.elapsed),
                 request=task.request,
@@ -1364,7 +1425,10 @@ class OrchestratorTui:
         task = self.current_task
         if task is None or preview_height <= 0:
             return
-        _safe_addstr(screen, preview_top - 1, 0, f"— output of #{task.index} (Enter for full log) —", width, curses.A_DIM)
+        # The full id, not the 8-character prefix: this is the line to copy
+        # when following the run into `show` or `report`.
+        reference = f"#{task.index}" + (f" · {task.execution_id}" if task.execution_id else "")
+        _safe_addstr(screen, preview_top - 1, 0, f"— output of {reference} (Enter for full log) —", width, curses.A_DIM)
         for index, line in enumerate(task.output_lines()[-preview_height:]):
             _safe_addstr(screen, preview_top + index, 0, line, width)
 

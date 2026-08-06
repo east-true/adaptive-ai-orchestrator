@@ -3,6 +3,7 @@ from __future__ import annotations
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -24,6 +25,7 @@ from adaptive_orchestrator.interfaces.tui import (
     TaskManager,
     _cursor_window,
     _dashboard_layout,
+    _execution_id_from,
     build_task_command,
     clamp_offset,
     condense_path,
@@ -37,6 +39,7 @@ from adaptive_orchestrator.interfaces.tui import (
     markdown_heading,
     scroll_offset,
     status_category,
+    task_id_groups_rows,
     wrap_text,
 )
 from adaptive_orchestrator.infrastructure.events import LifecycleEvent, LifecycleEventType
@@ -137,7 +140,7 @@ class DashboardLayoutTests(unittest.TestCase):
         # Fixed columns should shrink toward what is actually on screen (plus
         # its header) rather than always reserving their full preferred
         # width, leaving more room for TASK.
-        rows = (_dashboard_row(task_id="short"),)
+        rows = (_dashboard_row(task_id="short"), _dashboard_row(task_id="short"))
         widths = _dashboard_layout(120, rows)
         self.assertEqual(widths, (8, 10, 8, 10, 12, 60))
         self.assertGreater(widths[-1], _dashboard_layout(120, ())[-1])
@@ -145,13 +148,32 @@ class DashboardLayoutTests(unittest.TestCase):
     def test_exec_id_column_stays_at_its_fixed_width_regardless_of_content(self) -> None:
         # exec_id is always an 8-character slice of the execution id, not
         # measured text, so nothing about row content should change it.
-        rows = (_dashboard_row(task_id="a-very-long-task-identifier-1234567890"),)
+        shared = "a-very-long-task-identifier-1234567890"
+        rows = (_dashboard_row(task_id=shared), _dashboard_row(task_id=shared))
         exec_id_width, task_id_width, *_ = _dashboard_layout(120, rows)
         self.assertEqual(exec_id_width, 8)
         # Unlike the old task-id-only special case, TASK ID now caps at its
         # own preferred width like every other fixed column instead of
         # growing without bound.
         self.assertEqual(task_id_width, 18)
+
+    def test_task_id_column_collapses_when_it_only_repeats_the_execution_id(self) -> None:
+        # One row per task id says nothing exec_id does not already say, so
+        # the column gives its width to TASK instead.
+        rows = (_dashboard_row(task_id="task-a"), _dashboard_row(task_id="task-b"))
+        exec_id_width, task_id_width, *_, task_width = _dashboard_layout(120, rows)
+        self.assertEqual(task_id_width, 0)
+        self.assertEqual(exec_id_width, 8)
+        self.assertGreater(task_width, _dashboard_layout(120, ())[-1])
+
+    def test_task_id_column_appears_once_rows_share_one(self) -> None:
+        rows = (_dashboard_row(task_id="paired"), _dashboard_row(task_id="paired"))
+        self.assertGreater(_dashboard_layout(120, rows)[1], 0)
+
+    def test_rows_without_any_task_id_do_not_count_as_sharing_one(self) -> None:
+        rows = (_dashboard_row(task_id=""), _dashboard_row(task_id=""))
+        self.assertFalse(task_id_groups_rows(rows))
+        self.assertEqual(_dashboard_layout(120, rows)[1], 0)
 
     def test_task_keeps_its_reserved_minimum_while_every_other_column_is_squeezed(self) -> None:
         # A narrow terminal must still show *something* of the task text: the
@@ -201,6 +223,23 @@ def _row(execution_id: str, status: str, agent: str, description: str) -> object
         "status": status,
         "task": {"description": description},
     }])[0]
+
+
+class ExecutionIdFromOutputTests(unittest.TestCase):
+    """`run --summary` opens with `Execution: <id>`, which is the link back."""
+
+    def test_reads_the_id_from_the_summary_line(self) -> None:
+        self.assertEqual(_execution_id_from("Execution: 3f9a1c22-0e7b"), "3f9a1c22-0e7b")
+
+    def test_ignores_every_other_line(self) -> None:
+        for line in ("Task: do the thing", "Status: completed", "", "  Execution: indented"):
+            self.assertEqual(_execution_id_from(line), "")
+
+    def test_refuses_a_value_that_is_not_a_single_token(self) -> None:
+        self.assertEqual(_execution_id_from("Execution: not an id"), "")
+
+    def test_refuses_an_empty_value(self) -> None:
+        self.assertEqual(_execution_id_from("Execution: "), "")
 
 
 class FilterRowsTests(unittest.TestCase):
@@ -482,6 +521,36 @@ class FakeTask:
             return False
         self.signals.append(force)
         return True
+
+
+class BackgroundTaskExecutionIdTests(unittest.TestCase):
+    """The capture path itself, through a real child and its reader thread."""
+
+    def _run(self, script: str) -> "object":
+        command = (sys.executable, "-c", script)
+        with mock.patch.object(
+            sys.modules["adaptive_orchestrator.interfaces.tui"],
+            "build_task_command",
+            return_value=command,
+        ):
+            from adaptive_orchestrator.interfaces.tui import BackgroundTask
+
+            task = BackgroundTask(Path(tempfile.gettempdir()), "a request", 1)
+        while task.running:
+            time.sleep(0.01)
+        return task
+
+    def test_captures_the_id_the_summary_prints(self) -> None:
+        task = self._run("print('Execution: 3f9a1c22-0e7b')")
+        self.assertEqual(task.execution_id, "3f9a1c22-0e7b")
+
+    def test_a_run_that_never_names_one_leaves_it_empty(self) -> None:
+        task = self._run("print('Status: failed')")
+        self.assertEqual(task.execution_id, "")
+
+    def test_keeps_the_first_id_when_output_names_more_than_one(self) -> None:
+        task = self._run("print('Execution: first'); print('Execution: second')")
+        self.assertEqual(task.execution_id, "first")
 
 
 class TaskManagerTests(unittest.TestCase):
