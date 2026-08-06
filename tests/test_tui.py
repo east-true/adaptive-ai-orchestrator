@@ -3,6 +3,7 @@ from __future__ import annotations
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -16,10 +17,15 @@ from adaptive_orchestrator.interfaces.tui import (
     EDITOR_EDIT,
     EDITOR_IGNORED,
     EDITOR_SUBMIT,
+    VIEW_DASHBOARD,
+    VIEW_TASKS,
     LineEditor,
     DashboardRow,
     TaskAdmissionError,
     TaskManager,
+    _cursor_window,
+    _dashboard_layout,
+    _execution_id_from,
     build_task_command,
     clamp_offset,
     condense_path,
@@ -33,6 +39,7 @@ from adaptive_orchestrator.interfaces.tui import (
     markdown_heading,
     scroll_offset,
     status_category,
+    task_id_groups_rows,
     wrap_text,
 )
 from adaptive_orchestrator.infrastructure.events import LifecycleEvent, LifecycleEventType
@@ -115,6 +122,80 @@ class DashboardRowsTests(unittest.TestCase):
         self.assertIn("task-live", rows[0].description)
 
 
+def _dashboard_row(task_id: str = "", status: str = "completed", agent: str = "codex",
+                    verification: str = "passed", attempt_count: int = 1) -> DashboardRow:
+    return DashboardRow(
+        execution_id="e", status=status, agent=agent, verification=verification,
+        description="d", attempts=(), task_id=task_id, attempt_count=attempt_count,
+    )
+
+
+class DashboardLayoutTests(unittest.TestCase):
+    """Columns, in order: exec id, task id, attempts, agent, verification, task."""
+
+    def test_prefers_default_widths_when_there_are_no_rows_to_measure(self) -> None:
+        self.assertEqual(_dashboard_layout(120, ()), (8, 18, 8, 16, 12, 46))
+
+    def test_short_visible_values_shrink_fixed_columns_below_their_preferred_max(self) -> None:
+        # Fixed columns should shrink toward what is actually on screen (plus
+        # its header) rather than always reserving their full preferred
+        # width, leaving more room for TASK.
+        rows = (_dashboard_row(task_id="short"), _dashboard_row(task_id="short"))
+        widths = _dashboard_layout(120, rows)
+        self.assertEqual(widths, (8, 10, 8, 10, 12, 60))
+        self.assertGreater(widths[-1], _dashboard_layout(120, ())[-1])
+
+    def test_exec_id_column_stays_at_its_fixed_width_regardless_of_content(self) -> None:
+        # exec_id is always an 8-character slice of the execution id, not
+        # measured text, so nothing about row content should change it.
+        shared = "a-very-long-task-identifier-1234567890"
+        rows = (_dashboard_row(task_id=shared), _dashboard_row(task_id=shared))
+        exec_id_width, task_id_width, *_ = _dashboard_layout(120, rows)
+        self.assertEqual(exec_id_width, 8)
+        # Unlike the old task-id-only special case, TASK ID now caps at its
+        # own preferred width like every other fixed column instead of
+        # growing without bound.
+        self.assertEqual(task_id_width, 18)
+
+    def test_task_id_column_collapses_when_it_only_repeats_the_execution_id(self) -> None:
+        # One row per task id says nothing exec_id does not already say, so
+        # the column gives its width to TASK instead.
+        rows = (_dashboard_row(task_id="task-a"), _dashboard_row(task_id="task-b"))
+        exec_id_width, task_id_width, *_, task_width = _dashboard_layout(120, rows)
+        self.assertEqual(task_id_width, 0)
+        self.assertEqual(exec_id_width, 8)
+        self.assertGreater(task_width, _dashboard_layout(120, ())[-1])
+
+    def test_task_id_column_appears_once_rows_share_one(self) -> None:
+        rows = (_dashboard_row(task_id="paired"), _dashboard_row(task_id="paired"))
+        self.assertGreater(_dashboard_layout(120, rows)[1], 0)
+
+    def test_rows_without_any_task_id_do_not_count_as_sharing_one(self) -> None:
+        rows = (_dashboard_row(task_id=""), _dashboard_row(task_id=""))
+        self.assertFalse(task_id_groups_rows(rows))
+        self.assertEqual(_dashboard_layout(120, rows)[1], 0)
+
+    def test_task_keeps_its_reserved_minimum_while_every_other_column_is_squeezed(self) -> None:
+        # A narrow terminal must still show *something* of the task text: the
+        # fixed columns give up width, in priority order, before TASK does.
+        widths = _dashboard_layout(40, ())
+        self.assertEqual(widths, (2, 4, 0, 4, 2, 16))
+        self.assertEqual(widths[-1], 16)
+
+    def test_exec_id_still_gets_some_width_once_lower_priority_columns_hit_zero(self) -> None:
+        # exec_id is what every follow-up show/retry/report command needs, so
+        # it keeps *something* even once a lower-priority column (attempts)
+        # has been squeezed away entirely.
+        exec_id_width, _task_id_width, attempts_width, *_ = _dashboard_layout(40, ())
+        self.assertEqual(attempts_width, 0)
+        self.assertGreater(exec_id_width, 0)
+
+    def test_a_terminal_too_narrow_for_any_column_returns_all_zero(self) -> None:
+        for width in (8, 0, -5):
+            with self.subTest(width=width):
+                self.assertEqual(_dashboard_layout(width, ()), (0, 0, 0, 0, 0, 0))
+
+
 class BuildTaskCommandTests(unittest.TestCase):
     def test_builds_shell_free_verbose_cli_command(self) -> None:
         command = build_task_command(Path("/workspace"), "Run the tests")
@@ -122,6 +203,13 @@ class BuildTaskCommandTests(unittest.TestCase):
         self.assertIn("adaptive_orchestrator.cli", command)
         self.assertIn("--verbose", command)
         self.assertEqual(command.count("Run the tests"), 2)
+
+    def test_requests_the_readable_summary_instead_of_the_raw_json_record(self) -> None:
+        # The task's log view is meant to read like output, not a dumped
+        # execution record: without --summary, `run` prints the full
+        # {"plan": ..., "execution": ...} JSON on completion.
+        command = build_task_command(Path("/workspace"), "Run the tests")
+        self.assertIn("--summary", command)
 
     def test_rejects_empty_request(self) -> None:
         with self.assertRaises(ValueError):
@@ -135,6 +223,23 @@ def _row(execution_id: str, status: str, agent: str, description: str) -> object
         "status": status,
         "task": {"description": description},
     }])[0]
+
+
+class ExecutionIdFromOutputTests(unittest.TestCase):
+    """`run --summary` opens with `Execution: <id>`, which is the link back."""
+
+    def test_reads_the_id_from_the_summary_line(self) -> None:
+        self.assertEqual(_execution_id_from("Execution: 3f9a1c22-0e7b"), "3f9a1c22-0e7b")
+
+    def test_ignores_every_other_line(self) -> None:
+        for line in ("Task: do the thing", "Status: completed", "", "  Execution: indented"):
+            self.assertEqual(_execution_id_from(line), "")
+
+    def test_refuses_a_value_that_is_not_a_single_token(self) -> None:
+        self.assertEqual(_execution_id_from("Execution: not an id"), "")
+
+    def test_refuses_an_empty_value(self) -> None:
+        self.assertEqual(_execution_id_from("Execution: "), "")
 
 
 class FilterRowsTests(unittest.TestCase):
@@ -336,6 +441,69 @@ class LineEditorTests(unittest.TestCase):
         self.assertEqual((editor.text, editor.cursor), ("", 0))
 
 
+class CursorWindowTest(unittest.TestCase):
+    def test_text_after_the_cursor_stays_visible(self) -> None:
+        """Moving back into a request must not blank out the rest of it."""
+        request = "refactor the routing policy"
+        for cursor in (0, 8, len(request)):
+            window, offset = _cursor_window(request, cursor, 40)
+            self.assertEqual(window, request)
+            self.assertEqual(offset, display_width(request[:cursor]))
+
+    def test_window_scrolls_to_keep_an_overflowing_caret_in_view(self) -> None:
+        text = "abcdefghijklmnopqrstuvwxyz"
+        self.assertEqual(_cursor_window(text, 0, 10), ("abcdefghij", 0))
+        self.assertEqual(_cursor_window(text, len(text), 10), ("rstuvwxyz", 9))
+        window, offset = _cursor_window(text, 18, 10)
+        self.assertIn(window, text)
+        self.assertEqual(window[offset], text[18])
+
+    def test_a_double_width_window_never_exceeds_its_budget(self) -> None:
+        for cursor in range(0, 8):
+            window, offset = _cursor_window("가나다라마바사", cursor, 9)
+            self.assertLessEqual(display_width(window), 9)
+            self.assertLessEqual(offset, 9)
+
+    def test_degenerate_budgets_render_nothing_rather_than_raising(self) -> None:
+        for columns in (0, -3):
+            self.assertEqual(_cursor_window("hello", 3, columns), ("", 0))
+
+
+class FakeScreen:
+    """Minimal ``curses`` window recording what was written where."""
+
+    def __init__(self, height: int = 10, width: int = 48) -> None:
+        self.height, self.width = height, width
+        self.cells = [[" "] * width for _ in range(height)]
+
+    def getmaxyx(self) -> tuple[int, int]:
+        return self.height, self.width
+
+    def addstr(self, y: int, x: int, text: str, attribute: int = 0) -> None:
+        for index, character in enumerate(text):
+            if 0 <= y < self.height and 0 <= x + index < self.width:
+                self.cells[y][x + index] = character
+
+    def row(self, y: int) -> str:
+        return "".join(self.cells[y]).rstrip()
+
+
+class PromptRenderTest(unittest.TestCase):
+    """The one-line prompt, where hiding the text after the cursor was visible."""
+
+    def _tui(self) -> OrchestratorTui:
+        return OrchestratorTui.__new__(OrchestratorTui)
+
+    def test_draws_the_whole_value_from_any_cursor_position(self) -> None:
+        for label, value in (("Filter: ", "codex"), ("New task: ", "refactor the routing policy")):
+            for cursor in (0, 2, len(value)):
+                screen = FakeScreen()
+                editor = LineEditor(value)
+                editor.cursor = cursor
+                row, _ = OrchestratorTui._draw_input_line(self._tui(), screen, label, editor)
+                self.assertIn(value, screen.row(row))
+
+
 class FakeTask:
     def __init__(self, workspace: Path, request: str, index: int) -> None:
         self.workspace = workspace
@@ -353,6 +521,36 @@ class FakeTask:
             return False
         self.signals.append(force)
         return True
+
+
+class BackgroundTaskExecutionIdTests(unittest.TestCase):
+    """The capture path itself, through a real child and its reader thread."""
+
+    def _run(self, script: str) -> "object":
+        command = (sys.executable, "-c", script)
+        with mock.patch.object(
+            sys.modules["adaptive_orchestrator.interfaces.tui"],
+            "build_task_command",
+            return_value=command,
+        ):
+            from adaptive_orchestrator.interfaces.tui import BackgroundTask
+
+            task = BackgroundTask(Path(tempfile.gettempdir()), "a request", 1)
+        while task.running:
+            time.sleep(0.01)
+        return task
+
+    def test_captures_the_id_the_summary_prints(self) -> None:
+        task = self._run("print('Execution: 3f9a1c22-0e7b')")
+        self.assertEqual(task.execution_id, "3f9a1c22-0e7b")
+
+    def test_a_run_that_never_names_one_leaves_it_empty(self) -> None:
+        task = self._run("print('Status: failed')")
+        self.assertEqual(task.execution_id, "")
+
+    def test_keeps_the_first_id_when_output_names_more_than_one(self) -> None:
+        task = self._run("print('Execution: first'); print('Execution: second')")
+        self.assertEqual(task.execution_id, "first")
 
 
 class TaskManagerTests(unittest.TestCase):
@@ -390,6 +588,52 @@ class TaskManagerTests(unittest.TestCase):
     def test_rejects_a_zero_limit(self) -> None:
         with self.assertRaises(ValueError):
             TaskManager(limit=0)
+
+
+class TaskPromptTests(unittest.TestCase):
+    """Starting a run is one modal question that lands on the task list."""
+
+    def _app(self) -> OrchestratorTui:
+        workspace = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, workspace, ignore_errors=True)
+        app = OrchestratorTui(workspace)
+        app.tasks = TaskManager(limit=2, factory=FakeTask)
+        return app
+
+    def test_a_submitted_request_starts_a_task_and_lands_on_the_task_list(self) -> None:
+        app = self._app()
+        with mock.patch.object(OrchestratorTui, "_prompt", return_value="do the thing"):
+            app._prompt_task(None)
+        self.assertEqual(app.view, VIEW_TASKS)
+        self.assertEqual(app.tasks.tasks[app.task_selected].request, "do the thing")
+
+    def test_cancelling_the_prompt_starts_nothing_and_stays_put(self) -> None:
+        app = self._app()
+        with mock.patch.object(OrchestratorTui, "_prompt", return_value=None):
+            app._prompt_task(None)
+        self.assertEqual(app.tasks.tasks, ())
+        self.assertEqual(app.view, VIEW_DASHBOARD)
+
+    def test_blank_text_starts_nothing(self) -> None:
+        app = self._app()
+        with mock.patch.object(OrchestratorTui, "_prompt", return_value="   "):
+            app._prompt_task(None)
+        self.assertEqual(app.tasks.tasks, ())
+
+    def test_n_opens_the_prompt_from_the_dashboard(self) -> None:
+        app = self._app()
+        with mock.patch.object(OrchestratorTui, "_prompt", return_value="from the key") as prompt:
+            app._handle_key(None, "n")
+        prompt.assert_called_once()
+        self.assertEqual(app.view, VIEW_TASKS)
+
+    def test_a_full_pool_refuses_rather_than_starting(self) -> None:
+        app = self._app()
+        with mock.patch.object(OrchestratorTui, "_prompt", side_effect=["one", "two", "three"]):
+            for _ in range(3):
+                app._prompt_task(None)
+        self.assertEqual(len(app.tasks.tasks), 2)
+        self.assertIn("already running", app.message)
 
 
 class PresentationTests(unittest.TestCase):
