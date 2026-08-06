@@ -7,15 +7,49 @@ import tempfile
 import threading
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
 from adaptive_orchestrator.interfaces import cli
 from adaptive_orchestrator.infrastructure.configuration import ProjectConfig, config_path
-from adaptive_orchestrator.core.domain import Capability, EvaluatorRole, MemoryEntryType, Priority
+from adaptive_orchestrator.core.domain import (
+    Capability,
+    EvaluatorRole,
+    ExecutionRecord,
+    ExecutionStatus,
+    MemoryEntryType,
+    Priority,
+    Task,
+    VerificationResult,
+    VerificationStatus,
+)
 from adaptive_orchestrator.infrastructure.events import JsonlEventStore, LifecycleEventType
 from adaptive_orchestrator.routing.state import LifecycleRecorder, RoutingStateStore
+from adaptive_orchestrator.orchestration.planning import ExecutionPlan
+
+
+
+def _stub_plan() -> ExecutionPlan:
+    return ExecutionPlan(Task("Do the thing", "Thing is done"), "codex", "stub")
+
+
+def _completed_record(execution_id: str) -> ExecutionRecord:
+    """A minimal successful record for exercising CLI output formatting."""
+    return ExecutionRecord(
+        task=Task("Do the thing", "Thing is done"),
+        agent_id="codex",
+        prompt="prompt",
+        command=(),
+        status=ExecutionStatus.COMPLETED,
+        result="done",
+        error=None,
+        exit_code=0,
+        duration_ms=1.0,
+        verification=VerificationResult(VerificationStatus.SKIPPED, (), ""),
+        execution_id=execution_id,
+    )
 
 
 class BuildWorkflowTests(unittest.TestCase):
@@ -904,6 +938,400 @@ class WorkspaceRelativeDispatchTests(unittest.TestCase):
 
             self.assertEqual(exit_code, 0)
             self.assertEqual(workflow.tasks[0].description, "From final workspace")
+
+    def test_fresh_workspace_lookup_suggests_running_a_task(self) -> None:
+        for command in ("show", "report", "retry"):
+            with self.subTest(command=command), tempfile.TemporaryDirectory() as directory:
+                workspace = Path(directory)
+                stderr = io.StringIO()
+                with contextlib.redirect_stderr(stderr):
+                    exit_code = cli.main([command, "#1", "--workspace", str(workspace)])
+
+                self.assertEqual(exit_code, 1)
+                self.assertIn("No task has run in this workspace yet", stderr.getvalue())
+                self.assertIn(cli.PROGRAM_NAME, stderr.getvalue())
+
+    def test_bad_identifier_with_existing_history_does_not_suggest_a_first_run(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            log = workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir(parents=True)
+            log.write_text(
+                json.dumps({"execution_id": "e1", "attempt_id": "a1", "agent_id": "codex"}) + "\n",
+                encoding="utf-8",
+            )
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                exit_code = cli.main(["show", "nope", "--workspace", str(workspace)])
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("Show failed", stderr.getvalue())
+        self.assertNotIn("No task has run in this workspace yet", stderr.getvalue())
+
+    def test_empty_memory_search_explains_itself_without_breaking_json(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            stdout, stderr = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                exit_code = cli.main(["memory", "search", "--workspace", str(workspace)])
+
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(json.loads(stdout.getvalue()), [])
+            self.assertIn("no engineering memory has been recorded", stderr.getvalue())
+
+            with contextlib.redirect_stdout(io.StringIO()):
+                cli.main([
+                    "memory", "record", "--workspace", str(workspace),
+                    "--type", "trade_off", "--title", "T", "--summary", "S",
+                ])
+            stdout, stderr = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                cli.main(["memory", "search", "--workspace", str(workspace), "--keyword", "zzz"])
+
+            self.assertEqual(json.loads(stdout.getvalue()), [])
+            self.assertIn("nothing matched --keyword", stderr.getvalue())
+
+            stdout, stderr = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                cli.main(["memory", "search", "--workspace", str(workspace)])
+
+            self.assertEqual(len(json.loads(stdout.getvalue())), 1)
+            self.assertEqual(stderr.getvalue(), "")
+
+    def test_version_reports_the_installed_console_script_name(self) -> None:
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout), self.assertRaises(SystemExit) as raised:
+            cli.main(["--version"])
+
+        self.assertEqual(raised.exception.code, 0)
+        self.assertIn(cli.PROGRAM_NAME, stdout.getvalue())
+        self.assertIn("kernel", stdout.getvalue())
+
+    def test_usage_text_names_a_runnable_command_not_the_module_file(self) -> None:
+        # Reached through `python3 -m adaptive_orchestrator.cli`, argparse would
+        # otherwise report "cli.py", which is not a command anyone can run.
+        with patch.object(sys, "argv", ["/somewhere/adaptive_orchestrator/cli.py"]):
+            module_usage = cli.build_parser().format_usage()
+        with patch.object(sys, "argv", [f"/usr/local/bin/{cli.PROGRAM_NAME}"]):
+            script_usage = cli.build_parser().format_usage()
+
+        self.assertIn(f"-m {cli.MODULE_ENTRY_POINT}", module_usage)
+        self.assertNotIn("cli.py", module_usage)
+        self.assertIn(cli.PROGRAM_NAME, script_usage)
+
+    def test_summary_flag_renders_the_same_view_show_prints(self) -> None:
+        class Workflow:
+            def run(self, task, requested_agent):
+                return _stub_plan(), _completed_record("exec-1")
+
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            log = workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir(parents=True)
+            log.write_text(
+                json.dumps({
+                    "execution_id": "exec-1",
+                    "attempt_id": "attempt-1",
+                    "agent_id": "codex",
+                    "status": "completed",
+                    "task": {"description": "Do the thing"},
+                }) + "\n",
+                encoding="utf-8",
+            )
+            argv = [
+                "run", "--workspace", str(workspace),
+                "--description", "Do the thing", "--objective", "Thing is done",
+            ]
+            stdout = io.StringIO()
+            with (
+                patch.object(cli, "_build_workflow_for_cli", return_value=Workflow()),
+                contextlib.redirect_stdout(stdout),
+            ):
+                cli.main([*argv, "--summary"])
+            summary_output = stdout.getvalue()
+
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                cli.main(["show", "exec-1", "--workspace", str(workspace)])
+            show_output = stdout.getvalue()
+
+        self.assertEqual(summary_output.strip(), show_output.strip())
+        self.assertIn("Execution: exec-1", summary_output)
+
+    def test_default_output_stays_json_for_scripted_callers(self) -> None:
+        class Workflow:
+            def run(self, task, requested_agent):
+                return _stub_plan(), _completed_record("exec-1")
+
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            stdout = io.StringIO()
+            with (
+                patch.object(cli, "_build_workflow_for_cli", return_value=Workflow()),
+                contextlib.redirect_stdout(stdout),
+            ):
+                cli.main([
+                    "run", "--workspace", str(workspace),
+                    "--description", "d", "--objective", "o",
+                ])
+
+        self.assertEqual(set(json.loads(stdout.getvalue())), {"plan", "execution"})
+
+    def test_summary_falls_back_to_json_when_the_execution_cannot_be_read(self) -> None:
+        class Workflow:
+            def run(self, task, requested_agent):
+                return _stub_plan(), _completed_record("missing")
+
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            stdout = io.StringIO()
+            with (
+                patch.object(cli, "_build_workflow_for_cli", return_value=Workflow()),
+                contextlib.redirect_stdout(stdout),
+            ):
+                cli.main([
+                    "run", "--workspace", str(workspace),
+                    "--description", "d", "--objective", "o", "--summary",
+                ])
+
+        self.assertEqual(set(json.loads(stdout.getvalue())), {"plan", "execution"})
+
+    def test_failed_run_explains_itself_on_stderr_without_touching_stdout(self) -> None:
+        failed = ExecutionRecord(
+            task=Task("Do it", "Done"),
+            agent_id="codex",
+            prompt="p",
+            command=(),
+            status=ExecutionStatus.FAILED,
+            result=None,
+            error="boom: the agent could not do it",
+            exit_code=3,
+            duration_ms=1.0,
+            verification=VerificationResult(VerificationStatus.SKIPPED, (), ""),
+            execution_id="exec-9",
+        )
+
+        class Workflow:
+            def run(self, task, requested_agent):
+                return _stub_plan(), failed
+
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            stdout, stderr = io.StringIO(), io.StringIO()
+            with (
+                patch.object(cli, "_build_workflow_for_cli", return_value=Workflow()),
+                contextlib.redirect_stdout(stdout),
+                contextlib.redirect_stderr(stderr),
+            ):
+                exit_code = cli.main(["run", "--workspace", str(workspace), "--task", "Do it"])
+
+        self.assertEqual(exit_code, 1)
+        # stdout keeps its exact machine-readable contract.
+        self.assertEqual(set(json.loads(stdout.getvalue())), {"plan", "execution"})
+        reported = stderr.getvalue()
+        self.assertIn("Run did not succeed", reported)
+        self.assertIn("status=failed", reported)
+        self.assertIn("boom: the agent could not do it", reported)
+        self.assertIn("show exec-9", reported)
+
+    def test_successful_run_says_nothing_on_stderr(self) -> None:
+        class Workflow:
+            def run(self, task, requested_agent):
+                return _stub_plan(), _completed_record("exec-1")
+
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            stderr = io.StringIO()
+            with (
+                patch.object(cli, "_build_workflow_for_cli", return_value=Workflow()),
+                contextlib.redirect_stdout(io.StringIO()),
+                contextlib.redirect_stderr(stderr),
+            ):
+                exit_code = cli.main(["run", "--workspace", str(workspace), "--task", "Do it"])
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_unreadable_text_file_is_reported_without_a_traceback(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            (workspace / "adir").mkdir()
+            cases = (
+                (["--description-file", "missing.txt", "--objective", "o"], "--description-file"),
+                (["--description", "d", "--objective-file", "missing.txt"], "--objective-file"),
+                (["--description-file", "adir", "--objective", "o"], "--description-file"),
+            )
+            for extra, expected in cases:
+                with self.subTest(arguments=extra):
+                    stderr = io.StringIO()
+                    with contextlib.redirect_stderr(stderr), self.assertRaises(SystemExit) as raised:
+                        cli.main(["run", "--workspace", str(workspace), *extra])
+
+                    self.assertEqual(raised.exception.code, 2)
+                    self.assertIn(f"could not read {expected}", stderr.getvalue())
+                    self.assertNotIn("Traceback", stderr.getvalue())
+
+    def test_task_shorthand_fills_both_description_and_objective(self) -> None:
+        captured = {}
+
+        class Workflow:
+            def run(self, task, requested_agent):
+                captured["task"] = task
+                return _stub_plan(), _completed_record("exec-1")
+
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            with (
+                patch.object(cli, "_build_workflow_for_cli", return_value=Workflow()),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                exit_code = cli.main([
+                    "run", "--workspace", str(workspace), "--task", "Fix the parser",
+                ])
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(captured["task"].description, "Fix the parser")
+        self.assertEqual(captured["task"].objective, "Fix the parser")
+
+    def test_task_shorthand_conflicts_are_rejected(self) -> None:
+        parser = cli.build_parser()
+        for extra in (
+            ["--description", "d"],
+            ["--objective", "o"],
+            ["--description-file", "d.txt"],
+        ):
+            with self.subTest(extra=extra):
+                args = parser.parse_args(["run", "--task", "t", *extra])
+                stderr = io.StringIO()
+                with contextlib.redirect_stderr(stderr):
+                    accepted = cli._apply_task_shorthand(args)
+
+                self.assertFalse(accepted)
+                self.assertIn("--task cannot be combined with", stderr.getvalue())
+
+    def test_task_shorthand_is_optional(self) -> None:
+        parser = cli.build_parser()
+        args = parser.parse_args(["run", "--description", "d", "--objective", "o"])
+
+        self.assertTrue(cli._apply_task_shorthand(args))
+        self.assertEqual(args.description, "d")
+        self.assertEqual(args.objective, "o")
+
+    def test_every_option_documents_itself(self) -> None:
+        # `--workspace` is the most-used option in the CLI and had no help text
+        # on any of the eleven commands that accept it.
+        undocumented: list[str] = []
+
+        def scan(command: str, parser: argparse.ArgumentParser) -> None:
+            for action in parser._actions:
+                if isinstance(action, argparse._SubParsersAction):
+                    for name, child in action.choices.items():
+                        scan(f"{command} {name}", child)
+                    continue
+                if action.option_strings and not action.help:
+                    undocumented.append(f"{command} {action.option_strings[0]}")
+
+        root = cli.build_parser()
+        subparsers = [
+            action for action in root._actions
+            if isinstance(action, argparse._SubParsersAction)
+        ][0]
+        for name, parser in subparsers.choices.items():
+            scan(name, parser)
+
+        self.assertEqual(undocumented, [])
+
+    def test_run_help_groups_its_options_by_what_they_configure(self) -> None:
+        # `run` carries more than thirty options; a single flat list is a wall.
+        parser = cli.build_parser()
+        run_parser = [
+            action for action in parser._actions
+            if isinstance(action, argparse._SubParsersAction)
+        ][0].choices["run"]
+        help_text = run_parser.format_help()
+
+        for heading in (
+            "agent selection:",
+            "task definition:",
+            "verification and evaluators:",
+            "routing and telemetry:",
+            "escalation:",
+            "output:",
+        ):
+            self.assertIn(heading, help_text)
+
+    def test_grouping_did_not_drop_any_run_option(self) -> None:
+        parser = cli.build_parser()
+        args = parser.parse_args([
+            "run", "--description", "d", "--objective", "o",
+            "--agent", "codex", "--capability", "testing", "--constraint", "c",
+            "--priority", "high", "--time-limit", "30",
+            "--verify-command", "check", "--verify-time-limit", "5",
+            "--routing-policy", "static", "--routing-seed", "3",
+            "--escalation-risk-threshold", "2", "--no-escalation",
+            "--verbose", "--summary",
+        ])
+
+        self.assertEqual(args.description, "d")
+        self.assertEqual(args.agent, "codex")
+        self.assertEqual(args.capability, ["testing"])
+        self.assertEqual(args.priority, "high")
+        self.assertEqual(args.time_limit, 30)
+        self.assertEqual(args.verify_command, ["check"])
+        self.assertEqual(args.routing_policy, "static")
+        self.assertEqual(args.escalation_risk_threshold, 2)
+        self.assertTrue(args.no_escalation)
+        self.assertTrue(args.verbose)
+        self.assertTrue(args.summary)
+
+    def test_subcommands_are_listed_in_the_order_they_are_used(self) -> None:
+        # argparse lists subcommands in registration order, and help is read top
+        # down: show/report/retry used to appear before the commands that create
+        # anything to show.
+        subparsers = [
+            action for action in cli.build_parser()._actions
+            if isinstance(action, argparse._SubParsersAction)
+        ]
+        order = list(subparsers[0].choices)
+
+        self.assertEqual(order[:2], ["init", "doctor"])
+        self.assertLess(order.index("run"), order.index("show"))
+        self.assertLess(order.index("run"), order.index("report"))
+        self.assertLess(order.index("run"), order.index("retry"))
+        self.assertEqual(order[-1], "paired")
+
+    def test_unrecognized_invocation_falls_back_to_the_console_script_name(self) -> None:
+        with patch.object(sys, "argv", ["/opt/some-test-runner"]):
+            self.assertEqual(cli.resolve_program_name(), cli.PROGRAM_NAME)
+
+    def test_run_plan_reports_an_unreadable_plan_file_without_a_traceback(self) -> None:
+        cases = {
+            "missing.json": None,
+            "not-a-list.json": json.dumps({"not": "a list"}),
+            "missing-field.json": json.dumps([{"description": "d"}]),
+            "bad-capability.json": json.dumps(
+                [{"description": "d", "objective": "o", "capabilities": ["nope"]}]
+            ),
+        }
+        for name, content in cases.items():
+            with self.subTest(plan=name), tempfile.TemporaryDirectory() as directory:
+                workspace = Path(directory)
+                if content is not None:
+                    (workspace / name).write_text(content, encoding="utf-8")
+                stderr = io.StringIO()
+
+                # The workflow must never be built: opening the lifecycle recorder
+                # reconciles attempts and rewrites the routing projection, which an
+                # invocation that cannot start should not trigger.
+                with (
+                    patch.object(cli, "_build_workflow_for_cli") as build_workflow,
+                    contextlib.redirect_stderr(stderr),
+                ):
+                    exit_code = cli.main(["run-plan", "--workspace", str(workspace), name])
+
+                self.assertEqual(exit_code, 1)
+                self.assertIn("Invalid plan file", stderr.getvalue())
+                build_workflow.assert_not_called()
 
     def test_run_resolves_relative_text_files_from_final_workspace(self) -> None:
         class Workflow:

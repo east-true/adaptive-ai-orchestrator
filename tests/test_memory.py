@@ -1,4 +1,6 @@
 import json
+import os
+import stat
 import sys
 import tempfile
 import unittest
@@ -119,6 +121,16 @@ class EngineeringMemoryStoreTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             results = EngineeringMemoryStore(Path(directory) / "missing.jsonl").search()
             self.assertEqual(results, [])
+
+    @unittest.skipUnless(os.name == "posix", "POSIX file mode")
+    def test_memory_file_is_written_owner_only(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "memory.jsonl"
+            EngineeringMemoryStore(path).record(
+                MemoryEntry(MemoryEntryType.ARCHITECTURE_DECISION, "Title", "Summary")
+            )
+
+            self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
 
 
 if __name__ == "__main__":

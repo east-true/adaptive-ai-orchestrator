@@ -5,7 +5,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from adaptive_orchestrator.core.domain import MemoryEntry, MemoryEntryType
-from adaptive_orchestrator.infrastructure.logging import redact
+from adaptive_orchestrator.infrastructure.logging import redact, restrict_to_owner
 
 
 class EngineeringMemoryStore:
@@ -16,6 +16,7 @@ class EngineeringMemoryStore:
     def record(self, entry: MemoryEntry) -> None:
         payload = redact(asdict(entry))
         with self.path.open("a", encoding="utf-8") as stream:
+            restrict_to_owner(self.path)
             stream.write(json.dumps(payload, default=str) + "\n")
 
     def search(self, entry_type: MemoryEntryType | None = None, tag: str | None = None, keyword: str | None = None) -> list[MemoryEntry]:

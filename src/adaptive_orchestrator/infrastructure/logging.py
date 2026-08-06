@@ -1,11 +1,29 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from dataclasses import asdict
 from pathlib import Path
 
 from adaptive_orchestrator.core.domain import ExecutionRecord
+
+
+def restrict_to_owner(path: Path) -> None:
+    """Best-effort owner-only mode for a local sink holding task content.
+
+    The protected lifecycle log and routing projection are already written
+    owner-only. These sinks carry strictly more of the task itself—full prompts,
+    agent output, and the workspace diff when it is enabled—so they are held to
+    the same mode instead of the process umask's usual world-readable default.
+    Failure is ignored: telemetry must not abort a run that already finished, and
+    some filesystems do not implement chmod.
+    """
+
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass
 
 
 class JsonlExecutionLogger:
@@ -22,6 +40,7 @@ class JsonlExecutionLogger:
     def write(self, record: ExecutionRecord) -> None:
         payload = redact(asdict(record))
         with self.path.open("a", encoding="utf-8") as stream:
+            restrict_to_owner(self.path)
             stream.write(json.dumps(payload, default=str) + "\n")
 
 

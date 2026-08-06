@@ -90,6 +90,70 @@ class ExecutionReportStoreTests(unittest.TestCase):
             bundle = ExecutionReportStore(path).find("#1")
         self.assertEqual(bundle.execution_id, "legacy-1")
 
+    def test_unique_execution_id_prefix_resolves(self) -> None:
+        # The tools print a 36-character UUID and used to demand every character
+        # of it back; a leading fragment is what people actually retype.
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "executions.jsonl"
+            rows = [
+                {"execution_id": "abcd1111-aaaa", "attempt_id": "att-1", "agent_id": "codex"},
+                {"execution_id": "efgh2222-bbbb", "attempt_id": "att-2", "agent_id": "codex"},
+            ]
+            path.write_text("\n".join(json.dumps(row) for row in rows), encoding="utf-8")
+            store = ExecutionReportStore(path)
+
+            self.assertEqual(store.find("abcd").execution_id, "abcd1111-aaaa")
+            self.assertEqual(store.find("efgh2222").execution_id, "efgh2222-bbbb")
+            # An exact id still resolves exactly as before.
+            self.assertEqual(store.find("abcd1111-aaaa").execution_id, "abcd1111-aaaa")
+
+    def test_ambiguous_prefix_is_reported_rather_than_guessed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "executions.jsonl"
+            rows = [
+                {"execution_id": "same1111", "attempt_id": "att-1", "agent_id": "codex"},
+                {"execution_id": "same2222", "attempt_id": "att-2", "agent_id": "codex"},
+            ]
+            path.write_text("\n".join(json.dumps(row) for row in rows), encoding="utf-8")
+
+            with self.assertRaisesRegex(ExecutionLookupError, "Ambiguous execution prefix"):
+                ExecutionReportStore(path).find("same")
+
+    def test_short_fragments_are_not_treated_as_prefixes(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "executions.jsonl"
+            path.write_text(
+                json.dumps({"execution_id": "abcdef12", "attempt_id": "a1", "agent_id": "codex"}),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ExecutionLookupError, "Execution not found"):
+                ExecutionReportStore(path).find("abc")
+
+    def test_an_exact_id_wins_over_a_prefix_of_another(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "executions.jsonl"
+            rows = [
+                {"execution_id": "abcd", "attempt_id": "att-1", "agent_id": "codex"},
+                {"execution_id": "abcd9999", "attempt_id": "att-2", "agent_id": "claude-code"},
+            ]
+            path.write_text("\n".join(json.dumps(row) for row in rows), encoding="utf-8")
+
+            self.assertEqual(ExecutionReportStore(path).find("abcd").execution_id, "abcd")
+
+    def test_non_decimal_digit_reference_raises_a_lookup_error(self) -> None:
+        # str.isdigit accepts characters int() rejects, such as the superscript
+        # "²"; the lookup must still fail as a lookup, not as a ValueError.
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "executions.jsonl"
+            path.write_text(json.dumps(_record("codex", "attempt-1")), encoding="utf-8")
+            store = ExecutionReportStore(path)
+
+            for identifier in ("#²", "#³"):
+                with self.subTest(identifier=identifier):
+                    with self.assertRaisesRegex(ExecutionLookupError, "Execution not found"):
+                        store.find(identifier)
+
     def test_missing_execution_has_clear_error(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             with self.assertRaisesRegex(ExecutionLookupError, "No executions"):

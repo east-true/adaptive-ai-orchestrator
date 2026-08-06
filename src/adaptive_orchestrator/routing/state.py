@@ -9,9 +9,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Iterator, Mapping, Sequence
 
-import fcntl
-
 from adaptive_orchestrator.infrastructure.events import JsonlEventStore, LifecycleEvent, LifecycleEventType
+from adaptive_orchestrator.infrastructure.file_lock import lock_exclusive, unlock
 
 
 class ReplayError(ValueError):
@@ -209,11 +208,11 @@ def _exclusive_recorder_lock(lock_path: Path) -> Iterator[None]:
     os.chmod(lock_path.parent, 0o700)
     with lock_path.open("a+", encoding="utf-8") as stream:
         os.chmod(lock_path, 0o600)
-        fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
+        lock_exclusive(stream)
         try:
             yield
         finally:
-            fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+            unlock(stream)
 
 
 def _rebuild_routing_state_unlocked(

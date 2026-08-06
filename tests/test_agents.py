@@ -140,6 +140,25 @@ class CodexAgentTests(unittest.TestCase):
         result, metadata = CodexAgent().parse_result("\n".join(lines))
         self.assertEqual(metadata.session_id, "abc")
 
+    def test_parse_result_skips_non_object_line_without_discarding_the_rest(self) -> None:
+        # A bare scalar parses as JSON but is not an event. Reading it as one
+        # used to raise AttributeError, which the kernel turned into a FAILED
+        # record for a run that actually completed.
+        lines = [
+            json.dumps({"type": "thread.started", "thread_id": "abc"}),
+            "42",
+            json.dumps({"type": "item.completed", "item": {"type": "agent_message", "text": "done"}}),
+        ]
+        result, metadata = CodexAgent().parse_result("\n".join(lines))
+        self.assertEqual(result, "done")
+        self.assertEqual(metadata.session_id, "abc")
+
+    def test_parse_result_falls_back_when_every_line_is_a_non_object(self) -> None:
+        stdout = "42\n[1, 2]\n"
+        result, metadata = CodexAgent().parse_result(stdout)
+        self.assertEqual(result, stdout)
+        self.assertIsNone(metadata)
+
     def test_parse_result_records_requested_model(self) -> None:
         _, metadata = CodexAgent(model="gpt-5.5").parse_result(json.dumps({"type": "thread.started", "thread_id": "abc"}))
         self.assertEqual(metadata.model, "gpt-5.5")

@@ -9,8 +9,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 from uuid import uuid4
 
-import fcntl
-
+from adaptive_orchestrator.infrastructure.file_lock import lock_exclusive, lock_shared, unlock
 from adaptive_orchestrator.infrastructure.logging import redact
 
 EVENT_SCHEMA_VERSION = 1
@@ -130,7 +129,7 @@ class JsonlEventStore:
         os.chmod(self.path.parent, 0o700)
         with self.path.open("a+", encoding="utf-8") as stream:
             os.chmod(self.path, 0o600)
-            fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
+            lock_exclusive(stream)
             try:
                 stream.seek(0)
                 events = _parse_lines(stream.read().splitlines(), self.path)
@@ -203,17 +202,17 @@ class JsonlEventStore:
                 os.fsync(stream.fileno())
                 return persisted
             finally:
-                fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+                unlock(stream)
 
     def read(self) -> tuple[LifecycleEvent, ...]:
         if not self.path.exists():
             return ()
         with self.path.open("r", encoding="utf-8") as stream:
-            fcntl.flock(stream.fileno(), fcntl.LOCK_SH)
+            lock_shared(stream)
             try:
                 return _parse_lines(stream.read().splitlines(), self.path)
             finally:
-                fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+                unlock(stream)
 
 
 def _parse_lines(lines: Sequence[str], path: Path) -> tuple[LifecycleEvent, ...]:

@@ -17,6 +17,7 @@ from adaptive_orchestrator.interfaces.tui import (
     EDITOR_IGNORED,
     EDITOR_SUBMIT,
     LineEditor,
+    DashboardRow,
     TaskAdmissionError,
     TaskManager,
     build_task_command,
@@ -28,6 +29,7 @@ from adaptive_orchestrator.interfaces.tui import (
     filter_rows,
     fit_to_width,
     main,
+    OrchestratorTui,
     markdown_heading,
     scroll_offset,
     status_category,
@@ -228,6 +230,34 @@ class MarkdownHeadingTests(unittest.TestCase):
         self.assertEqual(markdown_heading(""), ("", 0))
 
 
+class DashboardEmptyStateTests(unittest.TestCase):
+    def _tui(self) -> OrchestratorTui:
+        return OrchestratorTui.__new__(OrchestratorTui)
+
+    def test_fresh_workspace_says_how_to_start(self) -> None:
+        tui = self._tui()
+        tui.rows = ()
+        tui.filter_text = ""
+
+        lines = tui._dashboard_empty_lines()
+        self.assertIn("No executions recorded", lines[0])
+        self.assertIn("Press n", " ".join(lines))
+
+    def test_filter_that_hides_everything_is_distinguished_from_no_data(self) -> None:
+        tui = self._tui()
+        tui.rows = (
+            DashboardRow("e1", "completed", "codex", "passed", "Build it", ()),
+            DashboardRow("e2", "completed", "codex", "passed", "Ship it", ()),
+        )
+        tui.filter_text = "nomatch"
+
+        lines = tui._dashboard_empty_lines()
+        joined = " ".join(lines)
+        self.assertIn("nomatch", joined)
+        self.assertIn("2 hidden by the filter", joined)
+        self.assertNotIn("No executions recorded", joined)
+
+
 class WrapTextTests(unittest.TestCase):
     def test_short_text_is_returned_as_a_single_line(self) -> None:
         self.assertEqual(wrap_text("short line", 40), ["short line"])
@@ -250,6 +280,23 @@ class WrapTextTests(unittest.TestCase):
 
     def test_zero_budget_returns_text_unchanged(self) -> None:
         self.assertEqual(wrap_text("anything", 0), ["anything"])
+
+    def test_double_width_character_wider_than_the_budget_terminates(self) -> None:
+        # Both call sites clamp the wrap budget to a minimum of 1, so a
+        # one-column pane is reachable. A double-width glyph never fits there,
+        # and returning nothing for it used to leave the remainder unchanged and
+        # spin forever.
+        for text in ("한글", "abc한글def", "한 글"):
+            with self.subTest(text=text):
+                lines = wrap_text(text, 1)
+                self.assertEqual("".join(lines), text.replace(" ", ""))
+                self.assertTrue(all(lines))
+
+    def test_hard_break_keeps_every_character_at_narrow_widths(self) -> None:
+        text = "한글abc漢字"
+        for columns in (1, 2, 3, 4):
+            with self.subTest(columns=columns):
+                self.assertEqual("".join(wrap_text(text, columns)), text)
 
 
 class LineEditorTests(unittest.TestCase):
