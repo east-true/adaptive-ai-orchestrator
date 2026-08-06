@@ -22,6 +22,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Sequence
 
+from adaptive_orchestrator.infrastructure.configuration import (
+    ProjectConfigError,
+    configured_agent_ids,
+    load_project_config,
+)
 from adaptive_orchestrator.infrastructure.events import EventLogError, JsonlEventStore
 from adaptive_orchestrator.infrastructure.state_paths import resolve_control_state_directory
 from adaptive_orchestrator.operations.reporting import (
@@ -549,9 +554,36 @@ class TaskAdmissionError(RuntimeError):
     pass
 
 
-def build_task_command(workspace: Path, request: str) -> tuple[str, ...]:
+COMPOSE_COMMANDS: tuple[tuple[str, str, str], ...] = (
+    ("/help", "", "List these commands."),
+    ("/agent", "[id|auto]", "Set the agent for new tasks, or list the choices."),
+    ("/cancel", "", "Cancel the task running on this screen."),
+    ("/clear", "", "Clear the output area."),
+)
+
+
+def parse_compose_command(text: str) -> tuple[str, str] | None:
+    """Split a submitted line into ``(command, argument)`` when it is one.
+
+    Any leading ``/`` marks a command; ``//`` is the escape for a request that
+    really does start with a slash, such as a path. Guessing instead — a path
+    here, a command there — would make the same keystrokes mean different
+    things depending on what follows, so an unknown ``/word`` is reported as
+    an unknown command rather than quietly run as a task.
+    """
+    if not text.startswith("/") or text.startswith("//"):
+        return None
+    command, _, argument = text.partition(" ")
+    return command, argument.strip()
+
+
+def build_task_command(workspace: Path, request: str, agent: str | None = None) -> tuple[str, ...]:
     if not request.strip():
         raise ValueError("Task request cannot be empty.")
+    # No ``--agent`` at all when none was chosen, so the workspace profile keeps
+    # deciding: passing a resolved default here would silently pin the agent to
+    # whatever it happened to be when the screen opened.
+    selection = ("--agent", agent) if agent else ()
     return (
         sys.executable,
         "-m",
@@ -561,6 +593,7 @@ def build_task_command(workspace: Path, request: str) -> tuple[str, ...]:
         str(workspace.resolve()),
         "--verbose",
         "--summary",
+        *selection,
         "--description",
         request,
         "--objective",
@@ -571,10 +604,11 @@ def build_task_command(workspace: Path, request: str) -> tuple[str, ...]:
 class BackgroundTask:
     """One shell-free CLI child whose combined output is safe to poll from curses."""
 
-    def __init__(self, workspace: Path, request: str, index: int = 1) -> None:
+    def __init__(self, workspace: Path, request: str, index: int = 1, agent: str | None = None) -> None:
         self.request = request
         self.index = index
-        self.command = build_task_command(workspace, request)
+        self.agent = agent
+        self.command = build_task_command(workspace, request, agent)
         self.started_at = time.monotonic()
         self.finished_at: float | None = None
         self._cancel_requested = False
@@ -665,7 +699,7 @@ class TaskManager:
     def __init__(
         self,
         limit: int = DEFAULT_TASK_LIMIT,
-        factory: Callable[[Path, str, int], BackgroundTask] | None = None,
+        factory: Callable[[Path, str, int, str | None], BackgroundTask] | None = None,
     ) -> None:
         if limit < 1:
             raise ValueError("Task limit must be at least 1.")
@@ -685,11 +719,11 @@ class TaskManager:
     def can_start(self) -> bool:
         return self.running_count < self.limit
 
-    def start(self, workspace: Path, request: str) -> BackgroundTask:
+    def start(self, workspace: Path, request: str, agent: str | None = None) -> BackgroundTask:
         if not self.can_start():
             raise TaskAdmissionError(f"{self.limit} tasks already running; cancel one first.")
         self._counter += 1
-        task = self._factory(workspace, request, self._counter)
+        task = self._factory(workspace, request, self._counter, agent)
         self._tasks.append(task)
         return task
 
@@ -790,6 +824,11 @@ class OrchestratorTui:
         self.log_follow = True
         self.compose_editor = LineEditor()
         self.compose_task: BackgroundTask | None = None
+        self.compose_agent: str | None = None
+        # Command replies share the output area with task output rather than
+        # opening a pane of their own: the box below stays the one place to
+        # type, so a reply reads as the next turn of the same transcript.
+        self.compose_notice: tuple[str, ...] = ()
 
         self.message = ""
         self._message_kind = "info"
@@ -1075,11 +1114,17 @@ class OrchestratorTui:
         if not request:
             self._set_message("New task cancelled.")
             return
+        command = parse_compose_command(request)
+        if command is not None:
+            self._run_compose_command(*command)
+            return
+        if request.startswith("//"):
+            request = request[1:]
         if not self.tasks.can_start():
             self._set_message(f"{self.tasks.limit} tasks already running; cancel one first.", "error")
             return
         try:
-            task = self.tasks.start(self.workspace, request)
+            task = self.tasks.start(self.workspace, request, self.compose_agent)
         except (OSError, ValueError, TaskAdmissionError) as exc:
             self._set_message(f"Could not start task: {exc}", "error")
             return
@@ -1087,7 +1132,88 @@ class OrchestratorTui:
         # fill the space above the input box, the same way a chat reply
         # appears without navigating away from the box you typed it in.
         self.compose_task = task
+        self.compose_notice = ()
         self._set_message(f"Task #{task.index} started.", "ok")
+
+    # -- compose commands ---------------------------------------------------
+
+    def _run_compose_command(self, command: str, argument: str) -> None:
+        handlers = {
+            "/help": self._compose_help,
+            "/agent": self._compose_agent,
+            "/cancel": self._compose_cancel,
+            "/clear": self._compose_clear,
+        }
+        handler = handlers.get(command)
+        if handler is None:
+            names = ", ".join(name for name, _, _ in COMPOSE_COMMANDS)
+            self._set_message(f"Unknown command {command}; try {names}.", "error")
+            return
+        handler(argument)
+
+    def _compose_help(self, argument: str) -> None:
+        del argument
+        width = max(len(f"{name} {arguments}".strip()) for name, arguments, _ in COMPOSE_COMMANDS)
+        self.compose_notice = (
+            "Commands",
+            "",
+            *(
+                f"  {f'{name} {arguments}'.strip():<{width + 2}}{summary}"
+                for name, arguments, summary in COMPOSE_COMMANDS
+            ),
+            "",
+            "  Anything else is run as a task. Start a request with // to send a",
+            "  literal leading slash.",
+        )
+        self._set_message("Showing commands.")
+
+    def _compose_agent(self, argument: str) -> None:
+        # The same vocabulary the interactive shell's `agent` accepts, read
+        # from the workspace profile, so the two frontends cannot drift apart
+        # on what counts as a valid agent.
+        try:
+            allowed = ("auto", *configured_agent_ids(load_project_config(self.workspace)))
+        except ProjectConfigError as exc:
+            self._set_message(f"Cannot select an agent until the project config is valid: {exc}", "error")
+            return
+        if not argument:
+            current = self.compose_agent or "the workspace profile"
+            self.compose_notice = (
+                f"New tasks use {current}.",
+                "",
+                *(f"  {agent}" for agent in allowed),
+                "",
+                "  /agent auto restores the workspace profile.",
+            )
+            self._set_message("Showing agents.")
+            return
+        if argument not in allowed:
+            self._set_message(f"Agent must be one of {', '.join(allowed)}.", "error")
+            return
+        # "auto" is the profile's own default rather than a registry id, so it
+        # clears the override instead of being passed down as a selection.
+        self.compose_agent = None if argument == "auto" else argument
+        self._set_message(f"New tasks use {self.compose_agent or 'the workspace profile'}.", "ok")
+
+    def _compose_cancel(self, argument: str) -> None:
+        del argument
+        task = self.compose_task
+        if task is None or not task.running:
+            self._set_message("No task running on this screen.", "error")
+            return
+        if task.cancel():
+            self._set_message(f"Cancelling task #{task.index}.")
+            return
+        self._set_message(f"Could not cancel task #{task.index}.", "error")
+
+    def _compose_clear(self, argument: str) -> None:
+        del argument
+        # Only the view is cleared. A running task keeps running and stays in
+        # the task list, because a command that reads as "tidy the screen"
+        # must not be a way to silently kill work.
+        self.compose_notice = ()
+        self.compose_task = None
+        self._set_message("Output cleared.")
 
     # -- prompts -----------------------------------------------------------
 
@@ -1142,9 +1268,9 @@ class OrchestratorTui:
         row = max(height - 1, 0)
         prefix = fit_to_width(label, max(width - 1, 1))
         budget = max(width - display_width(prefix) - 1, 1)
-        shown = _tail_to_width(editor.text[:editor.cursor], budget)
+        shown, caret_offset = _cursor_window(editor.text, editor.cursor, budget)
         _safe_addstr(screen, row, 0, pad_to_width(prefix + shown, max(width - 1, 0)), width)
-        cursor_x = min(display_width(prefix) + display_width(shown), max(width - 1, 0))
+        cursor_x = min(display_width(prefix) + caret_offset, max(width - 1, 0))
         return row, cursor_x
 
     def _draw_input_box(self, screen: "curses.window", editor: LineEditor, placeholder: str) -> tuple[int, int]:
@@ -1181,12 +1307,12 @@ class OrchestratorTui:
         inner_left = left + 3
         inner_width = max(box_width - 6, 1)
         content_budget = max(inner_width - display_width(prompt), 0)
-        typed = _tail_to_width(editor.text[:editor.cursor], content_budget)
-        shown, attribute = (typed, 0) if editor.text else (fit_to_width(placeholder, content_budget), curses.A_DIM)
+        visible, caret_offset = _cursor_window(editor.text, editor.cursor, content_budget)
+        shown, attribute = (visible, 0) if editor.text else (fit_to_width(placeholder, content_budget), curses.A_DIM)
         _safe_addstr(screen, top + 1, left, "│", 2, frame_attribute, ellipsis=False)
         _safe_addstr(screen, top + 1, inner_left, prompt + shown, inner_width, attribute)
         _safe_addstr(screen, top + 1, left + box_width - 1, "│", 2, frame_attribute, ellipsis=False)
-        cursor_x = min(inner_left + display_width(prompt) + display_width(typed), left + box_width - 2)
+        cursor_x = min(inner_left + display_width(prompt) + caret_offset, left + box_width - 2)
         return top + 1, cursor_x
 
     # -- drawing -----------------------------------------------------------
@@ -1484,15 +1610,19 @@ class OrchestratorTui:
         content_top = top
         task = self.compose_task
         if task is not None:
-            status = f"Task #{task.index} · {task.status_text} · {elapsed_text(task.elapsed)}"
+            agent = f" · {task.agent}" if task.agent else ""
+            status = f"Task #{task.index} · {task.status_text} · {elapsed_text(task.elapsed)}{agent}"
             _safe_addstr(screen, top, 0, status, width, curses.A_DIM)
             content_top = top + 1
-        lines = task.output_lines() if task is not None else ()
+        # A command reply is the most recent turn, so it takes the content
+        # area; the status line above it still says what is running, so
+        # asking for help never hides that a task is in flight.
+        lines = self.compose_notice or (task.output_lines() if task is not None else ())
         output_height = max(workspace_row - content_top, 0)
         offset = max(len(lines) - output_height, 0)
         for index, line in enumerate(lines[offset:offset + output_height]):
             _safe_addstr(screen, content_top + index, 0, line, width)
-        return self._draw_input_box(screen, self.compose_editor, "Describe the task to run…")
+        return self._draw_input_box(screen, self.compose_editor, "Describe the task to run, or /help for commands…")
 
     def _draw_help(self, screen: "curses.window", height: int, width: int) -> None:
         entries = (
@@ -1516,6 +1646,14 @@ class OrchestratorTui:
             "  r           refresh now",
             "  a           toggle auto-refresh",
             "  f           toggle log follow (log view)",
+            "",
+            # One line, not the whole table: this overlay is already the
+            # tallest thing drawn and a short terminal truncates it. The names
+            # still come from the table the prompt dispatches on, so the two
+            # cannot drift; `/help` in the prompt spells out the arguments.
+            "Task prompt",
+            f"  {'/help':<12}commands in the prompt: "
+            f"{' '.join(name for name, _, _ in COMPOSE_COMMANDS if name != '/help')}",
             "",
             "q             quit (from any view; asks first if a task is running)",
             "",
@@ -1567,6 +1705,32 @@ def _movement(character: str, code: int, current: int, total: int) -> int | None
     if character == "G" or code == curses.KEY_END:
         return last
     return None
+
+
+def _cursor_window(text: str, cursor: int, columns: int) -> tuple[str, int]:
+    """Slice ``text`` to a ``columns``-wide window holding the cursor, and say
+    how far into that window the cursor sits.
+
+    Only the window's left edge scrolls, so whatever follows the cursor stays
+    on screen. Showing just ``text[:cursor]`` would keep the caret visible too,
+    but moving back into a long request to fix a word would blank out the rest
+    of it, and an editor whose contents vanish while being edited reads as
+    having lost them.
+    """
+    if columns <= 0:
+        return "", 0
+    # One column is held back so the caret has a cell of its own once it is
+    # pushed to the right edge; otherwise it lands on top of the border.
+    limit = max(columns - 1, 0)
+    used = 0
+    start = cursor
+    for index in range(cursor - 1, -1, -1):
+        width = character_width(text[index])
+        if used + width > limit:
+            break
+        used += width
+        start = index
+    return fit_to_width(text[start:], columns), used
 
 
 def _tail_to_width(text: str, columns: int) -> str:

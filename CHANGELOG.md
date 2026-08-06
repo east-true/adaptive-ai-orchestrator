@@ -19,6 +19,12 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   subcommands whose parsers define it, and the shell never injects
   `--confirm-agent-execution`.
 
+- Slash commands in the terminal UI's task prompt: `/help`, `/agent`,
+  `/cancel`, and `/clear`. Anything else is still run as a task, and a request
+  that really begins with a slash is escaped by doubling it. `/agent` accepts
+  the vocabulary the interactive shell's `agent` accepts, read from the
+  workspace profile, and `auto` clears the override so the profile decides
+  again; the terminal UI previously had no way to pick an agent at all.
 - A `--version` flag reporting the distribution and kernel versions.
 - `show`, `report`, and `retry` accept an unambiguous leading fragment of an
   execution or attempt id, the way `git` accepts a short commit hash. Exact ids
@@ -103,6 +109,13 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   state store used POSIX-only `fcntl` file locking unconditionally; they now
   go through a small cross-platform lock helper that uses `msvcrt` on
   Windows.
+- The terminal UI's prompts no longer hide everything to the right of the
+  cursor. Both the task composer and the filter drew only the text before the
+  caret, so moving back into a request with an arrow key, `Home`, or `Ctrl-A`
+  blanked out the rest of it—at the caret's leftmost position the box looked
+  empty, and forward-delete gave no sight of what it was removing. The window
+  now scrolls only its left edge, keeping the caret and the following text
+  visible together.
 
 ### Changed
 

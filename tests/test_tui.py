@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 import curses
 
 from adaptive_orchestrator.interfaces.tui import (
+    COMPOSE_COMMANDS,
     EDITOR_CANCEL,
     EDITOR_EDIT,
     EDITOR_IGNORED,
@@ -22,6 +23,7 @@ from adaptive_orchestrator.interfaces.tui import (
     DashboardRow,
     TaskAdmissionError,
     TaskManager,
+    _cursor_window,
     _dashboard_layout,
     build_task_command,
     clamp_offset,
@@ -34,6 +36,7 @@ from adaptive_orchestrator.interfaces.tui import (
     main,
     OrchestratorTui,
     markdown_heading,
+    parse_compose_command,
     scroll_offset,
     status_category,
     wrap_text,
@@ -401,11 +404,88 @@ class LineEditorTests(unittest.TestCase):
         self.assertEqual((editor.text, editor.cursor), ("", 0))
 
 
+class CursorWindowTest(unittest.TestCase):
+    def test_text_after_the_cursor_stays_visible(self) -> None:
+        """Moving back into a request must not blank out the rest of it."""
+        request = "refactor the routing policy"
+        for cursor in (0, 8, len(request)):
+            window, offset = _cursor_window(request, cursor, 40)
+            self.assertEqual(window, request)
+            self.assertEqual(offset, display_width(request[:cursor]))
+
+    def test_window_scrolls_to_keep_an_overflowing_caret_in_view(self) -> None:
+        text = "abcdefghijklmnopqrstuvwxyz"
+        self.assertEqual(_cursor_window(text, 0, 10), ("abcdefghij", 0))
+        self.assertEqual(_cursor_window(text, len(text), 10), ("rstuvwxyz", 9))
+        window, offset = _cursor_window(text, 18, 10)
+        self.assertIn(window, text)
+        self.assertEqual(window[offset], text[18])
+
+    def test_a_double_width_window_never_exceeds_its_budget(self) -> None:
+        for cursor in range(0, 8):
+            window, offset = _cursor_window("가나다라마바사", cursor, 9)
+            self.assertLessEqual(display_width(window), 9)
+            self.assertLessEqual(offset, 9)
+
+    def test_degenerate_budgets_render_nothing_rather_than_raising(self) -> None:
+        for columns in (0, -3):
+            self.assertEqual(_cursor_window("hello", 3, columns), ("", 0))
+
+
+class FakeScreen:
+    """Minimal ``curses`` window recording what was written where."""
+
+    def __init__(self, height: int = 10, width: int = 48) -> None:
+        self.height, self.width = height, width
+        self.cells = [[" "] * width for _ in range(height)]
+
+    def getmaxyx(self) -> tuple[int, int]:
+        return self.height, self.width
+
+    def addstr(self, y: int, x: int, text: str, attribute: int = 0) -> None:
+        for index, character in enumerate(text):
+            if 0 <= y < self.height and 0 <= x + index < self.width:
+                self.cells[y][x + index] = character
+
+    def row(self, y: int) -> str:
+        return "".join(self.cells[y]).rstrip()
+
+
+class PromptRenderTest(unittest.TestCase):
+    """The draw sites themselves, where hiding the suffix was visible."""
+
+    def _tui(self) -> OrchestratorTui:
+        return OrchestratorTui.__new__(OrchestratorTui)
+
+    def test_input_box_draws_the_whole_request_from_any_cursor_position(self) -> None:
+        request = "refactor the routing policy"
+        for cursor in (0, 8, len(request)):
+            screen = FakeScreen()
+            editor = LineEditor(request)
+            editor.cursor = cursor
+            row, _ = OrchestratorTui._draw_input_box(self._tui(), screen, editor, "placeholder")
+            self.assertIn(request, screen.row(row))
+
+    def test_input_box_shows_the_placeholder_only_while_empty(self) -> None:
+        screen = FakeScreen()
+        row, _ = OrchestratorTui._draw_input_box(self._tui(), screen, LineEditor(""), "Describe the task")
+        self.assertIn("Describe the task", screen.row(row))
+
+    def test_filter_line_draws_the_whole_value_from_any_cursor_position(self) -> None:
+        for cursor in (0, 2, 5):
+            screen = FakeScreen()
+            editor = LineEditor("codex")
+            editor.cursor = cursor
+            row, _ = OrchestratorTui._draw_input_line(self._tui(), screen, "Filter: ", editor)
+            self.assertIn("codex", screen.row(row))
+
+
 class FakeTask:
-    def __init__(self, workspace: Path, request: str, index: int) -> None:
+    def __init__(self, workspace: Path, request: str, index: int, agent: str | None = None) -> None:
         self.workspace = workspace
         self.request = request
         self.index = index
+        self.agent = agent
         self.alive = True
         self.signals: list[bool] = []
 
@@ -418,6 +498,92 @@ class FakeTask:
             return False
         self.signals.append(force)
         return True
+
+
+class ParseComposeCommandTest(unittest.TestCase):
+    def test_a_leading_slash_marks_a_command(self) -> None:
+        self.assertEqual(parse_compose_command("/help"), ("/help", ""))
+        self.assertEqual(parse_compose_command("/agent codex"), ("/agent", "codex"))
+
+    def test_ordinary_requests_are_not_commands(self) -> None:
+        self.assertIsNone(parse_compose_command("refactor the routing policy"))
+        self.assertIsNone(parse_compose_command("fix /etc/hosts handling"))
+
+    def test_a_doubled_slash_escapes_a_literal_leading_slash(self) -> None:
+        self.assertIsNone(parse_compose_command("//etc/hosts is stale"))
+
+
+class ComposeCommandTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.workspace = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.workspace, ignore_errors=True)
+        self.tui = OrchestratorTui(self.workspace)
+        self.tui.tasks = TaskManager(limit=3, factory=FakeTask)
+
+    def _submit(self, text: str) -> None:
+        self.tui.compose_editor = LineEditor(text)
+        self.tui._submit_compose()
+
+    def test_help_lists_every_command(self) -> None:
+        self._submit("/help")
+        rendered = "\n".join(self.tui.compose_notice)
+        for name, _, _ in COMPOSE_COMMANDS:
+            self.assertIn(name, rendered)
+        self.assertIsNone(self.tui.compose_task)
+
+    def test_an_unknown_command_is_reported_rather_than_run_as_a_task(self) -> None:
+        self._submit("/nope")
+        self.assertIn("/nope", self.tui.message)
+        self.assertIsNone(self.tui.compose_task)
+
+    def test_agent_selection_reaches_the_task_and_its_command_line(self) -> None:
+        self._submit("/agent codex")
+        self.assertEqual(self.tui.compose_agent, "codex")
+        self._submit("refactor the routing policy")
+        self.assertEqual(self.tui.compose_task.agent, "codex")
+        command = build_task_command(self.workspace, "request", "codex")
+        self.assertIn("--agent", command)
+        self.assertEqual(command[command.index("--agent") + 1], "codex")
+
+    def test_auto_clears_the_override_so_the_profile_decides(self) -> None:
+        self._submit("/agent codex")
+        self._submit("/agent auto")
+        self.assertIsNone(self.tui.compose_agent)
+        self.assertNotIn("--agent", build_task_command(self.workspace, "request", None))
+
+    def test_an_unknown_agent_is_refused(self) -> None:
+        self._submit("/agent nonsense")
+        self.assertIn("must be one of", self.tui.message)
+        self.assertIsNone(self.tui.compose_agent)
+
+    def test_cancel_signals_the_task_on_this_screen(self) -> None:
+        self._submit("refactor the routing policy")
+        task = self.tui.compose_task
+        self._submit("/cancel")
+        self.assertTrue(task.signals)
+
+    def test_cancel_without_a_running_task_says_so(self) -> None:
+        self._submit("/cancel")
+        self.assertIn("No task running", self.tui.message)
+
+    def test_clear_empties_the_view_but_keeps_the_task_running(self) -> None:
+        self._submit("refactor the routing policy")
+        task = self.tui.compose_task
+        self._submit("/clear")
+        self.assertIsNone(self.tui.compose_task)
+        self.assertEqual(self.tui.compose_notice, ())
+        self.assertTrue(task.running)
+        self.assertIn(task, self.tui.tasks.tasks)
+
+    def test_a_doubled_slash_runs_as_a_task_with_one_slash(self) -> None:
+        self._submit("//etc/hosts is stale")
+        self.assertEqual(self.tui.compose_task.request, "/etc/hosts is stale")
+
+    def test_starting_a_task_clears_a_command_reply(self) -> None:
+        self._submit("/help")
+        self.assertTrue(self.tui.compose_notice)
+        self._submit("refactor the routing policy")
+        self.assertEqual(self.tui.compose_notice, ())
 
 
 class TaskManagerTests(unittest.TestCase):
