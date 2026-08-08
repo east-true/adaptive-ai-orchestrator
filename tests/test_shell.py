@@ -2056,6 +2056,56 @@ class ShellUsageTests(unittest.TestCase):
             self.assertIn("Claude Code: project usage data not available", stdout.getvalue())
 
 
+class ControlStateDirectoryNoteTests(unittest.TestCase):
+    """A relative control-state dir lands in the launch directory, silently."""
+
+    COMMANDS = (
+        "run --task=x --control-state-dir {value}",
+        "run_plan p.json --control-state-dir {value}",
+        "plan_generate make a plan --control-state-dir {value}",
+        "retry #1 --control-state-dir {value}",
+        "replay --control-state-dir {value}",
+        "paired_analyze m.json --control-state-dir {value}",
+    )
+
+    def _stderr_for(self, line: str) -> str:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell(Path(directory))
+            err = io.StringIO()
+            with (
+                patch("adaptive_orchestrator.interfaces.shell.cli.main", return_value=0),
+                contextlib.redirect_stderr(err),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                shell.onecmd(line)
+            return err.getvalue()
+
+    def test_a_relative_value_names_where_it_will_actually_land(self) -> None:
+        for template in self.COMMANDS:
+            with self.subTest(command=template.split()[0]):
+                output = self._stderr_for(template.format(value="myctl"))
+                self.assertIn("--control-state-dir myctl resolves to", output)
+                self.assertIn(str(Path("myctl").resolve()), output)
+
+    def test_an_absolute_value_says_nothing(self) -> None:
+        for template in self.COMMANDS:
+            with self.subTest(command=template.split()[0]):
+                self.assertNotIn("resolves to", self._stderr_for(template.format(value="/tmp/ctl")))
+
+    def test_a_home_relative_value_says_nothing(self) -> None:
+        self.assertNotIn("resolves to", self._stderr_for("run --task=x --control-state-dir ~/ctl"))
+
+    def test_the_attached_form_is_covered_too(self) -> None:
+        output = self._stderr_for("run --task=x --control-state-dir=myctl")
+        self.assertIn("resolves to", output)
+
+    def test_a_command_without_the_option_says_nothing(self) -> None:
+        self.assertNotIn("resolves to", self._stderr_for("run --task=x"))
+
+    def test_a_trailing_option_with_no_value_is_left_to_argparse(self) -> None:
+        self.assertNotIn("resolves to", self._stderr_for("replay --control-state-dir"))
+
+
 class SessionSurvivalTests(unittest.TestCase):
     """One bad argument must cost a command, not the session."""
 

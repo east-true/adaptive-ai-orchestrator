@@ -505,6 +505,7 @@ class OrchestratorShell(cmd.Cmd):
         tokens = self._split(arg, command)
         if tokens is None:
             return
+        self._note_cwd_relative_options(tokens)
         self._invoke_cli([command, "--workspace", str(self.workspace), *tokens], command)
 
     def do_task(self, arg: str) -> None:
@@ -564,6 +565,7 @@ class OrchestratorShell(cmd.Cmd):
         tokens = self._split(arg, "run")
         if tokens is None:
             return
+        self._note_cwd_relative_options(tokens)
         argv = [
             "run",
             "--workspace",
@@ -582,6 +584,7 @@ class OrchestratorShell(cmd.Cmd):
         if not tokens:
             print("Usage: run_plan <plan_file> [args...]")
             return
+        self._note_cwd_relative_options(tokens)
         argv = [
             "run-plan",
             "--workspace",
@@ -616,6 +619,7 @@ class OrchestratorShell(cmd.Cmd):
             request_tokens.append(tokens.pop(0))
         if request_tokens:
             tokens = [" ".join(request_tokens), *tokens]
+        self._note_cwd_relative_options(tokens)
         argv = [
             "plan",
             "generate",
@@ -732,6 +736,7 @@ class OrchestratorShell(cmd.Cmd):
         if not tokens:
             print("Usage: retry <execution-id|attempt-id|#number> [args...]")
             return
+        self._note_cwd_relative_options(tokens)
         self._invoke_cli(
             [
                 "retry",
@@ -858,6 +863,7 @@ class OrchestratorShell(cmd.Cmd):
         argv = ["paired", subcommand]
         if source_repository:
             argv.extend(("--source-repository", str(self.workspace)))
+        self._note_cwd_relative_options(tokens)
         self._invoke_cli([*argv, *tokens], label)
 
     def do_exit(self, arg: str) -> bool:
@@ -1364,6 +1370,44 @@ class OrchestratorShell(cmd.Cmd):
         if self._workspace_absence_note():
             workspace_label = f"{workspace_label}!"
         self.prompt = f"adaptive[{self.agent}:{workspace_label}]> "
+
+    #: Options whose relative value resolves somewhere the session never names.
+    _CWD_RELATIVE_OPTIONS = ("--control-state-dir",)
+
+    def _note_cwd_relative_options(self, tokens: list[str]) -> None:
+        """Say where a relative option path will actually land.
+
+        The shell anchors the paths it owns—`plan_validate`'s file, the paired
+        manifest—to the session workspace, but this one cannot be: the kernel
+        requires the control-state directory to live *outside* the agent
+        workspace, so there is no workspace-relative base to anchor to. It
+        therefore keeps the CLI's rule and resolves against the process working
+        directory: wherever the shell happened to be launched, which the
+        session never mentions again.
+
+        `run --control-state-dir myctl` consequently succeeds and writes
+        events.jsonl and routing-state.json there without a word. Naming the
+        resolved path once, when a relative value is actually passed, is enough
+        to keep that from being a surprise.
+        """
+
+        for index, token in enumerate(tokens):
+            name, separator, attached = token.partition("=")
+            if name not in self._CWD_RELATIVE_OPTIONS:
+                continue
+            if separator:
+                value = attached
+            elif index + 1 < len(tokens):
+                value = tokens[index + 1]
+            else:
+                continue  # trailing option with no value: argparse reports it
+            if not value or value.startswith("~") or Path(value).is_absolute():
+                continue
+            print(
+                f"Note: {name} {value} resolves to {Path(value).resolve()} "
+                "(relative to this shell's working directory, not the session workspace).",
+                file=sys.stderr,
+            )
 
     def _resolve_workspace_path(self, value: str) -> Path:
         path = Path(value).expanduser()
