@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import cmd
 import difflib
 import math
@@ -26,6 +27,10 @@ from adaptive_orchestrator.operations.reporting import (
 )
 from adaptive_orchestrator.operations.usage import CodexUsage, read_claude_subscription, read_codex_usage
 from adaptive_orchestrator.orchestration.kernel import KERNEL_VERSION
+
+
+#: The installed console script for this interface (see ``[project.scripts]``).
+SHELL_PROGRAM_NAME = "adaptive-ai-orchestrator-shell"
 
 
 class _ShellTermination(BaseException):
@@ -183,9 +188,9 @@ class OrchestratorShell(cmd.Cmd):
     intro = _shell_banner()
     prompt = "adaptive[auto]> "
 
-    def __init__(self) -> None:
+    def __init__(self, workspace: Path | None = None) -> None:
         super().__init__()
-        self.workspace = Path.cwd()
+        self.workspace = Path.cwd() if workspace is None else workspace
         # None means the active workspace profile remains authoritative. An
         # explicit "auto" is distinct: it overrides a profile-pinned agent.
         self.agent_override: str | None = None
@@ -1456,7 +1461,46 @@ class OrchestratorShell(cmd.Cmd):
         return f"Codex: {', '.join(clauses)}{reset_text}" if clauses else "Codex: usage data not available"
 
 
-def main() -> None:
+def _parse_shell_arguments(argv: list[str] | None) -> Path:
+    """Read the shell's own options, which it used to discard in silence.
+
+    This entry point accepted no arguments at all, so the console script threw
+    away everything handed to it—including ``--help``, ``--version``, and an
+    outright misspelling. ``--workspace`` was the costly one: the operator named
+    a repository, the shell started in the current directory instead, and the
+    prompt showed a workspace nobody asked for. The CLI and the TUI have always
+    parsed this option; the shell is now the third to agree.
+    """
+
+    parser = argparse.ArgumentParser(
+        prog=SHELL_PROGRAM_NAME,
+        description="Interactive shell for Adaptive Orchestrator.",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"{SHELL_PROGRAM_NAME} {package_version()} (kernel {KERNEL_VERSION})",
+    )
+    parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=Path.cwd(),
+        help="Repository the session starts in. Defaults to the current directory; `workspace <dir>` changes it later.",
+    )
+    args = parser.parse_args(argv)
+    try:
+        workspace = args.workspace.expanduser().resolve()
+    except (OSError, RuntimeError) as exc:
+        parser.error(f"could not resolve --workspace {args.workspace}: {exc}")
+    if not workspace.is_dir():
+        detail = "not a directory" if workspace.exists() else "does not exist"
+        parser.error(f"--workspace {workspace} {detail}")
+    return workspace
+
+
+def main(argv: list[str] | None = None) -> None:
+    workspace = _parse_shell_arguments(argv)
+
     def terminate(signum: int, _frame: object) -> None:
         raise _ShellTermination(signum)
 
@@ -1476,7 +1520,7 @@ def main() -> None:
             signal.signal(signum, terminate)
             installed_handlers.append((signum, original_handler))
 
-        shell = OrchestratorShell()
+        shell = OrchestratorShell(workspace)
         intro: str | None = None
         while True:
             try:
