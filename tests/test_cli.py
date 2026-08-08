@@ -1964,6 +1964,30 @@ class UnexpectedModifiedFilesTests(unittest.TestCase):
     def test_returns_empty_list_when_no_files_were_modified(self) -> None:
         self.assertEqual(cli._unexpected_modified_files([], "plan.json"), [])
 
+    def test_the_orchestrators_own_state_directory_is_not_an_agent_modification(self) -> None:
+        """The execution log for this very run lives there.
+
+        Every successful `plan generate` in a workspace that does not gitignore
+        `.orchestrator/` warned about it, and a standing false positive is how
+        an operator learns to stop reading the warning.
+        """
+
+        for entry in (".orchestrator/", ".orchestrator", ".orchestrator/executions.jsonl"):
+            with self.subTest(entry=entry):
+                self.assertEqual(cli._unexpected_modified_files([entry, "plan.json"], "plan.json"), [])
+
+    def test_a_real_modification_alongside_the_state_directory_still_reports(self) -> None:
+        self.assertEqual(
+            cli._unexpected_modified_files([".orchestrator/", "plan.json", "src/app.py"], "plan.json"),
+            ["src/app.py"],
+        )
+
+    def test_a_similarly_named_directory_is_not_swallowed(self) -> None:
+        self.assertEqual(
+            cli._unexpected_modified_files([".orchestrator-backup/x", "plan.json"], "plan.json"),
+            [".orchestrator-backup/x"],
+        )
+
 
 class MemoryEntryFromArgsTests(unittest.TestCase):
     def test_builds_entry_from_record_arguments(self) -> None:

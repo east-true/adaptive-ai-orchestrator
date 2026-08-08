@@ -585,8 +585,27 @@ def _validate_plan_file(path: Path) -> tuple[bool, str | None]:
     return True, None
 
 
+#: The orchestrator's own state directory inside an agent workspace.
+ORCHESTRATOR_STATE_DIRECTORY = ".orchestrator"
+
+
 def _unexpected_modified_files(modified_files: Sequence[str], expected_relative_path: str) -> list[str]:
-    return [item for item in modified_files if item != expected_relative_path]
+    """Files the agent touched that it was not asked to touch.
+
+    `.orchestrator/` is not one of them: the execution log written during this
+    very run lives there, so a workspace that does not gitignore it saw the
+    warning on *every* successful `plan generate`. The check exists to catch an
+    agent writing outside its remit, and a standing false positive is how an
+    operator learns to stop reading it.
+    """
+
+    ignored = {expected_relative_path, ORCHESTRATOR_STATE_DIRECTORY, f"{ORCHESTRATOR_STATE_DIRECTORY}/"}
+    return [
+        item
+        for item in modified_files
+        if item not in ignored
+        and not item.startswith(f"{ORCHESTRATOR_STATE_DIRECTORY}/")
+    ]
 
 
 def _build_plan_generation_task(request: str, workspace: Path, output_path: Path) -> Task:
