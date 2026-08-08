@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import difflib
 import json
 import shlex
 import sys
@@ -85,6 +86,19 @@ def resolve_program_name() -> str:
     if Path(sys.argv[0]).name in _MODULE_INVOCATION_NAMES:
         return f"{Path(sys.executable).name} -m {MODULE_ENTRY_POINT}"
     return PROGRAM_NAME
+
+
+def _non_blank_text(value: str) -> str:
+    """Reject an option value that is present but says nothing.
+
+    An epoch is the boundary that keeps one generation of model/CLI evidence
+    from being read alongside another. An empty one is recorded verbatim and
+    then separates nothing, which is worse than the default it replaced.
+    """
+
+    if not value.strip():
+        raise argparse.ArgumentTypeError("value cannot be blank")
+    return value
 
 
 def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser:
@@ -358,7 +372,7 @@ def _add_workflow_arguments(parser: argparse.ArgumentParser, config: ProjectConf
     routing.add_argument("--routing-baseline-agent", help="Configured baseline agent used by corrected static routing and its shadow.")
     routing.add_argument("--routing-shadow", action="store_true", help="Record execution-free baseline decisions without changing the selected agent.")
     routing.add_argument("--routing-seed", type=int, default=0, help="Seed used only for deterministic shadow assignments; exploration remains disabled.")
-    routing.add_argument("--environment-epoch", default="default-v1", help="Version boundary for model/CLI/permission/cache evidence.")
+    routing.add_argument("--environment-epoch", type=_non_blank_text, default="default-v1", help="Version boundary for model/CLI/permission/cache evidence. Cannot be blank.")
     routing.add_argument("--control-state-dir", type=Path, help="Protected event/state directory outside the agent workspace.")
     routing.add_argument(
         "--include-git-diff",
@@ -386,8 +400,49 @@ def _add_workflow_arguments(parser: argparse.ArgumentParser, config: ProjectConf
     )
 
 
+#: Every key one plan-file entry may carry, in the order the schema documents them.
+PLAN_SPEC_FIELDS = (
+    "description",
+    "objective",
+    "constraints",
+    "capabilities",
+    "priority",
+    "time_limit_seconds",
+    "cost_limit_usd",
+    "task_id",
+)
+
+
+def _reject_unknown_plan_fields(spec: object) -> None:
+    """Refuse a step carrying a field this schema does not define.
+
+    Every optional field is read with ``.get``, so a near-miss key—``constraint``
+    for ``constraints``—used to vanish without a trace while `plan validate`
+    called the file valid. What vanishes is often the part that matters most: a
+    constraint is the sentence telling the agent what not to touch. Project
+    config already refuses unknown keys; plan files were the one input that did
+    not, and they are also the ones `plan generate` writes with an agent.
+    """
+
+    if not isinstance(spec, dict):
+        # Checked here rather than left to the field lookup: iterating a string
+        # walks its characters and would report every letter as a bad field.
+        raise ValueError(f"expected an object, got {type(spec).__name__}")
+    unknown = [key for key in spec if key not in PLAN_SPEC_FIELDS]
+    if not unknown:
+        return
+    details = []
+    for key in sorted(unknown):
+        close = difflib.get_close_matches(key, PLAN_SPEC_FIELDS, n=1, cutoff=0.6)
+        details.append(f"{key!r}" + (f" (did you mean {close[0]!r}?)" if close else ""))
+    raise ValueError(
+        f"unknown field(s) {', '.join(details)}; valid fields are {', '.join(PLAN_SPEC_FIELDS)}"
+    )
+
+
 def _task_from_spec(spec: dict) -> Task:
     """Builds a Task from one JSON plan-file entry; same field names as `run`'s flags, all but description/objective optional."""
+    _reject_unknown_plan_fields(spec)
     return Task(
         description=spec["description"],
         objective=spec["objective"],
@@ -404,7 +459,22 @@ def _load_plan(path: Path) -> list[Task]:
     specs = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(specs, list) or not specs:
         raise ValueError(f"Plan file must contain a non-empty JSON list of task specs: {path}")
-    return [_task_from_spec(spec) for spec in specs]
+    tasks = []
+    for index, spec in enumerate(specs, start=1):
+        try:
+            tasks.append(_task_from_spec(spec))
+        except (AttributeError, KeyError, TypeError, ValueError) as exc:
+            # Name the step: a plan is a list, and "unknown field 'constraint'"
+            # says nothing about which of ten entries to open.
+            raise ValueError(f"step {index} of {len(specs)}: {_spec_error_text(exc)}") from exc
+    return tasks
+
+
+def _spec_error_text(exc: Exception) -> str:
+    """Render one step's failure, naming a missing required field as such."""
+    if isinstance(exc, KeyError):
+        return f"missing required field {exc.args[0]!r}"
+    return str(exc)
 
 
 def _validate_plan_file(path: Path) -> tuple[bool, str | None]:
@@ -646,12 +716,20 @@ def _build_workflow_for_cli(
 ) -> EngineeringWorkflow | None:
     try:
         agent_id = args.agent if requested_agent_id is None else requested_agent_id
-        if agent_id != "auto":
-            available = tuple(agent.agent_id for agent in _configured_agents(args))
-            if agent_id not in available:
-                raise ValueError(
-                    f"Unknown agent: {agent_id}. Available: {', '.join(available)}"
-                )
+        available = tuple(agent.agent_id for agent in _configured_agents(args))
+        if agent_id != "auto" and agent_id not in available:
+            raise ValueError(
+                f"Unknown agent: {agent_id}. Available: {', '.join(available)}"
+            )
+        # The baseline is an agent id like any other, and static routing only
+        # discovers a bad one once it selects—by then the lifecycle recorder has
+        # already rewritten protected state for a run that cannot proceed.
+        baseline_agent_id = getattr(args, "routing_baseline_agent", None)
+        if baseline_agent_id and baseline_agent_id not in available:
+            raise ValueError(
+                f"Unknown --routing-baseline-agent: {baseline_agent_id}. "
+                f"Available: {', '.join(available)}"
+            )
         return _build_workflow(args, workspace, requested_agent_id)
     except (EventLogError, ReplayError, OSError, ValueError) as exc:
         print(f"Workflow configuration failed: {exc}", file=sys.stderr)
@@ -787,6 +865,27 @@ def _print_failure_reason(record: object, label: str) -> None:
             f"  Details: {resolve_program_name()} show {execution_id}",
             file=sys.stderr,
         )
+
+
+def _warn_missing_recorded_diff(bundle: object) -> None:
+    """Say why an asked-for diff is absent, rather than omitting it in silence.
+
+    A diff is only in the log when the run that produced it opted in, so asking
+    for one afterwards can never add it. Leaving the section out said nothing
+    about which of the two it was: a run that changed nothing, or a run that was
+    never asked to record what it changed.
+    """
+
+    # Same field and same emptiness test the renderer applies, so this note
+    # appears exactly when the report has no diff section to show.
+    attempts = getattr(bundle, "attempts", ())
+    if any(str(attempt.get("workspace_git_diff") or "").strip() for attempt in attempts):
+        return
+    print(
+        "Note: no workspace diff is recorded for this execution, so --include-diff added nothing. "
+        "A diff is captured only when the run itself was given --include-git-diff.",
+        file=sys.stderr,
+    )
 
 
 def _print_no_executions_hint(workspace: Path) -> None:
@@ -993,6 +1092,8 @@ def _run_command(argv: list[str] | None = None) -> int:
                 print(render_text_summary(bundle))
                 return 0
             content = render_markdown_report(bundle, include_diff=args.include_diff)
+            if args.include_diff:
+                _warn_missing_recorded_diff(bundle)
             if args.output is None:
                 print(content, end="")
             else:

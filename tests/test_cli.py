@@ -1501,6 +1501,94 @@ class InterruptTests(unittest.TestCase):
             cli.main(["run", "--task", "Do it"])
 
 
+class BlankOptionValueTests(unittest.TestCase):
+    def test_an_epoch_that_says_nothing_is_rejected(self) -> None:
+        for value in ("", "   "):
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as directory:
+                stderr = io.StringIO()
+                with (
+                    contextlib.redirect_stderr(stderr),
+                    contextlib.redirect_stdout(io.StringIO()),
+                    self.assertRaises(SystemExit) as raised,
+                ):
+                    cli.main([
+                        "run", "--workspace", directory, "--task", "Do it",
+                        "--environment-epoch", value,
+                    ])
+
+                self.assertEqual(raised.exception.code, 2)
+                self.assertIn("cannot be blank", stderr.getvalue())
+
+    def test_a_real_epoch_passes_through(self) -> None:
+        self.assertEqual(cli._non_blank_text("codex-0.145"), "codex-0.145")
+
+
+class MissingRecordedDiffTests(unittest.TestCase):
+    def test_a_recorded_diff_produces_no_note(self) -> None:
+        bundle = SimpleNamespace(attempts=({"workspace_git_diff": "diff --git a b"},))
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            cli._warn_missing_recorded_diff(bundle)
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_an_absent_diff_explains_why_the_flag_added_nothing(self) -> None:
+        for attempts in (({},), ({"workspace_git_diff": None},), ({"workspace_git_diff": "  "},)):
+            with self.subTest(attempts=attempts):
+                stderr = io.StringIO()
+                with contextlib.redirect_stderr(stderr):
+                    cli._warn_missing_recorded_diff(SimpleNamespace(attempts=attempts))
+                self.assertIn("--include-git-diff", stderr.getvalue())
+
+
+class RoutingBaselineAgentTests(unittest.TestCase):
+    """The baseline is an agent id, and is checked where every other one is."""
+
+    def _run(self, workspace: Path, *options: str) -> tuple[int, str]:
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+            exit_code = cli.main(["run", "--workspace", str(workspace), "--task", "Do it", *options])
+        return exit_code, stderr.getvalue()
+
+    def test_unknown_baseline_is_rejected_before_any_state_is_written(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            exit_code, stderr = self._run(
+                workspace, "--routing-policy", "static", "--routing-baseline-agent", "nope",
+            )
+
+            self.assertEqual(exit_code, 2)
+            self.assertIn("Unknown --routing-baseline-agent: nope", stderr)
+            self.assertNotIn("Traceback", stderr)
+            # Reaching the router would mean the lifecycle recorder already ran.
+            self.assertEqual(list(workspace.iterdir()), [])
+
+    def test_unknown_baseline_is_rejected_even_beside_an_explicit_agent(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            exit_code, stderr = self._run(
+                Path(directory), "--agent", "codex", "--routing-baseline-agent", "nope",
+            )
+
+            self.assertEqual(exit_code, 2)
+            self.assertIn("Unknown --routing-baseline-agent", stderr)
+
+    def test_a_registered_baseline_is_accepted(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(cli, "_build_workflow", return_value=object()) as build:
+                workflow = cli._build_workflow_for_cli(
+                    argparse.Namespace(
+                        agent="auto",
+                        routing_baseline_agent="codex",
+                        claude_model=None,
+                        codex_model=None,
+                        codex_reasoning_effort=None,
+                    ),
+                    Path(directory),
+                )
+
+            self.assertIsNotNone(workflow)
+            build.assert_called_once()
+
+
 class InertEscalationOptionTests(unittest.TestCase):
     """Escalation only applies to --agent auto; saying so beats accepting it silently."""
 
@@ -1657,6 +1745,74 @@ class RunArgumentRejectionTests(unittest.TestCase):
 
                 build_workflow.assert_not_called()
                 self.assertEqual(list(workspace.iterdir()), [])
+
+
+class PlanSpecFieldTests(unittest.TestCase):
+    """A near-miss key used to vanish while `plan validate` called the file good."""
+
+    def _validate(self, payload: object) -> tuple[bool, str]:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "plan.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            ok, message = cli._validate_plan_file(path)
+        return ok, message or ""
+
+    def test_every_documented_field_is_accepted(self) -> None:
+        ok, message = self._validate([{
+            "description": "d",
+            "objective": "o",
+            "constraints": ["c"],
+            "capabilities": ["testing"],
+            "priority": "high",
+            "time_limit_seconds": 60,
+            "cost_limit_usd": 1.5,
+            "task_id": "t1",
+        }])
+        self.assertTrue(ok, message)
+
+    def test_a_near_miss_key_is_rejected_with_the_field_it_resembles(self) -> None:
+        ok, message = self._validate([
+            {"description": "d", "objective": "o", "constraint": ["never delete files"]},
+        ])
+        self.assertFalse(ok)
+        self.assertIn("'constraint'", message)
+        self.assertIn("did you mean 'constraints'?", message)
+
+    def test_the_failing_step_is_named(self) -> None:
+        ok, message = self._validate([
+            {"description": "d", "objective": "o"},
+            {"description": "d2", "objective": "o2", "nonsense": 1},
+        ])
+        self.assertFalse(ok)
+        self.assertIn("step 2 of 2", message)
+
+    def test_a_missing_required_field_reads_as_missing(self) -> None:
+        ok, message = self._validate([{"objective": "o"}])
+        self.assertFalse(ok)
+        self.assertIn("missing required field 'description'", message)
+
+    def test_a_step_that_is_not_an_object_is_reported_once(self) -> None:
+        ok, message = self._validate(["just a string"])
+        self.assertFalse(ok)
+        self.assertIn("expected an object, got str", message)
+        # Iterating the string would have named every letter as a bad field.
+        self.assertNotIn("'j'", message)
+
+    def test_the_retry_spec_round_trips_through_the_same_builder(self) -> None:
+        # `task_spec_for_retry` feeds _task_from_spec; a field it emits that the
+        # schema does not list would make every retry fail.
+        spec = {
+            "description": "d",
+            "objective": "o",
+            "constraints": [],
+            "capabilities": [],
+            "priority": "normal",
+            "time_limit_seconds": None,
+            "cost_limit_usd": None,
+            "task_id": "t1",
+        }
+        self.assertTrue(set(spec) <= set(cli.PLAN_SPEC_FIELDS))
+        self.assertEqual(cli._task_from_spec(spec).task_id, "t1")
 
 
 class PlanGenerateOutputPathTests(unittest.TestCase):
