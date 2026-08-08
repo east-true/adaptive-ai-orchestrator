@@ -2439,5 +2439,68 @@ class ExplicitControlStateDirectoryTests(unittest.TestCase):
         self.assertIsNone(cli._require_existing_control_state_dir(None))
 
 
+class EscalatedFailureReasonTests(unittest.TestCase):
+    """The reason on stderr describes the attempt the summary calls the outcome."""
+
+    @staticmethod
+    def _record(status: str, error: str | None, escalated: object = None) -> object:
+        return SimpleNamespace(
+            status=status,
+            agent_id="codex",
+            error=error,
+            verification=SimpleNamespace(status="skipped"),
+            execution_id="exec-1",
+            escalation=None if escalated is None else SimpleNamespace(record=escalated),
+        )
+
+    def test_the_escalated_attempt_supplies_the_status_and_agent(self) -> None:
+        escalated = SimpleNamespace(
+            status="timed_out", agent_id="claude-code", error=None,
+            verification=SimpleNamespace(status="skipped"), execution_id="exec-1",
+            escalation=None,
+        )
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            cli._print_failure_reason(self._record("failed", None, escalated), "Run")
+
+        self.assertIn("status=timed_out", stderr.getvalue())
+        self.assertIn("agent=claude-code", stderr.getvalue())
+        self.assertNotIn("status=failed", stderr.getvalue())
+
+    def test_an_error_recorded_only_on_the_escalated_attempt_is_shown(self) -> None:
+        escalated = SimpleNamespace(
+            status="failed", agent_id="claude-code", error="boom\ndetail",
+            verification=SimpleNamespace(status="skipped"), execution_id="exec-1",
+            escalation=None,
+        )
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            cli._print_failure_reason(self._record("failed", None, escalated), "Run")
+
+        self.assertIn("boom", stderr.getvalue())
+        self.assertNotIn("detail", stderr.getvalue())
+
+    def test_a_primary_error_still_shows_when_the_escalated_attempt_has_none(self) -> None:
+        escalated = SimpleNamespace(
+            status="failed", agent_id="claude-code", error=None,
+            verification=SimpleNamespace(status="skipped"), execution_id="exec-1",
+            escalation=None,
+        )
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            cli._print_failure_reason(self._record("failed", "primary blew up", escalated), "Run")
+
+        self.assertIn("primary blew up", stderr.getvalue())
+
+    def test_an_unescalated_record_is_reported_as_itself(self) -> None:
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            cli._print_failure_reason(self._record("failed", "boom"), "Run")
+
+        self.assertIn("status=failed", stderr.getvalue())
+        self.assertIn("agent=codex", stderr.getvalue())
+        self.assertIn("boom", stderr.getvalue())
+
+
 if __name__ == "__main__":
     unittest.main()

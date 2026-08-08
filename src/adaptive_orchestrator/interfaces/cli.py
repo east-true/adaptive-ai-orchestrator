@@ -972,6 +972,22 @@ def _rendered_summary(record: object, workspace: Path) -> str | None:
         return None
 
 
+def _terminal_record(record: object) -> object:
+    """The attempt that ended the execution, which is what its outcome reports.
+
+    An escalated execution holds two attempts, and every other rendering—`show`,
+    `report`, `--summary`—describes the second one. Reading the first here made
+    the same command disagree with itself on stdout and stderr: a run whose
+    primary failed and whose escalation timed out announced "timed_out" in the
+    summary and "status=failed" in the reason, and an error recorded only on the
+    escalated attempt was dropped entirely.
+    """
+
+    escalation = getattr(record, "escalation", None)
+    escalated = getattr(escalation, "record", None) if escalation is not None else None
+    return escalated if escalated is not None else record
+
+
 def _print_failure_reason(record: object, label: str) -> None:
     """State on stderr why a command is exiting non-zero.
 
@@ -984,13 +1000,17 @@ def _print_failure_reason(record: object, label: str) -> None:
     def _name(value: object) -> str:
         return str(getattr(value, "value", value))
 
-    parts = [f"status={_name(getattr(record, 'status', 'unknown'))}"]
-    verification = getattr(record, "verification", None)
+    outcome = _terminal_record(record)
+    parts = [f"status={_name(getattr(outcome, 'status', 'unknown'))}"]
+    verification = getattr(outcome, "verification", None)
     if verification is not None:
         parts.append(f"verification={_name(getattr(verification, 'status', 'unknown'))}")
+    agent_id = getattr(outcome, "agent_id", None)
+    if isinstance(agent_id, str) and agent_id:
+        parts.append(f"agent={agent_id}")
     print(f"{label} did not succeed ({', '.join(parts)}).", file=sys.stderr)
 
-    error = getattr(record, "error", None)
+    error = getattr(outcome, "error", None) or getattr(record, "error", None)
     if error:
         first_line = str(error).strip().splitlines()
         if first_line:
