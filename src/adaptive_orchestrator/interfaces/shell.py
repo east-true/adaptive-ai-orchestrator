@@ -301,8 +301,26 @@ class OrchestratorShell(cmd.Cmd):
     def do_status(self, arg: str) -> None:
         """Show the current session workspace and agent."""
         del arg
-        print(f"Workspace: {self.workspace}")
+        print(f"Workspace: {self.workspace}{self._workspace_absence_note()}")
         print(f"Agent: {self._format_agent_state()}")
+
+    def _workspace_absence_note(self) -> str:
+        """Flag a session workspace that has stopped being a directory.
+
+        `workspace <dir>` refuses a path that is not a directory, but a session
+        outlives what it points at — a branch switch, a `git clean`, an `rm -rf`
+        elsewhere. Reporting the path alone then states something that is no
+        longer true, and the next routed command fails at the CLI instead. The
+        run path is already safe; this only keeps the session view from
+        contradicting it.
+        """
+
+        try:
+            if self.workspace.is_dir():
+                return ""
+            return " (missing: no longer a directory)"
+        except OSError as exc:
+            return f" (unreadable: {exc})"
 
     def do_settings(self, arg: str) -> None:
         """Show session overrides applied to task and plan commands."""
@@ -515,10 +533,15 @@ class OrchestratorShell(cmd.Cmd):
             str(self.workspace),
             *self._agent_default_args(),
             *self._workflow_default_args(include_time_limit=True),
-            "--description",
-            request,
-            "--objective",
-            request,
+            # `--task=` rather than a separate --description/--objective pair:
+            # the CLI already owns this shorthand, and the attached form is the
+            # only one a request may start a dash in. Passed as its own argv
+            # element, argparse inspects the request for option syntax, so
+            # `task --help` died with "argument --description: expected one
+            # argument" while `task -x fix it` ran — argparse skips that check
+            # for values containing a space, so the outcome turned on whether
+            # the request happened to have one.
+            f"--task={request}",
         ]
         self._invoke_cli(argv, label)
 
@@ -1261,6 +1284,11 @@ class OrchestratorShell(cmd.Cmd):
 
     def _refresh_prompt(self) -> None:
         workspace_label = self.workspace.name or str(self.workspace)
+        # postcmd refreshes this after every command, so a workspace that goes
+        # away mid-session is marked before the next one is typed rather than
+        # after it has already failed.
+        if self._workspace_absence_note():
+            workspace_label = f"{workspace_label}!"
         self.prompt = f"adaptive[{self.agent}:{workspace_label}]> "
 
     def _resolve_workspace_path(self, value: str) -> Path:
@@ -1458,6 +1486,17 @@ class OrchestratorShell(cmd.Cmd):
         return "under a minute"
 
     def _format_codex_usage(self, usage: CodexUsage | None) -> str:
+        """Report the quota, and say so when only the plan name is known.
+
+        The percentage is what this command exists to show, and Codex is the
+        source that supposedly has it. A session log that names a plan but
+        carries no rate-limit block used to render as "Codex: prolite plan" —
+        silence where the number belongs, which reads as "nothing to report"
+        rather than "not known". The Claude row already says
+        "no live quota % available locally", and the history rows already say
+        "no success data"; this one now agrees with both.
+        """
+
         if usage is None:
             return "Codex: usage data not available"
         clauses = []
@@ -1465,12 +1504,14 @@ class OrchestratorShell(cmd.Cmd):
             clauses.append(f"{usage.plan_type} plan")
         if usage.used_percent is not None:
             clauses.append(f"{usage.used_percent:g}% used")
+        else:
+            clauses.append("no quota % in the local session log")
         reset_text = ""
         if usage.resets_at is not None:
             seconds = usage.resets_at - time.time()
             if seconds >= 0:
                 reset_text = f" (resets in {self._format_reset_delay(seconds)})"
-        return f"Codex: {', '.join(clauses)}{reset_text}" if clauses else "Codex: usage data not available"
+        return f"Codex: {', '.join(clauses)}{reset_text}"
 
 
 def _parse_shell_arguments(argv: list[str] | None) -> Path:
