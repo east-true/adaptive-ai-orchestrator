@@ -11,9 +11,11 @@ from adaptive_orchestrator.infrastructure.logging import redact, restrict_to_own
 class EngineeringMemoryStore:
     def __init__(self, path: Path) -> None:
         self.path = path
-        self.path.parent.mkdir(parents=True, exist_ok=True)
 
     def record(self, entry: MemoryEntry) -> None:
+        # Created here rather than in the constructor: `memory search` opens the
+        # same store and must leave a workspace it only queried untouched.
+        self.path.parent.mkdir(parents=True, exist_ok=True)
         payload = redact(asdict(entry))
         with self.path.open("a", encoding="utf-8") as stream:
             restrict_to_owner(self.path)

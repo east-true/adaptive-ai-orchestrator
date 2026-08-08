@@ -1,7 +1,9 @@
 import argparse
 import contextlib
+import dataclasses
 import io
 import json
+import os
 import sys
 import tempfile
 import threading
@@ -29,6 +31,30 @@ from adaptive_orchestrator.infrastructure.events import JsonlEventStore, Lifecyc
 from adaptive_orchestrator.routing.state import LifecycleRecorder, RoutingStateStore
 from adaptive_orchestrator.orchestration.planning import ExecutionPlan
 
+
+
+@contextlib.contextmanager
+def resolve_failing_for(target: Path):
+    """Make ``Path.resolve()`` fail for one path, and only for that path.
+
+    "The workspace could not be resolved at all" is a real branch — an
+    unwalkable directory reaches it on every Python — but the convenient way to
+    provoke it, a symlink loop, stopped raising in Python 3.13. Injecting the
+    failure keeps the branch covered on all supported versions, and scoping it
+    to one path leaves every other resolve() in the call (project config lookup,
+    report store) working normally.
+    """
+
+    real_resolve = Path.resolve
+    text = str(target)
+
+    def fake_resolve(self, *args, **kwargs):
+        if str(self) == text:
+            raise RuntimeError(f"Symlink loop from '{self}'")
+        return real_resolve(self, *args, **kwargs)
+
+    with patch.object(Path, "resolve", fake_resolve):
+        yield
 
 
 def _stub_plan() -> ExecutionPlan:
@@ -143,6 +169,40 @@ class BuildWorkflowTests(unittest.TestCase):
         runner_ctor.assert_called_once()
         self.assertIs(workflow._kernel.runner, runner_instance)
         self.assertTrue(callable(runner_ctor.call_args.args[0]))
+
+    def test_verbose_stream_is_labelled_with_the_agent_actually_run(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            args = type(
+                "Args",
+                (),
+                {
+                    "command": "retry",
+                    # `retry` keeps the sentinel here until the record names one.
+                    "agent": "same",
+                    "include_git_diff": False,
+                    "verify_command": [],
+                    "verify_time_limit": None,
+                    "no_escalation": True,
+                    "escalation_risk_threshold": 3,
+                    "escalation_uncertainty_threshold": 3,
+                    "escalation_difficulty_threshold": 4,
+                    "verbose": True,
+                    "control_state_dir": root / "control",
+                },
+            )()
+
+            with patch.object(cli, "SubprocessRunner") as runner_ctor:
+                cli._build_workflow(args, workspace, "codex")
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                runner_ctor.call_args.args[0]("line\n")
+
+        self.assertIn("[retry:codex]", stderr.getvalue())
+        self.assertNotIn("same", stderr.getvalue())
 
 
 class ProjectConfigCliTests(unittest.TestCase):
@@ -998,6 +1058,35 @@ class WorkspaceRelativeDispatchTests(unittest.TestCase):
             self.assertEqual(len(json.loads(stdout.getvalue())), 1)
             self.assertEqual(stderr.getvalue(), "")
 
+    def test_memory_search_leaves_a_workspace_it_only_queried_untouched(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                exit_code = cli.main(["memory", "search", "--workspace", str(workspace)])
+
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(list(workspace.iterdir()), [])
+
+    def test_unwritable_memory_workspace_reports_one_line_instead_of_a_traceback(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "workspace"
+            workspace.mkdir()
+            stderr = io.StringIO()
+            with (
+                patch.object(cli.EngineeringMemoryStore, "record", side_effect=PermissionError("denied")),
+                contextlib.redirect_stdout(io.StringIO()),
+                contextlib.redirect_stderr(stderr),
+            ):
+                exit_code = cli.main([
+                    "memory", "record", "--workspace", str(workspace),
+                    "--type", "trade_off", "--title", "T", "--summary", "S",
+                ])
+
+            self.assertEqual(exit_code, 1)
+            self.assertIn("Memory record failed", stderr.getvalue())
+            self.assertIn("denied", stderr.getvalue())
+            self.assertNotIn("Traceback", stderr.getvalue())
+
     def test_version_reports_the_installed_console_script_name(self) -> None:
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout), self.assertRaises(SystemExit) as raised:
@@ -1375,6 +1464,445 @@ class WorkspaceRelativeDispatchTests(unittest.TestCase):
             self.assertEqual(workflow.task.objective, "Workspace objective")
 
 
+class PlanStepReportingTests(unittest.TestCase):
+    @staticmethod
+    def _record(succeeded: bool, name: str) -> SimpleNamespace:
+        return SimpleNamespace(
+            status="completed" if succeeded else "failed",
+            verification=SimpleNamespace(status="passed" if succeeded else "failed"),
+            execution_id=name,
+        )
+
+    def _result(self, succeeded: bool, outcomes: tuple[bool, ...], stopped_early: bool = False) -> SimpleNamespace:
+        steps = [
+            SimpleNamespace(record=self._record(ok, f"step{index}"), plan=object())
+            for index, ok in enumerate(outcomes, start=1)
+        ]
+        return SimpleNamespace(steps=steps, succeeded=succeeded, stopped_early=stopped_early)
+
+    def test_step_numbering_counts_the_plan_not_the_steps_that_ran(self) -> None:
+        result = self._result(False, (True, False), stopped_early=True)
+        stdout = io.StringIO()
+        with (
+            patch.object(cli, "_rendered_summary", side_effect=lambda record, workspace: "summary"),
+            contextlib.redirect_stdout(stdout),
+        ):
+            cli._print_plan_result(result, Path("/workspace"), summary=True, planned_steps=3)
+
+        self.assertIn("--- step 1 of 3 ---", stdout.getvalue())
+        self.assertIn("--- step 2 of 3 ---", stdout.getvalue())
+        self.assertNotIn("of 2 ---", stdout.getvalue())
+
+    def test_notification_describes_the_first_failure_not_a_later_success(self) -> None:
+        with patch.object(cli, "execution_succeeded", side_effect=lambda record: record.status == "completed"):
+            failed_plan = self._result(False, (True, False, True))
+            self.assertEqual(cli._notified_step_record(failed_plan).execution_id, "step2")
+
+            succeeded_plan = self._result(True, (True, True, True))
+            self.assertEqual(cli._notified_step_record(succeeded_plan).execution_id, "step3")
+
+
+class InterruptTests(unittest.TestCase):
+    def test_interrupt_reports_a_status_instead_of_a_traceback(self) -> None:
+        stderr = io.StringIO()
+        with (
+            patch.object(cli, "_run_command", side_effect=KeyboardInterrupt),
+            contextlib.redirect_stderr(stderr),
+        ):
+            exit_code = cli.main(["run", "--task", "Do it"])
+
+        self.assertEqual(exit_code, cli.INTERRUPTED_EXIT_CODE)
+        self.assertEqual(exit_code, 130)
+        self.assertIn("Interrupted", stderr.getvalue())
+        self.assertNotIn("Traceback", stderr.getvalue())
+
+    def test_a_signal_driven_shutdown_still_propagates(self) -> None:
+        class Termination(BaseException):
+            pass
+
+        with (
+            patch.object(cli, "_run_command", side_effect=Termination),
+            self.assertRaises(Termination),
+        ):
+            cli.main(["run", "--task", "Do it"])
+
+
+class BlankOptionValueTests(unittest.TestCase):
+    def test_an_epoch_that_says_nothing_is_rejected(self) -> None:
+        for value in ("", "   "):
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as directory:
+                stderr = io.StringIO()
+                with (
+                    contextlib.redirect_stderr(stderr),
+                    contextlib.redirect_stdout(io.StringIO()),
+                    self.assertRaises(SystemExit) as raised,
+                ):
+                    cli.main([
+                        "run", "--workspace", directory, "--task", "Do it",
+                        "--environment-epoch", value,
+                    ])
+
+                self.assertEqual(raised.exception.code, 2)
+                self.assertIn("cannot be blank", stderr.getvalue())
+
+    def test_a_real_epoch_passes_through(self) -> None:
+        self.assertEqual(cli._non_blank_text("codex-0.145"), "codex-0.145")
+
+
+class MissingRecordedDiffTests(unittest.TestCase):
+    def test_a_recorded_diff_produces_no_note(self) -> None:
+        bundle = SimpleNamespace(attempts=({"workspace_git_diff": "diff --git a b"},))
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            cli._warn_missing_recorded_diff(bundle)
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_an_absent_diff_explains_why_the_flag_added_nothing(self) -> None:
+        for attempts in (({},), ({"workspace_git_diff": None},), ({"workspace_git_diff": "  "},)):
+            with self.subTest(attempts=attempts):
+                stderr = io.StringIO()
+                with contextlib.redirect_stderr(stderr):
+                    cli._warn_missing_recorded_diff(SimpleNamespace(attempts=attempts))
+                self.assertIn("--include-git-diff", stderr.getvalue())
+
+
+class RoutingBaselineAgentTests(unittest.TestCase):
+    """The baseline is an agent id, and is checked where every other one is."""
+
+    def _run(self, workspace: Path, *options: str) -> tuple[int, str]:
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+            exit_code = cli.main(["run", "--workspace", str(workspace), "--task", "Do it", *options])
+        return exit_code, stderr.getvalue()
+
+    def test_unknown_baseline_is_rejected_before_any_state_is_written(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            exit_code, stderr = self._run(
+                workspace, "--routing-policy", "static", "--routing-baseline-agent", "nope",
+            )
+
+            self.assertEqual(exit_code, 2)
+            self.assertIn("Unknown --routing-baseline-agent: nope", stderr)
+            self.assertNotIn("Traceback", stderr)
+            # Reaching the router would mean the lifecycle recorder already ran.
+            self.assertEqual(list(workspace.iterdir()), [])
+
+    def test_unknown_baseline_is_rejected_even_beside_an_explicit_agent(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            exit_code, stderr = self._run(
+                Path(directory), "--agent", "codex", "--routing-baseline-agent", "nope",
+            )
+
+            self.assertEqual(exit_code, 2)
+            self.assertIn("Unknown --routing-baseline-agent", stderr)
+
+    def test_a_registered_baseline_is_accepted(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(cli, "_build_workflow", return_value=object()) as build:
+                workflow = cli._build_workflow_for_cli(
+                    argparse.Namespace(
+                        agent="auto",
+                        routing_baseline_agent="codex",
+                        claude_model=None,
+                        codex_model=None,
+                        codex_reasoning_effort=None,
+                    ),
+                    Path(directory),
+                )
+
+            self.assertIsNotNone(workflow)
+            build.assert_called_once()
+
+
+class InertEscalationOptionTests(unittest.TestCase):
+    """Escalation only applies to --agent auto; saying so beats accepting it silently."""
+
+    def test_typed_options_are_reported_only_when_the_caller_wrote_them(self) -> None:
+        self.assertEqual(cli._escalation_options_in(["run", "--escalation"]), ["--escalation"])
+        self.assertEqual(
+            cli._escalation_options_in(["run", "--escalation-risk-threshold=0"]),
+            ["--escalation-risk-threshold"],
+        )
+        self.assertEqual(cli._escalation_options_in(["run", "--no-escalation"]), [])
+        self.assertEqual(cli._escalation_options_in(["run", "--task", "x"]), [])
+
+    def test_no_warning_for_auto(self) -> None:
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            cli._warn_inert_escalation_options(["run", "--escalation"], "auto")
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_warning_names_the_options_and_the_agent(self) -> None:
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            cli._warn_inert_escalation_options(["run", "--escalation"], "claude-code")
+        self.assertIn("--escalation", stderr.getvalue())
+        self.assertIn("claude-code", stderr.getvalue())
+        self.assertIn("--agent auto", stderr.getvalue())
+
+    def test_run_with_an_explicit_agent_warns_through_the_command(self) -> None:
+        class Workflow:
+            def run(self, task, requested_agent):
+                return object(), object()
+
+        with tempfile.TemporaryDirectory() as directory:
+            stderr = io.StringIO()
+            with (
+                patch.object(cli, "_build_workflow_for_cli", return_value=Workflow()),
+                patch.object(cli, "asdict", return_value={}),
+                patch.object(cli, "execution_succeeded", return_value=True),
+                contextlib.redirect_stdout(io.StringIO()),
+                contextlib.redirect_stderr(stderr),
+            ):
+                exit_code = cli.main([
+                    "run", "--workspace", directory, "--task", "Do it",
+                    "--agent", "codex", "--escalation",
+                ])
+
+            self.assertEqual(exit_code, 0)
+            self.assertIn("has no effect with --agent codex", stderr.getvalue())
+
+
+class RetryUnknownAgentTests(unittest.TestCase):
+    def test_recorded_model_variant_that_is_not_configured_says_what_to_do(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            log = workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir(parents=True)
+            log.write_text(json.dumps({
+                "execution_id": "e1",
+                "attempt_id": "a1",
+                "agent_id": "claude-code:some-exotic-model",
+                "task": {"description": "d", "objective": "o"},
+            }) + "\n", encoding="utf-8")
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                exit_code = cli.main(["retry", "#1", "--workspace", str(workspace)])
+
+            self.assertEqual(exit_code, 2)
+            self.assertIn("Unknown agent: claude-code:some-exotic-model", stderr.getvalue())
+            self.assertIn("--agent auto", stderr.getvalue())
+
+
+class WorkspaceResolutionTests(unittest.TestCase):
+    WORKSPACE_COMMANDS = (
+        ["show", "#1"],
+        ["report", "#1"],
+        ["retry", "#1"],
+        ["replay"],
+        ["doctor"],
+        ["init"],
+        ["memory", "search"],
+        ["run", "--task", "Do it"],
+    )
+
+    def test_unresolvable_workspace_is_reported_as_a_bad_argument(self) -> None:
+        # A raising resolve() is forced rather than provoked with a symlink
+        # loop: Python 3.13 resolves loops instead of raising, so the real-world
+        # trigger reaches a different branch there. The branch under test is
+        # "resolve() failed at all" — a loop on older versions, an unwalkable
+        # directory on any of them — so the failure is injected directly.
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "unwalkable"
+            with resolve_failing_for(target):
+                for command in self.WORKSPACE_COMMANDS:
+                    with self.subTest(command=command[0]):
+                        stderr = io.StringIO()
+                        with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                            exit_code = cli.main([*command, "--workspace", str(target)])
+
+                        self.assertEqual(exit_code, 2)
+                        self.assertIn("could not resolve --workspace", stderr.getvalue())
+                        self.assertNotIn("Traceback", stderr.getvalue())
+
+    def test_a_symlink_loop_is_refused_however_this_python_resolves_it(self) -> None:
+        # 3.10-3.12 raise RuntimeError; 3.13 resolves the loop and the path then
+        # names no directory. Both must be refused, and neither may traceback.
+        with tempfile.TemporaryDirectory() as directory:
+            first = Path(directory) / "first"
+            second = Path(directory) / "second"
+            first.symlink_to(second)
+            second.symlink_to(first)
+
+            for command in (["show", "#1"], ["run", "--task", "Do it"], ["init"]):
+                with self.subTest(command=command[0]):
+                    stderr = io.StringIO()
+                    with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                        exit_code = cli.main([*command, "--workspace", str(first)])
+
+                    self.assertEqual(exit_code, 2)
+                    self.assertIn("--workspace", stderr.getvalue())
+                    self.assertNotIn("Traceback", stderr.getvalue())
+                    self.assertFalse(first.is_dir())
+
+    def test_home_relative_workspace_is_expanded(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory) / "home"
+            (home / "project").mkdir(parents=True)
+            stderr = io.StringIO()
+            with (
+                patch.dict(os.environ, {"HOME": str(home)}),
+                contextlib.redirect_stderr(stderr),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                exit_code = cli.main(["show", "#1", "--workspace", "~/project"])
+
+            self.assertEqual(exit_code, 1)
+            self.assertIn(str((home / "project").resolve()), stderr.getvalue())
+            self.assertNotIn("~", stderr.getvalue())
+
+
+class RunArgumentRejectionTests(unittest.TestCase):
+    """A run rejected for its arguments reports one line and touches nothing."""
+
+    REJECTED = (
+        (["--task", "hi", "--time-limit", "-5"], "not a positive number of seconds"),
+        (["--task", "   "], "description and objective are required"),
+        (["--description-file", "/nope.txt", "--objective", "x"], "could not read --description-file"),
+    )
+
+    def test_domain_validation_failures_are_reported_like_parser_errors(self) -> None:
+        for options, expected in self.REJECTED:
+            with self.subTest(options=options), tempfile.TemporaryDirectory() as directory:
+                workspace = Path(directory)
+                stderr = io.StringIO()
+                with (
+                    contextlib.redirect_stderr(stderr),
+                    contextlib.redirect_stdout(io.StringIO()),
+                    self.assertRaises(SystemExit) as raised,
+                ):
+                    cli.main(["run", "--workspace", str(workspace), *options])
+
+                self.assertEqual(raised.exception.code, 2)
+                self.assertIn(expected, stderr.getvalue())
+                self.assertNotIn("Traceback", stderr.getvalue())
+
+    def test_no_workflow_is_built_for_a_run_that_cannot_start(self) -> None:
+        for options, _expected in self.REJECTED:
+            with self.subTest(options=options), tempfile.TemporaryDirectory() as directory:
+                workspace = Path(directory)
+                with (
+                    patch.object(cli, "_build_workflow_for_cli") as build_workflow,
+                    contextlib.redirect_stderr(io.StringIO()),
+                    contextlib.redirect_stdout(io.StringIO()),
+                    self.assertRaises(SystemExit),
+                ):
+                    cli.main(["run", "--workspace", str(workspace), *options])
+
+                build_workflow.assert_not_called()
+                self.assertEqual(list(workspace.iterdir()), [])
+
+
+class PlanSpecFieldTests(unittest.TestCase):
+    """A near-miss key used to vanish while `plan validate` called the file good."""
+
+    def _validate(self, payload: object) -> tuple[bool, str]:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "plan.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            ok, message = cli._validate_plan_file(path)
+        return ok, message or ""
+
+    def test_every_documented_field_is_accepted(self) -> None:
+        ok, message = self._validate([{
+            "description": "d",
+            "objective": "o",
+            "constraints": ["c"],
+            "capabilities": ["testing"],
+            "priority": "high",
+            "time_limit_seconds": 60,
+            "cost_limit_usd": 1.5,
+            "task_id": "t1",
+        }])
+        self.assertTrue(ok, message)
+
+    def test_a_near_miss_key_is_rejected_with_the_field_it_resembles(self) -> None:
+        ok, message = self._validate([
+            {"description": "d", "objective": "o", "constraint": ["never delete files"]},
+        ])
+        self.assertFalse(ok)
+        self.assertIn("'constraint'", message)
+        self.assertIn("did you mean 'constraints'?", message)
+
+    def test_the_failing_step_is_named(self) -> None:
+        ok, message = self._validate([
+            {"description": "d", "objective": "o"},
+            {"description": "d2", "objective": "o2", "nonsense": 1},
+        ])
+        self.assertFalse(ok)
+        self.assertIn("step 2 of 2", message)
+
+    def test_a_missing_required_field_reads_as_missing(self) -> None:
+        ok, message = self._validate([{"objective": "o"}])
+        self.assertFalse(ok)
+        self.assertIn("missing required field 'description'", message)
+
+    def test_a_step_that_is_not_an_object_is_reported_once(self) -> None:
+        ok, message = self._validate(["just a string"])
+        self.assertFalse(ok)
+        self.assertIn("expected an object, got str", message)
+        # Iterating the string would have named every letter as a bad field.
+        self.assertNotIn("'j'", message)
+
+    def test_the_retry_spec_round_trips_through_the_same_builder(self) -> None:
+        # `task_spec_for_retry` feeds _task_from_spec; a field it emits that the
+        # schema does not list would make every retry fail.
+        spec = {
+            "description": "d",
+            "objective": "o",
+            "constraints": [],
+            "capabilities": [],
+            "priority": "normal",
+            "time_limit_seconds": None,
+            "cost_limit_usd": None,
+            "task_id": "t1",
+        }
+        self.assertTrue(set(spec) <= set(cli.PLAN_SPEC_FIELDS))
+        self.assertEqual(cli._task_from_spec(spec).task_id, "t1")
+
+
+class PlanGenerateOutputPathTests(unittest.TestCase):
+    def test_home_relative_output_is_expanded_like_every_other_path_option(self) -> None:
+        class Workflow:
+            task = None
+
+            def run(self, task, requested_agent):
+                self.task = task
+                return object(), SimpleNamespace(workspace_modified_files=())
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workspace = root / "workspace"
+            home = root / "home"
+            workspace.mkdir()
+            home.mkdir()
+            workflow = Workflow()
+
+            with (
+                patch.dict(os.environ, {"HOME": str(home)}),
+                patch.object(cli, "_build_workflow_for_cli", return_value=workflow),
+                patch.object(cli, "execution_succeeded", return_value=True),
+                patch.object(cli, "_load_plan", return_value=[]),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                exit_code = cli.main([
+                    "plan",
+                    "generate",
+                    "Add a regression test",
+                    "--workspace",
+                    str(workspace),
+                    "--output",
+                    "~/plans/plan.json",
+                ])
+
+            self.assertEqual(exit_code, 0)
+            expected = str((home / "plans" / "plan.json").resolve())
+            self.assertEqual(workflow.task.context["output_path"], expected)
+            self.assertNotIn("~", expected)
+
+
 class ValidatePlanFileTests(unittest.TestCase):
     def test_returns_success_for_valid_plan_file(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -1529,6 +2057,646 @@ class ResolveObjectiveTests(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 cli._resolve_objective(args, parser)
         self.assertIn("exactly one of --objective or --objective-file must be provided for objective", stderr.getvalue())
+
+
+class WorkspaceMustBeADirectoryTests(unittest.TestCase):
+    """A mistyped --workspace is a bad argument, not a directory to create."""
+
+    COMMANDS = (
+        ("run", "--task", "Do the thing"),
+        ("run-plan", "plan.json"),
+        ("retry", "#1"),
+        ("memory", "record", "--type", "trade_off", "--title", "T", "--summary", "S"),
+        ("show", "#1"),
+        ("replay",),
+    )
+
+    def test_missing_workspace_is_rejected_and_never_created(self) -> None:
+        for command in self.COMMANDS:
+            with self.subTest(command=command), tempfile.TemporaryDirectory() as directory:
+                workspace = Path(directory) / "typo"
+                stderr = io.StringIO()
+                with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                    exit_code = cli.main([*command, "--workspace", str(workspace)])
+
+                self.assertEqual(exit_code, 2)
+                self.assertIn("does not exist", stderr.getvalue())
+                self.assertFalse(workspace.exists())
+
+    def test_workspace_naming_a_file_says_so(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "notes.txt"
+            target.write_text("x", encoding="utf-8")
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                exit_code = cli.main(["run", "--workspace", str(target), "--task", "Do the thing"])
+
+            self.assertEqual(exit_code, 2)
+            self.assertIn("not a directory", stderr.getvalue())
+
+    def test_doctor_still_reports_a_bad_workspace_as_a_failed_check(self) -> None:
+        # `doctor` exists to name what is wrong; refusing to start would say less.
+        with tempfile.TemporaryDirectory() as directory:
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(io.StringIO()):
+                exit_code = cli.main(["doctor", "--workspace", str(Path(directory) / "typo")])
+
+            self.assertEqual(exit_code, 1)
+            self.assertIn("workspace", stdout.getvalue())
+            self.assertIn("not a directory", stdout.getvalue())
+
+
+class PositiveTimeLimitTests(unittest.TestCase):
+    """A time limit no process could satisfy is refused before the agent runs."""
+
+    OPTIONS = ("--time-limit", "--verify-time-limit", "--quality-evaluator-time-limit")
+
+    def test_zero_and_negative_limits_are_argument_errors(self) -> None:
+        for option in self.OPTIONS:
+            for value in ("0", "-5"):
+                with self.subTest(option=option, value=value), tempfile.TemporaryDirectory() as directory:
+                    stderr = io.StringIO()
+                    with (
+                        patch.object(cli, "_build_workflow_for_cli") as build_workflow,
+                        contextlib.redirect_stderr(stderr),
+                        contextlib.redirect_stdout(io.StringIO()),
+                        self.assertRaises(SystemExit) as raised,
+                    ):
+                        cli.main([
+                            "run", "--workspace", directory, "--task", "Do the thing", option, value,
+                        ])
+
+                    self.assertEqual(raised.exception.code, 2)
+                    self.assertIn("not a positive number of seconds", stderr.getvalue())
+                    build_workflow.assert_not_called()
+
+    def test_a_non_numeric_limit_names_the_value(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            stderr = io.StringIO()
+            with (
+                contextlib.redirect_stderr(stderr),
+                contextlib.redirect_stdout(io.StringIO()),
+                self.assertRaises(SystemExit),
+            ):
+                cli.main(["run", "--workspace", directory, "--task", "Do it", "--time-limit", "soon"])
+
+            self.assertIn("'soon' is not a number of seconds", stderr.getvalue())
+
+    def test_fractional_limits_are_still_accepted(self) -> None:
+        args = cli.build_parser().parse_args(
+            ["run", "--task", "Do it", "--verify-time-limit", "0.5", "--time-limit", "1.5"]
+        )
+        self.assertEqual(args.verify_time_limit, 0.5)
+        self.assertEqual(args.time_limit, 1.5)
+
+
+class PlanSpecTypeTests(unittest.TestCase):
+    """Plan-file values are checked here, where the file can still be named."""
+
+    def test_a_string_where_an_array_belongs_is_rejected(self) -> None:
+        # Accepted before: a string is iterable, so one constraint became twelve
+        # single-character ones and nothing said so.
+        with self.assertRaisesRegex(ValueError, "'constraints' must be an array of strings, got str"):
+            cli._task_from_spec({"description": "a", "objective": "b", "constraints": "do not touch"})
+
+    def test_a_non_string_array_entry_is_located(self) -> None:
+        with self.assertRaisesRegex(ValueError, "'constraints' entry 2 must be a string, got int"):
+            cli._task_from_spec({"description": "a", "objective": "b", "constraints": ["ok", 7]})
+
+    def test_non_string_description_and_objective_name_the_field(self) -> None:
+        with self.assertRaisesRegex(ValueError, "'description' must be a string, got int"):
+            cli._task_from_spec({"description": 42, "objective": "b"})
+        with self.assertRaisesRegex(ValueError, "'objective' must be a string, got NoneType"):
+            cli._task_from_spec({"description": "a", "objective": None})
+
+    def test_a_non_numeric_limit_is_rejected_including_booleans(self) -> None:
+        for value in ("60", True):
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(ValueError, "'time_limit_seconds' must be a number or null"):
+                    cli._task_from_spec({"description": "a", "objective": "b", "time_limit_seconds": value})
+
+    def test_invalid_enum_values_list_what_is_valid(self) -> None:
+        with self.assertRaisesRegex(ValueError, "did you mean 'code_generation'"):
+            cli._task_from_spec({"description": "a", "objective": "b", "capabilities": ["cod_generation"]})
+        with self.assertRaisesRegex(ValueError, "'priority': 'urgent' is not valid; expected one of"):
+            cli._task_from_spec({"description": "a", "objective": "b", "priority": "urgent"})
+
+    def test_a_missing_required_field_is_still_named_as_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "plan.json"
+            path.write_text(json.dumps([{"objective": "b"}]), encoding="utf-8")
+            _, error = cli._validate_plan_file(path)
+            self.assertIn("missing required field 'description'", error or "")
+
+    def test_a_fully_populated_valid_spec_still_loads(self) -> None:
+        task = cli._task_from_spec({
+            "description": "a", "objective": "b", "constraints": ["x"],
+            "capabilities": ["testing"], "priority": "high",
+            "time_limit_seconds": 60, "cost_limit_usd": None, "task_id": "t1",
+        })
+        self.assertEqual(task.constraints, ("x",))
+        self.assertEqual(task.required_capabilities, (Capability.TESTING,))
+
+    def test_a_recorded_execution_still_round_trips_through_retry(self) -> None:
+        # `retry` rebuilds its task through the same function; the stricter
+        # checks must not reject what the logger itself wrote.
+        from adaptive_orchestrator.operations.reporting import task_spec_for_retry
+
+        bundle = SimpleNamespace(
+            execution_id="exec-1",
+            primary={
+                "task": {
+                    "description": "Fix it", "objective": "Done",
+                    "constraints": ["Read-only"], "required_capabilities": ["debugging"],
+                    "priority": "high", "time_limit_seconds": 30, "cost_limit_usd": 1.0,
+                },
+                "task_id": "task-1",
+            },
+        )
+        task = cli._task_from_spec(task_spec_for_retry(bundle))
+        self.assertEqual(task.required_capabilities, (Capability.DEBUGGING,))
+        self.assertEqual(task.task_id, "task-1")
+
+
+class VerifyCommandParsingTests(unittest.TestCase):
+    """A constraint command that holds nothing is refused, not skipped."""
+
+    def test_a_blank_command_is_rejected(self) -> None:
+        for value in ("", "   "):
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(ValueError, "contains no command"):
+                    cli._verify_commands([value])
+
+    def test_an_unbalanced_quote_names_the_offending_value(self) -> None:
+        with self.assertRaisesRegex(ValueError, r"--verify-command \"echo 'oops\" could not be parsed"):
+            cli._verify_commands(["echo 'oops"])
+
+    def test_valid_commands_are_tokenized_in_order(self) -> None:
+        self.assertEqual(
+            cli._verify_commands(["pytest -q", "ruff check ."]),
+            [("pytest", "-q"), ("ruff", "check", ".")],
+        )
+
+    def test_a_blank_command_stops_the_run_before_the_agent_starts(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                exit_code = cli.main([
+                    "run", "--workspace", directory, "--task", "Do the thing",
+                    "--agent", "codex", "--verify-command", "",
+                ])
+
+            self.assertEqual(exit_code, 2)
+            self.assertIn("contains no command", stderr.getvalue())
+            self.assertFalse((Path(directory) / ".orchestrator").exists())
+
+
+class PlanGenerateOverwriteTests(unittest.TestCase):
+    """The agent writes the plan file, so the guard has to come first."""
+
+    def test_an_existing_plan_file_is_not_replaced_without_force(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            existing = Path(directory) / "plan.json"
+            existing.write_text('[{"description": "keep", "objective": "me"}]', encoding="utf-8")
+            stderr = io.StringIO()
+            with (
+                patch.object(cli, "_build_workflow_for_cli") as build_workflow,
+                contextlib.redirect_stderr(stderr),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                exit_code = cli.main(["plan", "generate", "do something", "--workspace", directory])
+
+            self.assertEqual(exit_code, 2)
+            self.assertIn("already exists", stderr.getvalue())
+            self.assertIn("--force", stderr.getvalue())
+            build_workflow.assert_not_called()
+            self.assertIn("keep", existing.read_text(encoding="utf-8"))
+
+    def test_force_allows_the_run_to_proceed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            (Path(directory) / "plan.json").write_text("[]", encoding="utf-8")
+            with (
+                patch.object(cli, "_build_workflow_for_cli", return_value=None) as build_workflow,
+                contextlib.redirect_stderr(io.StringIO()),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                cli.main(["plan", "generate", "do something", "--workspace", directory, "--force"])
+
+            build_workflow.assert_called_once()
+
+
+class ReportOutputTargetTests(unittest.TestCase):
+    def test_a_directory_output_is_named_as_one_and_force_does_not_help(self) -> None:
+        record = {
+            "execution_id": "exec-1", "attempt_id": "attempt-1",
+            "task": {"description": "Fix it", "objective": "It works"},
+            "agent_id": "codex", "status": "completed", "duration_ms": 10,
+            "verification": {"status": "passed"},
+        }
+        for extra in ([], ["--force"]):
+            with self.subTest(extra=extra), tempfile.TemporaryDirectory() as directory:
+                workspace = Path(directory)
+                log = workspace / ".orchestrator" / "executions.jsonl"
+                log.parent.mkdir(parents=True)
+                log.write_text(json.dumps(record) + "\n", encoding="utf-8")
+                target = workspace / "reports"
+                target.mkdir()
+                stderr = io.StringIO()
+                with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                    exit_code = cli.main([
+                        "report", "exec-1", "--workspace", str(workspace),
+                        "--output", str(target), *extra,
+                    ])
+
+                self.assertEqual(exit_code, 1)
+                self.assertIn("is a directory, not a file", stderr.getvalue())
+                self.assertNotIn("already exists", stderr.getvalue())
+                self.assertTrue(target.is_dir())
+
+
+class EmptyTextFileTests(unittest.TestCase):
+    def test_an_empty_file_names_the_option_and_the_path(self) -> None:
+        for name, options in (
+            ("description", ["--objective", "It works"]),
+            ("objective", ["--description", "Fix it"]),
+        ):
+            for content in ("", "   \n\n"):
+                with self.subTest(name=name, content=content), tempfile.TemporaryDirectory() as directory:
+                    source = Path(directory) / "text.md"
+                    source.write_text(content, encoding="utf-8")
+                    stderr = io.StringIO()
+                    with (
+                        contextlib.redirect_stderr(stderr),
+                        contextlib.redirect_stdout(io.StringIO()),
+                        self.assertRaises(SystemExit) as raised,
+                    ):
+                        cli.main([
+                            "run", "--workspace", directory, *options,
+                            f"--{name}-file", str(source),
+                        ])
+
+                    self.assertEqual(raised.exception.code, 2)
+                    self.assertIn(f"--{name}-file {source} is empty", stderr.getvalue())
+
+    def test_a_file_holding_only_a_trailing_newline_still_reads(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "text.md"
+            source.write_text("Fix the parser\n", encoding="utf-8")
+            args = type("Args", (), {"description": None, "description_file": source})()
+            self.assertEqual(cli._resolve_description(args), "Fix the parser")
+
+
+class PlanFileEncodingTests(unittest.TestCase):
+    def test_a_byte_order_mark_does_not_fail_the_parse(self) -> None:
+        # `plan generate` has an agent write this file; a BOM is a routine
+        # artifact, not a malformed plan.
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "plan.json"
+            path.write_text(
+                json.dumps([{"description": "Step one", "objective": "First"}]),
+                encoding="utf-8-sig",
+            )
+            tasks = cli._load_plan(path)
+            self.assertEqual([task.description for task in tasks], ["Step one"])
+
+    def test_plain_utf8_is_unaffected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "plan.json"
+            path.write_text(
+                json.dumps([{"description": "단계 하나", "objective": "완료"}]),
+                encoding="utf-8",
+            )
+            self.assertEqual(cli._load_plan(path)[0].description, "단계 하나")
+
+
+class ShortIdentifierPrefixTests(unittest.TestCase):
+    def _workspace(self, directory: str) -> Path:
+        workspace = Path(directory)
+        log = workspace / ".orchestrator" / "executions.jsonl"
+        log.parent.mkdir(parents=True)
+        log.write_text(json.dumps({
+            "execution_id": "e5ea2bea-f524-4f1a-9276-191d75a613c7",
+            "attempt_id": "attempt-1",
+            "task": {"description": "Fix it", "objective": "It works"},
+            "agent_id": "codex", "status": "completed", "duration_ms": 10,
+            "verification": {"status": "passed"},
+        }) + "\n", encoding="utf-8")
+        return workspace
+
+    def test_a_too_short_fragment_says_so(self) -> None:
+        for command in ("show", "report", "retry"):
+            with self.subTest(command=command), tempfile.TemporaryDirectory() as directory:
+                workspace = self._workspace(directory)
+                stderr = io.StringIO()
+                with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                    cli.main([command, "e5e", "--workspace", str(workspace)])
+
+                self.assertIn("shorter than the 4 characters", stderr.getvalue())
+
+    def test_a_long_wrong_identifier_gets_no_prefix_hint(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = self._workspace(directory)
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                cli.main(["show", "12345678", "--workspace", str(workspace)])
+
+            self.assertIn("Execution not found", stderr.getvalue())
+            self.assertNotIn("shorter than", stderr.getvalue())
+
+    def test_a_legacy_row_number_gets_no_prefix_hint(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = self._workspace(directory)
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                cli.main(["show", "#9", "--workspace", str(workspace)])
+
+            self.assertNotIn("shorter than", stderr.getvalue())
+
+
+class ExplicitControlStateDirectoryTests(unittest.TestCase):
+    """A typed control directory that names nothing is a typo, not an empty log."""
+
+    def test_replay_refuses_a_missing_explicit_directory_and_creates_nothing(self) -> None:
+        for extra in ([], ["--rebuild-state"], ["--reconcile-incomplete"]):
+            with self.subTest(extra=extra), tempfile.TemporaryDirectory() as directory:
+                workspace = Path(directory) / "workspace"
+                workspace.mkdir()
+                control = Path(directory) / "typo"
+                stderr = io.StringIO()
+                with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                    exit_code = cli.main([
+                        "replay", "--workspace", str(workspace),
+                        "--control-state-dir", str(control), *extra,
+                    ])
+
+                self.assertEqual(exit_code, 2)
+                self.assertIn("does not exist", stderr.getvalue())
+                self.assertFalse(control.exists())
+
+    def test_a_directory_inside_the_workspace_is_still_refused_as_such(self) -> None:
+        # The safety rule outranks existence: reporting "does not exist" would
+        # invite creating a directory that is rejected for a better reason.
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                exit_code = cli.main([
+                    "replay", "--workspace", str(workspace),
+                    "--control-state-dir", str(workspace / "inside"),
+                ])
+
+            self.assertEqual(exit_code, 1)
+            self.assertIn("must be outside the agent workspace", stderr.getvalue())
+
+    def test_paired_analyze_refuses_a_missing_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                exit_code = cli.main([
+                    "paired", "analyze", "manifest.json",
+                    "--control-state-dir", str(Path(directory) / "typo"),
+                ])
+
+            self.assertEqual(exit_code, 2)
+            self.assertIn("does not exist", stderr.getvalue())
+
+    def test_the_default_path_is_left_to_come_into_existence(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "workspace"
+            workspace.mkdir()
+            with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
+                exit_code = cli.main(["replay", "--workspace", str(workspace)])
+
+            self.assertEqual(exit_code, 0)
+
+    def test_an_existing_directory_is_accepted(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "workspace"
+            workspace.mkdir()
+            control = Path(directory) / "control"
+            control.mkdir()
+            with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
+                exit_code = cli.main([
+                    "replay", "--workspace", str(workspace), "--control-state-dir", str(control),
+                ])
+
+            self.assertEqual(exit_code, 0)
+
+    def test_a_run_still_creates_the_directory_it_was_told_to_write(self) -> None:
+        self.assertIsNone(cli._require_existing_control_state_dir(None))
+
+
+class EscalatedFailureReasonTests(unittest.TestCase):
+    """The reason on stderr describes the attempt the summary calls the outcome."""
+
+    @staticmethod
+    def _record(status: str, error: str | None, escalated: object = None) -> object:
+        return SimpleNamespace(
+            status=status,
+            agent_id="codex",
+            error=error,
+            verification=SimpleNamespace(status="skipped"),
+            execution_id="exec-1",
+            escalation=None if escalated is None else SimpleNamespace(record=escalated),
+        )
+
+    def test_the_escalated_attempt_supplies_the_status_and_agent(self) -> None:
+        escalated = SimpleNamespace(
+            status="timed_out", agent_id="claude-code", error=None,
+            verification=SimpleNamespace(status="skipped"), execution_id="exec-1",
+            escalation=None,
+        )
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            cli._print_failure_reason(self._record("failed", None, escalated), "Run")
+
+        self.assertIn("status=timed_out", stderr.getvalue())
+        self.assertIn("agent=claude-code", stderr.getvalue())
+        self.assertNotIn("status=failed", stderr.getvalue())
+
+    def test_an_error_recorded_only_on_the_escalated_attempt_is_shown(self) -> None:
+        escalated = SimpleNamespace(
+            status="failed", agent_id="claude-code", error="boom\ndetail",
+            verification=SimpleNamespace(status="skipped"), execution_id="exec-1",
+            escalation=None,
+        )
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            cli._print_failure_reason(self._record("failed", None, escalated), "Run")
+
+        self.assertIn("boom", stderr.getvalue())
+        self.assertNotIn("detail", stderr.getvalue())
+
+    def test_a_primary_error_still_shows_when_the_escalated_attempt_has_none(self) -> None:
+        escalated = SimpleNamespace(
+            status="failed", agent_id="claude-code", error=None,
+            verification=SimpleNamespace(status="skipped"), execution_id="exec-1",
+            escalation=None,
+        )
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            cli._print_failure_reason(self._record("failed", "primary blew up", escalated), "Run")
+
+        self.assertIn("primary blew up", stderr.getvalue())
+
+    def test_an_unescalated_record_is_reported_as_itself(self) -> None:
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            cli._print_failure_reason(self._record("failed", "boom"), "Run")
+
+        self.assertIn("status=failed", stderr.getvalue())
+        self.assertIn("agent=codex", stderr.getvalue())
+        self.assertIn("boom", stderr.getvalue())
+
+
+class UnreadableExecutionLogTests(unittest.TestCase):
+    """The log is read for routing history mid-run; check it before the agent."""
+
+    def test_an_unreadable_log_is_one_line_and_stops_before_the_agent(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            log = workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir(parents=True)
+            log.write_text("", encoding="utf-8")
+            # Unlinking it only needs write permission on the parent directory,
+            # so the temporary directory still cleans up.
+            log.chmod(0o000)
+            if os.access(log, os.R_OK):  # running as root: the mode means nothing
+                self.skipTest("cannot make a file unreadable for this user")
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                exit_code = cli.main([
+                    "run", "--workspace", str(workspace), "--task", "Do the thing",
+                    "--agent", "codex", "--no-escalation",
+                ])
+
+            self.assertEqual(exit_code, 2)
+            self.assertIn("cannot read the execution log", stderr.getvalue())
+            self.assertNotIn("Traceback", stderr.getvalue())
+
+    def test_a_log_path_that_is_a_directory_is_reported_not_raised(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            log = Path(directory) / ".orchestrator" / "executions.jsonl"
+            log.mkdir(parents=True)
+            with self.assertRaisesRegex(OSError, "cannot read the execution log"):
+                cli._require_readable_execution_log(log)
+
+    def test_an_absent_log_is_not_an_error(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            cli._require_readable_execution_log(Path(directory) / "nothing.jsonl")
+
+    def test_a_readable_log_passes(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            log = Path(directory) / "executions.jsonl"
+            log.write_text("{}\n", encoding="utf-8")
+            cli._require_readable_execution_log(log)
+
+
+@dataclasses.dataclass
+class _FakePlan:
+    agent_id: str = "codex"
+    rationale: str = "only candidate"
+
+
+@dataclasses.dataclass
+class _FakeRecord:
+    # Empty on purpose: keeps the --summary path from reading a real log.
+    execution_id: str
+    task: dict
+    agent_id: str
+    status: str
+    metadata: dict
+
+
+class ExecutionOutputRedactionTests(unittest.TestCase):
+    """stdout says what the log says; the record is redacted in both."""
+
+    PLAN = _FakePlan()
+    SECRET = "sk-abcdefghijklmnop123456"
+
+    def _record(self) -> _FakeRecord:
+        return _FakeRecord(
+            execution_id="",
+            task={"description": f"use api_key={self.SECRET} here", "objective": "done"},
+            agent_id="codex",
+            status="completed",
+            metadata={"input_tokens": 10, "output_tokens": 5, "cost_usd": 0.01},
+        )
+
+    def test_the_json_record_does_not_echo_a_secret_the_log_dropped(self) -> None:
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            cli._print_execution_result(self.PLAN, self._record(), Path("/nowhere"), summary=False)
+
+        payload = json.loads(stdout.getvalue())
+        self.assertNotIn(self.SECRET, stdout.getvalue())
+        self.assertIn("[REDACTED]", payload["execution"]["task"]["description"])
+
+    def test_usage_counts_and_structure_survive_redaction(self) -> None:
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            cli._print_execution_result(self.PLAN, self._record(), Path("/nowhere"), summary=False)
+
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(sorted(payload), ["execution", "plan"])
+        self.assertEqual(payload["plan"]["agent_id"], "codex")
+        self.assertEqual(payload["execution"]["metadata"]["input_tokens"], 10)
+        self.assertEqual(payload["execution"]["metadata"]["output_tokens"], 5)
+        self.assertEqual(payload["execution"]["status"], "completed")
+
+    def test_plan_steps_are_redacted_too(self) -> None:
+        result = SimpleNamespace(
+            steps=(SimpleNamespace(plan=self.PLAN, record=self._record()),),
+            stopped_early=False,
+        )
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            cli._print_plan_result(result, Path("/nowhere"), summary=False)
+
+        payload = json.loads(stdout.getvalue())
+        self.assertNotIn(self.SECRET, stdout.getvalue())
+        self.assertEqual(sorted(payload), ["steps", "stopped_early"])
+        self.assertEqual(len(payload["steps"]), 1)
+
+
+class MemoryRecordOutputTests(unittest.TestCase):
+    """What the command prints is what the store holds."""
+
+    def test_a_secret_is_redacted_on_stdout_as_well_as_on_disk(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(io.StringIO()):
+                exit_code = cli.main([
+                    "memory", "record", "--workspace", str(workspace),
+                    "--type", "trade_off", "--title", "Rotate",
+                    "--summary", "api_key=sk-abcdefghijklmnop123456 was rotated",
+                ])
+
+            self.assertEqual(exit_code, 0)
+            self.assertNotIn("sk-abcdefghijklmnop123456", stdout.getvalue())
+            self.assertIn("[REDACTED]", stdout.getvalue())
+
+            stored = json.loads(
+                (workspace / ".orchestrator" / "memory.jsonl").read_text(encoding="utf-8")
+            )
+            self.assertEqual(json.loads(stdout.getvalue())["summary"], stored["summary"])
+
+    def test_ordinary_text_is_printed_unchanged(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(io.StringIO()):
+                cli.main([
+                    "memory", "record", "--workspace", directory,
+                    "--type", "trade_off", "--title", "Chose sqlite",
+                    "--summary", "Postgres was more than this needs.",
+                    "--tag", "storage",
+                ])
+
+            payload = json.loads(stdout.getvalue())
+            self.assertEqual(payload["summary"], "Postgres was more than this needs.")
+            self.assertEqual(payload["tags"], ["storage"])
 
 
 if __name__ == "__main__":

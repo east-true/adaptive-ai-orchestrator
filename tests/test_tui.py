@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+import io
 import shutil
 import sys
 import tempfile
@@ -672,6 +674,97 @@ class MainCleanupTests(unittest.TestCase):
                 main(["--workspace", str(workspace)])
 
         self.assertEqual(captured["task"].signals, [True])
+
+
+@contextlib.contextmanager
+def resolve_failing_for(target: Path):
+    """Make ``Path.resolve()`` fail for one path, and only for that path.
+
+    A symlink loop used to provoke this, but Python 3.13 resolves loops instead
+    of raising, so the real trigger reaches a different branch there. The branch
+    under test — resolve() failing outright, as an unwalkable directory does on
+    every version — is injected so it stays covered everywhere.
+    """
+
+    real_resolve = Path.resolve
+    text = str(target)
+
+    def fake_resolve(self, *args, **kwargs):
+        if str(self) == text:
+            raise RuntimeError(f"Symlink loop from '{self}'")
+        return real_resolve(self, *args, **kwargs)
+
+    with mock.patch.object(Path, "resolve", fake_resolve):
+        yield
+
+
+class MainWorkspaceTests(unittest.TestCase):
+    def test_unresolvable_workspace_is_a_named_option_error(self) -> None:
+        from adaptive_orchestrator.interfaces import tui as tui_module
+
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "unwalkable"
+            stderr = io.StringIO()
+            with (
+                resolve_failing_for(target),
+                contextlib.redirect_stderr(stderr),
+                self.assertRaises(SystemExit) as raised,
+            ):
+                tui_module.main(["--workspace", str(target)])
+
+            self.assertEqual(raised.exception.code, 2)
+            self.assertIn("could not resolve --workspace", stderr.getvalue())
+            self.assertNotIn("Traceback", stderr.getvalue())
+
+    def test_a_symlink_loop_is_refused_however_this_python_resolves_it(self) -> None:
+        from adaptive_orchestrator.interfaces import tui as tui_module
+
+        with tempfile.TemporaryDirectory() as directory:
+            first = Path(directory) / "first"
+            second = Path(directory) / "second"
+            first.symlink_to(second)
+            second.symlink_to(first)
+
+            stderr = io.StringIO()
+            with (
+                contextlib.redirect_stderr(stderr),
+                self.assertRaises(SystemExit) as raised,
+            ):
+                tui_module.main(["--workspace", str(first)])
+
+            self.assertEqual(raised.exception.code, 2)
+            self.assertIn("--workspace", stderr.getvalue())
+            self.assertNotIn("Traceback", stderr.getvalue())
+
+
+class EntryPointNamingTests(unittest.TestCase):
+    """argparse's default prog is "tui.py", which is not a runnable command."""
+
+    def test_module_invocation_reports_the_documented_module_entry_point(self) -> None:
+        from adaptive_orchestrator.interfaces import tui as tui_module
+
+        for name in ("tui.py", "__main__.py"):
+            with self.subTest(name=name), mock.patch.object(sys, "argv", [name]):
+                resolved = tui_module.resolve_tui_program_name()
+            self.assertIn(tui_module.TUI_MODULE_ENTRY_POINT, resolved)
+            self.assertNotEqual(resolved, "tui.py")
+
+    def test_anything_else_reports_the_installed_console_script(self) -> None:
+        from adaptive_orchestrator.interfaces import tui as tui_module
+
+        with mock.patch.object(sys, "argv", ["/usr/local/bin/adaptive-ai-orchestrator-tui"]):
+            self.assertEqual(tui_module.resolve_tui_program_name(), tui_module.TUI_PROGRAM_NAME)
+
+    def test_version_names_the_console_script_and_the_kernel(self) -> None:
+        from adaptive_orchestrator.interfaces import tui as tui_module
+
+        with contextlib.redirect_stdout(io.StringIO()) as stdout:
+            with self.assertRaises(SystemExit) as raised:
+                tui_module.main(["--version"])
+
+        self.assertEqual(raised.exception.code, 0)
+        self.assertIn(tui_module.TUI_PROGRAM_NAME, stdout.getvalue())
+        self.assertIn("kernel", stdout.getvalue())
 
 
 if __name__ == "__main__":

@@ -108,6 +108,45 @@ class ShellStateTests(unittest.TestCase):
         self.assertIn("Time limit: 30s", output)
         self.assertIn("Verify command: off", output)
 
+    def test_session_verify_command_is_shown_as_added_to_the_profile(self) -> None:
+        # `--verify-command` appends to the profile's list at the CLI boundary,
+        # so a row printing only the session value read as a replacement.
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            path = config_path(workspace)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(
+                json.dumps({
+                    "version": 1,
+                    "agent": "auto",
+                    "verification": {"commands": ["python3 -m unittest"]},
+                }),
+                encoding="utf-8",
+            )
+            shell = OrchestratorShell()
+            shell.workspace = workspace
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("set verify echo session")
+                shell.onecmd("settings")
+
+        output = stdout.getvalue()
+        self.assertIn("Note: this runs in addition to 1 verify command(s)", output)
+        self.assertIn("Verify command: python3 -m unittest; echo session", output)
+
+    def test_session_verify_command_stands_alone_without_a_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell()
+            shell.workspace = Path(directory)
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("set verify echo session")
+                shell.onecmd("settings")
+
+        output = stdout.getvalue()
+        self.assertNotIn("Note: this runs in addition", output)
+        self.assertIn("Verify command: echo session", output)
+
     def test_settings_survives_an_invalid_project_profile(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory)
@@ -459,7 +498,7 @@ class ShellStateTests(unittest.TestCase):
             shell = shell_type.return_value
             shell.cmdloop.side_effect = [KeyboardInterrupt(), None]
             with contextlib.redirect_stdout(io.StringIO()):
-                shell_interface.main()
+                shell_interface.main([])
 
         self.assertEqual(shell.cmdloop.call_count, 2)
         self.assertIsNone(shell.cmdloop.call_args_list[0].kwargs["intro"])
@@ -484,7 +523,7 @@ class ShellStateTests(unittest.TestCase):
 
             shell.cmdloop.side_effect = terminate_from_loop
             with self.assertRaises(SystemExit) as raised:
-                shell_interface.main()
+                shell_interface.main([])
 
         self.assertEqual(raised.exception.code, 143)
         self.assertEqual(installed[-1], (signal.SIGTERM, signal.SIG_DFL))
@@ -510,7 +549,7 @@ class ShellStateTests(unittest.TestCase):
 
             shell.cmdloop.side_effect = hangup_from_loop
             with self.assertRaises(SystemExit) as raised:
-                shell_interface.main()
+                shell_interface.main([])
 
         self.assertEqual(raised.exception.code, 128 + signal.SIGHUP)
         restored = installed[-len({signal.SIGTERM, signal.SIGHUP, signal.SIGQUIT}) :]
@@ -1845,6 +1884,52 @@ class ShellUsageTests(unittest.TestCase):
                 shell.onecmd("usage")
 
             self.assertIn("Claude Code: project usage data not available", stdout.getvalue())
+
+
+class ShellEntryPointArgumentTests(unittest.TestCase):
+    """The console script used to discard everything handed to it."""
+
+    def test_workspace_option_selects_the_session_workspace(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "repo"
+            workspace.mkdir()
+            self.assertEqual(
+                shell_interface._parse_shell_arguments(["--workspace", str(workspace)]),
+                workspace.resolve(),
+            )
+
+    def test_no_arguments_still_means_the_current_directory(self) -> None:
+        self.assertEqual(shell_interface._parse_shell_arguments([]), Path.cwd().resolve())
+
+    def test_a_workspace_that_is_not_a_directory_is_refused(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "notes.txt"
+            target.write_text("x", encoding="utf-8")
+            for value, expected in ((Path(directory) / "typo", "does not exist"), (target, "not a directory")):
+                with self.subTest(value=value), contextlib.redirect_stderr(io.StringIO()) as stderr:
+                    with self.assertRaises(SystemExit) as raised:
+                        shell_interface._parse_shell_arguments(["--workspace", str(value)])
+                self.assertEqual(raised.exception.code, 2)
+                self.assertIn(expected, stderr.getvalue())
+
+    def test_an_unknown_option_is_an_error_rather_than_ignored(self) -> None:
+        with contextlib.redirect_stderr(io.StringIO()) as stderr:
+            with self.assertRaises(SystemExit) as raised:
+                shell_interface._parse_shell_arguments(["--nonsense"])
+
+        self.assertEqual(raised.exception.code, 2)
+        self.assertIn("unrecognized arguments", stderr.getvalue())
+
+    def test_version_names_this_console_script(self) -> None:
+        with contextlib.redirect_stdout(io.StringIO()) as stdout:
+            with self.assertRaises(SystemExit) as raised:
+                shell_interface._parse_shell_arguments(["--version"])
+
+        self.assertEqual(raised.exception.code, 0)
+        self.assertIn(shell_interface.SHELL_PROGRAM_NAME, stdout.getvalue())
+
+    def test_the_shell_still_constructs_without_a_workspace(self) -> None:
+        self.assertEqual(shell_interface.OrchestratorShell().workspace, Path.cwd())
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import cmd
 import difflib
 import math
@@ -26,6 +27,10 @@ from adaptive_orchestrator.operations.reporting import (
 )
 from adaptive_orchestrator.operations.usage import CodexUsage, read_claude_subscription, read_codex_usage
 from adaptive_orchestrator.orchestration.kernel import KERNEL_VERSION
+
+
+#: The installed console script for this interface (see ``[project.scripts]``).
+SHELL_PROGRAM_NAME = "adaptive-ai-orchestrator-shell"
 
 
 class _ShellTermination(BaseException):
@@ -183,9 +188,9 @@ class OrchestratorShell(cmd.Cmd):
     intro = _shell_banner()
     prompt = "adaptive[auto]> "
 
-    def __init__(self) -> None:
+    def __init__(self, workspace: Path | None = None) -> None:
         super().__init__()
-        self.workspace = Path.cwd()
+        self.workspace = Path.cwd() if workspace is None else workspace
         # None means the active workspace profile remains authoritative. An
         # explicit "auto" is distinct: it overrides a profile-pinned agent.
         self.agent_override: str | None = None
@@ -337,12 +342,20 @@ class OrchestratorShell(cmd.Cmd):
             seconds = config.time_limit_seconds if config else None
             print(f"Time limit: {inherited(f'{seconds:g}s' if seconds is not None else 'none')}")
 
+        commands = config.verify_commands if config else ()
         if self.default_verify_commands_disabled:
             print("Verify command: off")
         elif self.default_verify_command is not None:
-            print(f"Verify command: {self.default_verify_command}")
+            # A session command is added to the profile's, not substituted for
+            # them: every check runs and the worst outcome wins. Printing the
+            # session value alone read as a replacement, so this row shows the
+            # whole set the way the inherited rows show what is effective.
+            effective = "; ".join((*commands, self.default_verify_command))
+            if commands:
+                print(f"Verify command: {effective} (session command added to {len(commands)} from the profile)")
+            else:
+                print(f"Verify command: {effective}")
         else:
-            commands = config.verify_commands if config else ()
             print(f"Verify command: {inherited('; '.join(commands) if commands else 'none')}")
 
     def do_set(self, arg: str) -> None:
@@ -418,6 +431,15 @@ class OrchestratorShell(cmd.Cmd):
             self.default_verify_command = shlex.join(tokens)
             self.default_verify_commands_disabled = False
             print(f"verify set to {self.default_verify_command}")
+            profile_commands = self._profile_verify_commands()
+            if profile_commands:
+                # Said once, at the moment it becomes true, so the operator does
+                # not have to run `settings` to discover the profile's checks
+                # still run alongside this one. `set verify off` clears both.
+                print(
+                    f"Note: this runs in addition to {len(profile_commands)} verify "
+                    f"command(s) from the workspace profile: {'; '.join(profile_commands)}"
+                )
             return
 
         print(f"Error: unknown setting: {name}. Choose one of {', '.join(_SETTING_NAMES)}")
@@ -669,6 +691,13 @@ class OrchestratorShell(cmd.Cmd):
             ["report", "--workspace", str(self.workspace), *tokens],
             "report",
         )
+
+    def _profile_verify_commands(self) -> tuple[str, ...]:
+        """The active profile's verify commands, or none when it cannot be read."""
+        try:
+            return tuple(load_project_config(self.workspace).verify_commands)
+        except ProjectConfigError:
+            return ()
 
     def _history_agent_ids(self, history: ExecutionHistory) -> list[str]:
         # Registered agents always show, so a freshly added one reports "no data yet" instead of
@@ -1432,7 +1461,46 @@ class OrchestratorShell(cmd.Cmd):
         return f"Codex: {', '.join(clauses)}{reset_text}" if clauses else "Codex: usage data not available"
 
 
-def main() -> None:
+def _parse_shell_arguments(argv: list[str] | None) -> Path:
+    """Read the shell's own options, which it used to discard in silence.
+
+    This entry point accepted no arguments at all, so the console script threw
+    away everything handed to it—including ``--help``, ``--version``, and an
+    outright misspelling. ``--workspace`` was the costly one: the operator named
+    a repository, the shell started in the current directory instead, and the
+    prompt showed a workspace nobody asked for. The CLI and the TUI have always
+    parsed this option; the shell is now the third to agree.
+    """
+
+    parser = argparse.ArgumentParser(
+        prog=SHELL_PROGRAM_NAME,
+        description="Interactive shell for Adaptive Orchestrator.",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"{SHELL_PROGRAM_NAME} {package_version()} (kernel {KERNEL_VERSION})",
+    )
+    parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=Path.cwd(),
+        help="Repository the session starts in. Defaults to the current directory; `workspace <dir>` changes it later.",
+    )
+    args = parser.parse_args(argv)
+    try:
+        workspace = args.workspace.expanduser().resolve()
+    except (OSError, RuntimeError) as exc:
+        parser.error(f"could not resolve --workspace {args.workspace}: {exc}")
+    if not workspace.is_dir():
+        detail = "not a directory" if workspace.exists() else "does not exist"
+        parser.error(f"--workspace {workspace} {detail}")
+    return workspace
+
+
+def main(argv: list[str] | None = None) -> None:
+    workspace = _parse_shell_arguments(argv)
+
     def terminate(signum: int, _frame: object) -> None:
         raise _ShellTermination(signum)
 
@@ -1452,7 +1520,7 @@ def main() -> None:
             signal.signal(signum, terminate)
             installed_handlers.append((signum, original_handler))
 
-        shell = OrchestratorShell()
+        shell = OrchestratorShell(workspace)
         intro: str | None = None
         while True:
             try:
