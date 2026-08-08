@@ -807,7 +807,7 @@ def _require_readable_execution_log(path: Path) -> None:
 
 
 def _verify_commands(values: Sequence[str]) -> list[tuple[str, ...]]:
-    """Parse each --verify-command into tokens, refusing one that holds none.
+    """Parse each --verify-command into tokens, refusing one that names no program.
 
     A blank value used to disappear here: `shlex.split("")` is the empty list,
     so a run asked to verify itself reported verification "skipped" and exited
@@ -815,6 +815,13 @@ def _verify_commands(values: Sequence[str]) -> list[tuple[str, ...]]:
     has always refused an empty command; the constraint side now agrees. An
     unbalanced quote is named with the value that carries it, since "No closing
     quotation" alone does not say which of several commands it came from.
+
+    A *quoted* empty value is the same mistake wearing a disguise:
+    ``shlex.split("''")`` is ``['']``, a one-element list that passes an
+    emptiness test and then asks the runner to execute the program named "".
+    That surfaced as verification **failed**, which reads as the task having
+    been checked and found wanting when no check ever ran. The program name is
+    what has to be there, so that is what is tested.
     """
 
     commands: list[tuple[str, ...]] = []
@@ -823,8 +830,8 @@ def _verify_commands(values: Sequence[str]) -> list[tuple[str, ...]]:
             tokens = tuple(shlex.split(value))
         except ValueError as exc:
             raise ValueError(f"--verify-command {value!r} could not be parsed: {exc}") from exc
-        if not tokens:
-            raise ValueError(f"--verify-command {value!r} contains no command.")
+        if not tokens or not tokens[0].strip():
+            raise ValueError(f"--verify-command {value!r} names no command to run.")
         commands.append(tokens)
     return commands
 

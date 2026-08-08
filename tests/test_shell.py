@@ -755,6 +755,32 @@ class ShellCliDispatchTests(unittest.TestCase):
         stored = argv[argv.index("--verify-command") + 1]
         self.assertEqual(shlex.split(stored), ["/tmp/check tool"])
 
+    def test_verify_setting_is_validated_by_the_cli_that_will_receive_it(self) -> None:
+        """A session default the CLI would reject is refused when it is set.
+
+        `set verify ""` used to be stored happily, and every later run then
+        reported verification *failed* — the task looking checked and found
+        wanting when the stored value named the program "" and no check ran.
+        """
+
+        for value in ('set verify ""', 'set verify "   "'):
+            with self.subTest(value=value):
+                stderr = io.StringIO()
+                with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(stderr):
+                    self.shell.onecmd(value)
+
+                self.assertIn("names no command to run", stderr.getvalue())
+                self.assertIsNone(self.shell.default_verify_command)
+                self.assertFalse(self.shell.default_verify_commands_disabled)
+
+    def test_a_rejected_verify_setting_leaves_an_earlier_one_intact(self) -> None:
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.shell.onecmd("set verify pytest -q")
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            self.shell.onecmd('set verify ""')
+
+        self.assertEqual(self.shell.default_verify_command, "pytest -q")
+
     def test_explicit_off_defaults_override_profiles_and_can_return_to_inherit(self) -> None:
         with contextlib.redirect_stdout(io.StringIO()):
             self.shell.onecmd("set verbose off")

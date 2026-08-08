@@ -2224,8 +2224,23 @@ class VerifyCommandParsingTests(unittest.TestCase):
     def test_a_blank_command_is_rejected(self) -> None:
         for value in ("", "   "):
             with self.subTest(value=value):
-                with self.assertRaisesRegex(ValueError, "contains no command"):
+                with self.assertRaisesRegex(ValueError, "names no command to run"):
                     cli._verify_commands([value])
+
+    def test_a_quoted_empty_command_is_rejected_too(self) -> None:
+        # shlex.split("''") is [''], which passes an emptiness test and then
+        # asks the runner to execute the program named "". That reported
+        # verification *failed* — the task looking checked and found wanting
+        # when no check had run at all.
+        for value in ("''", '"   "', "'' --flag"):
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(ValueError, "names no command to run"):
+                    cli._verify_commands([value])
+
+    def test_a_command_with_blank_arguments_is_still_accepted(self) -> None:
+        # Only the program name has to be there; an empty argument is a real
+        # thing to pass, and the runner never uses a shell.
+        self.assertEqual(cli._verify_commands(["grep '' file.txt"]), [("grep", "", "file.txt")])
 
     def test_an_unbalanced_quote_names_the_offending_value(self) -> None:
         with self.assertRaisesRegex(ValueError, r"--verify-command \"echo 'oops\" could not be parsed"):
@@ -2247,7 +2262,7 @@ class VerifyCommandParsingTests(unittest.TestCase):
                 ])
 
             self.assertEqual(exit_code, 2)
-            self.assertIn("contains no command", stderr.getvalue())
+            self.assertIn("names no command to run", stderr.getvalue())
             self.assertFalse((Path(directory) / ".orchestrator").exists())
 
 

@@ -428,7 +428,19 @@ class OrchestratorShell(cmd.Cmd):
                 return
             # cli.py parses this value once more. Re-quoting the validated tokens
             # preserves their exact boundaries across that second shlex split.
-            self.default_verify_command = shlex.join(tokens)
+            candidate = shlex.join(tokens)
+            try:
+                # Validated by the CLI's own parser rather than by a second copy
+                # of its rules here. `set verify ""` used to be stored happily
+                # and then made every later run report verification *failed*,
+                # because the stored value named the program "". Refusing it at
+                # the moment it is set keeps the session default to values the
+                # CLI will actually accept.
+                cli._verify_commands([candidate])
+            except ValueError as exc:
+                print(f"Error: set verify: {exc}", file=sys.stderr)
+                return
+            self.default_verify_command = candidate
             self.default_verify_commands_disabled = False
             print(f"verify set to {self.default_verify_command}")
             profile_commands = self._profile_verify_commands()
