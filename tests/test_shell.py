@@ -161,7 +161,28 @@ class ShellStateTests(unittest.TestCase):
             with contextlib.redirect_stdout(stdout):
                 shell.onecmd("settings")
 
-        self.assertIn("profile error", stdout.getvalue())
+        output = stdout.getvalue()
+        self.assertIn("Profile error:", output)
+        # Said once, above the rows: five copies of a message carrying a full
+        # path buried the settings the command exists to show.
+        self.assertEqual(output.count(str(path)), 1)
+        self.assertEqual(output.count("profile unreadable"), 5)
+
+    def test_status_still_spells_out_a_profile_failure_in_full(self) -> None:
+        """`status` has no header to carry it, so it keeps the whole message."""
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            path = config_path(workspace)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("{broken", encoding="utf-8")
+            shell = OrchestratorShell()
+            shell.workspace = workspace
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("status")
+
+            self.assertIn("profile error:", stdout.getvalue())
+            self.assertIn(str(path), stdout.getvalue())
 
     def test_unknown_setting_lists_the_valid_names(self) -> None:
         shell = OrchestratorShell()

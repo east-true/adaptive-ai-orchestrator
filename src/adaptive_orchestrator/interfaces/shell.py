@@ -336,10 +336,15 @@ class OrchestratorShell(cmd.Cmd):
 
         def inherited(effective: str) -> str:
             if profile_error is not None:
-                return f"inherit (profile error: {profile_error})"
+                # Named once, above; repeating a message that carries a full
+                # path on all five rows buried the settings it was describing.
+                return "inherit (profile unreadable)"
             return f"inherit (effective: {effective})"
 
-        print(f"Agent: {self._format_agent_state()}")
+        if profile_error is not None:
+            print(f"Profile error: {profile_error}")
+            print("Inherited rows cannot be resolved until it is fixed.")
+        print(f"Agent: {self._format_agent_state(brief_profile_error=profile_error is not None)}")
         print(
             f"Verbose: {self._format_toggle(self.default_verbose)}"
             if self.default_verbose is not None
@@ -1258,13 +1263,21 @@ class OrchestratorShell(cmd.Cmd):
             return "inherit"
         return "on" if value else "off"
 
-    def _format_agent_state(self) -> str:
+    def _format_agent_state(self, brief_profile_error: bool = False) -> str:
+        """Describe the effective agent.
+
+        ``brief_profile_error`` is for `settings`, which prints the profile
+        failure once above its rows; spelling it out again here would put the
+        same path-carrying message on the row directly beneath it.
+        """
+
         try:
             config = load_project_config(self.workspace)
         except ProjectConfigError as exc:
+            detail = "profile unreadable" if brief_profile_error else f"profile error: {exc}"
             if self.agent_override is None:
-                return f"inherit (profile error: {exc})"
-            return f"{self.agent_override} (session override; profile error: {exc})"
+                return f"inherit ({detail})"
+            return f"{self.agent_override} (session override; {detail})"
 
         if self.agent_override is None:
             return f"inherit (effective: {config.agent})"
