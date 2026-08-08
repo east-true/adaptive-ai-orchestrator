@@ -1,5 +1,6 @@
 import argparse
 import contextlib
+import dataclasses
 import io
 import json
 import os
@@ -2544,6 +2545,112 @@ class UnreadableExecutionLogTests(unittest.TestCase):
             log = Path(directory) / "executions.jsonl"
             log.write_text("{}\n", encoding="utf-8")
             cli._require_readable_execution_log(log)
+
+
+@dataclasses.dataclass
+class _FakePlan:
+    agent_id: str = "codex"
+    rationale: str = "only candidate"
+
+
+@dataclasses.dataclass
+class _FakeRecord:
+    # Empty on purpose: keeps the --summary path from reading a real log.
+    execution_id: str
+    task: dict
+    agent_id: str
+    status: str
+    metadata: dict
+
+
+class ExecutionOutputRedactionTests(unittest.TestCase):
+    """stdout says what the log says; the record is redacted in both."""
+
+    PLAN = _FakePlan()
+    SECRET = "sk-abcdefghijklmnop123456"
+
+    def _record(self) -> _FakeRecord:
+        return _FakeRecord(
+            execution_id="",
+            task={"description": f"use api_key={self.SECRET} here", "objective": "done"},
+            agent_id="codex",
+            status="completed",
+            metadata={"input_tokens": 10, "output_tokens": 5, "cost_usd": 0.01},
+        )
+
+    def test_the_json_record_does_not_echo_a_secret_the_log_dropped(self) -> None:
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            cli._print_execution_result(self.PLAN, self._record(), Path("/nowhere"), summary=False)
+
+        payload = json.loads(stdout.getvalue())
+        self.assertNotIn(self.SECRET, stdout.getvalue())
+        self.assertIn("[REDACTED]", payload["execution"]["task"]["description"])
+
+    def test_usage_counts_and_structure_survive_redaction(self) -> None:
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            cli._print_execution_result(self.PLAN, self._record(), Path("/nowhere"), summary=False)
+
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(sorted(payload), ["execution", "plan"])
+        self.assertEqual(payload["plan"]["agent_id"], "codex")
+        self.assertEqual(payload["execution"]["metadata"]["input_tokens"], 10)
+        self.assertEqual(payload["execution"]["metadata"]["output_tokens"], 5)
+        self.assertEqual(payload["execution"]["status"], "completed")
+
+    def test_plan_steps_are_redacted_too(self) -> None:
+        result = SimpleNamespace(
+            steps=(SimpleNamespace(plan=self.PLAN, record=self._record()),),
+            stopped_early=False,
+        )
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            cli._print_plan_result(result, Path("/nowhere"), summary=False)
+
+        payload = json.loads(stdout.getvalue())
+        self.assertNotIn(self.SECRET, stdout.getvalue())
+        self.assertEqual(sorted(payload), ["steps", "stopped_early"])
+        self.assertEqual(len(payload["steps"]), 1)
+
+
+class MemoryRecordOutputTests(unittest.TestCase):
+    """What the command prints is what the store holds."""
+
+    def test_a_secret_is_redacted_on_stdout_as_well_as_on_disk(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(io.StringIO()):
+                exit_code = cli.main([
+                    "memory", "record", "--workspace", str(workspace),
+                    "--type", "trade_off", "--title", "Rotate",
+                    "--summary", "api_key=sk-abcdefghijklmnop123456 was rotated",
+                ])
+
+            self.assertEqual(exit_code, 0)
+            self.assertNotIn("sk-abcdefghijklmnop123456", stdout.getvalue())
+            self.assertIn("[REDACTED]", stdout.getvalue())
+
+            stored = json.loads(
+                (workspace / ".orchestrator" / "memory.jsonl").read_text(encoding="utf-8")
+            )
+            self.assertEqual(json.loads(stdout.getvalue())["summary"], stored["summary"])
+
+    def test_ordinary_text_is_printed_unchanged(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(io.StringIO()):
+                cli.main([
+                    "memory", "record", "--workspace", directory,
+                    "--type", "trade_off", "--title", "Chose sqlite",
+                    "--summary", "Postgres was more than this needs.",
+                    "--tag", "storage",
+                ])
+
+            payload = json.loads(stdout.getvalue())
+            self.assertEqual(payload["summary"], "Postgres was more than this needs.")
+            self.assertEqual(payload["tags"], ["storage"])
 
 
 if __name__ == "__main__":

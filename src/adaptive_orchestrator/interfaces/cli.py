@@ -33,7 +33,7 @@ from adaptive_orchestrator.infrastructure.configuration import (
 )
 from adaptive_orchestrator.infrastructure.events import EventLogError, JsonlEventStore
 from adaptive_orchestrator.infrastructure.history import ExecutionHistory
-from adaptive_orchestrator.infrastructure.logging import JsonlExecutionLogger
+from adaptive_orchestrator.infrastructure.logging import JsonlExecutionLogger, redact
 from adaptive_orchestrator.infrastructure.memory import EngineeringMemoryStore
 from adaptive_orchestrator.infrastructure.state_paths import resolve_control_state_directory
 from adaptive_orchestrator.infrastructure.version import package_version
@@ -938,7 +938,11 @@ def _print_execution_result(
         if rendered is not None:
             print(rendered)
             return
-    print(json.dumps({"plan": asdict(plan), "execution": asdict(record)}, default=str, indent=2))
+    print(json.dumps(
+        redact({"plan": asdict(plan), "execution": asdict(record)}),
+        default=str,
+        indent=2,
+    ))
 
 
 def _print_plan_result(
@@ -965,13 +969,13 @@ def _print_plan_result(
                 print("Stopped early: a step did not succeed.")
             return
     print(json.dumps(
-        {
+        redact({
             "steps": [
                 {"plan": asdict(step.plan), "execution": asdict(step.record)}
                 for step in steps
             ],
             "stopped_early": getattr(result, "stopped_early", False),
-        },
+        }),
         default=str,
         indent=2,
     ))
@@ -1406,7 +1410,10 @@ def _run_command(argv: list[str] | None = None) -> int:
             if args.memory_command == "record":
                 entry = _memory_entry_from_args(args)
                 store.record(entry)
-                print(json.dumps(asdict(entry), default=str, indent=2))
+                # The store redacts before writing. Echoing the raw input
+                # contradicted the record it was confirming, and put a live
+                # secret into whatever captured this stdout.
+                print(json.dumps(redact(asdict(entry)), default=str, indent=2))
                 return 0
             entry_type, tag, keyword = _memory_search_filters_from_args(args)
             entries = store.search(entry_type=entry_type, tag=tag, keyword=keyword)
