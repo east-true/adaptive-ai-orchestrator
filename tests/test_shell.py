@@ -2105,6 +2105,24 @@ class ControlStateDirectoryNoteTests(unittest.TestCase):
     def test_a_trailing_option_with_no_value_is_left_to_argparse(self) -> None:
         self.assertNotIn("resolves to", self._stderr_for("replay --control-state-dir"))
 
+    def test_the_paired_path_options_are_covered_too(self) -> None:
+        """--workspace-root creates checkouts; --source-repository picks a repo."""
+        for option, command in (
+            ("--workspace-root", "paired_plan m.json --workspace-root relroot"),
+            ("--source-repository", "paired_validate m.json --source-repository other"),
+        ):
+            with self.subTest(option=option):
+                output = self._stderr_for(command)
+                self.assertIn(f"{option} ", output)
+                self.assertIn("resolves to", output)
+
+    def test_every_noted_option_must_live_outside_the_session(self) -> None:
+        # The reason none of them can be anchored the way a plan file is.
+        self.assertEqual(
+            set(OrchestratorShell._CWD_RELATIVE_OPTIONS),
+            {"--control-state-dir", "--workspace-root", "--source-repository"},
+        )
+
 
 class SessionSurvivalTests(unittest.TestCase):
     """One bad argument must cost a command, not the session."""

@@ -1372,7 +1372,13 @@ class OrchestratorShell(cmd.Cmd):
         self.prompt = f"adaptive[{self.agent}:{workspace_label}]> "
 
     #: Options whose relative value resolves somewhere the session never names.
-    _CWD_RELATIVE_OPTIONS = ("--control-state-dir",)
+    #: All three must point *outside* the workspace or source repository, so
+    #: none of them can be anchored to the session the way a plan file is.
+    _CWD_RELATIVE_OPTIONS = (
+        "--control-state-dir",
+        "--workspace-root",
+        "--source-repository",
+    )
 
     def _note_cwd_relative_options(self, tokens: list[str]) -> None:
         """Say where a relative option path will actually land.
@@ -1386,9 +1392,10 @@ class OrchestratorShell(cmd.Cmd):
         session never mentions again.
 
         `run --control-state-dir myctl` consequently succeeds and writes
-        events.jsonl and routing-state.json there without a word. Naming the
-        resolved path once, when a relative value is actually passed, is enough
-        to keep that from being a surprise.
+        events.jsonl and routing-state.json there without a word, and
+        `paired dry-run --workspace-root relroot` creates its checkouts there.
+        Naming the resolved path once, when a relative value is actually
+        passed, is enough to keep that from being a surprise.
         """
 
         for index, token in enumerate(tokens):
