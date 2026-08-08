@@ -553,7 +553,10 @@ def _task_from_spec(spec: dict) -> Task:
 
 
 def _load_plan(path: Path) -> list[Task]:
-    specs = json.loads(path.read_text(encoding="utf-8"))
+    # utf-8-sig, not utf-8: `plan generate` has an agent write this file, and a
+    # leading BOM—routine from editors and Windows tooling—otherwise fails the
+    # JSON parse before any field is looked at. Plain UTF-8 reads identically.
+    specs = json.loads(path.read_text(encoding="utf-8-sig"))
     if not isinstance(specs, list) or not specs:
         raise ValueError(f"Plan file must contain a non-empty JSON list of task specs: {path}")
     tasks = []
@@ -677,6 +680,14 @@ def _resolve_text_argument(
             if parser is not None:
                 parser.error(message)
             raise ValueError(message) from exc
+        if not text.strip():
+            # `Task` would reject this too, but only as "description and
+            # objective are required" — which names neither the option the
+            # operator passed nor the file that turned out to hold nothing.
+            message = f"--{file_name.replace('_', '-')} {path} is empty"
+            if parser is not None:
+                parser.error(message)
+            raise ValueError(message)
         return text[:-1] if text.endswith("\n") else text
     return value
 
@@ -1014,6 +1025,27 @@ def _warn_missing_recorded_diff(bundle: object) -> None:
     )
 
 
+def _print_short_prefix_hint(identifier: str) -> None:
+    """Distinguish a too-short fragment from an identifier that does not exist.
+
+    An id prefix resolves only from four characters on, so a shorter one is
+    refused before any record is compared. It then reported the same "Execution
+    not found" as a genuine typo, which reads as "no such execution" for a
+    fragment that may well name one.
+    """
+
+    if not identifier or identifier.startswith("#"):
+        return
+    if len(identifier) >= ExecutionReportStore._MINIMUM_PREFIX_LENGTH:
+        return
+    print(
+        f"  {identifier!r} is shorter than the "
+        f"{ExecutionReportStore._MINIMUM_PREFIX_LENGTH} characters an id prefix needs; "
+        "pass more of the id.",
+        file=sys.stderr,
+    )
+
+
 def _print_no_executions_hint(workspace: Path) -> None:
     """Point a first-time user at the command that produces something to inspect.
 
@@ -1123,6 +1155,10 @@ def _workspace_path(path: Path, workspace: Path) -> Path:
 
 def _write_report(path: Path, content: str, force: bool) -> None:
     path = path.expanduser().resolve()
+    if path.is_dir():
+        # Not "already exists": --force cannot replace a directory with a file,
+        # and offering it only moved the failure to a raw "Is a directory".
+        raise IsADirectoryError(f"Report output is a directory, not a file: {path}")
     if path.exists() and not force:
         raise FileExistsError(f"Report already exists: {path} (use --force to replace it)")
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -1242,6 +1278,8 @@ def _run_command(argv: list[str] | None = None) -> int:
             return 0
         except (ExecutionLookupError, OSError, FileExistsError) as exc:
             print(f"{args.command.capitalize()} failed: {exc}", file=sys.stderr)
+            if isinstance(exc, ExecutionLookupError):
+                _print_short_prefix_hint(args.identifier)
             _print_no_executions_hint(workspace)
             return 1
 
@@ -1267,6 +1305,8 @@ def _run_command(argv: list[str] | None = None) -> int:
             task = _task_from_spec(task_spec_for_retry(bundle))
         except (ExecutionLookupError, KeyError, TypeError, ValueError) as exc:
             print(f"Retry failed: {exc}", file=sys.stderr)
+            if isinstance(exc, ExecutionLookupError):
+                _print_short_prefix_hint(args.identifier)
             _print_no_executions_hint(workspace)
             return 1
         requested_agent = bundle.primary.get("agent_id") if args.agent == "same" else args.agent

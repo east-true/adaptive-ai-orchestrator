@@ -2238,5 +2238,133 @@ class PlanGenerateOverwriteTests(unittest.TestCase):
             build_workflow.assert_called_once()
 
 
+class ReportOutputTargetTests(unittest.TestCase):
+    def test_a_directory_output_is_named_as_one_and_force_does_not_help(self) -> None:
+        record = {
+            "execution_id": "exec-1", "attempt_id": "attempt-1",
+            "task": {"description": "Fix it", "objective": "It works"},
+            "agent_id": "codex", "status": "completed", "duration_ms": 10,
+            "verification": {"status": "passed"},
+        }
+        for extra in ([], ["--force"]):
+            with self.subTest(extra=extra), tempfile.TemporaryDirectory() as directory:
+                workspace = Path(directory)
+                log = workspace / ".orchestrator" / "executions.jsonl"
+                log.parent.mkdir(parents=True)
+                log.write_text(json.dumps(record) + "\n", encoding="utf-8")
+                target = workspace / "reports"
+                target.mkdir()
+                stderr = io.StringIO()
+                with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                    exit_code = cli.main([
+                        "report", "exec-1", "--workspace", str(workspace),
+                        "--output", str(target), *extra,
+                    ])
+
+                self.assertEqual(exit_code, 1)
+                self.assertIn("is a directory, not a file", stderr.getvalue())
+                self.assertNotIn("already exists", stderr.getvalue())
+                self.assertTrue(target.is_dir())
+
+
+class EmptyTextFileTests(unittest.TestCase):
+    def test_an_empty_file_names_the_option_and_the_path(self) -> None:
+        for name, options in (
+            ("description", ["--objective", "It works"]),
+            ("objective", ["--description", "Fix it"]),
+        ):
+            for content in ("", "   \n\n"):
+                with self.subTest(name=name, content=content), tempfile.TemporaryDirectory() as directory:
+                    source = Path(directory) / "text.md"
+                    source.write_text(content, encoding="utf-8")
+                    stderr = io.StringIO()
+                    with (
+                        contextlib.redirect_stderr(stderr),
+                        contextlib.redirect_stdout(io.StringIO()),
+                        self.assertRaises(SystemExit) as raised,
+                    ):
+                        cli.main([
+                            "run", "--workspace", directory, *options,
+                            f"--{name}-file", str(source),
+                        ])
+
+                    self.assertEqual(raised.exception.code, 2)
+                    self.assertIn(f"--{name}-file {source} is empty", stderr.getvalue())
+
+    def test_a_file_holding_only_a_trailing_newline_still_reads(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "text.md"
+            source.write_text("Fix the parser\n", encoding="utf-8")
+            args = type("Args", (), {"description": None, "description_file": source})()
+            self.assertEqual(cli._resolve_description(args), "Fix the parser")
+
+
+class PlanFileEncodingTests(unittest.TestCase):
+    def test_a_byte_order_mark_does_not_fail_the_parse(self) -> None:
+        # `plan generate` has an agent write this file; a BOM is a routine
+        # artifact, not a malformed plan.
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "plan.json"
+            path.write_text(
+                json.dumps([{"description": "Step one", "objective": "First"}]),
+                encoding="utf-8-sig",
+            )
+            tasks = cli._load_plan(path)
+            self.assertEqual([task.description for task in tasks], ["Step one"])
+
+    def test_plain_utf8_is_unaffected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "plan.json"
+            path.write_text(
+                json.dumps([{"description": "단계 하나", "objective": "완료"}]),
+                encoding="utf-8",
+            )
+            self.assertEqual(cli._load_plan(path)[0].description, "단계 하나")
+
+
+class ShortIdentifierPrefixTests(unittest.TestCase):
+    def _workspace(self, directory: str) -> Path:
+        workspace = Path(directory)
+        log = workspace / ".orchestrator" / "executions.jsonl"
+        log.parent.mkdir(parents=True)
+        log.write_text(json.dumps({
+            "execution_id": "e5ea2bea-f524-4f1a-9276-191d75a613c7",
+            "attempt_id": "attempt-1",
+            "task": {"description": "Fix it", "objective": "It works"},
+            "agent_id": "codex", "status": "completed", "duration_ms": 10,
+            "verification": {"status": "passed"},
+        }) + "\n", encoding="utf-8")
+        return workspace
+
+    def test_a_too_short_fragment_says_so(self) -> None:
+        for command in ("show", "report", "retry"):
+            with self.subTest(command=command), tempfile.TemporaryDirectory() as directory:
+                workspace = self._workspace(directory)
+                stderr = io.StringIO()
+                with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                    cli.main([command, "e5e", "--workspace", str(workspace)])
+
+                self.assertIn("shorter than the 4 characters", stderr.getvalue())
+
+    def test_a_long_wrong_identifier_gets_no_prefix_hint(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = self._workspace(directory)
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                cli.main(["show", "12345678", "--workspace", str(workspace)])
+
+            self.assertIn("Execution not found", stderr.getvalue())
+            self.assertNotIn("shorter than", stderr.getvalue())
+
+    def test_a_legacy_row_number_gets_no_prefix_hint(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = self._workspace(directory)
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                cli.main(["show", "#9", "--workspace", str(workspace)])
+
+            self.assertNotIn("shorter than", stderr.getvalue())
+
+
 if __name__ == "__main__":
     unittest.main()
