@@ -1992,6 +1992,64 @@ class ShellUsageTests(unittest.TestCase):
             self.assertIn("Claude Code: project usage data not available", stdout.getvalue())
 
 
+class SessionSurvivalTests(unittest.TestCase):
+    """One bad argument must cost a command, not the session."""
+
+    #: Values that used to unwind through cmdloop and exit the process.
+    HOSTILE = ("a\x00b", "x" * 5000)
+
+    PATH_COMMANDS = (
+        "workspace", "cd", "plan_validate",
+        "paired_validate", "paired_plan", "paired_dry_run",
+        "paired_analyze", "paired_run", "paired_resume",
+    )
+
+    def test_a_hostile_path_argument_reports_and_keeps_going(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell(Path(directory))
+            for command in self.PATH_COMMANDS:
+                for value in self.HOSTILE:
+                    with self.subTest(command=command, value=value[:8]):
+                        out, err = io.StringIO(), io.StringIO()
+                        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                            stop = shell.onecmd(f"{command} {value}")
+
+                        reported = out.getvalue() + err.getvalue()
+                        self.assertFalse(stop)
+                        # Some of these report through the CLI ("Invalid plan
+                        # file ...", "Paired experiment failed: ..."), so the
+                        # contract is that something is said and nothing unwinds.
+                        self.assertTrue(reported.strip(), "said nothing at all")
+                        self.assertNotIn("Traceback", reported)
+            # The session kept its state through every one of them.
+            self.assertEqual(shell.workspace, Path(directory))
+
+    def test_an_unexpected_failure_is_caught_at_the_session_boundary(self) -> None:
+        shell = OrchestratorShell()
+        with patch.object(OrchestratorShell, "do_status", side_effect=RuntimeError("boom")):
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+                stop = shell.onecmd("status")
+
+        self.assertFalse(stop)
+        self.assertIn("status failed", err.getvalue())
+        self.assertIn("boom", err.getvalue())
+
+    def test_the_ways_the_shell_is_meant_to_end_still_propagate(self) -> None:
+        shell = OrchestratorShell()
+        for error in (SystemExit(2), KeyboardInterrupt(), shell_interface._ShellTermination(15)):
+            with self.subTest(error=type(error).__name__):
+                with patch.object(OrchestratorShell, "do_status", side_effect=error):
+                    with self.assertRaises(type(error)):
+                        with contextlib.redirect_stderr(io.StringIO()):
+                            shell.onecmd("status")
+
+    def test_exit_still_stops_the_loop(self) -> None:
+        shell = OrchestratorShell()
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertTrue(shell.onecmd("exit"))
+
+
 class CompletionSilenceTests(unittest.TestCase):
     """A completer runs mid-prompt; anything it prints smears the line."""
 

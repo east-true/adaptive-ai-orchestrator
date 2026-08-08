@@ -251,15 +251,19 @@ class OrchestratorShell(cmd.Cmd):
             return
 
         try:
+            # exists()/is_dir() belong inside the same guard as the resolve:
+            # they stat the path too, so an over-long name raised OSError from
+            # here and killed the session while the resolve itself succeeded.
+            # ValueError covers a path holding an embedded null byte.
             workspace = self._resolve_workspace_path(tokens[0])
-        except (OSError, RuntimeError) as exc:
+            if not workspace.exists():
+                print(f"Error: workspace does not exist: {workspace}")
+                return
+            if not workspace.is_dir():
+                print(f"Error: workspace is not a directory: {workspace}")
+                return
+        except (OSError, RuntimeError, ValueError) as exc:
             print(f"Error: could not resolve workspace: {exc}")
-            return
-        if not workspace.exists():
-            print(f"Error: workspace does not exist: {workspace}")
-            return
-        if not workspace.is_dir():
-            print(f"Error: workspace is not a directory: {workspace}")
             return
 
         self.workspace = workspace
@@ -614,7 +618,7 @@ class OrchestratorShell(cmd.Cmd):
         if not plan_file.startswith("-"):
             try:
                 plan_file = str(self._resolve_workspace_path(plan_file))
-            except (OSError, RuntimeError) as exc:
+            except (OSError, RuntimeError, ValueError) as exc:
                 print(f"Error: plan_validate: could not resolve plan file: {exc}", file=sys.stderr)
                 return
         self._invoke_cli(["plan", "validate", plan_file], "plan_validate")
@@ -826,7 +830,7 @@ class OrchestratorShell(cmd.Cmd):
         if not tokens[0].startswith("-"):
             try:
                 tokens = [str(self._resolve_workspace_path(tokens[0])), *tokens[1:]]
-            except (OSError, RuntimeError) as exc:
+            except (OSError, RuntimeError, ValueError) as exc:
                 print(f"Error: {label}: could not resolve manifest: {exc}", file=sys.stderr)
                 return
 
@@ -854,6 +858,29 @@ class OrchestratorShell(cmd.Cmd):
         del arg
         print()
         return True
+
+    def onecmd(self, line: str) -> bool:
+        """Run one command without letting it take the session down with it.
+
+        Routed commands have had this since `_invoke_cli` grew its boundary
+        handler; the shell-native ones had none, so a single bad argument
+        unwound through `cmdloop` and exited the process. A path holding an
+        embedded null byte did it (`ValueError`), and so did one too long to
+        stat (`OSError`), losing the workspace, the agent, and every session
+        default to a typo.
+
+        `SystemExit`, `KeyboardInterrupt`, and `_ShellTermination` still
+        propagate: those are how the shell is meant to end.
+        """
+
+        try:
+            return super().onecmd(line)
+        except (SystemExit, KeyboardInterrupt, _ShellTermination):
+            raise
+        except Exception as exc:  # noqa: BLE001 - session boundary: keep the loop alive.
+            command = line.split(maxsplit=1)[0] if line.split() else "command"
+            print(f"Error: {command} failed: {type(exc).__name__}: {exc}", file=sys.stderr)
+            return False
 
     def emptyline(self) -> None:
         """Do nothing instead of repeating a potentially expensive command."""
@@ -1460,7 +1487,7 @@ class OrchestratorShell(cmd.Cmd):
                 (item for item in directory.iterdir() if item.name.startswith(prefix)),
                 key=lambda item: item.name,
             )
-        except (OSError, RuntimeError):
+        except (OSError, RuntimeError, ValueError):
             return []
 
         completions: list[str] = []
