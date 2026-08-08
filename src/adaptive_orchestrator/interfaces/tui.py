@@ -25,6 +25,8 @@ from typing import Callable, Sequence
 from adaptive_orchestrator.infrastructure.child_environment import ensure_child_import_path
 from adaptive_orchestrator.infrastructure.events import EventLogError, JsonlEventStore
 from adaptive_orchestrator.infrastructure.state_paths import resolve_control_state_directory
+from adaptive_orchestrator.infrastructure.version import package_version
+from adaptive_orchestrator.orchestration.kernel import KERNEL_VERSION
 from adaptive_orchestrator.operations.reporting import (
     ExecutionBundle,
     ExecutionReportStore,
@@ -38,6 +40,15 @@ ESCAPE_DELAY_MS = 25
 AUTO_REFRESH_SECONDS = 2.0
 MAX_TASK_OUTPUT_LINES = 5000
 DEFAULT_TASK_LIMIT = 3
+
+#: The installed console script for this interface (see ``[project.scripts]``).
+TUI_PROGRAM_NAME = "adaptive-ai-orchestrator-tui"
+
+#: Module path behind the documented ``python3 -m ...`` entry point.
+TUI_MODULE_ENTRY_POINT = "adaptive_orchestrator.tui"
+
+#: Basenames that mean "started as a module", not as the installed script.
+_MODULE_INVOCATION_NAMES = frozenset({"tui.py", "__main__.py"})
 MESSAGE_TTL_SECONDS = 4.0
 
 VIEW_DASHBOARD = "dashboard"
@@ -1608,8 +1619,29 @@ def _lifecycle_status(status: str, outcome: object, terminal: object) -> str:
     return status
 
 
+def resolve_tui_program_name() -> str:
+    """Name this UI the way the caller reached it, as the CLI already does.
+
+    argparse defaults to ``tui.py``, which is neither of the two documented
+    invocations: the installed console script, and
+    ``python3 -m adaptive_orchestrator.tui`` through the compatibility shim.
+    """
+
+    if Path(sys.argv[0]).name in _MODULE_INVOCATION_NAMES:
+        return f"{Path(sys.executable).name} -m {TUI_MODULE_ENTRY_POINT}"
+    return TUI_PROGRAM_NAME
+
+
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Full-screen local UI for Adaptive Orchestrator.")
+    parser = argparse.ArgumentParser(
+        prog=resolve_tui_program_name(),
+        description="Full-screen local UI for Adaptive Orchestrator.",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"{TUI_PROGRAM_NAME} {package_version()} (kernel {KERNEL_VERSION})",
+    )
     parser.add_argument("--workspace", type=Path, default=Path.cwd())
     parser.add_argument("--control-state-dir", type=Path, help="Protected lifecycle event directory.")
     parser.add_argument(

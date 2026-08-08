@@ -698,5 +698,35 @@ class MainWorkspaceTests(unittest.TestCase):
             self.assertNotIn("Traceback", stderr.getvalue())
 
 
+class EntryPointNamingTests(unittest.TestCase):
+    """argparse's default prog is "tui.py", which is not a runnable command."""
+
+    def test_module_invocation_reports_the_documented_module_entry_point(self) -> None:
+        from adaptive_orchestrator.interfaces import tui as tui_module
+
+        for name in ("tui.py", "__main__.py"):
+            with self.subTest(name=name), mock.patch.object(sys, "argv", [name]):
+                resolved = tui_module.resolve_tui_program_name()
+            self.assertIn(tui_module.TUI_MODULE_ENTRY_POINT, resolved)
+            self.assertNotEqual(resolved, "tui.py")
+
+    def test_anything_else_reports_the_installed_console_script(self) -> None:
+        from adaptive_orchestrator.interfaces import tui as tui_module
+
+        with mock.patch.object(sys, "argv", ["/usr/local/bin/adaptive-ai-orchestrator-tui"]):
+            self.assertEqual(tui_module.resolve_tui_program_name(), tui_module.TUI_PROGRAM_NAME)
+
+    def test_version_names_the_console_script_and_the_kernel(self) -> None:
+        from adaptive_orchestrator.interfaces import tui as tui_module
+
+        with contextlib.redirect_stdout(io.StringIO()) as stdout:
+            with self.assertRaises(SystemExit) as raised:
+                tui_module.main(["--version"])
+
+        self.assertEqual(raised.exception.code, 0)
+        self.assertIn(tui_module.TUI_PROGRAM_NAME, stdout.getvalue())
+        self.assertIn("kernel", stdout.getvalue())
+
+
 if __name__ == "__main__":
     unittest.main()
