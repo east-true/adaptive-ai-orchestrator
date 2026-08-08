@@ -101,6 +101,25 @@ def _non_blank_text(value: str) -> str:
     return value
 
 
+def _positive_seconds(value: str) -> float:
+    """Reject a time limit that no process could ever satisfy.
+
+    ``0`` and negative values are the same mistake as a blank epoch: accepted,
+    then acted on somewhere far from the option that carried them. Project
+    config already refuses both for these very settings, and one of the two
+    flags that override it used to fail only after the agent had run—so the
+    invocation was paid for and then lost to a traceback.
+    """
+
+    try:
+        seconds = float(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"{value!r} is not a number of seconds") from None
+    if seconds <= 0:
+        raise argparse.ArgumentTypeError(f"{value} is not a positive number of seconds")
+    return seconds
+
+
 def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser:
     config = config or ProjectConfig()
     parser = argparse.ArgumentParser(
@@ -141,7 +160,7 @@ def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser
     task_group.add_argument("--capability", choices=[item.value for item in Capability], action="append", default=[], help="Capability the task requires. Repeatable.")
     task_group.add_argument("--constraint", action="append", default=[], help="Constraint text passed to the agent. Repeatable.")
     task_group.add_argument("--priority", choices=[item.value for item in Priority], default=Priority.NORMAL.value, help="Task priority; high and critical raise analyzed difficulty.")
-    task_group.add_argument("--time-limit", type=float, default=config.time_limit_seconds, help="Seconds the agent process may run.")
+    task_group.add_argument("--time-limit", type=_positive_seconds, default=config.time_limit_seconds, help="Seconds the agent process may run. Must be positive.")
     task_group.add_argument(
         "--no-time-limit",
         dest="time_limit",
@@ -186,6 +205,7 @@ def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser
     plan_generate.add_argument("request", help="The vague human request to turn into an ordered plan.")
     plan_generate.add_argument("--workspace", type=Path, default=Path.cwd(), help="Repository the agent may modify. Defaults to the current directory.")
     plan_generate.add_argument("--output", type=Path, default=None, help="Plan file to write; defaults to plan.json in the workspace.")
+    plan_generate.add_argument("--force", action="store_true", help="Replace an existing plan file.")
     _add_agent_argument(plan_generate, config)
     _add_workflow_arguments(plan_generate, config)
 
@@ -348,7 +368,7 @@ def _add_workflow_arguments(parser: argparse.ArgumentParser, config: ProjectConf
         default=argparse.SUPPRESS,
         help="Clear constraint verification commands supplied by project config or earlier options.",
     )
-    verification.add_argument("--verify-time-limit", type=float, default=config.verify_time_limit_seconds, help="Seconds each constraint verification command may run.")
+    verification.add_argument("--verify-time-limit", type=_positive_seconds, default=config.verify_time_limit_seconds, help="Seconds each constraint verification command may run. Must be positive.")
     verification.add_argument(
         "--quality-evaluator-command",
         action="append",
@@ -362,7 +382,7 @@ def _add_workflow_arguments(parser: argparse.ArgumentParser, config: ProjectConf
         default=[],
         help="Read-only evaluator or golden-fixture path outside the agent workspace. Repeatable and shared by quality commands.",
     )
-    verification.add_argument("--quality-evaluator-time-limit", type=float, help="Seconds each quality evaluator command may run.")
+    verification.add_argument("--quality-evaluator-time-limit", type=_positive_seconds, help="Seconds each quality evaluator command may run. Must be positive.")
     routing.add_argument(
         "--routing-policy",
         choices=("legacy", "static"),
@@ -440,18 +460,95 @@ def _reject_unknown_plan_fields(spec: object) -> None:
     )
 
 
+def _plan_field_type_error(field: str, value: object, expected: str) -> str:
+    return f"field {field!r} must be {expected}, got {type(value).__name__}"
+
+
+def _plan_text(spec: dict, field: str) -> str:
+    value = spec[field]
+    if not isinstance(value, str):
+        raise ValueError(_plan_field_type_error(field, value, "a string"))
+    return value
+
+
+def _plan_text_list(spec: dict, field: str) -> tuple[str, ...]:
+    value = spec.get(field, ())
+    # A bare string is the mistake worth naming: it is iterable, so it used to be
+    # accepted and then split into one constraint per character.
+    if isinstance(value, str) or not isinstance(value, (list, tuple)):
+        raise ValueError(_plan_field_type_error(field, value, "an array of strings"))
+    for index, item in enumerate(value):
+        if not isinstance(item, str):
+            raise ValueError(
+                f"field {field!r} entry {index + 1} must be a string, got {type(item).__name__}"
+            )
+    return tuple(value)
+
+
+def _plan_number(spec: dict, field: str) -> float | None:
+    value = spec.get(field)
+    # bool is an int in Python, and "time_limit_seconds": true is not a duration.
+    if value is None or (isinstance(value, (int, float)) and not isinstance(value, bool)):
+        return value
+    raise ValueError(_plan_field_type_error(field, value, "a number or null"))
+
+
+def _plan_enum(spec: dict, field: str, enum: type, default: str) -> object:
+    value = spec.get(field, default)
+    if not isinstance(value, str):
+        raise ValueError(_plan_field_type_error(field, value, "a string"))
+    try:
+        return enum(value)
+    except ValueError:
+        valid = ", ".join(item.value for item in enum)
+        raise ValueError(f"field {field!r}: {value!r} is not valid; expected one of {valid}") from None
+
+
+def _plan_capabilities(spec: dict) -> tuple[Capability, ...]:
+    values = _plan_text_list(spec, "capabilities")
+    capabilities = []
+    for item in values:
+        try:
+            capabilities.append(Capability(item))
+        except ValueError:
+            valid = ", ".join(entry.value for entry in Capability)
+            close = difflib.get_close_matches(item, [entry.value for entry in Capability], n=1, cutoff=0.6)
+            hint = f" (did you mean {close[0]!r}?)" if close else ""
+            raise ValueError(
+                f"field 'capabilities': {item!r} is not valid{hint}; expected one of {valid}"
+            ) from None
+    return tuple(capabilities)
+
+
+def _plan_optional_text(spec: dict, field: str) -> str | None:
+    value = spec.get(field)
+    if value is None or isinstance(value, str):
+        return value
+    raise ValueError(_plan_field_type_error(field, value, "a string or null"))
+
+
 def _task_from_spec(spec: dict) -> Task:
-    """Builds a Task from one JSON plan-file entry; same field names as `run`'s flags, all but description/objective optional."""
+    """Builds a Task from one JSON plan-file entry; same field names as `run`'s flags, all but description/objective optional.
+
+    Every field is type-checked here rather than left to whatever consumes it.
+    A plan file is an input like any other, and `Task` is not written to report
+    bad JSON: a numeric description surfaced as "'int' object has no attribute
+    'strip'", and a string where an array belonged surfaced as nothing at all.
+    """
+
     _reject_unknown_plan_fields(spec)
+    for required in ("description", "objective"):
+        if required not in spec:
+            raise KeyError(required)
     return Task(
-        description=spec["description"],
-        objective=spec["objective"],
-        constraints=tuple(spec.get("constraints", ())),
-        required_capabilities=tuple(Capability(item) for item in spec.get("capabilities", ())),
-        priority=Priority(spec.get("priority", Priority.NORMAL.value)),
-        time_limit_seconds=spec.get("time_limit_seconds"),
-        cost_limit_usd=spec.get("cost_limit_usd"),
-        task_id=spec.get("task_id"),
+        description=_plan_text(spec, "description"),
+        objective=_plan_text(spec, "objective"),
+        constraints=_plan_text_list(spec, "constraints"),
+        required_capabilities=_plan_capabilities(spec),
+        priority=_plan_enum(spec, "priority", Priority, Priority.NORMAL.value),
+        time_limit_seconds=_plan_number(spec, "time_limit_seconds"),
+        cost_limit_usd=_plan_number(spec, "cost_limit_usd"),
+        task_id=_plan_optional_text(spec, "task_id"),
     )
 
 
@@ -630,12 +727,20 @@ def _build_workflow(
     requested_agent_id: str | None = None,
 ) -> EngineeringWorkflow:
     agents = _configured_agents(args)
+    # Everything that can reject an argument runs first. Constructing the log
+    # sink and the lifecycle recorder creates `.orchestrator/` and the protected
+    # control-state directory as a side effect, and a run refused for a bad
+    # option must leave no trace of having been attempted—the same ordering
+    # `run` and `run-plan` already apply to their own inputs.
+    commands = _verify_commands(args.verify_command)
+    quality_specs = _quality_evaluator_specs(args, workspace)
+    control_dir = resolve_control_state_directory(workspace, getattr(args, "control_state_dir", None))
+
     logger = JsonlExecutionLogger(workspace / ".orchestrator" / "executions.jsonl")
     # `retry` leaves args.agent at the sentinel "same"; label the stream with the
     # agent actually being run rather than with how it was requested.
     agent_label = requested_agent_id or args.agent
     runner = SubprocessRunner(_verbose_output_callback(f"[{args.command}:{agent_label}]")) if args.verbose else SubprocessRunner()
-    control_dir = resolve_control_state_directory(workspace, getattr(args, "control_state_dir", None))
     lifecycle = LifecycleRecorder(
         JsonlEventStore(control_dir / "events.jsonl"),
         RoutingStateStore(control_dir / "routing-state.json"),
@@ -648,8 +753,6 @@ def _build_workflow(
         include_git_diff=args.include_git_diff,
         lifecycle_recorder=lifecycle,
     )
-    commands = [tuple(shlex.split(item)) for item in args.verify_command]
-    quality_specs = _quality_evaluator_specs(args, workspace)
     verifier = CommandVerifier(commands[0] if commands else (), args.verify_time_limit, tuple(commands[1:]), quality_specs)
     history = ExecutionHistory(workspace / ".orchestrator" / "executions.jsonl")
     router = RoutingPolicyRouter(
@@ -668,6 +771,29 @@ def _build_workflow(
         args.escalation_risk_threshold, args.escalation_uncertainty_threshold, args.escalation_difficulty_threshold
     )
     return EngineeringWorkflow(kernel, router, verifier, escalation_policy)
+
+
+def _verify_commands(values: Sequence[str]) -> list[tuple[str, ...]]:
+    """Parse each --verify-command into tokens, refusing one that holds none.
+
+    A blank value used to disappear here: `shlex.split("")` is the empty list,
+    so a run asked to verify itself reported verification "skipped" and exited
+    zero—the one outcome that looks like the check passed. `--quality-evaluator-command`
+    has always refused an empty command; the constraint side now agrees. An
+    unbalanced quote is named with the value that carries it, since "No closing
+    quotation" alone does not say which of several commands it came from.
+    """
+
+    commands: list[tuple[str, ...]] = []
+    for value in values:
+        try:
+            tokens = tuple(shlex.split(value))
+        except ValueError as exc:
+            raise ValueError(f"--verify-command {value!r} could not be parsed: {exc}") from exc
+        if not tokens:
+            raise ValueError(f"--verify-command {value!r} contains no command.")
+        commands.append(tokens)
+    return commands
 
 
 def _quality_evaluator_specs(args: argparse.Namespace, workspace: Path) -> tuple[EvaluatorSpec, ...]:
@@ -959,7 +1085,7 @@ def _warn_inert_escalation_options(argv: Sequence[str], requested_agent_id: str)
     )
 
 
-def _resolve_workspace(path: Path) -> Path | None:
+def _resolve_workspace(path: Path, require_directory: bool = True) -> Path | None:
     """Resolve ``--workspace`` once, reporting a path that cannot be used.
 
     A workspace that fails to resolve at all—a symlink loop, a directory the
@@ -968,13 +1094,26 @@ def _resolve_workspace(path: Path) -> Path | None:
     treated both exception types this way; every command that takes a workspace
     now agrees with it. Expanding ``~`` here also settles a disagreement: the
     config lookup expanded it while command dispatch did not.
+
+    A path that resolves but names no directory is refused for the same reason.
+    Every other interface already refuses it—the shell, the TUI, and `init` all
+    say so—but the CLI's run path created it instead: a mistyped workspace
+    produced a new empty directory, ran the agent in it against no repository at
+    all, and reported success. `doctor` is the exception (``require_directory``
+    off): reporting an unusable workspace as a failed check is that command's
+    entire job, and refusing to start would print less than it already does.
     """
 
     try:
-        return path.expanduser().resolve()
+        resolved = path.expanduser().resolve()
     except (OSError, RuntimeError) as exc:
         print(f"Error: could not resolve --workspace {path}: {exc}", file=sys.stderr)
         return None
+    if require_directory and not resolved.is_dir():
+        detail = "not a directory" if resolved.exists() else "does not exist"
+        print(f"Error: --workspace {resolved} {detail}.", file=sys.stderr)
+        return None
+    return resolved
 
 
 def _workspace_path(path: Path, workspace: Path) -> Path:
@@ -1060,7 +1199,7 @@ def _run_command(argv: list[str] | None = None) -> int:
     # Every subcommand that takes a workspace works from the resolved path, so
     # resolve it once, here, rather than at each point of use.
     if getattr(args, "workspace", None) is not None:
-        resolved_workspace = _resolve_workspace(args.workspace)
+        resolved_workspace = _resolve_workspace(args.workspace, require_directory=args.command != "doctor")
         if resolved_workspace is None:
             return 2
         args.workspace = resolved_workspace
@@ -1261,6 +1400,16 @@ def _run_command(argv: list[str] | None = None) -> int:
     if args.command == "plan":
         output = args.output or Path("plan.json")
         resolved_output = _workspace_path(output, workspace)
+        # Refuse before the agent runs, not after. The agent is what writes this
+        # file, so an existing plan is already gone by the time the CLI regains
+        # control; there is no later point at which asking is still useful.
+        # `report --output` and `init` both guard their writes the same way.
+        if resolved_output.exists() and not args.force:
+            print(
+                f"Error: {resolved_output} already exists (use --force to replace it).",
+                file=sys.stderr,
+            )
+            return 2
         # The check below runs as a child process whose working directory is the
         # agent workspace, so a relative import root inherited from a source
         # checkout would no longer point at the checkout.
