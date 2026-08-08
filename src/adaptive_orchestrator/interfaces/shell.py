@@ -1172,7 +1172,7 @@ class OrchestratorShell(cmd.Cmd):
         if len(preceding) != 1:
             return []
 
-        executions = self._indexed_execution_bundles()
+        executions = self._indexed_execution_bundles(quiet=True)
         if not executions:
             return []
 
@@ -1195,12 +1195,25 @@ class OrchestratorShell(cmd.Cmd):
 
     def _indexed_execution_bundles(
         self,
+        quiet: bool = False,
     ) -> tuple[tuple[int, ExecutionBundle], ...] | None:
+        """Read grouped executions, optionally without saying anything.
+
+        Tab completion calls this while readline is mid-draw, where writing
+        anything smears the prompt and leaves the cursor position wrong — a
+        single TAB on an unreadable log used to inject an error line into the
+        line being typed. A completer's contract is to return no candidates,
+        which is what its own handlers already do; ``quiet`` extends that to
+        the read. Commands still report, because for them the failure is the
+        answer.
+        """
+
         path = self.workspace / ".orchestrator" / "executions.jsonl"
         try:
             indexed = ExecutionReportStore(path).indexed_bundles()
         except (ExecutionLookupError, OSError, UnicodeError) as exc:
-            print(f"Error: could not read execution history: {exc}", file=sys.stderr)
+            if not quiet:
+                print(f"Error: could not read execution history: {exc}", file=sys.stderr)
             return None
         return tuple(sorted(indexed, key=lambda item: item[0]))
 

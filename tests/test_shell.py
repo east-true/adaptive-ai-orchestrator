@@ -1,6 +1,7 @@
 import contextlib
 import io
 import json
+import os
 import signal
 import shlex
 import sys
@@ -1505,23 +1506,28 @@ class ShellHistoryTests(unittest.TestCase):
             log.mkdir(parents=True)
             stderr = io.StringIO()
 
-            with contextlib.redirect_stderr(stderr):
+            stdout = io.StringIO()
+            with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(stdout):
                 completed = shell.complete_show("", "show ", 5, 5)
 
             self.assertEqual(completed, [])
-            self.assertIn("could not read execution history", stderr.getvalue())
+            # Silence, not a report: this runs while readline is drawing the
+            # prompt, so the failure is carried by having no candidates.
+            self.assertEqual(stderr.getvalue() + stdout.getvalue(), "")
 
     def test_execution_identifier_completion_survives_history_stat_failure(self) -> None:
         shell = OrchestratorShell()
         stderr = io.StringIO()
+        stdout = io.StringIO()
         with (
             patch.object(Path, "exists", side_effect=OSError("stat failed")),
             contextlib.redirect_stderr(stderr),
+            contextlib.redirect_stdout(stdout),
         ):
             completed = shell.complete_show("", "show ", 5, 5)
 
         self.assertEqual(completed, [])
-        self.assertIn("stat failed", stderr.getvalue())
+        self.assertEqual(stderr.getvalue() + stdout.getvalue(), "")
 
     def test_history_uses_exact_agent_variants_from_the_active_profile(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -1963,6 +1969,63 @@ class ShellUsageTests(unittest.TestCase):
                 shell.onecmd("usage")
 
             self.assertIn("Claude Code: project usage data not available", stdout.getvalue())
+
+
+class CompletionSilenceTests(unittest.TestCase):
+    """A completer runs mid-prompt; anything it prints smears the line."""
+
+    @contextlib.contextmanager
+    def _unreadable_log(self):
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            log = workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir(parents=True)
+            log.write_text("{}\n", encoding="utf-8")
+            log.chmod(0o000)
+            if os.access(log, os.R_OK):  # running as root: the mode means nothing
+                self.skipTest("cannot make a file unreadable for this user")
+            yield OrchestratorShell(workspace)
+
+    def test_identifier_completion_stays_silent_on_an_unreadable_log(self) -> None:
+        with self._unreadable_log() as shell:
+            for name in ("complete_show", "complete_retry", "complete_report"):
+                with self.subTest(name=name):
+                    out, err = io.StringIO(), io.StringIO()
+                    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                        result = getattr(shell, name)("", "show ", 5, 5)
+
+                    self.assertEqual(result, [])
+                    self.assertEqual(out.getvalue(), "")
+                    self.assertEqual(err.getvalue(), "")
+
+    def test_recent_still_reports_the_same_failure(self) -> None:
+        with self._unreadable_log() as shell:
+            err = io.StringIO()
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+                shell.onecmd("recent")
+
+            self.assertIn("could not read execution history", err.getvalue())
+
+    def test_completion_still_offers_identifiers_when_the_log_reads(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            log = workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir(parents=True)
+            log.write_text(json.dumps({
+                "execution_id": "abcd1234-0000-0000-0000-000000000000",
+                "attempt_id": "attempt-1",
+                "task": {"description": "Fix it", "objective": "It works"},
+                "agent_id": "codex", "status": "completed", "duration_ms": 1,
+                "verification": {"status": "passed"},
+            }) + "\n", encoding="utf-8")
+            shell = OrchestratorShell(workspace)
+
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                result = shell.complete_show("", "show ", 5, 5)
+
+            self.assertTrue(result)
+            self.assertEqual(out.getvalue() + err.getvalue(), "")
 
 
 class VanishedWorkspaceTests(unittest.TestCase):
