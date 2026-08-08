@@ -676,8 +676,47 @@ class MainCleanupTests(unittest.TestCase):
         self.assertEqual(captured["task"].signals, [True])
 
 
+@contextlib.contextmanager
+def resolve_failing_for(target: Path):
+    """Make ``Path.resolve()`` fail for one path, and only for that path.
+
+    A symlink loop used to provoke this, but Python 3.13 resolves loops instead
+    of raising, so the real trigger reaches a different branch there. The branch
+    under test — resolve() failing outright, as an unwalkable directory does on
+    every version — is injected so it stays covered everywhere.
+    """
+
+    real_resolve = Path.resolve
+    text = str(target)
+
+    def fake_resolve(self, *args, **kwargs):
+        if str(self) == text:
+            raise RuntimeError(f"Symlink loop from '{self}'")
+        return real_resolve(self, *args, **kwargs)
+
+    with mock.patch.object(Path, "resolve", fake_resolve):
+        yield
+
+
 class MainWorkspaceTests(unittest.TestCase):
     def test_unresolvable_workspace_is_a_named_option_error(self) -> None:
+        from adaptive_orchestrator.interfaces import tui as tui_module
+
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "unwalkable"
+            stderr = io.StringIO()
+            with (
+                resolve_failing_for(target),
+                contextlib.redirect_stderr(stderr),
+                self.assertRaises(SystemExit) as raised,
+            ):
+                tui_module.main(["--workspace", str(target)])
+
+            self.assertEqual(raised.exception.code, 2)
+            self.assertIn("could not resolve --workspace", stderr.getvalue())
+            self.assertNotIn("Traceback", stderr.getvalue())
+
+    def test_a_symlink_loop_is_refused_however_this_python_resolves_it(self) -> None:
         from adaptive_orchestrator.interfaces import tui as tui_module
 
         with tempfile.TemporaryDirectory() as directory:
@@ -694,7 +733,7 @@ class MainWorkspaceTests(unittest.TestCase):
                 tui_module.main(["--workspace", str(first)])
 
             self.assertEqual(raised.exception.code, 2)
-            self.assertIn("could not resolve --workspace", stderr.getvalue())
+            self.assertIn("--workspace", stderr.getvalue())
             self.assertNotIn("Traceback", stderr.getvalue())
 
 

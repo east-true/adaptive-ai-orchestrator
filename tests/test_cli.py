@@ -33,6 +33,30 @@ from adaptive_orchestrator.orchestration.planning import ExecutionPlan
 
 
 
+@contextlib.contextmanager
+def resolve_failing_for(target: Path):
+    """Make ``Path.resolve()`` fail for one path, and only for that path.
+
+    "The workspace could not be resolved at all" is a real branch — an
+    unwalkable directory reaches it on every Python — but the convenient way to
+    provoke it, a symlink loop, stopped raising in Python 3.13. Injecting the
+    failure keeps the branch covered on all supported versions, and scoping it
+    to one path leaves every other resolve() in the call (project config lookup,
+    report store) working normally.
+    """
+
+    real_resolve = Path.resolve
+    text = str(target)
+
+    def fake_resolve(self, *args, **kwargs):
+        if str(self) == text:
+            raise RuntimeError(f"Symlink loop from '{self}'")
+        return real_resolve(self, *args, **kwargs)
+
+    with patch.object(Path, "resolve", fake_resolve):
+        yield
+
+
 def _stub_plan() -> ExecutionPlan:
     return ExecutionPlan(Task("Do the thing", "Thing is done"), "codex", "stub")
 
@@ -1675,21 +1699,43 @@ class WorkspaceResolutionTests(unittest.TestCase):
     )
 
     def test_unresolvable_workspace_is_reported_as_a_bad_argument(self) -> None:
+        # A raising resolve() is forced rather than provoked with a symlink
+        # loop: Python 3.13 resolves loops instead of raising, so the real-world
+        # trigger reaches a different branch there. The branch under test is
+        # "resolve() failed at all" — a loop on older versions, an unwalkable
+        # directory on any of them — so the failure is injected directly.
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "unwalkable"
+            with resolve_failing_for(target):
+                for command in self.WORKSPACE_COMMANDS:
+                    with self.subTest(command=command[0]):
+                        stderr = io.StringIO()
+                        with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                            exit_code = cli.main([*command, "--workspace", str(target)])
+
+                        self.assertEqual(exit_code, 2)
+                        self.assertIn("could not resolve --workspace", stderr.getvalue())
+                        self.assertNotIn("Traceback", stderr.getvalue())
+
+    def test_a_symlink_loop_is_refused_however_this_python_resolves_it(self) -> None:
+        # 3.10-3.12 raise RuntimeError; 3.13 resolves the loop and the path then
+        # names no directory. Both must be refused, and neither may traceback.
         with tempfile.TemporaryDirectory() as directory:
             first = Path(directory) / "first"
             second = Path(directory) / "second"
             first.symlink_to(second)
             second.symlink_to(first)
 
-            for command in self.WORKSPACE_COMMANDS:
+            for command in (["show", "#1"], ["run", "--task", "Do it"], ["init"]):
                 with self.subTest(command=command[0]):
                     stderr = io.StringIO()
                     with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
                         exit_code = cli.main([*command, "--workspace", str(first)])
 
                     self.assertEqual(exit_code, 2)
-                    self.assertIn("could not resolve --workspace", stderr.getvalue())
+                    self.assertIn("--workspace", stderr.getvalue())
                     self.assertNotIn("Traceback", stderr.getvalue())
+                    self.assertFalse(first.is_dir())
 
     def test_home_relative_workspace_is_expanded(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
