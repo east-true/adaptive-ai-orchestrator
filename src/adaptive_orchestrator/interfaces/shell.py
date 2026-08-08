@@ -595,6 +595,22 @@ class OrchestratorShell(cmd.Cmd):
         if not tokens:
             print("Usage: plan_generate <request> [args...]")
             return
+        # `plan generate` takes exactly one positional, so every leading
+        # non-option token belongs to the request. Passing them through
+        # unjoined made `plan_generate make a plan` fail with "unrecognized
+        # arguments: a plan" while the shell's own `task make a plan` — which
+        # uses the whole argument string — worked. Two commands taking a
+        # free-text request now read it the same way. A request that starts
+        # with a dash still has to be quoted, since that is the only way to
+        # tell it from an option.
+        # Only the leading form is rewritten. When options come first the
+        # request is somewhere among them and the caller has already had to
+        # quote it, so those tokens are passed through exactly as before.
+        request_tokens: list[str] = []
+        while tokens and not tokens[0].startswith("-"):
+            request_tokens.append(tokens.pop(0))
+        if request_tokens:
+            tokens = [" ".join(request_tokens), *tokens]
         argv = [
             "plan",
             "generate",

@@ -911,6 +911,38 @@ class ShellCliDispatchTests(unittest.TestCase):
         self.assertEqual(parsed.workspace, Path("/override"))
         self.assertEqual(parsed.agent, "auto")
 
+    def test_plan_generate_accepts_an_unquoted_request_like_task_does(self) -> None:
+        """`task make a plan` worked; `plan_generate make a plan` did not.
+
+        `plan generate` takes exactly one positional, so the split tokens
+        arrived as "unrecognized arguments: a plan" — an error naming no
+        remedy, for a phrasing the sibling command accepts.
+        """
+
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+            self.shell.onecmd("plan_generate Add a dark mode toggle")
+
+        argv = main.call_args.args[0]
+        self.assertIn("Add a dark mode toggle", argv)
+        shell_interface.cli.build_parser(ProjectConfig()).parse_args(argv)
+
+    def test_options_after_an_unquoted_request_stay_options(self) -> None:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+            self.shell.onecmd("plan_generate Add dark mode --agent codex --force")
+
+        argv = main.call_args.args[0]
+        self.assertEqual(argv[-3:], ["--agent", "codex", "--force"])
+        self.assertIn("Add dark mode", argv)
+        parsed = shell_interface.cli.build_parser(ProjectConfig()).parse_args(argv)
+        self.assertEqual(parsed.request, "Add dark mode")
+        self.assertEqual(parsed.agent, "codex")
+
+    def test_a_quoted_request_is_unchanged(self) -> None:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+            self.shell.onecmd('plan_generate "Add a dark mode toggle"')
+
+        self.assertIn("Add a dark mode toggle", main.call_args.args[0])
+
     def test_plan_generate_preserves_flags_first_argv(self) -> None:
         with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
             self.shell.onecmd(
