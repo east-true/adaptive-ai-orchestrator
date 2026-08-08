@@ -2366,5 +2366,78 @@ class ShortIdentifierPrefixTests(unittest.TestCase):
             self.assertNotIn("shorter than", stderr.getvalue())
 
 
+class ExplicitControlStateDirectoryTests(unittest.TestCase):
+    """A typed control directory that names nothing is a typo, not an empty log."""
+
+    def test_replay_refuses_a_missing_explicit_directory_and_creates_nothing(self) -> None:
+        for extra in ([], ["--rebuild-state"], ["--reconcile-incomplete"]):
+            with self.subTest(extra=extra), tempfile.TemporaryDirectory() as directory:
+                workspace = Path(directory) / "workspace"
+                workspace.mkdir()
+                control = Path(directory) / "typo"
+                stderr = io.StringIO()
+                with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                    exit_code = cli.main([
+                        "replay", "--workspace", str(workspace),
+                        "--control-state-dir", str(control), *extra,
+                    ])
+
+                self.assertEqual(exit_code, 2)
+                self.assertIn("does not exist", stderr.getvalue())
+                self.assertFalse(control.exists())
+
+    def test_a_directory_inside_the_workspace_is_still_refused_as_such(self) -> None:
+        # The safety rule outranks existence: reporting "does not exist" would
+        # invite creating a directory that is rejected for a better reason.
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                exit_code = cli.main([
+                    "replay", "--workspace", str(workspace),
+                    "--control-state-dir", str(workspace / "inside"),
+                ])
+
+            self.assertEqual(exit_code, 1)
+            self.assertIn("must be outside the agent workspace", stderr.getvalue())
+
+    def test_paired_analyze_refuses_a_missing_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                exit_code = cli.main([
+                    "paired", "analyze", "manifest.json",
+                    "--control-state-dir", str(Path(directory) / "typo"),
+                ])
+
+            self.assertEqual(exit_code, 2)
+            self.assertIn("does not exist", stderr.getvalue())
+
+    def test_the_default_path_is_left_to_come_into_existence(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "workspace"
+            workspace.mkdir()
+            with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
+                exit_code = cli.main(["replay", "--workspace", str(workspace)])
+
+            self.assertEqual(exit_code, 0)
+
+    def test_an_existing_directory_is_accepted(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "workspace"
+            workspace.mkdir()
+            control = Path(directory) / "control"
+            control.mkdir()
+            with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
+                exit_code = cli.main([
+                    "replay", "--workspace", str(workspace), "--control-state-dir", str(control),
+                ])
+
+            self.assertEqual(exit_code, 0)
+
+    def test_a_run_still_creates_the_directory_it_was_told_to_write(self) -> None:
+        self.assertIsNone(cli._require_existing_control_state_dir(None))
+
+
 if __name__ == "__main__":
     unittest.main()

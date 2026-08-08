@@ -1025,6 +1025,29 @@ def _warn_missing_recorded_diff(bundle: object) -> None:
     )
 
 
+def _require_existing_control_state_dir(configured: Path | None) -> str | None:
+    """Refuse an explicitly named control-state directory that names nothing.
+
+    An absent event log reads as "nothing has run", which is exactly right for
+    the default XDG path before a first run and exactly wrong for a directory
+    the operator typed. `paired analyze` turned a mistyped path into a complete
+    analysis with every pair "incomplete", and `replay --rebuild-state` created
+    the mistyped directory and wrote a routing projection into it. Only an
+    explicit value is checked; the default is left to come into existence.
+    """
+
+    if configured is None:
+        return None
+    try:
+        resolved = configured.expanduser().resolve()
+    except (OSError, RuntimeError) as exc:
+        return f"could not resolve --control-state-dir {configured}: {exc}"
+    if not resolved.is_dir():
+        detail = "not a directory" if resolved.exists() else "does not exist"
+        return f"--control-state-dir {resolved} {detail}."
+    return None
+
+
 def _print_short_prefix_hint(identifier: str) -> None:
     """Distinguish a too-short fragment from an identifier that does not exist.
 
@@ -1368,6 +1391,17 @@ def _run_command(argv: list[str] | None = None) -> int:
     if args.command == "replay":
         try:
             control_dir = resolve_control_state_directory(workspace, args.control_state_dir)
+        except (OSError, ValueError) as exc:
+            # Checked before existence: a control directory inside the agent
+            # workspace is refused whether or not it is there, and reporting it
+            # as merely missing would invite the operator to create it.
+            print(f"Replay failed: {exc}", file=sys.stderr)
+            return 1
+        error = _require_existing_control_state_dir(args.control_state_dir)
+        if error is not None:
+            print(f"Error: {error}", file=sys.stderr)
+            return 2
+        try:
             event_path = control_dir / "events.jsonl"
             if args.reconcile_incomplete:
                 before_events = JsonlEventStore(event_path).read()
@@ -1529,6 +1563,15 @@ def _run_command(argv: list[str] | None = None) -> int:
 
 
 def _run_paired_command(args: argparse.Namespace) -> int:
+    # `analyze` reads only what the log holds, so a mistyped directory produced
+    # a full report of "incomplete" pairs rather than an error. `run`/`resume`
+    # create their own control directory, so only the read-only command is
+    # required to point at one that already exists.
+    if args.paired_command == "analyze":
+        error = _require_existing_control_state_dir(args.control_state_dir)
+        if error is not None:
+            print(f"Error: {error}", file=sys.stderr)
+            return 2
     try:
         manifest_path = args.manifest.expanduser().resolve(strict=True)
         manifest = load_paired_manifest(manifest_path)
