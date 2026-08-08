@@ -361,10 +361,15 @@ class OrchestratorShell(cmd.Cmd):
             effective = self._format_toggle(not config.escalation_enabled) if config else "unknown"
             print(f"No escalation: {inherited(effective)}")
 
+        # `run-plan` and `plan generate` define no --time-limit, so a session
+        # value never reaches them: a plan step carries its own
+        # `time_limit_seconds`, and plan generation is not a budgeted task run.
+        # The row said "30s" flatly, which claimed a reach it does not have.
+        limit_scope = " (task and run only)"
         if self.default_time_limit_disabled:
-            print("Time limit: off")
+            print(f"Time limit: off{limit_scope}")
         elif self.default_time_limit is not None:
-            print(f"Time limit: {self.default_time_limit:g}s")
+            print(f"Time limit: {self.default_time_limit:g}s{limit_scope}")
         else:
             seconds = config.time_limit_seconds if config else None
             print(f"Time limit: {inherited(f'{seconds:g}s' if seconds is not None else 'none')}")

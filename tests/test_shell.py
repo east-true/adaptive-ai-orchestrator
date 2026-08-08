@@ -168,6 +168,38 @@ class ShellStateTests(unittest.TestCase):
         self.assertEqual(output.count(str(path)), 1)
         self.assertEqual(output.count("profile unreadable"), 5)
 
+    def test_the_time_limit_row_states_which_commands_it_reaches(self) -> None:
+        """It never reaches run_plan or plan_generate; the row used to imply it did."""
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell(Path(directory))
+            for setting in ("set time_limit 30", "set time_limit off"):
+                with self.subTest(setting=setting):
+                    stdout = io.StringIO()
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        shell.onecmd(setting)
+                    with contextlib.redirect_stdout(stdout):
+                        shell.onecmd("settings")
+
+                    row = next(l for l in stdout.getvalue().splitlines() if l.startswith("Time limit"))
+                    self.assertIn("task and run only", row)
+
+    def test_the_session_time_limit_really_is_dropped_for_plan_commands(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell(Path(directory))
+            with contextlib.redirect_stdout(io.StringIO()):
+                shell.onecmd("set time_limit 30")
+
+            reaches = {}
+            for line in ("task do it", "run --task=x", "run_plan p.json", "plan_generate make a plan"):
+                with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+                    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                        shell.onecmd(line)
+                reaches[line.split()[0]] = "--time-limit" in main.call_args.args[0]
+
+            self.assertEqual(reaches, {
+                "task": True, "run": True, "run_plan": False, "plan_generate": False,
+            })
+
     def test_status_still_spells_out_a_profile_failure_in_full(self) -> None:
         """`status` has no header to carry it, so it keeps the whole message."""
         with tempfile.TemporaryDirectory() as directory:
