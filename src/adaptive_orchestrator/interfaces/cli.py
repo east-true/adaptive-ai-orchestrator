@@ -366,13 +366,18 @@ def _add_workflow_arguments(parser: argparse.ArgumentParser, config: ProjectConf
         default=config.include_git_diff,
         help="Log the full workspace diff; use only when it contains no sensitive data.",
     )
+    escalation_group.description = (
+        "Escalation applies only when the agent is auto: an explicitly requested agent is a "
+        "deliberate override that escalation would defeat. On `retry` the agent defaults to the "
+        "recorded one, so these options need --agent auto to take effect."
+    )
     escalation = escalation_group.add_mutually_exclusive_group()
-    escalation.add_argument("--escalation", dest="no_escalation", action="store_false", help="Enable escalation when warranted.")
+    escalation.add_argument("--escalation", dest="no_escalation", action="store_false", help="Enable escalation when warranted. Requires --agent auto.")
     escalation.add_argument("--no-escalation", dest="no_escalation", action="store_true", help="Disable escalating to a second agent on failure, high risk, or high uncertainty.")
     parser.set_defaults(no_escalation=not config.escalation_enabled)
-    escalation_group.add_argument("--escalation-risk-threshold", type=int, default=config.escalation_risk_threshold, help="Minimum analyzed risk (0-5) that triggers escalation.")
-    escalation_group.add_argument("--escalation-uncertainty-threshold", type=int, default=config.escalation_uncertainty_threshold, help="Minimum analyzed uncertainty (0-5) that triggers escalation.")
-    escalation_group.add_argument("--escalation-difficulty-threshold", type=int, default=config.escalation_difficulty_threshold, help="Minimum analyzed difficulty (1-5) that triggers escalation.")
+    escalation_group.add_argument("--escalation-risk-threshold", type=int, default=config.escalation_risk_threshold, help="Minimum analyzed risk (0-5) that triggers escalation. Requires --agent auto.")
+    escalation_group.add_argument("--escalation-uncertainty-threshold", type=int, default=config.escalation_uncertainty_threshold, help="Minimum analyzed uncertainty (0-5) that triggers escalation. Requires --agent auto.")
+    escalation_group.add_argument("--escalation-difficulty-threshold", type=int, default=config.escalation_difficulty_threshold, help="Minimum analyzed difficulty (1-5) that triggers escalation. Requires --agent auto.")
     routing.add_argument(
         "--verbose",
         action=argparse.BooleanOptionalAction,
@@ -699,14 +704,25 @@ def _print_execution_result(
     print(json.dumps({"plan": asdict(plan), "execution": asdict(record)}, default=str, indent=2))
 
 
-def _print_plan_result(result: object, workspace: Path, summary: bool) -> None:
-    """Render every step of a plan run, numbered so the order stays legible."""
+def _print_plan_result(
+    result: object,
+    workspace: Path,
+    summary: bool,
+    planned_steps: int | None = None,
+) -> None:
+    """Render every step of a plan run, numbered so the order stays legible.
+
+    The denominator is how many steps the plan holds, not how many ran, so a
+    plan that stopped early is not numbered as though it reached its end.
+    """
+
     steps = getattr(result, "steps", ())
     if summary:
         rendered = [_rendered_summary(step.record, workspace) for step in steps]
+        total = len(rendered) if planned_steps is None else planned_steps
         if all(item is not None for item in rendered):
             for index, item in enumerate(rendered, start=1):
-                print(f"--- step {index} of {len(rendered)} ---")
+                print(f"--- step {index} of {total} ---")
                 print(item)
             if getattr(result, "stopped_early", False):
                 print("Stopped early: a step did not succeed.")
@@ -796,6 +812,54 @@ def _execution_store(workspace: Path) -> ExecutionReportStore:
     return ExecutionReportStore(workspace.resolve() / ".orchestrator" / "executions.jsonl")
 
 
+#: Options whose only effect is on a decision that never runs for an explicit agent.
+_ESCALATION_OPTION_PREFIXES = (
+    "--escalation",
+    "--escalation-risk-threshold",
+    "--escalation-uncertainty-threshold",
+    "--escalation-difficulty-threshold",
+)
+
+
+def _escalation_options_in(argv: Sequence[str]) -> list[str]:
+    """Return the escalation-enabling options the caller actually typed.
+
+    Defaults cannot be used for this: every one of these options has a value on
+    the namespace whether or not it was given. Only a flag the operator wrote is
+    worth reporting as having no effect. ``--no-escalation`` is excluded—it
+    disables something already disabled, which is not a surprise.
+    """
+
+    typed: list[str] = []
+    for item in argv:
+        name = item.partition("=")[0]
+        if name in _ESCALATION_OPTION_PREFIXES and name not in typed:
+            typed.append(name)
+    return typed
+
+
+def _warn_inert_escalation_options(argv: Sequence[str], requested_agent_id: str) -> None:
+    """Say when escalation options were given for an agent that cannot escalate.
+
+    Escalation only applies when the router was free to choose (see
+    `docs/architecture.md`); an explicitly requested agent is a deliberate
+    override. `retry` reaches this with the recorded agent by default, so its
+    escalation options are inert unless --agent auto is passed—accepting them in
+    silence reads as having enabled something.
+    """
+
+    if requested_agent_id == "auto":
+        return
+    typed = _escalation_options_in(argv)
+    if not typed:
+        return
+    print(
+        f"Warning: {', '.join(typed)} has no effect with --agent {requested_agent_id}; "
+        "escalation applies only to --agent auto.",
+        file=sys.stderr,
+    )
+
+
 def _resolve_workspace(path: Path) -> Path | None:
     """Resolve ``--workspace`` once, reporting a path that cannot be used.
 
@@ -827,6 +891,24 @@ def _write_report(path: Path, content: str, force: bool) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def _notified_step_record(result: object) -> object:
+    """Pick the plan step a notification should describe.
+
+    A notification carries one execution's status, and `notify_execution` reads
+    "completed" straight off it. Handing it the last step announced success for
+    a plan that failed earlier and kept going under --continue-on-failure, while
+    the command itself exited non-zero. The first failure is what the operator
+    is being called back for; a plan that succeeded still reports its last step.
+    """
+
+    steps = getattr(result, "steps", ())
+    if not getattr(result, "succeeded", False):
+        for step in steps:
+            if not execution_succeeded(step.record):
+                return step.record
+    return steps[-1].record
+
+
 def _deliver_notifications(record: object, config: ProjectConfig) -> None:
     if not config.notify_terminal_bell and not config.notify_desktop:
         return
@@ -840,7 +922,28 @@ def _deliver_notifications(record: object, config: ProjectConfig) -> None:
             print(f"Notification warning ({result.channel}): {result.detail}", file=sys.stderr)
 
 
+#: Conventional shell status for a command ended by SIGINT (128 + SIGINT).
+INTERRUPTED_EXIT_CODE = 130
+
+
 def main(argv: list[str] | None = None) -> int:
+    """Run one command, reporting an interrupt as a status rather than a trace.
+
+    Ctrl-C is how a long agent run is meant to be abandoned, so it is an
+    ordinary outcome here. The process runner already terminates the agent it
+    started before the interrupt propagates, and lifecycle telemetry records the
+    attempt; all that is left is to say so and exit the way a shell expects.
+    A signal-driven shutdown raises its own BaseException and still propagates.
+    """
+
+    try:
+        return _run_command(argv)
+    except KeyboardInterrupt:
+        print("Interrupted.", file=sys.stderr)
+        return INTERRUPTED_EXIT_CODE
+
+
+def _run_command(argv: list[str] | None = None) -> int:
     raw_argv = list(sys.argv[1:] if argv is None else argv)
     try:
         config = _config_for_argv(raw_argv)
@@ -930,6 +1033,7 @@ def main(argv: list[str] | None = None) -> int:
         if not isinstance(requested_agent, str):
             print("Retry failed: the original agent is not recorded; use --agent auto", file=sys.stderr)
             return 1
+        _warn_inert_escalation_options(raw_argv, requested_agent)
         workflow = _build_workflow_for_cli(args, workspace, requested_agent)
         if workflow is None:
             if args.agent == "same":
@@ -1032,18 +1136,23 @@ def main(argv: list[str] | None = None) -> int:
         except Exception as exc:  # noqa: BLE001 - deliberate CLI boundary: one-line error, not a traceback.
             print(f"Invalid plan file {plan_path}: {exc}", file=sys.stderr)
             return 1
+        _warn_inert_escalation_options(raw_argv, args.agent)
         workflow = _build_workflow_for_cli(args, workspace)
         if workflow is None:
             return 2
         result = workflow.run_plan(tasks, args.agent, stop_on_failure=not args.continue_on_failure)
-        _print_plan_result(result, workspace, args.summary)
+        # Count against the plan, not against the steps that got to run: a plan
+        # that stopped at step 2 of 3 reported "step 2 of 2", which reads as
+        # having failed on the last one.
+        planned_steps = len(tasks)
+        _print_plan_result(result, workspace, args.summary, planned_steps)
         if result.steps:
-            _deliver_notifications(result.steps[-1].record, config)
+            _deliver_notifications(_notified_step_record(result), config)
         if result.succeeded:
             return 0
         for index, step in enumerate(result.steps, start=1):
             if not execution_succeeded(step.record):
-                _print_failure_reason(step.record, f"Plan step {index} of {len(result.steps)}")
+                _print_failure_reason(step.record, f"Plan step {index} of {planned_steps}")
         if result.stopped_early:
             print("Stopped before the remaining steps ran.", file=sys.stderr)
         return 1
@@ -1058,6 +1167,7 @@ def main(argv: list[str] | None = None) -> int:
         validate_command = [sys.executable, "-m", "adaptive_orchestrator.cli", "plan", "validate", str(resolved_output)]
         args.verify_command = [shlex.join(validate_command), *args.verify_command]
         task = _build_plan_generation_task(args.request, workspace, resolved_output)
+        _warn_inert_escalation_options(raw_argv, args.agent)
         workflow = _build_workflow_for_cli(args, workspace)
         if workflow is None:
             return 2
@@ -1115,6 +1225,7 @@ def main(argv: list[str] | None = None) -> int:
             run_parser.error(str(exc))
         print(f"Error: {exc}", file=sys.stderr)
         return 2
+    _warn_inert_escalation_options(raw_argv, args.agent)
     workflow = _build_workflow_for_cli(args, workspace)
     if workflow is None:
         return 2

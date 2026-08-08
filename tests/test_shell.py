@@ -108,6 +108,45 @@ class ShellStateTests(unittest.TestCase):
         self.assertIn("Time limit: 30s", output)
         self.assertIn("Verify command: off", output)
 
+    def test_session_verify_command_is_shown_as_added_to_the_profile(self) -> None:
+        # `--verify-command` appends to the profile's list at the CLI boundary,
+        # so a row printing only the session value read as a replacement.
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            path = config_path(workspace)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(
+                json.dumps({
+                    "version": 1,
+                    "agent": "auto",
+                    "verification": {"commands": ["python3 -m unittest"]},
+                }),
+                encoding="utf-8",
+            )
+            shell = OrchestratorShell()
+            shell.workspace = workspace
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("set verify echo session")
+                shell.onecmd("settings")
+
+        output = stdout.getvalue()
+        self.assertIn("Note: this runs in addition to 1 verify command(s)", output)
+        self.assertIn("Verify command: python3 -m unittest; echo session", output)
+
+    def test_session_verify_command_stands_alone_without_a_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell()
+            shell.workspace = Path(directory)
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("set verify echo session")
+                shell.onecmd("settings")
+
+        output = stdout.getvalue()
+        self.assertNotIn("Note: this runs in addition", output)
+        self.assertIn("Verify command: echo session", output)
+
     def test_settings_survives_an_invalid_project_profile(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory)

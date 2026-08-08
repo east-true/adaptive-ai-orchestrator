@@ -337,12 +337,20 @@ class OrchestratorShell(cmd.Cmd):
             seconds = config.time_limit_seconds if config else None
             print(f"Time limit: {inherited(f'{seconds:g}s' if seconds is not None else 'none')}")
 
+        commands = config.verify_commands if config else ()
         if self.default_verify_commands_disabled:
             print("Verify command: off")
         elif self.default_verify_command is not None:
-            print(f"Verify command: {self.default_verify_command}")
+            # A session command is added to the profile's, not substituted for
+            # them: every check runs and the worst outcome wins. Printing the
+            # session value alone read as a replacement, so this row shows the
+            # whole set the way the inherited rows show what is effective.
+            effective = "; ".join((*commands, self.default_verify_command))
+            if commands:
+                print(f"Verify command: {effective} (session command added to {len(commands)} from the profile)")
+            else:
+                print(f"Verify command: {effective}")
         else:
-            commands = config.verify_commands if config else ()
             print(f"Verify command: {inherited('; '.join(commands) if commands else 'none')}")
 
     def do_set(self, arg: str) -> None:
@@ -418,6 +426,15 @@ class OrchestratorShell(cmd.Cmd):
             self.default_verify_command = shlex.join(tokens)
             self.default_verify_commands_disabled = False
             print(f"verify set to {self.default_verify_command}")
+            profile_commands = self._profile_verify_commands()
+            if profile_commands:
+                # Said once, at the moment it becomes true, so the operator does
+                # not have to run `settings` to discover the profile's checks
+                # still run alongside this one. `set verify off` clears both.
+                print(
+                    f"Note: this runs in addition to {len(profile_commands)} verify "
+                    f"command(s) from the workspace profile: {'; '.join(profile_commands)}"
+                )
             return
 
         print(f"Error: unknown setting: {name}. Choose one of {', '.join(_SETTING_NAMES)}")
@@ -669,6 +686,13 @@ class OrchestratorShell(cmd.Cmd):
             ["report", "--workspace", str(self.workspace), *tokens],
             "report",
         )
+
+    def _profile_verify_commands(self) -> tuple[str, ...]:
+        """The active profile's verify commands, or none when it cannot be read."""
+        try:
+            return tuple(load_project_config(self.workspace).verify_commands)
+        except ProjectConfigError:
+            return ()
 
     def _history_agent_ids(self, history: ExecutionHistory) -> list[str]:
         # Registered agents always show, so a freshly added one reports "no data yet" instead of

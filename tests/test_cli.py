@@ -1438,6 +1438,118 @@ class WorkspaceRelativeDispatchTests(unittest.TestCase):
             self.assertEqual(workflow.task.objective, "Workspace objective")
 
 
+class PlanStepReportingTests(unittest.TestCase):
+    @staticmethod
+    def _record(succeeded: bool, name: str) -> SimpleNamespace:
+        return SimpleNamespace(
+            status="completed" if succeeded else "failed",
+            verification=SimpleNamespace(status="passed" if succeeded else "failed"),
+            execution_id=name,
+        )
+
+    def _result(self, succeeded: bool, outcomes: tuple[bool, ...], stopped_early: bool = False) -> SimpleNamespace:
+        steps = [
+            SimpleNamespace(record=self._record(ok, f"step{index}"), plan=object())
+            for index, ok in enumerate(outcomes, start=1)
+        ]
+        return SimpleNamespace(steps=steps, succeeded=succeeded, stopped_early=stopped_early)
+
+    def test_step_numbering_counts_the_plan_not_the_steps_that_ran(self) -> None:
+        result = self._result(False, (True, False), stopped_early=True)
+        stdout = io.StringIO()
+        with (
+            patch.object(cli, "_rendered_summary", side_effect=lambda record, workspace: "summary"),
+            contextlib.redirect_stdout(stdout),
+        ):
+            cli._print_plan_result(result, Path("/workspace"), summary=True, planned_steps=3)
+
+        self.assertIn("--- step 1 of 3 ---", stdout.getvalue())
+        self.assertIn("--- step 2 of 3 ---", stdout.getvalue())
+        self.assertNotIn("of 2 ---", stdout.getvalue())
+
+    def test_notification_describes_the_first_failure_not_a_later_success(self) -> None:
+        with patch.object(cli, "execution_succeeded", side_effect=lambda record: record.status == "completed"):
+            failed_plan = self._result(False, (True, False, True))
+            self.assertEqual(cli._notified_step_record(failed_plan).execution_id, "step2")
+
+            succeeded_plan = self._result(True, (True, True, True))
+            self.assertEqual(cli._notified_step_record(succeeded_plan).execution_id, "step3")
+
+
+class InterruptTests(unittest.TestCase):
+    def test_interrupt_reports_a_status_instead_of_a_traceback(self) -> None:
+        stderr = io.StringIO()
+        with (
+            patch.object(cli, "_run_command", side_effect=KeyboardInterrupt),
+            contextlib.redirect_stderr(stderr),
+        ):
+            exit_code = cli.main(["run", "--task", "Do it"])
+
+        self.assertEqual(exit_code, cli.INTERRUPTED_EXIT_CODE)
+        self.assertEqual(exit_code, 130)
+        self.assertIn("Interrupted", stderr.getvalue())
+        self.assertNotIn("Traceback", stderr.getvalue())
+
+    def test_a_signal_driven_shutdown_still_propagates(self) -> None:
+        class Termination(BaseException):
+            pass
+
+        with (
+            patch.object(cli, "_run_command", side_effect=Termination),
+            self.assertRaises(Termination),
+        ):
+            cli.main(["run", "--task", "Do it"])
+
+
+class InertEscalationOptionTests(unittest.TestCase):
+    """Escalation only applies to --agent auto; saying so beats accepting it silently."""
+
+    def test_typed_options_are_reported_only_when_the_caller_wrote_them(self) -> None:
+        self.assertEqual(cli._escalation_options_in(["run", "--escalation"]), ["--escalation"])
+        self.assertEqual(
+            cli._escalation_options_in(["run", "--escalation-risk-threshold=0"]),
+            ["--escalation-risk-threshold"],
+        )
+        self.assertEqual(cli._escalation_options_in(["run", "--no-escalation"]), [])
+        self.assertEqual(cli._escalation_options_in(["run", "--task", "x"]), [])
+
+    def test_no_warning_for_auto(self) -> None:
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            cli._warn_inert_escalation_options(["run", "--escalation"], "auto")
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_warning_names_the_options_and_the_agent(self) -> None:
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            cli._warn_inert_escalation_options(["run", "--escalation"], "claude-code")
+        self.assertIn("--escalation", stderr.getvalue())
+        self.assertIn("claude-code", stderr.getvalue())
+        self.assertIn("--agent auto", stderr.getvalue())
+
+    def test_run_with_an_explicit_agent_warns_through_the_command(self) -> None:
+        class Workflow:
+            def run(self, task, requested_agent):
+                return object(), object()
+
+        with tempfile.TemporaryDirectory() as directory:
+            stderr = io.StringIO()
+            with (
+                patch.object(cli, "_build_workflow_for_cli", return_value=Workflow()),
+                patch.object(cli, "asdict", return_value={}),
+                patch.object(cli, "execution_succeeded", return_value=True),
+                contextlib.redirect_stdout(io.StringIO()),
+                contextlib.redirect_stderr(stderr),
+            ):
+                exit_code = cli.main([
+                    "run", "--workspace", directory, "--task", "Do it",
+                    "--agent", "codex", "--escalation",
+                ])
+
+            self.assertEqual(exit_code, 0)
+            self.assertIn("has no effect with --agent codex", stderr.getvalue())
+
+
 class RetryUnknownAgentTests(unittest.TestCase):
     def test_recorded_model_variant_that_is_not_configured_says_what_to_do(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
