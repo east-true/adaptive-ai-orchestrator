@@ -746,8 +746,10 @@ def _build_workflow(
     commands = _verify_commands(args.verify_command)
     quality_specs = _quality_evaluator_specs(args, workspace)
     control_dir = resolve_control_state_directory(workspace, getattr(args, "control_state_dir", None))
+    execution_log = workspace / ".orchestrator" / "executions.jsonl"
+    _require_readable_execution_log(execution_log)
 
-    logger = JsonlExecutionLogger(workspace / ".orchestrator" / "executions.jsonl")
+    logger = JsonlExecutionLogger(execution_log)
     # `retry` leaves args.agent at the sentinel "same"; label the stream with the
     # agent actually being run rather than with how it was requested.
     agent_label = requested_agent_id or args.agent
@@ -782,6 +784,26 @@ def _build_workflow(
         args.escalation_risk_threshold, args.escalation_uncertainty_threshold, args.escalation_difficulty_threshold
     )
     return EngineeringWorkflow(kernel, router, verifier, escalation_policy)
+
+
+def _require_readable_execution_log(path: Path) -> None:
+    """Fail here, before the agent runs, if the recorded log cannot be read.
+
+    The router reads this file for routing history partway through
+    `workflow.run`, so an unreadable one surfaced as a raw PermissionError
+    traceback after the workflow had been built—and, for `run`, after the agent
+    had been paid for. The log is written owner-only, so a second operator in a
+    shared workspace meets this routinely. Opening it is enough; the contents
+    are read by the components that own them.
+    """
+
+    if not path.exists():
+        return
+    try:
+        with path.open("rb"):
+            pass
+    except OSError as exc:
+        raise OSError(f"cannot read the execution log {path}: {exc}") from exc
 
 
 def _verify_commands(values: Sequence[str]) -> list[tuple[str, ...]]:

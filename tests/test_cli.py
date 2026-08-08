@@ -2502,5 +2502,49 @@ class EscalatedFailureReasonTests(unittest.TestCase):
         self.assertIn("boom", stderr.getvalue())
 
 
+class UnreadableExecutionLogTests(unittest.TestCase):
+    """The log is read for routing history mid-run; check it before the agent."""
+
+    def test_an_unreadable_log_is_one_line_and_stops_before_the_agent(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            log = workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir(parents=True)
+            log.write_text("", encoding="utf-8")
+            # Unlinking it only needs write permission on the parent directory,
+            # so the temporary directory still cleans up.
+            log.chmod(0o000)
+            if os.access(log, os.R_OK):  # running as root: the mode means nothing
+                self.skipTest("cannot make a file unreadable for this user")
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                exit_code = cli.main([
+                    "run", "--workspace", str(workspace), "--task", "Do the thing",
+                    "--agent", "codex", "--no-escalation",
+                ])
+
+            self.assertEqual(exit_code, 2)
+            self.assertIn("cannot read the execution log", stderr.getvalue())
+            self.assertNotIn("Traceback", stderr.getvalue())
+
+    def test_a_log_path_that_is_a_directory_is_reported_not_raised(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            log = Path(directory) / ".orchestrator" / "executions.jsonl"
+            log.mkdir(parents=True)
+            with self.assertRaisesRegex(OSError, "cannot read the execution log"):
+                cli._require_readable_execution_log(log)
+
+    def test_an_absent_log_is_not_an_error(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            cli._require_readable_execution_log(Path(directory) / "nothing.jsonl")
+
+    def test_a_readable_log_passes(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            log = Path(directory) / "executions.jsonl"
+            log.write_text("{}\n", encoding="utf-8")
+            cli._require_readable_execution_log(log)
+
+
 if __name__ == "__main__":
     unittest.main()
