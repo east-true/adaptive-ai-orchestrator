@@ -2,6 +2,7 @@ import argparse
 import contextlib
 import io
 import json
+import os
 import sys
 import tempfile
 import threading
@@ -143,6 +144,40 @@ class BuildWorkflowTests(unittest.TestCase):
         runner_ctor.assert_called_once()
         self.assertIs(workflow._kernel.runner, runner_instance)
         self.assertTrue(callable(runner_ctor.call_args.args[0]))
+
+    def test_verbose_stream_is_labelled_with_the_agent_actually_run(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            args = type(
+                "Args",
+                (),
+                {
+                    "command": "retry",
+                    # `retry` keeps the sentinel here until the record names one.
+                    "agent": "same",
+                    "include_git_diff": False,
+                    "verify_command": [],
+                    "verify_time_limit": None,
+                    "no_escalation": True,
+                    "escalation_risk_threshold": 3,
+                    "escalation_uncertainty_threshold": 3,
+                    "escalation_difficulty_threshold": 4,
+                    "verbose": True,
+                    "control_state_dir": root / "control",
+                },
+            )()
+
+            with patch.object(cli, "SubprocessRunner") as runner_ctor:
+                cli._build_workflow(args, workspace, "codex")
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                runner_ctor.call_args.args[0]("line\n")
+
+        self.assertIn("[retry:codex]", stderr.getvalue())
+        self.assertNotIn("same", stderr.getvalue())
 
 
 class ProjectConfigCliTests(unittest.TestCase):
@@ -998,6 +1033,34 @@ class WorkspaceRelativeDispatchTests(unittest.TestCase):
             self.assertEqual(len(json.loads(stdout.getvalue())), 1)
             self.assertEqual(stderr.getvalue(), "")
 
+    def test_memory_search_leaves_a_workspace_it_only_queried_untouched(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                exit_code = cli.main(["memory", "search", "--workspace", str(workspace)])
+
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(list(workspace.iterdir()), [])
+
+    def test_unwritable_memory_workspace_reports_one_line_instead_of_a_traceback(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "workspace"
+            stderr = io.StringIO()
+            with (
+                patch.object(cli.EngineeringMemoryStore, "record", side_effect=PermissionError("denied")),
+                contextlib.redirect_stdout(io.StringIO()),
+                contextlib.redirect_stderr(stderr),
+            ):
+                exit_code = cli.main([
+                    "memory", "record", "--workspace", str(workspace),
+                    "--type", "trade_off", "--title", "T", "--summary", "S",
+                ])
+
+            self.assertEqual(exit_code, 1)
+            self.assertIn("Memory record failed", stderr.getvalue())
+            self.assertIn("denied", stderr.getvalue())
+            self.assertNotIn("Traceback", stderr.getvalue())
+
     def test_version_reports_the_installed_console_script_name(self) -> None:
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout), self.assertRaises(SystemExit) as raised:
@@ -1373,6 +1436,155 @@ class WorkspaceRelativeDispatchTests(unittest.TestCase):
             self.assertEqual(exit_code, 0)
             self.assertEqual(workflow.task.description, "Workspace description")
             self.assertEqual(workflow.task.objective, "Workspace objective")
+
+
+class RetryUnknownAgentTests(unittest.TestCase):
+    def test_recorded_model_variant_that_is_not_configured_says_what_to_do(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            log = workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir(parents=True)
+            log.write_text(json.dumps({
+                "execution_id": "e1",
+                "attempt_id": "a1",
+                "agent_id": "claude-code:some-exotic-model",
+                "task": {"description": "d", "objective": "o"},
+            }) + "\n", encoding="utf-8")
+
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                exit_code = cli.main(["retry", "#1", "--workspace", str(workspace)])
+
+            self.assertEqual(exit_code, 2)
+            self.assertIn("Unknown agent: claude-code:some-exotic-model", stderr.getvalue())
+            self.assertIn("--agent auto", stderr.getvalue())
+
+
+class WorkspaceResolutionTests(unittest.TestCase):
+    WORKSPACE_COMMANDS = (
+        ["show", "#1"],
+        ["report", "#1"],
+        ["retry", "#1"],
+        ["replay"],
+        ["doctor"],
+        ["init"],
+        ["memory", "search"],
+        ["run", "--task", "Do it"],
+    )
+
+    def test_unresolvable_workspace_is_reported_as_a_bad_argument(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            first = Path(directory) / "first"
+            second = Path(directory) / "second"
+            first.symlink_to(second)
+            second.symlink_to(first)
+
+            for command in self.WORKSPACE_COMMANDS:
+                with self.subTest(command=command[0]):
+                    stderr = io.StringIO()
+                    with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(io.StringIO()):
+                        exit_code = cli.main([*command, "--workspace", str(first)])
+
+                    self.assertEqual(exit_code, 2)
+                    self.assertIn("could not resolve --workspace", stderr.getvalue())
+                    self.assertNotIn("Traceback", stderr.getvalue())
+
+    def test_home_relative_workspace_is_expanded(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory) / "home"
+            (home / "project").mkdir(parents=True)
+            stderr = io.StringIO()
+            with (
+                patch.dict(os.environ, {"HOME": str(home)}),
+                contextlib.redirect_stderr(stderr),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                exit_code = cli.main(["show", "#1", "--workspace", "~/project"])
+
+            self.assertEqual(exit_code, 1)
+            self.assertIn(str((home / "project").resolve()), stderr.getvalue())
+            self.assertNotIn("~", stderr.getvalue())
+
+
+class RunArgumentRejectionTests(unittest.TestCase):
+    """A run rejected for its arguments reports one line and touches nothing."""
+
+    REJECTED = (
+        (["--task", "hi", "--time-limit", "-5"], "time_limit_seconds must be positive"),
+        (["--task", "   "], "description and objective are required"),
+        (["--description-file", "/nope.txt", "--objective", "x"], "could not read --description-file"),
+    )
+
+    def test_domain_validation_failures_are_reported_like_parser_errors(self) -> None:
+        for options, expected in self.REJECTED:
+            with self.subTest(options=options), tempfile.TemporaryDirectory() as directory:
+                workspace = Path(directory)
+                stderr = io.StringIO()
+                with (
+                    contextlib.redirect_stderr(stderr),
+                    contextlib.redirect_stdout(io.StringIO()),
+                    self.assertRaises(SystemExit) as raised,
+                ):
+                    cli.main(["run", "--workspace", str(workspace), *options])
+
+                self.assertEqual(raised.exception.code, 2)
+                self.assertIn(expected, stderr.getvalue())
+                self.assertNotIn("Traceback", stderr.getvalue())
+
+    def test_no_workflow_is_built_for_a_run_that_cannot_start(self) -> None:
+        for options, _expected in self.REJECTED:
+            with self.subTest(options=options), tempfile.TemporaryDirectory() as directory:
+                workspace = Path(directory)
+                with (
+                    patch.object(cli, "_build_workflow_for_cli") as build_workflow,
+                    contextlib.redirect_stderr(io.StringIO()),
+                    contextlib.redirect_stdout(io.StringIO()),
+                    self.assertRaises(SystemExit),
+                ):
+                    cli.main(["run", "--workspace", str(workspace), *options])
+
+                build_workflow.assert_not_called()
+                self.assertEqual(list(workspace.iterdir()), [])
+
+
+class PlanGenerateOutputPathTests(unittest.TestCase):
+    def test_home_relative_output_is_expanded_like_every_other_path_option(self) -> None:
+        class Workflow:
+            task = None
+
+            def run(self, task, requested_agent):
+                self.task = task
+                return object(), SimpleNamespace(workspace_modified_files=())
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workspace = root / "workspace"
+            home = root / "home"
+            workspace.mkdir()
+            home.mkdir()
+            workflow = Workflow()
+
+            with (
+                patch.dict(os.environ, {"HOME": str(home)}),
+                patch.object(cli, "_build_workflow_for_cli", return_value=workflow),
+                patch.object(cli, "execution_succeeded", return_value=True),
+                patch.object(cli, "_load_plan", return_value=[]),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                exit_code = cli.main([
+                    "plan",
+                    "generate",
+                    "Add a regression test",
+                    "--workspace",
+                    str(workspace),
+                    "--output",
+                    "~/plans/plan.json",
+                ])
+
+            self.assertEqual(exit_code, 0)
+            expected = str((home / "plans" / "plan.json").resolve())
+            self.assertEqual(workflow.task.context["output_path"], expected)
+            self.assertNotIn("~", expected)
 
 
 class ValidatePlanFileTests(unittest.TestCase):

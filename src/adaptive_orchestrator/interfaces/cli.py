@@ -23,6 +23,7 @@ from adaptive_orchestrator.experiments.paired_experiment import (
     validate_paired_environment,
 )
 from adaptive_orchestrator.experiments.paired_runner import PairedSmokeRunner
+from adaptive_orchestrator.infrastructure.child_environment import ensure_child_import_path
 from adaptive_orchestrator.infrastructure.configuration import (
     ProjectConfig,
     ProjectConfigError,
@@ -548,10 +549,17 @@ def _resolve_objective(args: argparse.Namespace, parser: argparse.ArgumentParser
     return _resolve_text_argument(args, "objective", "objective_file", "objective", parser)
 
 
-def _build_workflow(args: argparse.Namespace, workspace: Path) -> EngineeringWorkflow:
+def _build_workflow(
+    args: argparse.Namespace,
+    workspace: Path,
+    requested_agent_id: str | None = None,
+) -> EngineeringWorkflow:
     agents = _configured_agents(args)
     logger = JsonlExecutionLogger(workspace / ".orchestrator" / "executions.jsonl")
-    runner = SubprocessRunner(_verbose_output_callback(f"[{args.command}:{args.agent}]")) if args.verbose else SubprocessRunner()
+    # `retry` leaves args.agent at the sentinel "same"; label the stream with the
+    # agent actually being run rather than with how it was requested.
+    agent_label = requested_agent_id or args.agent
+    runner = SubprocessRunner(_verbose_output_callback(f"[{args.command}:{agent_label}]")) if args.verbose else SubprocessRunner()
     control_dir = resolve_control_state_directory(workspace, getattr(args, "control_state_dir", None))
     lifecycle = LifecycleRecorder(
         JsonlEventStore(control_dir / "events.jsonl"),
@@ -639,7 +647,7 @@ def _build_workflow_for_cli(
                 raise ValueError(
                     f"Unknown agent: {agent_id}. Available: {', '.join(available)}"
                 )
-        return _build_workflow(args, workspace)
+        return _build_workflow(args, workspace, requested_agent_id)
     except (EventLogError, ReplayError, OSError, ValueError) as exc:
         print(f"Workflow configuration failed: {exc}", file=sys.stderr)
         return None
@@ -788,6 +796,24 @@ def _execution_store(workspace: Path) -> ExecutionReportStore:
     return ExecutionReportStore(workspace.resolve() / ".orchestrator" / "executions.jsonl")
 
 
+def _resolve_workspace(path: Path) -> Path | None:
+    """Resolve ``--workspace`` once, reporting a path that cannot be used.
+
+    A workspace that fails to resolve at all—a symlink loop, a directory the
+    process may not walk—is a bad argument value the operator can fix, not a
+    defect worth unwinding a traceback for. The interactive shell has always
+    treated both exception types this way; every command that takes a workspace
+    now agrees with it. Expanding ``~`` here also settles a disagreement: the
+    config lookup expanded it while command dispatch did not.
+    """
+
+    try:
+        return path.expanduser().resolve()
+    except (OSError, RuntimeError) as exc:
+        print(f"Error: could not resolve --workspace {path}: {exc}", file=sys.stderr)
+        return None
+
+
 def _workspace_path(path: Path, workspace: Path) -> Path:
     expanded = path.expanduser()
     return expanded.resolve() if expanded.is_absolute() else (workspace / expanded).resolve()
@@ -821,8 +847,21 @@ def main(argv: list[str] | None = None) -> int:
     except ProjectConfigError as exc:
         print(f"Invalid project config: {exc}", file=sys.stderr)
         return 2
+    except (OSError, RuntimeError) as exc:
+        # Locating the config resolves the workspace, so an unusable path fails
+        # here first—before the parser that would name the offending option.
+        print(f"Error: could not resolve --workspace: {exc}", file=sys.stderr)
+        return 2
     parser = build_parser(config)
     args = parser.parse_args(raw_argv)
+
+    # Every subcommand that takes a workspace works from the resolved path, so
+    # resolve it once, here, rather than at each point of use.
+    if getattr(args, "workspace", None) is not None:
+        resolved_workspace = _resolve_workspace(args.workspace)
+        if resolved_workspace is None:
+            return 2
+        args.workspace = resolved_workspace
 
     if args.command == "init":
         try:
@@ -844,8 +883,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if diagnostics_succeeded(checks) else 1
 
     if args.command in {"show", "report"}:
+        workspace = args.workspace
         try:
-            workspace = args.workspace.resolve()
             bundle = _execution_store(workspace).find(args.identifier)
             if args.command == "show":
                 print(render_text_summary(bundle))
@@ -877,7 +916,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "paired":
         return _run_paired_command(args)
 
-    workspace = args.workspace.resolve()
+    workspace = args.workspace
 
     if args.command == "retry":
         try:
@@ -893,6 +932,15 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         workflow = _build_workflow_for_cli(args, workspace, requested_agent)
         if workflow is None:
+            if args.agent == "same":
+                # The recorded run used a model variant this invocation does not
+                # configure, so say what makes it available again. Reaching
+                # workflow.run() would have said it; configuration fails first.
+                print(
+                    "  The recorded agent is not configured here; use --agent auto "
+                    "or pass the original model options.",
+                    file=sys.stderr,
+                )
             return 2
         try:
             plan, record = workflow.run(task, requested_agent)
@@ -905,13 +953,19 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "memory":
         store = EngineeringMemoryStore(workspace / ".orchestrator" / "memory.jsonl")
-        if args.memory_command == "record":
-            entry = _memory_entry_from_args(args)
-            store.record(entry)
-            print(json.dumps(asdict(entry), default=str, indent=2))
-            return 0
-        entry_type, tag, keyword = _memory_search_filters_from_args(args)
-        entries = store.search(entry_type=entry_type, tag=tag, keyword=keyword)
+        try:
+            if args.memory_command == "record":
+                entry = _memory_entry_from_args(args)
+                store.record(entry)
+                print(json.dumps(asdict(entry), default=str, indent=2))
+                return 0
+            entry_type, tag, keyword = _memory_search_filters_from_args(args)
+            entries = store.search(entry_type=entry_type, tag=tag, keyword=keyword)
+        except (OSError, UnicodeError, ValueError) as exc:
+            # An unwritable or unreadable workspace is an ordinary operating
+            # condition for this command, not a defect worth a traceback.
+            print(f"Memory {args.memory_command} failed: {exc}", file=sys.stderr)
+            return 1
         print(json.dumps([asdict(entry) for entry in entries], default=str, indent=2))
         if not entries:
             # Keep stdout valid JSON for callers that parse it, and say on stderr
@@ -996,7 +1050,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "plan":
         output = args.output or Path("plan.json")
-        resolved_output = (workspace / output).resolve()
+        resolved_output = _workspace_path(output, workspace)
+        # The check below runs as a child process whose working directory is the
+        # agent workspace, so a relative import root inherited from a source
+        # checkout would no longer point at the checkout.
+        ensure_child_import_path()
         validate_command = [sys.executable, "-m", "adaptive_orchestrator.cli", "plan", "validate", str(resolved_output)]
         args.verify_command = [shlex.join(validate_command), *args.verify_command]
         task = _build_plan_generation_task(args.request, workspace, resolved_output)
@@ -1035,19 +1093,31 @@ def main(argv: list[str] | None = None) -> int:
         args.description_file = _workspace_path(args.description_file, workspace)
     if args.objective_file is not None:
         args.objective_file = _workspace_path(args.objective_file, workspace)
+    # Build the task before the workflow, for the same reason `run-plan` reads
+    # its plan file first: constructing the workflow opens the lifecycle
+    # recorder, which reconciles abandoned attempts and rewrites the routing
+    # projection. A run rejected for a bad argument must not cause that work.
+    description = _resolve_description(args, run_parser)
+    objective = _resolve_objective(args, run_parser)
+    try:
+        task = Task(
+            description=description,
+            objective=objective,
+            constraints=tuple(args.constraint),
+            required_capabilities=tuple(Capability(item) for item in args.capability),
+            priority=Priority(args.priority),
+            time_limit_seconds=args.time_limit,
+        )
+    except ValueError as exc:
+        # Domain validation rejecting an option value is an argument error like
+        # any other, and is reported the way the parser reports its own.
+        if run_parser is not None:
+            run_parser.error(str(exc))
+        print(f"Error: {exc}", file=sys.stderr)
+        return 2
     workflow = _build_workflow_for_cli(args, workspace)
     if workflow is None:
         return 2
-    description = _resolve_description(args, run_parser)
-    objective = _resolve_objective(args, run_parser)
-    task = Task(
-        description=description,
-        objective=objective,
-        constraints=tuple(args.constraint),
-        required_capabilities=tuple(Capability(item) for item in args.capability),
-        priority=Priority(args.priority),
-        time_limit_seconds=args.time_limit,
-    )
     plan, record = workflow.run(task, args.agent)
     _print_execution_result(plan, record, workspace, args.summary)
     _deliver_notifications(record, config)

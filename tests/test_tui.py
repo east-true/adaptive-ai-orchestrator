@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+import io
 import shutil
 import sys
 import tempfile
@@ -672,6 +674,28 @@ class MainCleanupTests(unittest.TestCase):
                 main(["--workspace", str(workspace)])
 
         self.assertEqual(captured["task"].signals, [True])
+
+
+class MainWorkspaceTests(unittest.TestCase):
+    def test_unresolvable_workspace_is_a_named_option_error(self) -> None:
+        from adaptive_orchestrator.interfaces import tui as tui_module
+
+        with tempfile.TemporaryDirectory() as directory:
+            first = Path(directory) / "first"
+            second = Path(directory) / "second"
+            first.symlink_to(second)
+            second.symlink_to(first)
+
+            stderr = io.StringIO()
+            with (
+                contextlib.redirect_stderr(stderr),
+                self.assertRaises(SystemExit) as raised,
+            ):
+                tui_module.main(["--workspace", str(first)])
+
+            self.assertEqual(raised.exception.code, 2)
+            self.assertIn("could not resolve --workspace", stderr.getvalue())
+            self.assertNotIn("Traceback", stderr.getvalue())
 
 
 if __name__ == "__main__":

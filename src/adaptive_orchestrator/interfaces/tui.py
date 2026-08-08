@@ -22,6 +22,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Sequence
 
+from adaptive_orchestrator.infrastructure.child_environment import ensure_child_import_path
 from adaptive_orchestrator.infrastructure.events import EventLogError, JsonlEventStore
 from adaptive_orchestrator.infrastructure.state_paths import resolve_control_state_directory
 from adaptive_orchestrator.operations.reporting import (
@@ -1618,7 +1619,16 @@ def main(argv: list[str] | None = None) -> int:
         help=f"Concurrent CLI children the UI admits (default {DEFAULT_TASK_LIMIT}).",
     )
     args = parser.parse_args(argv)
-    workspace = args.workspace.expanduser().resolve()
+    # Every task is a child started in the workspace; fix the import roots once,
+    # here, so each of them inherits a value that does not depend on where the
+    # UI happened to be launched from.
+    ensure_child_import_path()
+    try:
+        workspace = args.workspace.expanduser().resolve()
+    except (OSError, RuntimeError) as exc:
+        # A workspace that cannot be resolved is a bad option value, and saying
+        # so beats a traceback from a UI that never got to draw anything.
+        parser.error(f"could not resolve --workspace {args.workspace}: {exc}")
     if not workspace.is_dir():
         parser.error(f"workspace is not a directory: {workspace}")
     if args.max_tasks < 1:

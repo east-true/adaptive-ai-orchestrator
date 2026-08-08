@@ -132,6 +132,23 @@ class EngineeringMemoryStoreTests(unittest.TestCase):
 
             self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
 
+    def test_opening_the_store_creates_nothing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / ".orchestrator" / "memory.jsonl"
+            store = EngineeringMemoryStore(path)
+
+            self.assertEqual(store.search(), [])
+            self.assertFalse(path.parent.exists())
+
+    def test_recording_creates_the_directory_it_needs(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / ".orchestrator" / "memory.jsonl"
+            store = EngineeringMemoryStore(path)
+
+            store.record(MemoryEntry(MemoryEntryType.TRADE_OFF, "Title", "Summary"))
+
+            self.assertTrue(path.is_file())
+
 
 if __name__ == "__main__":
     unittest.main()
