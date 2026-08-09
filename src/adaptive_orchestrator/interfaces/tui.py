@@ -1709,6 +1709,23 @@ def _lifecycle_status(status: str, outcome: object, terminal: object) -> str:
     return status
 
 
+class _TuiTermination(BaseException):
+    """Unwind the draw loop when the UI receives a termination signal.
+
+    BaseException, not Exception: this must pass through the loop's own error
+    handling untouched, the way KeyboardInterrupt does, so `curses.wrapper`
+    restores the terminal and the cleanup below still runs.
+    """
+
+    def __init__(self, signum: int) -> None:
+        super().__init__(signum)
+        self.signum = signum
+
+
+def _raise_termination(signum: int, _frame: object) -> None:
+    raise _TuiTermination(signum)
+
+
 def resolve_tui_program_name() -> str:
     """Name this UI the way the caller reached it, as the CLI already does.
 
@@ -1759,13 +1776,32 @@ def main(argv: list[str] | None = None) -> int:
         application = OrchestratorTui(workspace, args.control_state_dir, args.max_tasks)
     except ValueError as exc:
         parser.error(str(exc))
+    # Agent children run in their own POSIX session so cancellation can target
+    # one task's whole process tree. That also means they never see the
+    # terminal's own SIGHUP, and a default-disposition signal kills this
+    # process outright — the finally below never runs. Without these handlers,
+    # closing the terminal left every running agent alive and reparented to
+    # init, still spending quota and still able to write to the workspace.
+    installed: list[tuple[int, object]] = []
     try:
-        curses.wrapper(application.run)
+        for name in ("SIGTERM", "SIGHUP", "SIGQUIT"):
+            signum = getattr(signal, name, None)
+            if signum is None:
+                continue
+            installed.append((signum, signal.getsignal(signum)))
+            signal.signal(signum, _raise_termination)
+        try:
+            curses.wrapper(application.run)
+        finally:
+            # A normal quit already refuses to exit with tasks running; this
+            # covers Ctrl-C, a termination signal, and any unhandled exception
+            # in the draw/input loop, so none of them orphans a child.
+            application.tasks.cancel_all(force=True)
+    except _TuiTermination as exc:
+        return 128 + exc.signum
     finally:
-        # A normal quit already refuses to exit with tasks running; this covers
-        # Ctrl-C and any unhandled exception in the draw/input loop, so a crash
-        # can't leave a coding-agent child orphaned.
-        application.tasks.cancel_all(force=True)
+        for signum, original in reversed(installed):
+            signal.signal(signum, original)
     return 0
 
 

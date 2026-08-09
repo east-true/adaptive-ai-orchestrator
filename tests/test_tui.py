@@ -4,6 +4,7 @@ import contextlib
 import io
 import os
 import shutil
+import signal
 import sys
 import tempfile
 import time
@@ -890,6 +891,51 @@ class MainCleanupTests(unittest.TestCase):
                 main(["--workspace", str(workspace)])
 
         self.assertEqual(captured["task"].signals, [True])
+
+    def test_a_termination_signal_cancels_children_and_reports_its_status(self) -> None:
+        """Children live in their own session, so nothing else reaches them.
+
+        A default-disposition signal kills this process outright and the
+        cleanup never runs, and start_new_session=True means the agent never
+        sees the terminal's own SIGHUP either — so closing the terminal left
+        every running agent alive, reparented to init.
+        """
+
+        for name in ("SIGTERM", "SIGHUP", "SIGQUIT"):
+            signum = getattr(signal, name, None)
+            if signum is None:
+                continue
+            with self.subTest(signal=name):
+                workspace = Path(tempfile.mkdtemp())
+                self.addCleanup(shutil.rmtree, workspace, ignore_errors=True)
+                captured: dict[str, object] = {}
+
+                def fake_wrapper(run_method, signum=signum):
+                    app = run_method.__self__
+                    app.tasks = TaskManager(limit=2, factory=FakeTask)
+                    captured["task"] = app.tasks.start(workspace, "live")
+                    os.kill(os.getpid(), signum)
+
+                with mock.patch("adaptive_orchestrator.interfaces.tui.curses.wrapper", side_effect=fake_wrapper):
+                    exit_code = main(["--workspace", str(workspace)])
+
+                self.assertEqual(exit_code, 128 + signum)
+                self.assertEqual(captured["task"].signals, [True])
+
+    def test_the_original_signal_handlers_are_put_back(self) -> None:
+        # The handlers are process-global; a caller that embeds this must get
+        # its own back, whichever way the UI ended.
+        before = {name: signal.getsignal(getattr(signal, name))
+                  for name in ("SIGTERM", "SIGHUP", "SIGQUIT") if hasattr(signal, name)}
+        workspace = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, workspace, ignore_errors=True)
+
+        with mock.patch("adaptive_orchestrator.interfaces.tui.curses.wrapper", side_effect=lambda run: None):
+            main(["--workspace", str(workspace)])
+
+        for name, handler in before.items():
+            with self.subTest(signal=name):
+                self.assertIs(signal.getsignal(getattr(signal, name)), handler)
 
 
 @contextlib.contextmanager
