@@ -875,6 +875,50 @@ class PresentationTests(unittest.TestCase):
         self.assertEqual(elapsed_text(-5), "0s")
 
 
+class CursorVisibilityTests(unittest.TestCase):
+    """vt100 and dumb refuse to hide the cursor; that must stay cosmetic."""
+
+    def test_an_unsupported_cursor_mode_is_shrugged_off(self) -> None:
+        with mock.patch.object(curses, "curs_set", side_effect=curses.error("curs_set() returned ERR")):
+            tui_module._set_cursor(0)  # must not raise
+            tui_module._set_cursor(1)
+
+    def test_the_draw_loop_starts_on_a_terminal_that_refuses_it(self) -> None:
+        """curs_set(0) was the loop's first statement, so this died at frame 0."""
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "ws"
+            workspace.mkdir()
+            application = OrchestratorTui(workspace, Path(directory) / "ctl", 3)
+
+            class Screen:
+                def getmaxyx(self) -> tuple[int, int]: return (24, 80)
+                def erase(self) -> None: pass
+                def clear(self) -> None: pass
+                def refresh(self) -> None: pass
+                def move(self, *args: object) -> None: pass
+                def chgat(self, *args: object, **kwargs: object) -> None: pass
+                def addstr(self, *args: object, **kwargs: object) -> None: pass
+                def keypad(self, *args: object) -> None: pass
+                def timeout(self, *args: object) -> None: pass
+
+            def stop(screen: object) -> object:
+                raise SystemExit
+
+            with (
+                mock.patch.object(curses, "curs_set", side_effect=curses.error("returned ERR")),
+                mock.patch("adaptive_orchestrator.interfaces.tui._read_key", stop),
+                mock.patch.object(tui_module.Theme, "create", staticmethod(tui_module.Theme)),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                with self.assertRaises(SystemExit):
+                    application.run(Screen())
+
+    def test_a_working_terminal_still_gets_the_request(self) -> None:
+        with mock.patch.object(curses, "curs_set") as curs_set:
+            tui_module._set_cursor(1)
+        curs_set.assert_called_once_with(1)
+
+
 class EscapeEncodingTests(unittest.TestCase):
     """Escape is the way out; it must be recognised however it is read."""
 

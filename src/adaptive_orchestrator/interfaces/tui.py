@@ -962,7 +962,7 @@ class OrchestratorTui:
     # -- lifecycle ---------------------------------------------------------
 
     def run(self, screen: "curses.window") -> None:
-        curses.curs_set(0)
+        _set_cursor(0)
         screen.keypad(True)
         screen.timeout(POLL_INTERVAL_MS)
         if hasattr(curses, "set_escdelay"):
@@ -1267,7 +1267,7 @@ class OrchestratorTui:
         earlier goes on collecting output behind the prompt.
         """
         editor = LineEditor(initial)
-        curses.curs_set(1)
+        _set_cursor(1)
         try:
             while True:
                 cursor = self._draw_input_line(screen, label, editor)
@@ -1288,7 +1288,7 @@ class OrchestratorTui:
                 if outcome == EDITOR_CANCEL:
                     return None
         finally:
-            curses.curs_set(0)
+            _set_cursor(0)
 
     def _draw_input_line(self, screen: "curses.window", label: str, editor: LineEditor) -> tuple[int, int]:
         """The original one-line "Label: text" prompt, still used for the filter."""
@@ -1346,7 +1346,7 @@ class OrchestratorTui:
             self.theme.attribute("accent"),
         )
         try:
-            curses.curs_set(1 if cursor is not None else 0)
+            _set_cursor(1 if cursor is not None else 0)
         except curses.error:
             pass
         if cursor is not None:
@@ -1632,6 +1632,22 @@ class OrchestratorTui:
 
 
 # ------------------------------------------------------------------------ helpers
+
+
+def _set_cursor(visibility: int) -> None:
+    """Ask for a cursor mode, and shrug if the terminal has no such mode.
+
+    ``curs_set`` raises when the terminal cannot honour the request — vt100
+    and dumb both refuse to hide the cursor. That was the very first statement
+    of the draw loop, so on those terminals the UI died with a traceback
+    before drawing anything. A visible cursor is a cosmetic loss; the session
+    is not.
+    """
+
+    try:
+        curses.curs_set(visibility)
+    except curses.error:
+        pass
 
 
 def _read_key(screen: "curses.window") -> int | str | None:
