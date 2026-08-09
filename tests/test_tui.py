@@ -735,8 +735,11 @@ class BackgroundTaskExecutionIdTests(unittest.TestCase):
         task._reader.join(timeout=5)
         self.assertTrue(task._process.stdout.closed)
         # Closing the pipe must not cost the output already captured.
+        # output_lines is a method, not a property like its siblings, so it has
+        # to be called — asserting the attribute alone tests only that a bound
+        # method is truthy, which it always is.
         self.assertEqual(task.execution_id, "abc")
-        self.assertTrue(task.output_lines)
+        self.assertEqual(task.output_lines(), ("Execution: abc",))
 
     def test_finished_tasks_do_not_accumulate_descriptors(self) -> None:
         def open_descriptors() -> int:
