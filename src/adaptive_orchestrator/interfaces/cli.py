@@ -585,8 +585,27 @@ def _validate_plan_file(path: Path) -> tuple[bool, str | None]:
     return True, None
 
 
+#: The orchestrator's own state directory inside an agent workspace.
+ORCHESTRATOR_STATE_DIRECTORY = ".orchestrator"
+
+
 def _unexpected_modified_files(modified_files: Sequence[str], expected_relative_path: str) -> list[str]:
-    return [item for item in modified_files if item != expected_relative_path]
+    """Files the agent touched that it was not asked to touch.
+
+    `.orchestrator/` is not one of them: the execution log written during this
+    very run lives there, so a workspace that does not gitignore it saw the
+    warning on *every* successful `plan generate`. The check exists to catch an
+    agent writing outside its remit, and a standing false positive is how an
+    operator learns to stop reading it.
+    """
+
+    ignored = {expected_relative_path, ORCHESTRATOR_STATE_DIRECTORY, f"{ORCHESTRATOR_STATE_DIRECTORY}/"}
+    return [
+        item
+        for item in modified_files
+        if item not in ignored
+        and not item.startswith(f"{ORCHESTRATOR_STATE_DIRECTORY}/")
+    ]
 
 
 def _build_plan_generation_task(request: str, workspace: Path, output_path: Path) -> Task:
@@ -807,7 +826,7 @@ def _require_readable_execution_log(path: Path) -> None:
 
 
 def _verify_commands(values: Sequence[str]) -> list[tuple[str, ...]]:
-    """Parse each --verify-command into tokens, refusing one that holds none.
+    """Parse each --verify-command into tokens, refusing one that names no program.
 
     A blank value used to disappear here: `shlex.split("")` is the empty list,
     so a run asked to verify itself reported verification "skipped" and exited
@@ -815,6 +834,13 @@ def _verify_commands(values: Sequence[str]) -> list[tuple[str, ...]]:
     has always refused an empty command; the constraint side now agrees. An
     unbalanced quote is named with the value that carries it, since "No closing
     quotation" alone does not say which of several commands it came from.
+
+    A *quoted* empty value is the same mistake wearing a disguise:
+    ``shlex.split("''")`` is ``['']``, a one-element list that passes an
+    emptiness test and then asks the runner to execute the program named "".
+    That surfaced as verification **failed**, which reads as the task having
+    been checked and found wanting when no check ever ran. The program name is
+    what has to be there, so that is what is tested.
     """
 
     commands: list[tuple[str, ...]] = []
@@ -823,8 +849,8 @@ def _verify_commands(values: Sequence[str]) -> list[tuple[str, ...]]:
             tokens = tuple(shlex.split(value))
         except ValueError as exc:
             raise ValueError(f"--verify-command {value!r} could not be parsed: {exc}") from exc
-        if not tokens:
-            raise ValueError(f"--verify-command {value!r} contains no command.")
+        if not tokens or not tokens[0].strip():
+            raise ValueError(f"--verify-command {value!r} names no command to run.")
         commands.append(tokens)
     return commands
 

@@ -1,6 +1,7 @@
 import contextlib
 import io
 import json
+import os
 import signal
 import shlex
 import sys
@@ -17,6 +18,7 @@ from adaptive_orchestrator.infrastructure.configuration import (
     config_path,
     load_project_config,
 )
+from adaptive_orchestrator.interfaces import cli
 from adaptive_orchestrator.interfaces import shell as shell_interface
 from adaptive_orchestrator.interfaces.shell import OrchestratorShell
 from adaptive_orchestrator.operations.usage import CodexUsage
@@ -159,7 +161,60 @@ class ShellStateTests(unittest.TestCase):
             with contextlib.redirect_stdout(stdout):
                 shell.onecmd("settings")
 
-        self.assertIn("profile error", stdout.getvalue())
+        output = stdout.getvalue()
+        self.assertIn("Profile error:", output)
+        # Said once, above the rows: five copies of a message carrying a full
+        # path buried the settings the command exists to show.
+        self.assertEqual(output.count(str(path)), 1)
+        self.assertEqual(output.count("profile unreadable"), 5)
+
+    def test_the_time_limit_row_states_which_commands_it_reaches(self) -> None:
+        """It never reaches run_plan or plan_generate; the row used to imply it did."""
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell(Path(directory))
+            for setting in ("set time_limit 30", "set time_limit off"):
+                with self.subTest(setting=setting):
+                    stdout = io.StringIO()
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        shell.onecmd(setting)
+                    with contextlib.redirect_stdout(stdout):
+                        shell.onecmd("settings")
+
+                    row = next(l for l in stdout.getvalue().splitlines() if l.startswith("Time limit"))
+                    self.assertIn("task and run only", row)
+
+    def test_the_session_time_limit_really_is_dropped_for_plan_commands(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell(Path(directory))
+            with contextlib.redirect_stdout(io.StringIO()):
+                shell.onecmd("set time_limit 30")
+
+            reaches = {}
+            for line in ("task do it", "run --task=x", "run_plan p.json", "plan_generate make a plan"):
+                with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+                    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                        shell.onecmd(line)
+                reaches[line.split()[0]] = "--time-limit" in main.call_args.args[0]
+
+            self.assertEqual(reaches, {
+                "task": True, "run": True, "run_plan": False, "plan_generate": False,
+            })
+
+    def test_status_still_spells_out_a_profile_failure_in_full(self) -> None:
+        """`status` has no header to carry it, so it keeps the whole message."""
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            path = config_path(workspace)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("{broken", encoding="utf-8")
+            shell = OrchestratorShell()
+            shell.workspace = workspace
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("status")
+
+            self.assertIn("profile error:", stdout.getvalue())
+            self.assertIn(str(path), stdout.getvalue())
 
     def test_unknown_setting_lists_the_valid_names(self) -> None:
         shell = OrchestratorShell()
@@ -340,16 +395,19 @@ class ShellStateTests(unittest.TestCase):
         self.assertIn("could not resolve workspace", stdout.getvalue())
 
     def test_status_shows_current_session_state(self) -> None:
-        shell = OrchestratorShell()
-        shell.workspace = Path("/tmp/session-workspace")
-        shell.agent = "codex"
-        stdout = io.StringIO()
-        with contextlib.redirect_stdout(stdout):
-            shell.onecmd("status")
-        self.assertEqual(stdout.getvalue().splitlines(), [
-            "Workspace: /tmp/session-workspace",
-            "Agent: codex (session override)",
-        ])
+        # A real directory: status now says so when the workspace has stopped
+        # being one, which a fictitious path would trip on its own.
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell()
+            shell.workspace = Path(directory)
+            shell.agent = "codex"
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("status")
+            self.assertEqual(stdout.getvalue().splitlines(), [
+                f"Workspace: {directory}",
+                "Agent: codex (session override)",
+            ])
 
     def test_empty_line_does_not_repeat_last_command(self) -> None:
         shell = OrchestratorShell()
@@ -593,11 +651,36 @@ class ShellCliDispatchTests(unittest.TestCase):
             "/tmp/session-workspace",
             "--agent",
             "claude-code",
-            "--description",
-            "Run the unit tests and fix failures",
-            "--objective",
-            "Run the unit tests and fix failures",
+            "--task=Run the unit tests and fix failures",
         ])
+
+    def test_a_request_starting_with_a_dash_is_not_read_as_an_option(self) -> None:
+        """`task --help` is a request, not a plea for argparse.
+
+        Passed as its own argv element the request was inspected for option
+        syntax, so `--help` died with "argument --description: expected one
+        argument" while `-x fix it` ran — argparse skips that check for values
+        containing a space, so the outcome turned on whether the request
+        happened to have one.
+        """
+
+        for request in ("--help", "--version", "-x fix it", "-"):
+            with self.subTest(request=request):
+                with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+                    self.shell.onecmd(f"task {request}")
+
+                argv = main.call_args.args[0]
+                self.assertIn(f"--task={request}", argv)
+                # One attached element, so nothing in it can be read as a flag.
+                self.assertEqual(sum(item.startswith("--task=") for item in argv), 1)
+
+    def test_the_request_reaches_the_parser_as_description_and_objective(self) -> None:
+        """The shorthand is the CLI's; confirm it still means what it meant."""
+        parser = cli.build_parser()
+        args = parser.parse_args(["run", "--task=--help"])
+        cli._apply_task_shorthand(args, parser)
+        self.assertEqual(args.description, "--help")
+        self.assertEqual(args.objective, "--help")
 
     def test_inherited_agent_is_omitted_so_project_profile_remains_authoritative(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -642,10 +725,7 @@ class ShellCliDispatchTests(unittest.TestCase):
             "/tmp/session-workspace",
             "--agent",
             "claude-code",
-            "--description",
-            request,
-            "--objective",
-            request,
+            f"--task={request}",
         ])
 
     def test_compose_empty_request_is_cancelled(self) -> None:
@@ -701,10 +781,7 @@ class ShellCliDispatchTests(unittest.TestCase):
             "--verbose",
             "--time-limit",
             "30",
-            "--description",
-            "Run tests",
-            "--objective",
-            "Run tests",
+            "--task=Run tests",
         ])
 
     def test_run_plan_uses_workflow_defaults_but_not_task_time_limit(self) -> None:
@@ -754,6 +831,32 @@ class ShellCliDispatchTests(unittest.TestCase):
         argv = main.call_args.args[0]
         stored = argv[argv.index("--verify-command") + 1]
         self.assertEqual(shlex.split(stored), ["/tmp/check tool"])
+
+    def test_verify_setting_is_validated_by_the_cli_that_will_receive_it(self) -> None:
+        """A session default the CLI would reject is refused when it is set.
+
+        `set verify ""` used to be stored happily, and every later run then
+        reported verification *failed* — the task looking checked and found
+        wanting when the stored value named the program "" and no check ran.
+        """
+
+        for value in ('set verify ""', 'set verify "   "'):
+            with self.subTest(value=value):
+                stderr = io.StringIO()
+                with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(stderr):
+                    self.shell.onecmd(value)
+
+                self.assertIn("names no command to run", stderr.getvalue())
+                self.assertIsNone(self.shell.default_verify_command)
+                self.assertFalse(self.shell.default_verify_commands_disabled)
+
+    def test_a_rejected_verify_setting_leaves_an_earlier_one_intact(self) -> None:
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.shell.onecmd("set verify pytest -q")
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            self.shell.onecmd('set verify ""')
+
+        self.assertEqual(self.shell.default_verify_command, "pytest -q")
 
     def test_explicit_off_defaults_override_profiles_and_can_return_to_inherit(self) -> None:
         with contextlib.redirect_stdout(io.StringIO()):
@@ -839,6 +942,38 @@ class ShellCliDispatchTests(unittest.TestCase):
         self.assertEqual(parsed.plan_file, Path("plan.json"))
         self.assertEqual(parsed.workspace, Path("/override"))
         self.assertEqual(parsed.agent, "auto")
+
+    def test_plan_generate_accepts_an_unquoted_request_like_task_does(self) -> None:
+        """`task make a plan` worked; `plan_generate make a plan` did not.
+
+        `plan generate` takes exactly one positional, so the split tokens
+        arrived as "unrecognized arguments: a plan" — an error naming no
+        remedy, for a phrasing the sibling command accepts.
+        """
+
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+            self.shell.onecmd("plan_generate Add a dark mode toggle")
+
+        argv = main.call_args.args[0]
+        self.assertIn("Add a dark mode toggle", argv)
+        shell_interface.cli.build_parser(ProjectConfig()).parse_args(argv)
+
+    def test_options_after_an_unquoted_request_stay_options(self) -> None:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+            self.shell.onecmd("plan_generate Add dark mode --agent codex --force")
+
+        argv = main.call_args.args[0]
+        self.assertEqual(argv[-3:], ["--agent", "codex", "--force"])
+        self.assertIn("Add dark mode", argv)
+        parsed = shell_interface.cli.build_parser(ProjectConfig()).parse_args(argv)
+        self.assertEqual(parsed.request, "Add dark mode")
+        self.assertEqual(parsed.agent, "codex")
+
+    def test_a_quoted_request_is_unchanged(self) -> None:
+        with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
+            self.shell.onecmd('plan_generate "Add a dark mode toggle"')
+
+        self.assertIn("Add a dark mode toggle", main.call_args.args[0])
 
     def test_plan_generate_preserves_flags_first_argv(self) -> None:
         with patch("adaptive_orchestrator.interfaces.shell.cli.main") as main:
@@ -1456,23 +1591,28 @@ class ShellHistoryTests(unittest.TestCase):
             log.mkdir(parents=True)
             stderr = io.StringIO()
 
-            with contextlib.redirect_stderr(stderr):
+            stdout = io.StringIO()
+            with contextlib.redirect_stderr(stderr), contextlib.redirect_stdout(stdout):
                 completed = shell.complete_show("", "show ", 5, 5)
 
             self.assertEqual(completed, [])
-            self.assertIn("could not read execution history", stderr.getvalue())
+            # Silence, not a report: this runs while readline is drawing the
+            # prompt, so the failure is carried by having no candidates.
+            self.assertEqual(stderr.getvalue() + stdout.getvalue(), "")
 
     def test_execution_identifier_completion_survives_history_stat_failure(self) -> None:
         shell = OrchestratorShell()
         stderr = io.StringIO()
+        stdout = io.StringIO()
         with (
             patch.object(Path, "exists", side_effect=OSError("stat failed")),
             contextlib.redirect_stderr(stderr),
+            contextlib.redirect_stdout(stdout),
         ):
             completed = shell.complete_show("", "show ", 5, 5)
 
         self.assertEqual(completed, [])
-        self.assertIn("stat failed", stderr.getvalue())
+        self.assertEqual(stderr.getvalue() + stdout.getvalue(), "")
 
     def test_history_uses_exact_agent_variants_from_the_active_profile(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -1831,6 +1971,36 @@ class ShellUsageTests(unittest.TestCase):
         self.assertEqual(shell._format_reset_delay(120), "2m")
         self.assertEqual(shell._format_reset_delay(5), "under a minute")
 
+    def test_a_plan_without_a_quota_percentage_says_the_number_is_missing(self) -> None:
+        """The percentage is what `usage` exists to show; silence is not a value.
+
+        A Codex session log that names a plan but carries no rate-limit block
+        rendered as "Codex: prolite plan" — nothing at all where the quota
+        belongs, which reads as "nothing to report" rather than "not known".
+        """
+
+        shell = OrchestratorShell()
+        row = shell._format_codex_usage(
+            CodexUsage(plan_type="prolite", used_percent=None, window_minutes=None, resets_at=None)
+        )
+        self.assertIn("prolite plan", row)
+        self.assertIn("no quota %", row)
+
+    def test_a_known_percentage_is_still_reported_plainly(self) -> None:
+        shell = OrchestratorShell()
+        row = shell._format_codex_usage(
+            CodexUsage(plan_type="prolite", used_percent=42.5, window_minutes=None, resets_at=None)
+        )
+        self.assertEqual(row, "Codex: prolite plan, 42.5% used")
+        self.assertNotIn("no quota %", row)
+
+    def test_a_record_holding_neither_value_still_says_what_is_missing(self) -> None:
+        shell = OrchestratorShell()
+        row = shell._format_codex_usage(
+            CodexUsage(plan_type=None, used_percent=None, window_minutes=None, resets_at=None)
+        )
+        self.assertIn("no quota %", row)
+
     def test_codex_unavailable_but_claude_available(self) -> None:
         executions = [{"agent_id": "claude-code", "metadata": {"cost_usd": 0.5}}]
         self.assertEqual(self._run_usage(None, "max", executions), [
@@ -1884,6 +2054,248 @@ class ShellUsageTests(unittest.TestCase):
                 shell.onecmd("usage")
 
             self.assertIn("Claude Code: project usage data not available", stdout.getvalue())
+
+
+class ControlStateDirectoryNoteTests(unittest.TestCase):
+    """A relative control-state dir lands in the launch directory, silently."""
+
+    COMMANDS = (
+        "run --task=x --control-state-dir {value}",
+        "run_plan p.json --control-state-dir {value}",
+        "plan_generate make a plan --control-state-dir {value}",
+        "retry #1 --control-state-dir {value}",
+        "replay --control-state-dir {value}",
+        "paired_analyze m.json --control-state-dir {value}",
+    )
+
+    def _stderr_for(self, line: str) -> str:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell(Path(directory))
+            err = io.StringIO()
+            with (
+                patch("adaptive_orchestrator.interfaces.shell.cli.main", return_value=0),
+                contextlib.redirect_stderr(err),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                shell.onecmd(line)
+            return err.getvalue()
+
+    def test_a_relative_value_names_where_it_will_actually_land(self) -> None:
+        for template in self.COMMANDS:
+            with self.subTest(command=template.split()[0]):
+                output = self._stderr_for(template.format(value="myctl"))
+                self.assertIn("--control-state-dir myctl resolves to", output)
+                self.assertIn(str(Path("myctl").resolve()), output)
+
+    def test_an_absolute_value_says_nothing(self) -> None:
+        for template in self.COMMANDS:
+            with self.subTest(command=template.split()[0]):
+                self.assertNotIn("resolves to", self._stderr_for(template.format(value="/tmp/ctl")))
+
+    def test_a_home_relative_value_says_nothing(self) -> None:
+        self.assertNotIn("resolves to", self._stderr_for("run --task=x --control-state-dir ~/ctl"))
+
+    def test_the_attached_form_is_covered_too(self) -> None:
+        output = self._stderr_for("run --task=x --control-state-dir=myctl")
+        self.assertIn("resolves to", output)
+
+    def test_a_command_without_the_option_says_nothing(self) -> None:
+        self.assertNotIn("resolves to", self._stderr_for("run --task=x"))
+
+    def test_a_trailing_option_with_no_value_is_left_to_argparse(self) -> None:
+        self.assertNotIn("resolves to", self._stderr_for("replay --control-state-dir"))
+
+    def test_the_paired_path_options_are_covered_too(self) -> None:
+        """--workspace-root creates checkouts; --source-repository picks a repo."""
+        for option, command in (
+            ("--workspace-root", "paired_plan m.json --workspace-root relroot"),
+            ("--source-repository", "paired_validate m.json --source-repository other"),
+        ):
+            with self.subTest(option=option):
+                output = self._stderr_for(command)
+                self.assertIn(f"{option} ", output)
+                self.assertIn("resolves to", output)
+
+    def test_every_noted_option_must_live_outside_the_session(self) -> None:
+        # The reason none of them can be anchored the way a plan file is.
+        self.assertEqual(
+            set(OrchestratorShell._CWD_RELATIVE_OPTIONS),
+            {"--control-state-dir", "--workspace-root", "--source-repository"},
+        )
+
+
+class SessionSurvivalTests(unittest.TestCase):
+    """One bad argument must cost a command, not the session."""
+
+    #: Values that used to unwind through cmdloop and exit the process.
+    HOSTILE = ("a\x00b", "x" * 5000)
+
+    PATH_COMMANDS = (
+        "workspace", "cd", "plan_validate",
+        "paired_validate", "paired_plan", "paired_dry_run",
+        "paired_analyze", "paired_run", "paired_resume",
+    )
+
+    def test_a_hostile_path_argument_reports_and_keeps_going(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            shell = OrchestratorShell(Path(directory))
+            for command in self.PATH_COMMANDS:
+                for value in self.HOSTILE:
+                    with self.subTest(command=command, value=value[:8]):
+                        out, err = io.StringIO(), io.StringIO()
+                        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                            stop = shell.onecmd(f"{command} {value}")
+
+                        reported = out.getvalue() + err.getvalue()
+                        self.assertFalse(stop)
+                        # Some of these report through the CLI ("Invalid plan
+                        # file ...", "Paired experiment failed: ..."), so the
+                        # contract is that something is said and nothing unwinds.
+                        self.assertTrue(reported.strip(), "said nothing at all")
+                        self.assertNotIn("Traceback", reported)
+            # The session kept its state through every one of them.
+            self.assertEqual(shell.workspace, Path(directory))
+
+    def test_an_unexpected_failure_is_caught_at_the_session_boundary(self) -> None:
+        shell = OrchestratorShell()
+        with patch.object(OrchestratorShell, "do_status", side_effect=RuntimeError("boom")):
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+                stop = shell.onecmd("status")
+
+        self.assertFalse(stop)
+        self.assertIn("status failed", err.getvalue())
+        self.assertIn("boom", err.getvalue())
+
+    def test_the_ways_the_shell_is_meant_to_end_still_propagate(self) -> None:
+        shell = OrchestratorShell()
+        for error in (SystemExit(2), KeyboardInterrupt(), shell_interface._ShellTermination(15)):
+            with self.subTest(error=type(error).__name__):
+                with patch.object(OrchestratorShell, "do_status", side_effect=error):
+                    with self.assertRaises(type(error)):
+                        with contextlib.redirect_stderr(io.StringIO()):
+                            shell.onecmd("status")
+
+    def test_exit_still_stops_the_loop(self) -> None:
+        shell = OrchestratorShell()
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertTrue(shell.onecmd("exit"))
+
+
+class CompletionSilenceTests(unittest.TestCase):
+    """A completer runs mid-prompt; anything it prints smears the line."""
+
+    @contextlib.contextmanager
+    def _unreadable_log(self):
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            log = workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir(parents=True)
+            log.write_text("{}\n", encoding="utf-8")
+            log.chmod(0o000)
+            if os.access(log, os.R_OK):  # running as root: the mode means nothing
+                self.skipTest("cannot make a file unreadable for this user")
+            yield OrchestratorShell(workspace)
+
+    def test_identifier_completion_stays_silent_on_an_unreadable_log(self) -> None:
+        with self._unreadable_log() as shell:
+            for name in ("complete_show", "complete_retry", "complete_report"):
+                with self.subTest(name=name):
+                    out, err = io.StringIO(), io.StringIO()
+                    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                        result = getattr(shell, name)("", "show ", 5, 5)
+
+                    self.assertEqual(result, [])
+                    self.assertEqual(out.getvalue(), "")
+                    self.assertEqual(err.getvalue(), "")
+
+    def test_recent_still_reports_the_same_failure(self) -> None:
+        with self._unreadable_log() as shell:
+            err = io.StringIO()
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+                shell.onecmd("recent")
+
+            self.assertIn("could not read execution history", err.getvalue())
+
+    def test_completion_still_offers_identifiers_when_the_log_reads(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            log = workspace / ".orchestrator" / "executions.jsonl"
+            log.parent.mkdir(parents=True)
+            log.write_text(json.dumps({
+                "execution_id": "abcd1234-0000-0000-0000-000000000000",
+                "attempt_id": "attempt-1",
+                "task": {"description": "Fix it", "objective": "It works"},
+                "agent_id": "codex", "status": "completed", "duration_ms": 1,
+                "verification": {"status": "passed"},
+            }) + "\n", encoding="utf-8")
+            shell = OrchestratorShell(workspace)
+
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                result = shell.complete_show("", "show ", 5, 5)
+
+            self.assertTrue(result)
+            self.assertEqual(out.getvalue() + err.getvalue(), "")
+
+
+class VanishedWorkspaceTests(unittest.TestCase):
+    """A session outlives what it points at; the view must not claim otherwise."""
+
+    def test_status_and_prompt_mark_a_workspace_that_stopped_existing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "repo"
+            workspace.mkdir()
+            shell = OrchestratorShell(workspace)
+
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("status")
+            shell.postcmd(False, "status")
+            self.assertNotIn("missing", stdout.getvalue())
+            self.assertNotIn("!", shell.prompt)
+
+            workspace.rmdir()
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                shell.onecmd("status")
+            shell.postcmd(False, "status")
+            self.assertIn("missing", stdout.getvalue())
+            self.assertIn("repo!", shell.prompt)
+
+    def test_the_mark_clears_when_the_directory_comes_back(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "repo"
+            workspace.mkdir()
+            shell = OrchestratorShell(workspace)
+            workspace.rmdir()
+            shell.postcmd(False, "status")
+            self.assertIn("repo!", shell.prompt)
+
+            workspace.mkdir()
+            shell.postcmd(False, "status")
+            self.assertNotIn("!", shell.prompt)
+
+    def test_a_file_where_the_workspace_was_is_also_marked(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "repo"
+            workspace.mkdir()
+            shell = OrchestratorShell(workspace)
+            workspace.rmdir()
+            workspace.write_text("not a directory any more", encoding="utf-8")
+            self.assertIn("missing", shell._workspace_absence_note())
+
+    def test_the_read_only_views_still_work_while_it_is_gone(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "repo"
+            workspace.mkdir()
+            shell = OrchestratorShell(workspace)
+            workspace.rmdir()
+
+            for command in ("status", "settings", "recent", "history", "usage"):
+                with self.subTest(command=command):
+                    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                        shell.onecmd(command)  # must not raise
 
 
 class ShellEntryPointArgumentTests(unittest.TestCase):

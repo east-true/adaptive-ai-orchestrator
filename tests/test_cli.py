@@ -1964,6 +1964,30 @@ class UnexpectedModifiedFilesTests(unittest.TestCase):
     def test_returns_empty_list_when_no_files_were_modified(self) -> None:
         self.assertEqual(cli._unexpected_modified_files([], "plan.json"), [])
 
+    def test_the_orchestrators_own_state_directory_is_not_an_agent_modification(self) -> None:
+        """The execution log for this very run lives there.
+
+        Every successful `plan generate` in a workspace that does not gitignore
+        `.orchestrator/` warned about it, and a standing false positive is how
+        an operator learns to stop reading the warning.
+        """
+
+        for entry in (".orchestrator/", ".orchestrator", ".orchestrator/executions.jsonl"):
+            with self.subTest(entry=entry):
+                self.assertEqual(cli._unexpected_modified_files([entry, "plan.json"], "plan.json"), [])
+
+    def test_a_real_modification_alongside_the_state_directory_still_reports(self) -> None:
+        self.assertEqual(
+            cli._unexpected_modified_files([".orchestrator/", "plan.json", "src/app.py"], "plan.json"),
+            ["src/app.py"],
+        )
+
+    def test_a_similarly_named_directory_is_not_swallowed(self) -> None:
+        self.assertEqual(
+            cli._unexpected_modified_files([".orchestrator-backup/x", "plan.json"], "plan.json"),
+            [".orchestrator-backup/x"],
+        )
+
 
 class MemoryEntryFromArgsTests(unittest.TestCase):
     def test_builds_entry_from_record_arguments(self) -> None:
@@ -2224,8 +2248,23 @@ class VerifyCommandParsingTests(unittest.TestCase):
     def test_a_blank_command_is_rejected(self) -> None:
         for value in ("", "   "):
             with self.subTest(value=value):
-                with self.assertRaisesRegex(ValueError, "contains no command"):
+                with self.assertRaisesRegex(ValueError, "names no command to run"):
                     cli._verify_commands([value])
+
+    def test_a_quoted_empty_command_is_rejected_too(self) -> None:
+        # shlex.split("''") is [''], which passes an emptiness test and then
+        # asks the runner to execute the program named "". That reported
+        # verification *failed* — the task looking checked and found wanting
+        # when no check had run at all.
+        for value in ("''", '"   "', "'' --flag"):
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(ValueError, "names no command to run"):
+                    cli._verify_commands([value])
+
+    def test_a_command_with_blank_arguments_is_still_accepted(self) -> None:
+        # Only the program name has to be there; an empty argument is a real
+        # thing to pass, and the runner never uses a shell.
+        self.assertEqual(cli._verify_commands(["grep '' file.txt"]), [("grep", "", "file.txt")])
 
     def test_an_unbalanced_quote_names_the_offending_value(self) -> None:
         with self.assertRaisesRegex(ValueError, r"--verify-command \"echo 'oops\" could not be parsed"):
@@ -2247,7 +2286,7 @@ class VerifyCommandParsingTests(unittest.TestCase):
                 ])
 
             self.assertEqual(exit_code, 2)
-            self.assertIn("contains no command", stderr.getvalue())
+            self.assertIn("names no command to run", stderr.getvalue())
             self.assertFalse((Path(directory) / ".orchestrator").exists())
 
 

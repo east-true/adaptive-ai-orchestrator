@@ -251,15 +251,19 @@ class OrchestratorShell(cmd.Cmd):
             return
 
         try:
+            # exists()/is_dir() belong inside the same guard as the resolve:
+            # they stat the path too, so an over-long name raised OSError from
+            # here and killed the session while the resolve itself succeeded.
+            # ValueError covers a path holding an embedded null byte.
             workspace = self._resolve_workspace_path(tokens[0])
-        except (OSError, RuntimeError) as exc:
+            if not workspace.exists():
+                print(f"Error: workspace does not exist: {workspace}")
+                return
+            if not workspace.is_dir():
+                print(f"Error: workspace is not a directory: {workspace}")
+                return
+        except (OSError, RuntimeError, ValueError) as exc:
             print(f"Error: could not resolve workspace: {exc}")
-            return
-        if not workspace.exists():
-            print(f"Error: workspace does not exist: {workspace}")
-            return
-        if not workspace.is_dir():
-            print(f"Error: workspace is not a directory: {workspace}")
             return
 
         self.workspace = workspace
@@ -301,8 +305,26 @@ class OrchestratorShell(cmd.Cmd):
     def do_status(self, arg: str) -> None:
         """Show the current session workspace and agent."""
         del arg
-        print(f"Workspace: {self.workspace}")
+        print(f"Workspace: {self.workspace}{self._workspace_absence_note()}")
         print(f"Agent: {self._format_agent_state()}")
+
+    def _workspace_absence_note(self) -> str:
+        """Flag a session workspace that has stopped being a directory.
+
+        `workspace <dir>` refuses a path that is not a directory, but a session
+        outlives what it points at — a branch switch, a `git clean`, an `rm -rf`
+        elsewhere. Reporting the path alone then states something that is no
+        longer true, and the next routed command fails at the CLI instead. The
+        run path is already safe; this only keeps the session view from
+        contradicting it.
+        """
+
+        try:
+            if self.workspace.is_dir():
+                return ""
+            return " (missing: no longer a directory)"
+        except OSError as exc:
+            return f" (unreadable: {exc})"
 
     def do_settings(self, arg: str) -> None:
         """Show session overrides applied to task and plan commands."""
@@ -318,10 +340,15 @@ class OrchestratorShell(cmd.Cmd):
 
         def inherited(effective: str) -> str:
             if profile_error is not None:
-                return f"inherit (profile error: {profile_error})"
+                # Named once, above; repeating a message that carries a full
+                # path on all five rows buried the settings it was describing.
+                return "inherit (profile unreadable)"
             return f"inherit (effective: {effective})"
 
-        print(f"Agent: {self._format_agent_state()}")
+        if profile_error is not None:
+            print(f"Profile error: {profile_error}")
+            print("Inherited rows cannot be resolved until it is fixed.")
+        print(f"Agent: {self._format_agent_state(brief_profile_error=profile_error is not None)}")
         print(
             f"Verbose: {self._format_toggle(self.default_verbose)}"
             if self.default_verbose is not None
@@ -334,10 +361,15 @@ class OrchestratorShell(cmd.Cmd):
             effective = self._format_toggle(not config.escalation_enabled) if config else "unknown"
             print(f"No escalation: {inherited(effective)}")
 
+        # `run-plan` and `plan generate` define no --time-limit, so a session
+        # value never reaches them: a plan step carries its own
+        # `time_limit_seconds`, and plan generation is not a budgeted task run.
+        # The row said "30s" flatly, which claimed a reach it does not have.
+        limit_scope = " (task and run only)"
         if self.default_time_limit_disabled:
-            print("Time limit: off")
+            print(f"Time limit: off{limit_scope}")
         elif self.default_time_limit is not None:
-            print(f"Time limit: {self.default_time_limit:g}s")
+            print(f"Time limit: {self.default_time_limit:g}s{limit_scope}")
         else:
             seconds = config.time_limit_seconds if config else None
             print(f"Time limit: {inherited(f'{seconds:g}s' if seconds is not None else 'none')}")
@@ -428,7 +460,19 @@ class OrchestratorShell(cmd.Cmd):
                 return
             # cli.py parses this value once more. Re-quoting the validated tokens
             # preserves their exact boundaries across that second shlex split.
-            self.default_verify_command = shlex.join(tokens)
+            candidate = shlex.join(tokens)
+            try:
+                # Validated by the CLI's own parser rather than by a second copy
+                # of its rules here. `set verify ""` used to be stored happily
+                # and then made every later run report verification *failed*,
+                # because the stored value named the program "". Refusing it at
+                # the moment it is set keeps the session default to values the
+                # CLI will actually accept.
+                cli._verify_commands([candidate])
+            except ValueError as exc:
+                print(f"Error: set verify: {exc}", file=sys.stderr)
+                return
+            self.default_verify_command = candidate
             self.default_verify_commands_disabled = False
             print(f"verify set to {self.default_verify_command}")
             profile_commands = self._profile_verify_commands()
@@ -461,6 +505,7 @@ class OrchestratorShell(cmd.Cmd):
         tokens = self._split(arg, command)
         if tokens is None:
             return
+        self._note_cwd_relative_options(tokens)
         self._invoke_cli([command, "--workspace", str(self.workspace), *tokens], command)
 
     def do_task(self, arg: str) -> None:
@@ -503,10 +548,15 @@ class OrchestratorShell(cmd.Cmd):
             str(self.workspace),
             *self._agent_default_args(),
             *self._workflow_default_args(include_time_limit=True),
-            "--description",
-            request,
-            "--objective",
-            request,
+            # `--task=` rather than a separate --description/--objective pair:
+            # the CLI already owns this shorthand, and the attached form is the
+            # only one a request may start a dash in. Passed as its own argv
+            # element, argparse inspects the request for option syntax, so
+            # `task --help` died with "argument --description: expected one
+            # argument" while `task -x fix it` ran — argparse skips that check
+            # for values containing a space, so the outcome turned on whether
+            # the request happened to have one.
+            f"--task={request}",
         ]
         self._invoke_cli(argv, label)
 
@@ -515,6 +565,7 @@ class OrchestratorShell(cmd.Cmd):
         tokens = self._split(arg, "run")
         if tokens is None:
             return
+        self._note_cwd_relative_options(tokens)
         argv = [
             "run",
             "--workspace",
@@ -533,6 +584,7 @@ class OrchestratorShell(cmd.Cmd):
         if not tokens:
             print("Usage: run_plan <plan_file> [args...]")
             return
+        self._note_cwd_relative_options(tokens)
         argv = [
             "run-plan",
             "--workspace",
@@ -551,6 +603,23 @@ class OrchestratorShell(cmd.Cmd):
         if not tokens:
             print("Usage: plan_generate <request> [args...]")
             return
+        # `plan generate` takes exactly one positional, so every leading
+        # non-option token belongs to the request. Passing them through
+        # unjoined made `plan_generate make a plan` fail with "unrecognized
+        # arguments: a plan" while the shell's own `task make a plan` — which
+        # uses the whole argument string — worked. Two commands taking a
+        # free-text request now read it the same way. A request that starts
+        # with a dash still has to be quoted, since that is the only way to
+        # tell it from an option.
+        # Only the leading form is rewritten. When options come first the
+        # request is somewhere among them and the caller has already had to
+        # quote it, so those tokens are passed through exactly as before.
+        request_tokens: list[str] = []
+        while tokens and not tokens[0].startswith("-"):
+            request_tokens.append(tokens.pop(0))
+        if request_tokens:
+            tokens = [" ".join(request_tokens), *tokens]
+        self._note_cwd_relative_options(tokens)
         argv = [
             "plan",
             "generate",
@@ -574,7 +643,7 @@ class OrchestratorShell(cmd.Cmd):
         if not plan_file.startswith("-"):
             try:
                 plan_file = str(self._resolve_workspace_path(plan_file))
-            except (OSError, RuntimeError) as exc:
+            except (OSError, RuntimeError, ValueError) as exc:
                 print(f"Error: plan_validate: could not resolve plan file: {exc}", file=sys.stderr)
                 return
         self._invoke_cli(["plan", "validate", plan_file], "plan_validate")
@@ -667,6 +736,7 @@ class OrchestratorShell(cmd.Cmd):
         if not tokens:
             print("Usage: retry <execution-id|attempt-id|#number> [args...]")
             return
+        self._note_cwd_relative_options(tokens)
         self._invoke_cli(
             [
                 "retry",
@@ -786,13 +856,14 @@ class OrchestratorShell(cmd.Cmd):
         if not tokens[0].startswith("-"):
             try:
                 tokens = [str(self._resolve_workspace_path(tokens[0])), *tokens[1:]]
-            except (OSError, RuntimeError) as exc:
+            except (OSError, RuntimeError, ValueError) as exc:
                 print(f"Error: {label}: could not resolve manifest: {exc}", file=sys.stderr)
                 return
 
         argv = ["paired", subcommand]
         if source_repository:
             argv.extend(("--source-repository", str(self.workspace)))
+        self._note_cwd_relative_options(tokens)
         self._invoke_cli([*argv, *tokens], label)
 
     def do_exit(self, arg: str) -> bool:
@@ -814,6 +885,29 @@ class OrchestratorShell(cmd.Cmd):
         del arg
         print()
         return True
+
+    def onecmd(self, line: str) -> bool:
+        """Run one command without letting it take the session down with it.
+
+        Routed commands have had this since `_invoke_cli` grew its boundary
+        handler; the shell-native ones had none, so a single bad argument
+        unwound through `cmdloop` and exited the process. A path holding an
+        embedded null byte did it (`ValueError`), and so did one too long to
+        stat (`OSError`), losing the workspace, the agent, and every session
+        default to a typo.
+
+        `SystemExit`, `KeyboardInterrupt`, and `_ShellTermination` still
+        propagate: those are how the shell is meant to end.
+        """
+
+        try:
+            return super().onecmd(line)
+        except (SystemExit, KeyboardInterrupt, _ShellTermination):
+            raise
+        except Exception as exc:  # noqa: BLE001 - session boundary: keep the loop alive.
+            command = line.split(maxsplit=1)[0] if line.split() else "command"
+            print(f"Error: {command} failed: {type(exc).__name__}: {exc}", file=sys.stderr)
+            return False
 
     def emptyline(self) -> None:
         """Do nothing instead of repeating a potentially expensive command."""
@@ -1137,7 +1231,7 @@ class OrchestratorShell(cmd.Cmd):
         if len(preceding) != 1:
             return []
 
-        executions = self._indexed_execution_bundles()
+        executions = self._indexed_execution_bundles(quiet=True)
         if not executions:
             return []
 
@@ -1160,12 +1254,25 @@ class OrchestratorShell(cmd.Cmd):
 
     def _indexed_execution_bundles(
         self,
+        quiet: bool = False,
     ) -> tuple[tuple[int, ExecutionBundle], ...] | None:
+        """Read grouped executions, optionally without saying anything.
+
+        Tab completion calls this while readline is mid-draw, where writing
+        anything smears the prompt and leaves the cursor position wrong — a
+        single TAB on an unreadable log used to inject an error line into the
+        line being typed. A completer's contract is to return no candidates,
+        which is what its own handlers already do; ``quiet`` extends that to
+        the read. Commands still report, because for them the failure is the
+        answer.
+        """
+
         path = self.workspace / ".orchestrator" / "executions.jsonl"
         try:
             indexed = ExecutionReportStore(path).indexed_bundles()
         except (ExecutionLookupError, OSError, UnicodeError) as exc:
-            print(f"Error: could not read execution history: {exc}", file=sys.stderr)
+            if not quiet:
+                print(f"Error: could not read execution history: {exc}", file=sys.stderr)
             return None
         return tuple(sorted(indexed, key=lambda item: item[0]))
 
@@ -1210,13 +1317,21 @@ class OrchestratorShell(cmd.Cmd):
             return "inherit"
         return "on" if value else "off"
 
-    def _format_agent_state(self) -> str:
+    def _format_agent_state(self, brief_profile_error: bool = False) -> str:
+        """Describe the effective agent.
+
+        ``brief_profile_error`` is for `settings`, which prints the profile
+        failure once above its rows; spelling it out again here would put the
+        same path-carrying message on the row directly beneath it.
+        """
+
         try:
             config = load_project_config(self.workspace)
         except ProjectConfigError as exc:
+            detail = "profile unreadable" if brief_profile_error else f"profile error: {exc}"
             if self.agent_override is None:
-                return f"inherit (profile error: {exc})"
-            return f"{self.agent_override} (session override; profile error: {exc})"
+                return f"inherit ({detail})"
+            return f"{self.agent_override} (session override; {detail})"
 
         if self.agent_override is None:
             return f"inherit (effective: {config.agent})"
@@ -1249,7 +1364,57 @@ class OrchestratorShell(cmd.Cmd):
 
     def _refresh_prompt(self) -> None:
         workspace_label = self.workspace.name or str(self.workspace)
+        # postcmd refreshes this after every command, so a workspace that goes
+        # away mid-session is marked before the next one is typed rather than
+        # after it has already failed.
+        if self._workspace_absence_note():
+            workspace_label = f"{workspace_label}!"
         self.prompt = f"adaptive[{self.agent}:{workspace_label}]> "
+
+    #: Options whose relative value resolves somewhere the session never names.
+    #: All three must point *outside* the workspace or source repository, so
+    #: none of them can be anchored to the session the way a plan file is.
+    _CWD_RELATIVE_OPTIONS = (
+        "--control-state-dir",
+        "--workspace-root",
+        "--source-repository",
+    )
+
+    def _note_cwd_relative_options(self, tokens: list[str]) -> None:
+        """Say where a relative option path will actually land.
+
+        The shell anchors the paths it owns—`plan_validate`'s file, the paired
+        manifest—to the session workspace, but this one cannot be: the kernel
+        requires the control-state directory to live *outside* the agent
+        workspace, so there is no workspace-relative base to anchor to. It
+        therefore keeps the CLI's rule and resolves against the process working
+        directory: wherever the shell happened to be launched, which the
+        session never mentions again.
+
+        `run --control-state-dir myctl` consequently succeeds and writes
+        events.jsonl and routing-state.json there without a word, and
+        `paired dry-run --workspace-root relroot` creates its checkouts there.
+        Naming the resolved path once, when a relative value is actually
+        passed, is enough to keep that from being a surprise.
+        """
+
+        for index, token in enumerate(tokens):
+            name, separator, attached = token.partition("=")
+            if name not in self._CWD_RELATIVE_OPTIONS:
+                continue
+            if separator:
+                value = attached
+            elif index + 1 < len(tokens):
+                value = tokens[index + 1]
+            else:
+                continue  # trailing option with no value: argparse reports it
+            if not value or value.startswith("~") or Path(value).is_absolute():
+                continue
+            print(
+                f"Note: {name} {value} resolves to {Path(value).resolve()} "
+                "(relative to this shell's working directory, not the session workspace).",
+                file=sys.stderr,
+            )
 
     def _resolve_workspace_path(self, value: str) -> Path:
         path = Path(value).expanduser()
@@ -1394,7 +1559,7 @@ class OrchestratorShell(cmd.Cmd):
                 (item for item in directory.iterdir() if item.name.startswith(prefix)),
                 key=lambda item: item.name,
             )
-        except (OSError, RuntimeError):
+        except (OSError, RuntimeError, ValueError):
             return []
 
         completions: list[str] = []
@@ -1446,6 +1611,17 @@ class OrchestratorShell(cmd.Cmd):
         return "under a minute"
 
     def _format_codex_usage(self, usage: CodexUsage | None) -> str:
+        """Report the quota, and say so when only the plan name is known.
+
+        The percentage is what this command exists to show, and Codex is the
+        source that supposedly has it. A session log that names a plan but
+        carries no rate-limit block used to render as "Codex: prolite plan" —
+        silence where the number belongs, which reads as "nothing to report"
+        rather than "not known". The Claude row already says
+        "no live quota % available locally", and the history rows already say
+        "no success data"; this one now agrees with both.
+        """
+
         if usage is None:
             return "Codex: usage data not available"
         clauses = []
@@ -1453,12 +1629,14 @@ class OrchestratorShell(cmd.Cmd):
             clauses.append(f"{usage.plan_type} plan")
         if usage.used_percent is not None:
             clauses.append(f"{usage.used_percent:g}% used")
+        else:
+            clauses.append("no quota % in the local session log")
         reset_text = ""
         if usage.resets_at is not None:
             seconds = usage.resets_at - time.time()
             if seconds >= 0:
                 reset_text = f" (resets in {self._format_reset_delay(seconds)})"
-        return f"Codex: {', '.join(clauses)}{reset_text}" if clauses else "Codex: usage data not available"
+        return f"Codex: {', '.join(clauses)}{reset_text}"
 
 
 def _parse_shell_arguments(argv: list[str] | None) -> Path:
