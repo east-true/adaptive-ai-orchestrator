@@ -204,7 +204,34 @@ class BuildTaskCommandTests(unittest.TestCase):
         self.assertEqual(command[0], sys.executable)
         self.assertIn("adaptive_orchestrator.cli", command)
         self.assertIn("--verbose", command)
-        self.assertEqual(command.count("Run the tests"), 2)
+        # One attached element, so the request cannot be read as an option.
+        self.assertIn("--task=Run the tests", command)
+        self.assertNotIn("--description", command)
+
+    def test_a_request_starting_with_a_dash_is_not_read_as_an_option(self) -> None:
+        """A dash-leading request is a request, not a plea for argparse.
+
+        Passed as its own element the request was inspected for option syntax,
+        so "--help" died with "argument --description: expected one argument"
+        while "-x fix it" ran — argparse skips that check for values holding a
+        space, so the outcome turned on whether the request happened to have
+        one.
+        """
+
+        for request in ("--help", "--version", "-x fix it", "-"):
+            with self.subTest(request=request):
+                command = build_task_command(Path("/workspace"), request)
+                self.assertIn(f"--task={request}", command)
+                self.assertEqual(sum(item.startswith("--task=") for item in command), 1)
+
+    def test_the_control_state_directory_reaches_the_child(self) -> None:
+        """The dashboard reads there; without this the child recorded elsewhere."""
+        command = build_task_command(Path("/workspace"), "Run the tests", Path("/protected/ctl"))
+        self.assertIn("--control-state-dir", command)
+        self.assertEqual(command[command.index("--control-state-dir") + 1], "/protected/ctl")
+
+    def test_no_control_state_directory_leaves_the_child_to_its_default(self) -> None:
+        self.assertNotIn("--control-state-dir", build_task_command(Path("/workspace"), "Run it"))
 
     def test_requests_the_readable_summary_instead_of_the_raw_json_record(self) -> None:
         # The task's log view is meant to read like output, not a dumped
@@ -507,10 +534,17 @@ class PromptRenderTest(unittest.TestCase):
 
 
 class FakeTask:
-    def __init__(self, workspace: Path, request: str, index: int) -> None:
+    def __init__(
+        self,
+        workspace: Path,
+        request: str,
+        index: int,
+        control_state_dir: Path | None = None,
+    ) -> None:
         self.workspace = workspace
         self.request = request
         self.index = index
+        self.control_state_dir = control_state_dir
         self.alive = True
         self.signals: list[bool] = []
 
@@ -553,6 +587,40 @@ class BackgroundTaskExecutionIdTests(unittest.TestCase):
     def test_keeps_the_first_id_when_output_names_more_than_one(self) -> None:
         task = self._run("print('Execution: first'); print('Execution: second')")
         self.assertEqual(task.execution_id, "first")
+
+
+class ControlStateDirectoryReachesChildrenTests(unittest.TestCase):
+    """The screen polls one directory; its children must record into it."""
+
+    def test_the_manager_hands_its_directory_to_every_task_it_starts(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "workspace"
+            workspace.mkdir()
+            control = Path(directory) / "control"
+            application = OrchestratorTui(workspace, control, 3)
+            application.tasks._factory = FakeTask
+
+            first = application.tasks.start(workspace, "first")
+            second = application.tasks.start(workspace, "second")
+
+            for task in (first, second):
+                self.assertEqual(task.control_state_dir, application.control_state_dir)
+            self.assertEqual(application.control_state_dir, control.resolve())
+
+    def test_the_derived_default_is_handed_over_too(self) -> None:
+        # Not only the explicit option: passing the resolved directory either
+        # way keeps the child's records and the dashboard's reads identical.
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "workspace"
+            workspace.mkdir()
+            application = OrchestratorTui(workspace, None, 3)
+            application.tasks._factory = FakeTask
+
+            task = application.tasks.start(workspace, "only")
+            self.assertEqual(task.control_state_dir, application.control_state_dir)
+            self.assertIn("--control-state-dir", build_task_command(
+                workspace, "only", application.control_state_dir
+            ))
 
 
 class TaskManagerTests(unittest.TestCase):

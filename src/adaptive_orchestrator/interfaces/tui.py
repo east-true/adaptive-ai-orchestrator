@@ -579,13 +579,17 @@ class TaskAdmissionError(RuntimeError):
     pass
 
 
-def build_task_command(workspace: Path, request: str) -> tuple[str, ...]:
+def build_task_command(
+    workspace: Path,
+    request: str,
+    control_state_dir: Path | None = None,
+) -> tuple[str, ...]:
     if not request.strip():
         raise ValueError("Task request cannot be empty.")
     # No ``--agent``: this screen starts a run, it does not configure one. The
     # workspace profile decides, and the CLI and interactive shell remain the
     # places that override it.
-    return (
+    command = [
         sys.executable,
         "-m",
         "adaptive_orchestrator.cli",
@@ -594,11 +598,21 @@ def build_task_command(workspace: Path, request: str) -> tuple[str, ...]:
         str(workspace.resolve()),
         "--verbose",
         "--summary",
-        "--description",
-        request,
-        "--objective",
-        request,
-    )
+    ]
+    if control_state_dir is not None:
+        # The dashboard reads lifecycle events from this directory. Leaving it
+        # off let the child resolve its own default, so a UI started with an
+        # explicit --control-state-dir never showed the runs it had just
+        # launched: they were recorded somewhere it was not looking.
+        command += ["--control-state-dir", str(control_state_dir)]
+    # ``--task=`` rather than a --description/--objective pair: the CLI owns
+    # this shorthand, and the attached form is the only one a request may start
+    # a dash in. Passed as its own element, argparse inspects the request for
+    # option syntax, so a request of "--help" died with "argument
+    # --description: expected one argument" while "-x fix it" ran — argparse
+    # skips that check for values holding a space.
+    command.append(f"--task={request}")
+    return tuple(command)
 
 
 def _execution_id_from(line: str) -> str:
@@ -618,10 +632,16 @@ def _execution_id_from(line: str) -> str:
 class BackgroundTask:
     """One shell-free CLI child whose combined output is safe to poll from curses."""
 
-    def __init__(self, workspace: Path, request: str, index: int = 1) -> None:
+    def __init__(
+        self,
+        workspace: Path,
+        request: str,
+        index: int = 1,
+        control_state_dir: Path | None = None,
+    ) -> None:
         self.request = request
         self.index = index
-        self.command = build_task_command(workspace, request)
+        self.command = build_task_command(workspace, request, control_state_dir)
         self.started_at = time.monotonic()
         self.finished_at: float | None = None
         self._cancel_requested = False
@@ -727,12 +747,16 @@ class TaskManager:
     def __init__(
         self,
         limit: int = DEFAULT_TASK_LIMIT,
-        factory: Callable[[Path, str, int], BackgroundTask] | None = None,
+        factory: Callable[..., BackgroundTask] | None = None,
+        control_state_dir: Path | None = None,
     ) -> None:
         if limit < 1:
             raise ValueError("Task limit must be at least 1.")
         self.limit = limit
         self._factory = factory or BackgroundTask
+        # Handed to every child so its lifecycle events land where the
+        # dashboard reads them.
+        self.control_state_dir = control_state_dir
         self._tasks: list[BackgroundTask] = []
         self._counter = 0
 
@@ -751,7 +775,7 @@ class TaskManager:
         if not self.can_start():
             raise TaskAdmissionError(f"{self.limit} tasks already running; cancel one first.")
         self._counter += 1
-        task = self._factory(workspace, request, self._counter)
+        task = self._factory(workspace, request, self._counter, self.control_state_dir)
         self._tasks.append(task)
         return task
 
@@ -833,7 +857,10 @@ class OrchestratorTui:
         self.executions_path = self.workspace / ".orchestrator" / "executions.jsonl"
         self.events_path = self.control_state_dir / "events.jsonl"
         self.store = ExecutionReportStore(self.executions_path)
-        self.tasks = TaskManager(task_limit)
+        # The resolved directory, not the raw option: the child then records
+        # into exactly the file this screen polls, whether the operator named
+        # one or the default was derived.
+        self.tasks = TaskManager(task_limit, control_state_dir=self.control_state_dir)
         self.theme = Theme()
 
         self.rows: tuple[DashboardRow, ...] = ()
