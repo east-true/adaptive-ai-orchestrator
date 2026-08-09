@@ -967,10 +967,29 @@ class OrchestratorTui:
         # and returns here by way of the task list.
         self.view = VIEW_DASHBOARD
         while True:
-            self._draw(screen)
+            # curses.error only, and only around the terminal work: a resize
+            # landing between measuring the window and drawing into it makes
+            # erase/getmaxyx/refresh/move/chgat raise, and only `addstr` was
+            # guarded — so one such frame ended the session. The next
+            # iteration redraws, which makes a dropped frame invisible; a
+            # dropped session is not. Anything that is not a terminal error
+            # still propagates, because that would be a defect worth seeing.
+            try:
+                self._draw(screen)
+            except curses.error:
+                pass
+            # Outside the guard above, and never skipped: this is what blocks
+            # for the poll interval, so a terminal failing every frame would
+            # otherwise spin the loop at full speed instead of dropping frames.
+            # It reports "no input" rather than raising.
             key = _read_key(screen)
-            if key is not None and not self._handle_key(screen, key):
-                return
+            if key is not None:
+                try:
+                    still_running = self._handle_key(screen, key)
+                except curses.error:
+                    still_running = True
+                if not still_running:
+                    return
             self._poll_tasks()
             self._maybe_auto_refresh()
 

@@ -50,6 +50,7 @@ from adaptive_orchestrator.interfaces.tui import (
 )
 from adaptive_orchestrator.infrastructure.events import LifecycleEvent, LifecycleEventType
 from adaptive_orchestrator.routing.state import EventProjector
+from adaptive_orchestrator.interfaces import tui as tui_module
 
 
 class DashboardRowsTests(unittest.TestCase):
@@ -872,6 +873,85 @@ class PresentationTests(unittest.TestCase):
         self.assertEqual(elapsed_text(75), "1m15s")
         self.assertEqual(elapsed_text(3725), "1h02m")
         self.assertEqual(elapsed_text(-5), "0s")
+
+
+class LoopResilienceTests(unittest.TestCase):
+    """A terminal that errors mid-frame costs a frame, not the session."""
+
+    class _Flaky:
+        """Raises curses.error from the calls _safe_addstr never guarded."""
+
+        def __init__(self, failures: int) -> None:
+            self.left = failures
+
+        def _maybe(self) -> None:
+            if self.left > 0:
+                self.left -= 1
+                raise curses.error("resize landed mid-frame")
+
+        def getmaxyx(self) -> tuple[int, int]:
+            self._maybe()
+            return (24, 80)
+
+        def erase(self) -> None: self._maybe()
+        def clear(self) -> None: self._maybe()
+        def refresh(self) -> None: self._maybe()
+        def move(self, *args: object) -> None: self._maybe()
+        def chgat(self, *args: object, **kwargs: object) -> None: self._maybe()
+        def addstr(self, *args: object, **kwargs: object) -> None: self._maybe()
+        def keypad(self, *args: object) -> None: pass
+        def timeout(self, *args: object) -> None: pass
+
+    def _run_frames(self, failures: int, frames: int = 40) -> int:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "ws"
+            workspace.mkdir()
+            application = OrchestratorTui(workspace, Path(directory) / "ctl", 3)
+            seen = {"count": 0}
+
+            def fake_read(screen: object) -> object:
+                seen["count"] += 1
+                if seen["count"] > frames:
+                    raise SystemExit
+                return None  # the poll timeout expiring with no input
+
+            with (
+                mock.patch("adaptive_orchestrator.interfaces.tui._read_key", fake_read),
+                mock.patch.object(curses, "curs_set", lambda *_: None),
+                mock.patch.object(tui_module.Theme, "create", staticmethod(tui_module.Theme)),
+                contextlib.redirect_stdout(io.StringIO()),
+                contextlib.redirect_stderr(io.StringIO()),
+            ):
+                with self.assertRaises(SystemExit):
+                    application.run(self._Flaky(failures))
+            return seen["count"]
+
+    def test_a_failing_frame_does_not_end_the_loop(self) -> None:
+        self.assertGreater(self._run_frames(failures=5), 40)
+
+    def test_input_is_still_read_when_every_frame_fails(self) -> None:
+        """_read_key is what blocks for the poll interval.
+
+        Guarding it together with the draw would turn a terminal failing every
+        frame into a loop spinning at full speed instead of dropping frames.
+        """
+
+        self.assertGreater(self._run_frames(failures=10**6), 40)
+
+    def test_a_defect_that_is_not_a_terminal_error_still_surfaces(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "ws"
+            workspace.mkdir()
+            application = OrchestratorTui(workspace, Path(directory) / "ctl", 3)
+
+            with (
+                mock.patch.object(OrchestratorTui, "_draw", side_effect=AttributeError("a real bug")),
+                mock.patch.object(curses, "curs_set", lambda *_: None),
+                mock.patch.object(tui_module.Theme, "create", staticmethod(tui_module.Theme)),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                with self.assertRaises(AttributeError):
+                    application.run(self._Flaky(0))
 
 
 class MainCleanupTests(unittest.TestCase):
