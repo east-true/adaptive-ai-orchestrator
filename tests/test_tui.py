@@ -650,6 +650,22 @@ class DisplayableTests(unittest.TestCase):
             with self.subTest(text=text):
                 self.assertEqual(displayable(text), expected)
 
+    def test_the_rest_of_the_escape_family_goes_too(self) -> None:
+        """CSI and OSC are not the whole set.
+
+        Matching only those left the ESC neutralised to a space and its
+        remaining bytes on screen: " 7" for a cursor save, " (B" for a charset
+        designation.
+        """
+
+        for text in ("a\x1b7b", "a\x1b8b", "a\x1b(Bb", "a\x1b=b", "a\x1bMb", "a\x1bcb"):
+            with self.subTest(text=text):
+                self.assertEqual(displayable(text), "ab")
+
+    def test_a_trailing_lone_escape_still_becomes_a_space(self) -> None:
+        # Nothing follows it to strip, so the control character rule applies.
+        self.assertEqual(displayable("a\x1b"), "a ")
+
     def test_other_control_characters_become_a_space_not_nothing(self) -> None:
         # Removing them would silently reflow the line they came from.
         for text in ("a\x07b", "a\x00b", "a\x1fb"):

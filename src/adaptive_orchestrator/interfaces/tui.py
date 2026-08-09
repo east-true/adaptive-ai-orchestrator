@@ -232,8 +232,15 @@ def clamp_offset(offset: int, total: int, height: int) -> int:
     return max(0, min(offset, max(total - height, 0)))
 
 
-#: Terminal escape sequences: CSI (colour, cursor moves) and OSC (title sets).
-_ESCAPE_SEQUENCE = re.compile(r"\x1b(?:\[[0-9;?]*[ -/]*[@-~]|\][^\x07\x1b]*(?:\x07|\x1b\\)|[@-Z\\-_])")
+#: Terminal escape sequences, in the order they have to be tried: CSI (colour,
+#: cursor moves), OSC (title sets), then the general form — ESC, any
+#: intermediates, one final byte — which covers the rest of the family: ESC 7
+#: and ESC 8 save and restore the cursor, ESC ( B designates a charset, ESC c
+#: resets the terminal. Matching only the first two left the ESC neutralised
+#: to a space and its remaining bytes on screen as literal " 7" or " (B".
+_ESCAPE_SEQUENCE = re.compile(
+    r"\x1b(?:\[[0-9;?]*[ -/]*[@-~]|\][^\x07\x1b]*(?:\x07|\x1b\\)|[ -/]*[0-~])"
+)
 
 #: How many columns a tab stands for once it can no longer move the cursor.
 TAB_COLUMNS = 4
