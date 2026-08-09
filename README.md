@@ -85,8 +85,40 @@ logged in to actually route a task.
 | **Interactive shell** | `adaptive-ai-orchestrator-shell` | setting workspace and agent once, then issuing short commands |
 | **Terminal UI** | `adaptive-ai-orchestrator-tui` | watching several tasks run, with live output and reports |
 
-The shell keeps session state so you stop repeating flags, and `help` is grouped
-by what you are doing rather than listed alphabetically:
+The captures below come from the current entry points reading a synthetic demo
+history. They invoke no coding agent.
+
+### CLI: run it once, read it back later
+
+`run --summary` prints this readable view immediately. `show` renders the same
+view later from the append-only local record; the default JSON output remains
+available for scripts.
+
+![CLI showing a completed, verified execution summary](docs/assets/readme/cli.svg)
+
+### Shell: keep the working context
+
+The shell keeps workspace, agent, verification, verbosity, and timeout choices
+for one session, so repeated commands stay short. Its help is grouped by the
+work you are doing rather than alphabetically.
+
+![Interactive shell showing session state and recent executions](docs/assets/readme/shell.svg)
+
+### TUI: monitor runs and open reports
+
+The TUI combines recorded executions with lifecycle progress, can start up to
+`--max-tasks` background runs, and renders the same reports as the CLI.
+
+![Terminal UI dashboard showing recorded executions and verification results](docs/assets/readme/tui.svg)
+
+<details>
+<summary>Animated TUI walkthrough: dashboard → help → filter → report</summary>
+
+![Animated terminal UI walkthrough](docs/assets/readme/tui-demo.gif)
+
+</details>
+
+The shell's short forms map back to the canonical CLI:
 
 ```text
 Session:

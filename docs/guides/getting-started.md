@@ -37,6 +37,22 @@ The remaining examples use that explicit source-checkout form. In an editable
 installation, omit `PYTHONPATH=src` and use either the installed console command
 or `python -m adaptive_orchestrator.cli`.
 
+## Pick an interface
+
+All three interfaces use the same routing, execution, verification, and local
+record contracts. Choose the surface that matches the job:
+
+| Interface | Start it | Use it for |
+| --- | --- | --- |
+| [Command line](cli.md) | `adaptive-ai-orchestrator --help` | scripts, CI, and one-off tasks |
+| [Interactive shell](shell.md) | `adaptive-ai-orchestrator-shell` | several commands with one workspace and shared defaults |
+| [Terminal UI](tui.md) | `adaptive-ai-orchestrator-tui --workspace .` | monitoring recorded and in-flight work |
+
+The README's [interface tour](../../README.md#three-ways-to-drive-it) shows all
+three using a synthetic execution history; opening those screens does not
+itself invoke an agent. The next section uses the CLI because its complete argv
+makes every choice explicit.
+
 ## Run a task
 
 ```bash

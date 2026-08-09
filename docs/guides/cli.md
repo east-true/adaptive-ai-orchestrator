@@ -2,8 +2,29 @@
 
 # Command line
 
-The commands you come back to after the first run: reading past work,
-ordered plans, and engineering memory.
+Use the canonical, scriptable interface to run work and to read it back later.
+
+![CLI showing a completed, verified execution summary](../assets/readme/cli.svg)
+
+The capture is the real `show` output for a synthetic local record. A normal
+`run --summary` prints the same fields as soon as the run finishes, while the
+default `run` output remains JSON for scripts.
+
+## Command map
+
+| Goal | Commands |
+| --- | --- |
+| Prepare a workspace | `init`, `doctor` |
+| Run work | `run`, `run-plan`, `plan generate` |
+| Read or repeat work | `show`, `report`, `retry` |
+| Maintain local knowledge and state | `memory`, `replay` |
+| Exercise the paired-evaluation tooling | `paired` |
+
+Every command supports `--help`; the root help keeps these groups in the order
+an operator normally encounters them. The sections below cover the commands
+most often used after the first run: reading past work, ordered plans, and
+engineering memory. See [Getting started](getting-started.md) for `init`,
+`doctor`, and the first `run`.
 
 ## Inspect, report, or retry an execution
 

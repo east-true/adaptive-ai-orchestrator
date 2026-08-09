@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="774" height="250" viewBox="0 0 774 250" role="img" aria-label="CLI · execution summary">
+<rect width="100%" height="100%" rx="10" fill="#0d1117"/>
+<path d="M10 0h754a10 10 0 0 1 10 10v28H0V10A10 10 0 0 1 10 0z" fill="#161b22"/>
+<circle cx="18" cy="19" r="5" fill="#ff5f56"/><circle cx="36" cy="19" r="5" fill="#ffbd2e"/><circle cx="54" cy="19" r="5" fill="#27c93f"/>
+<text x="387.0" y="24" text-anchor="middle" fill="#8b949e" font-family="ui-monospace,SFMono-Regular,Consolas,Liberation Mono,monospace" font-size="13">CLI · execution summary</text>
+<text xml:space="preserve" x="18" y="52" fill="#c9d1d9" font-family="ui-monospace,SFMono-Regular,Consolas,Liberation Mono,monospace" font-size="15" font-weight="400" text-decoration="">$ adaptive-ai-orchestrator show d2e4f8a9 --workspace .</text>
+<text xml:space="preserve" x="18" y="70" fill="#c9d1d9" font-family="ui-monospace,SFMono-Regular,Consolas,Liberation Mono,monospace" font-size="15" font-weight="400" text-decoration="">Execution: d2e4f8a9-1c05-4b7e-93af-6ad81c250b73</text>
+<text xml:space="preserve" x="18" y="88" fill="#c9d1d9" font-family="ui-monospace,SFMono-Regular,Consolas,Liberation Mono,monospace" font-size="15" font-weight="400" text-decoration="">Task: Add a changelog entry for the TUI task list</text>
+<text xml:space="preserve" x="18" y="106" fill="#c9d1d9" font-family="ui-monospace,SFMono-Regular,Consolas,Liberation Mono,monospace" font-size="15" font-weight="400" text-decoration="">Status: completed</text>
+<text xml:space="preserve" x="18" y="124" fill="#c9d1d9" font-family="ui-monospace,SFMono-Regular,Consolas,Liberation Mono,monospace" font-size="15" font-weight="400" text-decoration="">Agent: codex</text>
+<text xml:space="preserve" x="18" y="142" fill="#c9d1d9" font-family="ui-monospace,SFMono-Regular,Consolas,Liberation Mono,monospace" font-size="15" font-weight="400" text-decoration="">Verification: passed</text>
+<text xml:space="preserve" x="18" y="160" fill="#c9d1d9" font-family="ui-monospace,SFMono-Regular,Consolas,Liberation Mono,monospace" font-size="15" font-weight="400" text-decoration="">Attempts: 1</text>
+<text xml:space="preserve" x="18" y="178" fill="#c9d1d9" font-family="ui-monospace,SFMono-Regular,Consolas,Liberation Mono,monospace" font-size="15" font-weight="400" text-decoration="">Duration: 22.4s</text>
+<text xml:space="preserve" x="18" y="196" fill="#c9d1d9" font-family="ui-monospace,SFMono-Regular,Consolas,Liberation Mono,monospace" font-size="15" font-weight="400" text-decoration="">Modified: README.md, docs/guides/tui.md</text>
+</svg>

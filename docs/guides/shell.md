@@ -4,55 +4,23 @@
 
 Set the workspace and agent once, then issue short commands against them.
 
-## Interactive shell
+![Interactive shell showing session state and recent executions](../assets/readme/shell.svg)
+
+The capture drives the real shell against a synthetic local execution history;
+none of the shown commands starts an agent.
+
+## Start a session
 
 If you want to set the workspace and agent once, then issue short commands repeatedly, use the stdlib shell on top of the existing CLI dispatch:
 
 ```bash
 PYTHONPATH=src python3 -m adaptive_orchestrator.shell
-    _        _        ___
-   / \      / \      / _ \
-  / _ \    / _ \    | | | |
- /_/ \_\  /_/ \_\    \___/
-
- Adaptive AI Orchestrator
- Shell v0.1.0 | Kernel v0.1
- Type help or ?; task <request> starts a quick run.
-adaptive[auto:adaptive-ai-orchestrator]> workspace .
-Workspace set to /path/to/adaptive-ai-orchestrator
-adaptive[auto:adaptive-ai-orchestrator]> agent codex
-Agent set to codex
-adaptive[codex:adaptive-ai-orchestrator]> set verbose on
-verbose set to on
-adaptive[codex:adaptive-ai-orchestrator]> set verify python3 -m unittest
-verify set to python3 -m unittest
-adaptive[codex:adaptive-ai-orchestrator]> compose
-Enter request. Finish with a line containing only '.'
-> Run the unit tests.
-> Fix any failures and explain their cause.
-> .
-{ ... existing cli.main JSON output ... }
-adaptive[codex:adaptive-ai-orchestrator]> recent 2
-#10 codex completed verify=passed duration=14.2s — Run the unit tests. Fix any failures and explain their cause.
-#9 claude-code completed verify=skipped duration=8.1s — Review the implementation
-adaptive[codex:adaptive-ai-orchestrator]> show #10
-Execution: <execution-id>
-Task: Run the unit tests. Fix any failures and explain their cause.
-Status: completed
-Agent: codex
-...
-adaptive[codex:adaptive-ai-orchestrator]> report #10 --output execution-10.md
-... report written by the canonical CLI ...
-adaptive[codex:adaptive-ai-orchestrator]> retry #10 --agent same
-{ ... existing cli.main JSON output ... }
-adaptive[codex:adaptive-ai-orchestrator]> history
-claude-code: ... legacy execution/verification metrics ...
-codex: ... legacy execution/verification metrics ...
-adaptive[codex:adaptive-ai-orchestrator]> usage
-Codex: ... current local plan usage when available ...
-Claude Code: ... subscription and logged project-cost summary ...
-adaptive[codex:adaptive-ai-orchestrator]> exit
 ```
+
+Installed, start the same session with `adaptive-ai-orchestrator-shell`. The
+most useful first commands are `status`, `settings`, `help`, `doctor`, and
+`recent`. Use `task <request>` for one line, `compose` for several lines, or
+`run [args...]` when the description, objective, and flags need to differ.
 
 The shell version in the banner is the distribution/shell release from package
 metadata (or the source tree's `[project].version` during `PYTHONPATH=src`

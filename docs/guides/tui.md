@@ -5,9 +5,21 @@
 A full-screen monitor over the executions this workspace has recorded, with a
 rendered report per execution and live output for runs started from the UI.
 
-> The screens below are captured from a 96×26 terminal against a demo workspace
-> whose `.orchestrator/executions.jsonl` is synthetic. Blank filler rows are
-> trimmed; nothing else is edited.
+> The static and animated captures below come from the current TUI running in a
+> 96×26 terminal against a demo workspace whose execution history is synthetic.
+> No coding agent was invoked to create them.
+
+![Terminal UI dashboard showing recorded executions and verification results](../assets/readme/tui.svg)
+
+<details>
+<summary>Animated walkthrough: dashboard → help → filter → report</summary>
+
+![Animated terminal UI walkthrough](../assets/readme/tui-demo.gif)
+
+</details>
+
+The text transcripts in the sections below mirror the same demo and remain
+copyable. Blank filler rows are trimmed.
 
 ## Starting it
 
@@ -35,11 +47,11 @@ The UI opens here, newest execution first.
 Adaptive Orchestrator — …/scratchpad/tui-demo                                    5/5 executions
 
   ID        ATTEMPTS  AGENT        VERIFICATION  TASK
-✓ 9a51b6c7         1  claude-code  passed        Explain the escalation ladder in the operato…
-✓ d2e4f8a9         1  codex        passed        Add a changelog entry for the TUI task list
-✗ b70a8c33         1  claude-code  not-run       Port the retry backoff to the Windows proces…
-✓ 6c1de5f0         2  claude-code  failed        Cache the resolved workspace profile between…
 ✓ 3f9c21ab         1  codex        passed        Document the --json flag on the status comma…
+✓ 6c1de5f0         1  claude-code  failed        Cache the resolved workspace profile between…
+✗ b70a8c33         1  claude-code  not-run       Port the retry backoff to the Windows proces…
+✓ d2e4f8a9         1  codex        passed        Add a changelog entry for the TUI task list
+✓ 9a51b6c7         1  claude-code  passed        Explain the escalation ladder in the operato…
 
 ?:help  n:new task  /:filter  Enter:report  Tab:tasks  q:quit                       running:0/3
 ```
@@ -109,8 +121,8 @@ verification, task id, and description:
 Adaptive Orchestrator — …/scratchpad/tui-demo             2/5 executions  filter:'codex passed'
 
   ID        ATTEMPTS  AGENT       VERIFICATION  TASK
-✓ d2e4f8a9         1  codex       passed        Add a changelog entry for the TUI task list
 ✓ 3f9c21ab         1  codex       passed        Document the --json flag on the status command
+✓ d2e4f8a9         1  codex       passed        Add a changelog entry for the TUI task list
 
 Filter 'codex passed': 2/5 executions.                                              running:0/3
 ```
