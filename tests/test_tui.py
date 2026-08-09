@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import contextlib
 import io
+import os
 import shutil
+import signal
 import sys
 import tempfile
 import time
@@ -28,11 +30,13 @@ from adaptive_orchestrator.interfaces.tui import (
     _cursor_window,
     _dashboard_layout,
     _execution_id_from,
+    _safe_addstr,
     build_task_command,
     clamp_offset,
     condense_path,
     dashboard_rows,
     display_width,
+    displayable,
     elapsed_text,
     filter_rows,
     fit_to_width,
@@ -46,6 +50,7 @@ from adaptive_orchestrator.interfaces.tui import (
 )
 from adaptive_orchestrator.infrastructure.events import LifecycleEvent, LifecycleEventType
 from adaptive_orchestrator.routing.state import EventProjector
+from adaptive_orchestrator.interfaces import tui as tui_module
 
 
 class DashboardRowsTests(unittest.TestCase):
@@ -204,7 +209,34 @@ class BuildTaskCommandTests(unittest.TestCase):
         self.assertEqual(command[0], sys.executable)
         self.assertIn("adaptive_orchestrator.cli", command)
         self.assertIn("--verbose", command)
-        self.assertEqual(command.count("Run the tests"), 2)
+        # One attached element, so the request cannot be read as an option.
+        self.assertIn("--task=Run the tests", command)
+        self.assertNotIn("--description", command)
+
+    def test_a_request_starting_with_a_dash_is_not_read_as_an_option(self) -> None:
+        """A dash-leading request is a request, not a plea for argparse.
+
+        Passed as its own element the request was inspected for option syntax,
+        so "--help" died with "argument --description: expected one argument"
+        while "-x fix it" ran — argparse skips that check for values holding a
+        space, so the outcome turned on whether the request happened to have
+        one.
+        """
+
+        for request in ("--help", "--version", "-x fix it", "-"):
+            with self.subTest(request=request):
+                command = build_task_command(Path("/workspace"), request)
+                self.assertIn(f"--task={request}", command)
+                self.assertEqual(sum(item.startswith("--task=") for item in command), 1)
+
+    def test_the_control_state_directory_reaches_the_child(self) -> None:
+        """The dashboard reads there; without this the child recorded elsewhere."""
+        command = build_task_command(Path("/workspace"), "Run the tests", Path("/protected/ctl"))
+        self.assertIn("--control-state-dir", command)
+        self.assertEqual(command[command.index("--control-state-dir") + 1], "/protected/ctl")
+
+    def test_no_control_state_directory_leaves_the_child_to_its_default(self) -> None:
+        self.assertNotIn("--control-state-dir", build_task_command(Path("/workspace"), "Run it"))
 
     def test_requests_the_readable_summary_instead_of_the_raw_json_record(self) -> None:
         # The task's log view is meant to read like output, not a dumped
@@ -507,10 +539,17 @@ class PromptRenderTest(unittest.TestCase):
 
 
 class FakeTask:
-    def __init__(self, workspace: Path, request: str, index: int) -> None:
+    def __init__(
+        self,
+        workspace: Path,
+        request: str,
+        index: int,
+        control_state_dir: Path | None = None,
+    ) -> None:
         self.workspace = workspace
         self.request = request
         self.index = index
+        self.control_state_dir = control_state_dir
         self.alive = True
         self.signals: list[bool] = []
 
@@ -523,6 +562,136 @@ class FakeTask:
             return False
         self.signals.append(force)
         return True
+
+
+class _CapturingScreen:
+    """Records what each draw put on screen, by row."""
+
+    def __init__(self, height: int = 24, width: int = 100) -> None:
+        self.height, self.width = height, width
+        self.rows: dict[int, dict[int, str]] = {}
+
+    def getmaxyx(self) -> tuple[int, int]:
+        return (self.height, self.width)
+
+    def erase(self) -> None: pass
+    def clear(self) -> None: pass
+    def refresh(self) -> None: pass
+    def move(self, *args: object) -> None: pass
+    def chgat(self, *args: object, **kwargs: object) -> None: pass
+
+    def addstr(self, y: int, x: int, text: str, attributes: int = 0) -> None:
+        self.rows.setdefault(y, {})[x] = text
+
+    def line(self, y: int) -> str:
+        return "".join(value for _, value in sorted(self.rows.get(y, {}).items()))
+
+
+class VanishedWorkspaceHeaderTests(unittest.TestCase):
+    """A session outlives its directory; the header must not keep claiming it."""
+
+    def test_the_header_marks_a_workspace_that_stopped_existing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "ws"
+            workspace.mkdir()
+            application = OrchestratorTui(workspace, Path(directory) / "ctl", 3)
+
+            screen = _CapturingScreen()
+            application._refresh()
+            application._draw(screen)
+            self.assertNotIn("workspace missing", screen.line(0))
+
+            shutil.rmtree(workspace)
+            screen = _CapturingScreen()
+            application._refresh()
+            application._draw(screen)
+            self.assertIn("[workspace missing]", screen.line(0))
+
+    def test_the_mark_clears_when_the_directory_returns(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "ws"
+            workspace.mkdir()
+            application = OrchestratorTui(workspace, Path(directory) / "ctl", 3)
+            shutil.rmtree(workspace)
+            self.assertTrue(application._workspace_is_missing())
+
+            workspace.mkdir()
+            self.assertFalse(application._workspace_is_missing())
+
+    def test_a_file_where_the_workspace_was_counts_as_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "ws"
+            workspace.mkdir()
+            application = OrchestratorTui(workspace, Path(directory) / "ctl", 3)
+            shutil.rmtree(workspace)
+            workspace.write_text("not a directory any more", encoding="utf-8")
+            self.assertTrue(application._workspace_is_missing())
+
+
+class DisplayableTests(unittest.TestCase):
+    """Agent output carries what a terminal reacts to instead of printing."""
+
+    def test_a_carriage_return_no_longer_scrambles_the_row(self) -> None:
+        # Verified through real curses: "abcdefgh\rXX|END" drew as
+        # "XX|ENDabcdefgh" — a progress bar rewriting the line it shares.
+        self.assertEqual(displayable("abcdefgh\rXX"), "abcdefgh XX")
+
+    def test_a_tab_becomes_columns_the_width_maths_can_see(self) -> None:
+        cleaned = displayable("ab\tcd")
+        self.assertNotIn("\t", cleaned)
+        self.assertEqual(display_width(cleaned), len(cleaned))
+
+    def test_escape_sequences_are_removed_rather_than_drawn_literally(self) -> None:
+        for text, expected in (
+            ("a\x1b[31mbc", "abc"),
+            ("\x1b[0mplain\x1b[0m", "plain"),
+            ("\x1b]0;title\x07after", "after"),
+        ):
+            with self.subTest(text=text):
+                self.assertEqual(displayable(text), expected)
+
+    def test_the_rest_of_the_escape_family_goes_too(self) -> None:
+        """CSI and OSC are not the whole set.
+
+        Matching only those left the ESC neutralised to a space and its
+        remaining bytes on screen: " 7" for a cursor save, " (B" for a charset
+        designation.
+        """
+
+        for text in ("a\x1b7b", "a\x1b8b", "a\x1b(Bb", "a\x1b=b", "a\x1bMb", "a\x1bcb"):
+            with self.subTest(text=text):
+                self.assertEqual(displayable(text), "ab")
+
+    def test_a_trailing_lone_escape_still_becomes_a_space(self) -> None:
+        # Nothing follows it to strip, so the control character rule applies.
+        self.assertEqual(displayable("a\x1b"), "a ")
+
+    def test_other_control_characters_become_a_space_not_nothing(self) -> None:
+        # Removing them would silently reflow the line they came from.
+        for text in ("a\x07b", "a\x00b", "a\x1fb"):
+            with self.subTest(text=text):
+                self.assertEqual(displayable(text), "a b")
+
+    def test_ordinary_text_including_wide_characters_is_untouched(self) -> None:
+        for text in ("hello world", "한글 텍스트", "🚀 emoji", "path/to/file.py", "", "a-b_c.d"):
+            with self.subTest(text=text):
+                self.assertEqual(displayable(text), text)
+
+    def test_truncation_still_honours_the_pane_after_sanitising(self) -> None:
+        cleaned = displayable("x\ty" * 10)
+        self.assertLessEqual(display_width(fit_to_width(cleaned, 20)), 20)
+
+    def test_the_draw_helper_sanitises_before_measuring(self) -> None:
+        drawn: list[str] = []
+
+        class FakeScreen:
+            def addstr(self, y: int, x: int, text: str, attributes: int = 0) -> None:
+                drawn.append(text)
+
+        _safe_addstr(FakeScreen(), 0, 0, "ab\tcd\rEF", 40)
+        self.assertTrue(drawn)
+        self.assertNotIn("\t", drawn[0])
+        self.assertNotIn("\r", drawn[0])
 
 
 class BackgroundTaskExecutionIdTests(unittest.TestCase):
@@ -553,6 +722,74 @@ class BackgroundTaskExecutionIdTests(unittest.TestCase):
     def test_keeps_the_first_id_when_output_names_more_than_one(self) -> None:
         task = self._run("print('Execution: first'); print('Execution: second')")
         self.assertEqual(task.execution_id, "first")
+
+    def test_the_child_pipe_is_closed_once_the_reader_is_done(self) -> None:
+        """A finished task outlives its run, so an open pipe leaks a descriptor.
+
+        TaskManager keeps finished entries so their logs stay readable, so the
+        stream stayed referenced and open for the life of the session — one
+        descriptor per completed task.
+        """
+
+        task = self._run("print('Execution: abc')")
+        task._reader.join(timeout=5)
+        self.assertTrue(task._process.stdout.closed)
+        # Closing the pipe must not cost the output already captured.
+        # output_lines is a method, not a property like its siblings, so it has
+        # to be called — asserting the attribute alone tests only that a bound
+        # method is truthy, which it always is.
+        self.assertEqual(task.execution_id, "abc")
+        self.assertEqual(task.output_lines(), ("Execution: abc",))
+
+    def test_finished_tasks_do_not_accumulate_descriptors(self) -> None:
+        def open_descriptors() -> int:
+            return len(os.listdir(f"/proc/{os.getpid()}/fd"))
+
+        if not Path(f"/proc/{os.getpid()}/fd").is_dir():
+            self.skipTest("no /proc on this platform")
+
+        before = open_descriptors()
+        retained = []
+        for _ in range(10):
+            task = self._run("print('Execution: x')")
+            task._reader.join(timeout=5)
+            retained.append(task)  # the task view keeps them; so does this list
+
+        self.assertLessEqual(open_descriptors(), before + 2)
+
+
+class ControlStateDirectoryReachesChildrenTests(unittest.TestCase):
+    """The screen polls one directory; its children must record into it."""
+
+    def test_the_manager_hands_its_directory_to_every_task_it_starts(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "workspace"
+            workspace.mkdir()
+            control = Path(directory) / "control"
+            application = OrchestratorTui(workspace, control, 3)
+            application.tasks._factory = FakeTask
+
+            first = application.tasks.start(workspace, "first")
+            second = application.tasks.start(workspace, "second")
+
+            for task in (first, second):
+                self.assertEqual(task.control_state_dir, application.control_state_dir)
+            self.assertEqual(application.control_state_dir, control.resolve())
+
+    def test_the_derived_default_is_handed_over_too(self) -> None:
+        # Not only the explicit option: passing the resolved directory either
+        # way keeps the child's records and the dashboard's reads identical.
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "workspace"
+            workspace.mkdir()
+            application = OrchestratorTui(workspace, None, 3)
+            application.tasks._factory = FakeTask
+
+            task = application.tasks.start(workspace, "only")
+            self.assertEqual(task.control_state_dir, application.control_state_dir)
+            self.assertIn("--control-state-dir", build_task_command(
+                workspace, "only", application.control_state_dir
+            ))
 
 
 class TaskManagerTests(unittest.TestCase):
@@ -657,6 +894,233 @@ class PresentationTests(unittest.TestCase):
         self.assertEqual(elapsed_text(-5), "0s")
 
 
+class DashboardLayoutCacheTests(unittest.TestCase):
+    """Sizing the columns reads every row; the draw runs on the poll interval."""
+
+    def _application(self, rows: int) -> OrchestratorTui:
+        directory = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, directory, ignore_errors=True)
+        workspace = Path(directory) / "ws"
+        workspace.mkdir()
+        application = OrchestratorTui(workspace, Path(directory) / "ctl", 3)
+        application.rows = tuple(
+            _dashboard_row(task_id=f"task-{i}") for i in range(rows)
+        )
+        application._apply_filter()
+        return application
+
+    def test_the_layout_is_measured_once_for_a_visible_set(self) -> None:
+        application = self._application(50)
+        with mock.patch.object(tui_module, "_dashboard_layout", wraps=tui_module._dashboard_layout) as layout:
+            for _ in range(10):
+                application._dashboard_columns(120)
+
+        layout.assert_called_once()
+
+    def test_a_changed_filter_re_measures(self) -> None:
+        application = self._application(50)
+        application._dashboard_columns(120)
+        application.filter_text = "task-1"
+        application._apply_filter()
+
+        with mock.patch.object(tui_module, "_dashboard_layout", wraps=tui_module._dashboard_layout) as layout:
+            application._dashboard_columns(120)
+
+        layout.assert_called_once()
+
+    def test_a_changed_width_re_measures(self) -> None:
+        application = self._application(50)
+        first = application._dashboard_columns(120)
+        second = application._dashboard_columns(60)
+        self.assertNotEqual(first, second)
+        self.assertEqual(application._dashboard_columns(60), second)
+
+    def test_the_widths_are_what_the_uncached_function_gives(self) -> None:
+        application = self._application(20)
+        self.assertEqual(
+            application._dashboard_columns(120),
+            tui_module._dashboard_layout(120, application.visible_rows),
+        )
+
+
+class CursorVisibilityTests(unittest.TestCase):
+    """vt100 and dumb refuse to hide the cursor; that must stay cosmetic."""
+
+    def test_an_unsupported_cursor_mode_is_shrugged_off(self) -> None:
+        with mock.patch.object(curses, "curs_set", side_effect=curses.error("curs_set() returned ERR")):
+            tui_module._set_cursor(0)  # must not raise
+            tui_module._set_cursor(1)
+
+    def test_the_draw_loop_starts_on_a_terminal_that_refuses_it(self) -> None:
+        """curs_set(0) was the loop's first statement, so this died at frame 0."""
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "ws"
+            workspace.mkdir()
+            application = OrchestratorTui(workspace, Path(directory) / "ctl", 3)
+
+            class Screen:
+                def getmaxyx(self) -> tuple[int, int]: return (24, 80)
+                def erase(self) -> None: pass
+                def clear(self) -> None: pass
+                def refresh(self) -> None: pass
+                def move(self, *args: object) -> None: pass
+                def chgat(self, *args: object, **kwargs: object) -> None: pass
+                def addstr(self, *args: object, **kwargs: object) -> None: pass
+                def keypad(self, *args: object) -> None: pass
+                def timeout(self, *args: object) -> None: pass
+
+            def stop(screen: object) -> object:
+                raise SystemExit
+
+            with (
+                mock.patch.object(curses, "curs_set", side_effect=curses.error("returned ERR")),
+                mock.patch("adaptive_orchestrator.interfaces.tui._read_key", stop),
+                mock.patch.object(tui_module.Theme, "create", staticmethod(tui_module.Theme)),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                with self.assertRaises(SystemExit):
+                    application.run(Screen())
+
+    def test_a_working_terminal_still_gets_the_request(self) -> None:
+        with mock.patch.object(curses, "curs_set") as curs_set:
+            tui_module._set_cursor(1)
+        curs_set.assert_called_once_with(1)
+
+
+class EscapeEncodingTests(unittest.TestCase):
+    """Escape is the way out; it must be recognised however it is read."""
+
+    def test_the_editor_cancels_on_either_encoding(self) -> None:
+        for key in ("\x1b", 27):
+            with self.subTest(key=key):
+                self.assertEqual(LineEditor("typed").handle(key), EDITOR_CANCEL)
+
+    def test_every_key_the_editor_knows_accepts_both_forms(self) -> None:
+        # The convention this restores: Enter and Backspace were already
+        # matched as codes and as characters; Escape was not.
+        for keys, outcome in ((("\n", 10, "\r", 13), EDITOR_SUBMIT), (("\x1b", 27), EDITOR_CANCEL)):
+            for key in keys:
+                with self.subTest(key=key):
+                    self.assertEqual(LineEditor("x").handle(key), outcome)
+
+    def test_a_modal_prompt_can_be_left_with_the_integer_form(self) -> None:
+        """Without this the prompt had no exit short of submitting it."""
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "ws"
+            workspace.mkdir()
+            application = OrchestratorTui(workspace, Path(directory) / "ctl", 3)
+
+            class Screen:
+                def getmaxyx(self) -> tuple[int, int]: return (24, 80)
+                def erase(self) -> None: pass
+                def clear(self) -> None: pass
+                def refresh(self) -> None: pass
+                def move(self, *args: object) -> None: pass
+                def chgat(self, *args: object, **kwargs: object) -> None: pass
+                def addstr(self, *args: object, **kwargs: object) -> None: pass
+
+            with (
+                mock.patch("adaptive_orchestrator.interfaces.tui._read_key", lambda screen: 27),
+                mock.patch.object(curses, "curs_set", lambda *_: None),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                self.assertIsNone(application._prompt(Screen(), "New task: "))
+
+    def test_the_dashboard_dispatch_takes_both_forms_too(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "ws"
+            workspace.mkdir()
+
+            class Screen:
+                def getmaxyx(self) -> tuple[int, int]: return (24, 80)
+
+            for key in ("\x1b", 27):
+                with self.subTest(key=key):
+                    application = OrchestratorTui(workspace, Path(directory) / "ctl", 3)
+                    application.view = VIEW_TASKS
+                    application._handle_key(Screen(), key)
+                    self.assertEqual(application.view, VIEW_DASHBOARD)
+
+
+class LoopResilienceTests(unittest.TestCase):
+    """A terminal that errors mid-frame costs a frame, not the session."""
+
+    class _Flaky:
+        """Raises curses.error from the calls _safe_addstr never guarded."""
+
+        def __init__(self, failures: int) -> None:
+            self.left = failures
+
+        def _maybe(self) -> None:
+            if self.left > 0:
+                self.left -= 1
+                raise curses.error("resize landed mid-frame")
+
+        def getmaxyx(self) -> tuple[int, int]:
+            self._maybe()
+            return (24, 80)
+
+        def erase(self) -> None: self._maybe()
+        def clear(self) -> None: self._maybe()
+        def refresh(self) -> None: self._maybe()
+        def move(self, *args: object) -> None: self._maybe()
+        def chgat(self, *args: object, **kwargs: object) -> None: self._maybe()
+        def addstr(self, *args: object, **kwargs: object) -> None: self._maybe()
+        def keypad(self, *args: object) -> None: pass
+        def timeout(self, *args: object) -> None: pass
+
+    def _run_frames(self, failures: int, frames: int = 40) -> int:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "ws"
+            workspace.mkdir()
+            application = OrchestratorTui(workspace, Path(directory) / "ctl", 3)
+            seen = {"count": 0}
+
+            def fake_read(screen: object) -> object:
+                seen["count"] += 1
+                if seen["count"] > frames:
+                    raise SystemExit
+                return None  # the poll timeout expiring with no input
+
+            with (
+                mock.patch("adaptive_orchestrator.interfaces.tui._read_key", fake_read),
+                mock.patch.object(curses, "curs_set", lambda *_: None),
+                mock.patch.object(tui_module.Theme, "create", staticmethod(tui_module.Theme)),
+                contextlib.redirect_stdout(io.StringIO()),
+                contextlib.redirect_stderr(io.StringIO()),
+            ):
+                with self.assertRaises(SystemExit):
+                    application.run(self._Flaky(failures))
+            return seen["count"]
+
+    def test_a_failing_frame_does_not_end_the_loop(self) -> None:
+        self.assertGreater(self._run_frames(failures=5), 40)
+
+    def test_input_is_still_read_when_every_frame_fails(self) -> None:
+        """_read_key is what blocks for the poll interval.
+
+        Guarding it together with the draw would turn a terminal failing every
+        frame into a loop spinning at full speed instead of dropping frames.
+        """
+
+        self.assertGreater(self._run_frames(failures=10**6), 40)
+
+    def test_a_defect_that_is_not_a_terminal_error_still_surfaces(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "ws"
+            workspace.mkdir()
+            application = OrchestratorTui(workspace, Path(directory) / "ctl", 3)
+
+            with (
+                mock.patch.object(OrchestratorTui, "_draw", side_effect=AttributeError("a real bug")),
+                mock.patch.object(curses, "curs_set", lambda *_: None),
+                mock.patch.object(tui_module.Theme, "create", staticmethod(tui_module.Theme)),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                with self.assertRaises(AttributeError):
+                    application.run(self._Flaky(0))
+
+
 class MainCleanupTests(unittest.TestCase):
     def test_running_tasks_are_force_cancelled_if_the_ui_loop_crashes(self) -> None:
         workspace = Path(tempfile.mkdtemp())
@@ -674,6 +1138,51 @@ class MainCleanupTests(unittest.TestCase):
                 main(["--workspace", str(workspace)])
 
         self.assertEqual(captured["task"].signals, [True])
+
+    def test_a_termination_signal_cancels_children_and_reports_its_status(self) -> None:
+        """Children live in their own session, so nothing else reaches them.
+
+        A default-disposition signal kills this process outright and the
+        cleanup never runs, and start_new_session=True means the agent never
+        sees the terminal's own SIGHUP either — so closing the terminal left
+        every running agent alive, reparented to init.
+        """
+
+        for name in ("SIGTERM", "SIGHUP", "SIGQUIT"):
+            signum = getattr(signal, name, None)
+            if signum is None:
+                continue
+            with self.subTest(signal=name):
+                workspace = Path(tempfile.mkdtemp())
+                self.addCleanup(shutil.rmtree, workspace, ignore_errors=True)
+                captured: dict[str, object] = {}
+
+                def fake_wrapper(run_method, signum=signum):
+                    app = run_method.__self__
+                    app.tasks = TaskManager(limit=2, factory=FakeTask)
+                    captured["task"] = app.tasks.start(workspace, "live")
+                    os.kill(os.getpid(), signum)
+
+                with mock.patch("adaptive_orchestrator.interfaces.tui.curses.wrapper", side_effect=fake_wrapper):
+                    exit_code = main(["--workspace", str(workspace)])
+
+                self.assertEqual(exit_code, 128 + signum)
+                self.assertEqual(captured["task"].signals, [True])
+
+    def test_the_original_signal_handlers_are_put_back(self) -> None:
+        # The handlers are process-global; a caller that embeds this must get
+        # its own back, whichever way the UI ended.
+        before = {name: signal.getsignal(getattr(signal, name))
+                  for name in ("SIGTERM", "SIGHUP", "SIGQUIT") if hasattr(signal, name)}
+        workspace = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, workspace, ignore_errors=True)
+
+        with mock.patch("adaptive_orchestrator.interfaces.tui.curses.wrapper", side_effect=lambda run: None):
+            main(["--workspace", str(workspace)])
+
+        for name, handler in before.items():
+            with self.subTest(signal=name):
+                self.assertIs(signal.getsignal(getattr(signal, name)), handler)
 
 
 @contextlib.contextmanager

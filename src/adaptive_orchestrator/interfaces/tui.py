@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import curses
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -37,6 +38,10 @@ from adaptive_orchestrator.routing.state import EventProjector, RoutingState
 
 POLL_INTERVAL_MS = 200
 ESCAPE_DELAY_MS = 25
+
+#: Escape arrives as "\x1b" from get_wch and as this code from a read that
+#: yields integers; both mean the same key.
+ESCAPE_CODE = 27
 AUTO_REFRESH_SECONDS = 2.0
 MAX_TASK_OUTPUT_LINES = 5000
 DEFAULT_TASK_LIMIT = 3
@@ -225,6 +230,48 @@ def clamp_offset(offset: int, total: int, height: int) -> int:
     if height <= 0 or total <= 0:
         return 0
     return max(0, min(offset, max(total - height, 0)))
+
+
+#: Terminal escape sequences, in the order they have to be tried: CSI (colour,
+#: cursor moves), OSC (title sets), then the general form — ESC, any
+#: intermediates, one final byte — which covers the rest of the family: ESC 7
+#: and ESC 8 save and restore the cursor, ESC ( B designates a charset, ESC c
+#: resets the terminal. Matching only the first two left the ESC neutralised
+#: to a space and its remaining bytes on screen as literal " 7" or " (B".
+_ESCAPE_SEQUENCE = re.compile(
+    r"\x1b(?:\[[0-9;?]*[ -/]*[@-~]|\][^\x07\x1b]*(?:\x07|\x1b\\)|[ -/]*[0-~])"
+)
+
+#: How many columns a tab stands for once it can no longer move the cursor.
+TAB_COLUMNS = 4
+
+
+def displayable(text: str) -> str:
+    """Strip what would move the cursor instead of drawing.
+
+    The log view exists to show a coding agent's output, and that output
+    carries the things a terminal reacts to rather than prints. Passed
+    straight to ``addstr`` they corrupt the screen: a carriage return returns
+    the cursor to column 0 and overwrites the row (``"abcdefgh\\rXX|END"``
+    draws as ``"XX|ENDabcdefgh"``, which is what a progress bar produces every
+    time it updates); a tab jumps to the next tab stop while the width
+    accounting here counted it as one column, so a line believed to fit
+    overruns its pane; an escape sequence draws as a literal ``^[[31m`` and is
+    measured wrong besides.
+
+    ``LineEditor`` already filters its own input with ``isprintable()``, so
+    this is the same rule applied to the side that was missing it.
+    """
+
+    if not text:
+        return text
+    text = _ESCAPE_SEQUENCE.sub("", text)
+    text = text.expandtabs(TAB_COLUMNS)
+    if text.isprintable():
+        return text
+    # Space, not removal: a control character stood somewhere, and closing the
+    # gap would silently reflow the line it came from.
+    return "".join(character if character.isprintable() else " " for character in text)
 
 
 def character_width(character: str) -> int:
@@ -538,6 +585,10 @@ class LineEditor:
     def _handle_code(self, key: int) -> str:
         if key in (curses.KEY_ENTER, 10, 13):
             return EDITOR_SUBMIT
+        if key == ESCAPE_CODE:
+            # Matched here as well as in _handle_character: this is the only
+            # way out of a modal prompt short of submitting it.
+            return EDITOR_CANCEL
         if key in (curses.KEY_BACKSPACE, 127, 8):
             return self._backspace()
         if key == curses.KEY_DC:
@@ -579,13 +630,17 @@ class TaskAdmissionError(RuntimeError):
     pass
 
 
-def build_task_command(workspace: Path, request: str) -> tuple[str, ...]:
+def build_task_command(
+    workspace: Path,
+    request: str,
+    control_state_dir: Path | None = None,
+) -> tuple[str, ...]:
     if not request.strip():
         raise ValueError("Task request cannot be empty.")
     # No ``--agent``: this screen starts a run, it does not configure one. The
     # workspace profile decides, and the CLI and interactive shell remain the
     # places that override it.
-    return (
+    command = [
         sys.executable,
         "-m",
         "adaptive_orchestrator.cli",
@@ -594,11 +649,21 @@ def build_task_command(workspace: Path, request: str) -> tuple[str, ...]:
         str(workspace.resolve()),
         "--verbose",
         "--summary",
-        "--description",
-        request,
-        "--objective",
-        request,
-    )
+    ]
+    if control_state_dir is not None:
+        # The dashboard reads lifecycle events from this directory. Leaving it
+        # off let the child resolve its own default, so a UI started with an
+        # explicit --control-state-dir never showed the runs it had just
+        # launched: they were recorded somewhere it was not looking.
+        command += ["--control-state-dir", str(control_state_dir)]
+    # ``--task=`` rather than a --description/--objective pair: the CLI owns
+    # this shorthand, and the attached form is the only one a request may start
+    # a dash in. Passed as its own element, argparse inspects the request for
+    # option syntax, so a request of "--help" died with "argument
+    # --description: expected one argument" while "-x fix it" ran — argparse
+    # skips that check for values holding a space.
+    command.append(f"--task={request}")
+    return tuple(command)
 
 
 def _execution_id_from(line: str) -> str:
@@ -618,10 +683,16 @@ def _execution_id_from(line: str) -> str:
 class BackgroundTask:
     """One shell-free CLI child whose combined output is safe to poll from curses."""
 
-    def __init__(self, workspace: Path, request: str, index: int = 1) -> None:
+    def __init__(
+        self,
+        workspace: Path,
+        request: str,
+        index: int = 1,
+        control_state_dir: Path | None = None,
+    ) -> None:
         self.request = request
         self.index = index
-        self.command = build_task_command(workspace, request)
+        self.command = build_task_command(workspace, request, control_state_dir)
         self.started_at = time.monotonic()
         self.finished_at: float | None = None
         self._cancel_requested = False
@@ -652,6 +723,17 @@ class BackgroundTask:
                         self._execution_id = _execution_id_from(text)
         except (OSError, ValueError):  # stream closed while the child was torn down
             pass
+        finally:
+            # The pipe is at EOF and nobody reads it again, but the task object
+            # outlives the run: the task view keeps finished entries so their
+            # logs stay readable, so an unclosed stream held its descriptor for
+            # the life of the session — one leaked per completed task. Closing
+            # from the reader is what the handler above already expects, since
+            # it exists for "stream closed while the child was torn down".
+            try:
+                self._process.stdout.close()
+            except OSError:
+                pass
 
     @property
     def execution_id(self) -> str:
@@ -727,12 +809,16 @@ class TaskManager:
     def __init__(
         self,
         limit: int = DEFAULT_TASK_LIMIT,
-        factory: Callable[[Path, str, int], BackgroundTask] | None = None,
+        factory: Callable[..., BackgroundTask] | None = None,
+        control_state_dir: Path | None = None,
     ) -> None:
         if limit < 1:
             raise ValueError("Task limit must be at least 1.")
         self.limit = limit
         self._factory = factory or BackgroundTask
+        # Handed to every child so its lifecycle events land where the
+        # dashboard reads them.
+        self.control_state_dir = control_state_dir
         self._tasks: list[BackgroundTask] = []
         self._counter = 0
 
@@ -751,7 +837,7 @@ class TaskManager:
         if not self.can_start():
             raise TaskAdmissionError(f"{self.limit} tasks already running; cancel one first.")
         self._counter += 1
-        task = self._factory(workspace, request, self._counter)
+        task = self._factory(workspace, request, self._counter, self.control_state_dir)
         self._tasks.append(task)
         return task
 
@@ -833,11 +919,16 @@ class OrchestratorTui:
         self.executions_path = self.workspace / ".orchestrator" / "executions.jsonl"
         self.events_path = self.control_state_dir / "events.jsonl"
         self.store = ExecutionReportStore(self.executions_path)
-        self.tasks = TaskManager(task_limit)
+        # The resolved directory, not the raw option: the child then records
+        # into exactly the file this screen polls, whether the operator named
+        # one or the default was derived.
+        self.tasks = TaskManager(task_limit, control_state_dir=self.control_state_dir)
         self.theme = Theme()
 
         self.rows: tuple[DashboardRow, ...] = ()
         self.visible_rows: tuple[DashboardRow, ...] = ()
+        self._layout: tuple[int, int, int, int, int, int] | None = None
+        self._layout_width = -1
         self.filter_text = ""
         self.view = VIEW_DASHBOARD
         self.help_visible = False
@@ -880,7 +971,7 @@ class OrchestratorTui:
     # -- lifecycle ---------------------------------------------------------
 
     def run(self, screen: "curses.window") -> None:
-        curses.curs_set(0)
+        _set_cursor(0)
         screen.keypad(True)
         screen.timeout(POLL_INTERVAL_MS)
         if hasattr(curses, "set_escdelay"):
@@ -893,10 +984,29 @@ class OrchestratorTui:
         # and returns here by way of the task list.
         self.view = VIEW_DASHBOARD
         while True:
-            self._draw(screen)
+            # curses.error only, and only around the terminal work: a resize
+            # landing between measuring the window and drawing into it makes
+            # erase/getmaxyx/refresh/move/chgat raise, and only `addstr` was
+            # guarded — so one such frame ended the session. The next
+            # iteration redraws, which makes a dropped frame invisible; a
+            # dropped session is not. Anything that is not a terminal error
+            # still propagates, because that would be a defect worth seeing.
+            try:
+                self._draw(screen)
+            except curses.error:
+                pass
+            # Outside the guard above, and never skipped: this is what blocks
+            # for the poll interval, so a terminal failing every frame would
+            # otherwise spin the loop at full speed instead of dropping frames.
+            # It reports "no input" rather than raising.
             key = _read_key(screen)
-            if key is not None and not self._handle_key(screen, key):
-                return
+            if key is not None:
+                try:
+                    still_running = self._handle_key(screen, key)
+                except curses.error:
+                    still_running = True
+                if not still_running:
+                    return
             self._poll_tasks()
             self._maybe_auto_refresh()
 
@@ -950,6 +1060,9 @@ class OrchestratorTui:
 
     def _apply_filter(self) -> None:
         self.visible_rows = filter_rows(self.rows, self.filter_text)
+        # The only place the visible set changes, so the only place the column
+        # layout derived from it can go stale.
+        self._layout = None
         self.selected = min(self.selected, max(len(self.visible_rows) - 1, 0))
         current = self.current_row
         key = current.execution_id if current is not None else ""
@@ -985,7 +1098,12 @@ class OrchestratorTui:
         if character == "?":
             self.help_visible = True
             return True
-        if character == "\x1b":
+        # Both encodings, like Enter, Backspace, and Tab above and below: the
+        # same key reaches here as a string or as its code depending on how it
+        # was read. Escape was the only one matched one way, and the only one
+        # whose absence traps the operator — inside a prompt it is the sole way
+        # out short of submitting.
+        if character == "\x1b" or code == ESCAPE_CODE:
             return self._handle_escape()
         if character in ("q", "Q"):
             return self._handle_quit()
@@ -1161,7 +1279,7 @@ class OrchestratorTui:
         earlier goes on collecting output behind the prompt.
         """
         editor = LineEditor(initial)
-        curses.curs_set(1)
+        _set_cursor(1)
         try:
             while True:
                 cursor = self._draw_input_line(screen, label, editor)
@@ -1182,7 +1300,7 @@ class OrchestratorTui:
                 if outcome == EDITOR_CANCEL:
                     return None
         finally:
-            curses.curs_set(0)
+            _set_cursor(0)
 
     def _draw_input_line(self, screen: "curses.window", label: str, editor: LineEditor) -> tuple[int, int]:
         """The original one-line "Label: text" prompt, still used for the filter."""
@@ -1240,7 +1358,7 @@ class OrchestratorTui:
             self.theme.attribute("accent"),
         )
         try:
-            curses.curs_set(1 if cursor is not None else 0)
+            _set_cursor(1 if cursor is not None else 0)
         except curses.error:
             pass
         if cursor is not None:
@@ -1250,6 +1368,13 @@ class OrchestratorTui:
                 pass
         screen.refresh()
 
+    def _workspace_is_missing(self) -> bool:
+        """Whether the session workspace has stopped being a directory."""
+        try:
+            return not self.workspace.is_dir()
+        except OSError:
+            return True
+
     def _draw_header(self, screen: "curses.window", height: int, width: int) -> None:
         prefix = "Adaptive Orchestrator — "
         shown = len(self.visible_rows)
@@ -1258,16 +1383,42 @@ class OrchestratorTui:
             meta += f"  filter:'{self.filter_text}'"
         if self.load_error:
             meta += "  [history unreadable]"
+        if self._workspace_is_missing():
+            # A session outlives its directory — a branch switch, a `git
+            # clean`, an `rm -rf` elsewhere. The header is the one thing on
+            # screen that says where this is pointed, and printing the path
+            # alone kept asserting something no longer true; the operator
+            # otherwise found out when a task refused to start.
+            meta += "  [workspace missing]"
         title_budget = max(width - display_width(meta) - 2, 1)
         path_budget = max(title_budget - display_width(prefix), 1)
         title = prefix + condense_path(str(self.workspace), path_budget)
         _safe_addstr(screen, 0, 0, title, title_budget, curses.A_BOLD, ellipsis=False)
         _safe_addstr(screen, 0, max(width - display_width(meta) - 1, 0), meta, width, curses.A_DIM)
 
+    def _dashboard_columns(self, width: int) -> tuple[int, int, int, int, int, int]:
+        """Column widths, measured once per visible set rather than per frame.
+
+        `_dashboard_layout` reads every row to size the fixed columns, and the
+        draw runs on the poll interval — so a workspace with twenty thousand
+        recorded executions spent a third of a second per frame measuring rows
+        it was never going to show, and every keystroke lagged by that much.
+
+        The widths depend only on the terminal width and the visible set, and
+        both change rarely. Caching keeps the columns steady; sizing them from
+        the on-screen slice instead would be cheap too, but the widths would
+        then shift under the reader every time the list scrolled.
+        """
+
+        if self._layout is None or self._layout_width != width:
+            self._layout = _dashboard_layout(width, self.visible_rows)
+            self._layout_width = width
+        return self._layout
+
     def _draw_dashboard(self, screen: "curses.window", top: int, body_height: int, width: int) -> None:
         list_width = max(width, 1)
         exec_id_width, task_id_width, attempts_width, agent_width, verification_width, task_width = (
-            _dashboard_layout(width, self.visible_rows)
+            self._dashboard_columns(width)
         )
 
         def format_cell(value: str, columns: int, align_right: bool = False) -> str:
@@ -1514,6 +1665,22 @@ class OrchestratorTui:
 # ------------------------------------------------------------------------ helpers
 
 
+def _set_cursor(visibility: int) -> None:
+    """Ask for a cursor mode, and shrug if the terminal has no such mode.
+
+    ``curs_set`` raises when the terminal cannot honour the request — vt100
+    and dumb both refuse to hide the cursor. That was the very first statement
+    of the draw loop, so on those terminals the UI died with a traceback
+    before drawing anything. A visible cursor is a cosmetic loss; the session
+    is not.
+    """
+
+    try:
+        curses.curs_set(visibility)
+    except curses.error:
+        pass
+
+
 def _read_key(screen: "curses.window") -> int | str | None:
     """``None`` means the poll timeout expired with no input."""
     try:
@@ -1590,7 +1757,9 @@ def _safe_addstr(
 ) -> None:
     if y < 0 or x < 0 or width <= 0:
         return
-    text = fit_to_width(value, width, ellipsis=ellipsis)
+    # Sanitised before the width maths, not after: a tab or an escape sequence
+    # measured as written is the reason a line overruns the pane it was cut for.
+    text = fit_to_width(displayable(value), width, ellipsis=ellipsis)
     if not text:
         return
     try:
@@ -1617,6 +1786,23 @@ def _lifecycle_status(status: str, outcome: object, terminal: object) -> str:
     if status in {"terminal", "reconciled", "evaluated"}:
         return _text(terminal_map.get("status"), status)
     return status
+
+
+class _TuiTermination(BaseException):
+    """Unwind the draw loop when the UI receives a termination signal.
+
+    BaseException, not Exception: this must pass through the loop's own error
+    handling untouched, the way KeyboardInterrupt does, so `curses.wrapper`
+    restores the terminal and the cleanup below still runs.
+    """
+
+    def __init__(self, signum: int) -> None:
+        super().__init__(signum)
+        self.signum = signum
+
+
+def _raise_termination(signum: int, _frame: object) -> None:
+    raise _TuiTermination(signum)
 
 
 def resolve_tui_program_name() -> str:
@@ -1669,13 +1855,32 @@ def main(argv: list[str] | None = None) -> int:
         application = OrchestratorTui(workspace, args.control_state_dir, args.max_tasks)
     except ValueError as exc:
         parser.error(str(exc))
+    # Agent children run in their own POSIX session so cancellation can target
+    # one task's whole process tree. That also means they never see the
+    # terminal's own SIGHUP, and a default-disposition signal kills this
+    # process outright — the finally below never runs. Without these handlers,
+    # closing the terminal left every running agent alive and reparented to
+    # init, still spending quota and still able to write to the workspace.
+    installed: list[tuple[int, object]] = []
     try:
-        curses.wrapper(application.run)
+        for name in ("SIGTERM", "SIGHUP", "SIGQUIT"):
+            signum = getattr(signal, name, None)
+            if signum is None:
+                continue
+            installed.append((signum, signal.getsignal(signum)))
+            signal.signal(signum, _raise_termination)
+        try:
+            curses.wrapper(application.run)
+        finally:
+            # A normal quit already refuses to exit with tasks running; this
+            # covers Ctrl-C, a termination signal, and any unhandled exception
+            # in the draw/input loop, so none of them orphans a child.
+            application.tasks.cancel_all(force=True)
+    except _TuiTermination as exc:
+        return 128 + exc.signum
     finally:
-        # A normal quit already refuses to exit with tasks running; this covers
-        # Ctrl-C and any unhandled exception in the draw/input loop, so a crash
-        # can't leave a coding-agent child orphaned.
-        application.tasks.cancel_all(force=True)
+        for signum, original in reversed(installed):
+            signal.signal(signum, original)
     return 0
 
 
