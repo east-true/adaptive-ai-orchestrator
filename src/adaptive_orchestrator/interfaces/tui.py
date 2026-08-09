@@ -1324,6 +1324,13 @@ class OrchestratorTui:
                 pass
         screen.refresh()
 
+    def _workspace_is_missing(self) -> bool:
+        """Whether the session workspace has stopped being a directory."""
+        try:
+            return not self.workspace.is_dir()
+        except OSError:
+            return True
+
     def _draw_header(self, screen: "curses.window", height: int, width: int) -> None:
         prefix = "Adaptive Orchestrator — "
         shown = len(self.visible_rows)
@@ -1332,6 +1339,13 @@ class OrchestratorTui:
             meta += f"  filter:'{self.filter_text}'"
         if self.load_error:
             meta += "  [history unreadable]"
+        if self._workspace_is_missing():
+            # A session outlives its directory — a branch switch, a `git
+            # clean`, an `rm -rf` elsewhere. The header is the one thing on
+            # screen that says where this is pointed, and printing the path
+            # alone kept asserting something no longer true; the operator
+            # otherwise found out when a task refused to start.
+            meta += "  [workspace missing]"
         title_budget = max(width - display_width(meta) - 2, 1)
         path_budget = max(title_budget - display_width(prefix), 1)
         title = prefix + condense_path(str(self.workspace), path_budget)

@@ -562,6 +562,70 @@ class FakeTask:
         return True
 
 
+class _CapturingScreen:
+    """Records what each draw put on screen, by row."""
+
+    def __init__(self, height: int = 24, width: int = 100) -> None:
+        self.height, self.width = height, width
+        self.rows: dict[int, dict[int, str]] = {}
+
+    def getmaxyx(self) -> tuple[int, int]:
+        return (self.height, self.width)
+
+    def erase(self) -> None: pass
+    def clear(self) -> None: pass
+    def refresh(self) -> None: pass
+    def move(self, *args: object) -> None: pass
+    def chgat(self, *args: object, **kwargs: object) -> None: pass
+
+    def addstr(self, y: int, x: int, text: str, attributes: int = 0) -> None:
+        self.rows.setdefault(y, {})[x] = text
+
+    def line(self, y: int) -> str:
+        return "".join(value for _, value in sorted(self.rows.get(y, {}).items()))
+
+
+class VanishedWorkspaceHeaderTests(unittest.TestCase):
+    """A session outlives its directory; the header must not keep claiming it."""
+
+    def test_the_header_marks_a_workspace_that_stopped_existing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "ws"
+            workspace.mkdir()
+            application = OrchestratorTui(workspace, Path(directory) / "ctl", 3)
+
+            screen = _CapturingScreen()
+            application._refresh()
+            application._draw(screen)
+            self.assertNotIn("workspace missing", screen.line(0))
+
+            shutil.rmtree(workspace)
+            screen = _CapturingScreen()
+            application._refresh()
+            application._draw(screen)
+            self.assertIn("[workspace missing]", screen.line(0))
+
+    def test_the_mark_clears_when_the_directory_returns(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "ws"
+            workspace.mkdir()
+            application = OrchestratorTui(workspace, Path(directory) / "ctl", 3)
+            shutil.rmtree(workspace)
+            self.assertTrue(application._workspace_is_missing())
+
+            workspace.mkdir()
+            self.assertFalse(application._workspace_is_missing())
+
+    def test_a_file_where_the_workspace_was_counts_as_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "ws"
+            workspace.mkdir()
+            application = OrchestratorTui(workspace, Path(directory) / "ctl", 3)
+            shutil.rmtree(workspace)
+            workspace.write_text("not a directory any more", encoding="utf-8")
+            self.assertTrue(application._workspace_is_missing())
+
+
 class DisplayableTests(unittest.TestCase):
     """Agent output carries what a terminal reacts to instead of printing."""
 
