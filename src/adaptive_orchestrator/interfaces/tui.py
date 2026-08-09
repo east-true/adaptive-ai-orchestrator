@@ -672,6 +672,17 @@ class BackgroundTask:
                         self._execution_id = _execution_id_from(text)
         except (OSError, ValueError):  # stream closed while the child was torn down
             pass
+        finally:
+            # The pipe is at EOF and nobody reads it again, but the task object
+            # outlives the run: the task view keeps finished entries so their
+            # logs stay readable, so an unclosed stream held its descriptor for
+            # the life of the session — one leaked per completed task. Closing
+            # from the reader is what the handler above already expects, since
+            # it exists for "stream closed while the child was torn down".
+            try:
+                self._process.stdout.close()
+            except OSError:
+                pass
 
     @property
     def execution_id(self) -> str:

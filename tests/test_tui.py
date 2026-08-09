@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import io
+import os
 import shutil
 import sys
 import tempfile
@@ -587,6 +588,37 @@ class BackgroundTaskExecutionIdTests(unittest.TestCase):
     def test_keeps_the_first_id_when_output_names_more_than_one(self) -> None:
         task = self._run("print('Execution: first'); print('Execution: second')")
         self.assertEqual(task.execution_id, "first")
+
+    def test_the_child_pipe_is_closed_once_the_reader_is_done(self) -> None:
+        """A finished task outlives its run, so an open pipe leaks a descriptor.
+
+        TaskManager keeps finished entries so their logs stay readable, so the
+        stream stayed referenced and open for the life of the session — one
+        descriptor per completed task.
+        """
+
+        task = self._run("print('Execution: abc')")
+        task._reader.join(timeout=5)
+        self.assertTrue(task._process.stdout.closed)
+        # Closing the pipe must not cost the output already captured.
+        self.assertEqual(task.execution_id, "abc")
+        self.assertTrue(task.output_lines)
+
+    def test_finished_tasks_do_not_accumulate_descriptors(self) -> None:
+        def open_descriptors() -> int:
+            return len(os.listdir(f"/proc/{os.getpid()}/fd"))
+
+        if not Path(f"/proc/{os.getpid()}/fd").is_dir():
+            self.skipTest("no /proc on this platform")
+
+        before = open_descriptors()
+        retained = []
+        for _ in range(10):
+            task = self._run("print('Execution: x')")
+            task._reader.join(timeout=5)
+            retained.append(task)  # the task view keeps them; so does this list
+
+        self.assertLessEqual(open_descriptors(), before + 2)
 
 
 class ControlStateDirectoryReachesChildrenTests(unittest.TestCase):
