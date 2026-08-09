@@ -4,7 +4,10 @@
 
 How to run the kernel day to day. Each page covers one topic; start at the
 top if this is your first time. The [README](../../README.md) is the short
-version — install, first task, and scope.
+version — install, first task, interface captures, and scope. The CLI, shell,
+and TUI are three clients of the same kernel rather than separate workflows:
+use the CLI for explicit or scripted invocations, the shell for session
+defaults, and the TUI for monitoring.
 
 | Guide | Read it when you want to |
 | --- | --- |
