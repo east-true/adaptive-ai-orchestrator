@@ -38,6 +38,10 @@ from adaptive_orchestrator.routing.state import EventProjector, RoutingState
 
 POLL_INTERVAL_MS = 200
 ESCAPE_DELAY_MS = 25
+
+#: Escape arrives as "\x1b" from get_wch and as this code from a read that
+#: yields integers; both mean the same key.
+ESCAPE_CODE = 27
 AUTO_REFRESH_SECONDS = 2.0
 MAX_TASK_OUTPUT_LINES = 5000
 DEFAULT_TASK_LIMIT = 3
@@ -574,6 +578,10 @@ class LineEditor:
     def _handle_code(self, key: int) -> str:
         if key in (curses.KEY_ENTER, 10, 13):
             return EDITOR_SUBMIT
+        if key == ESCAPE_CODE:
+            # Matched here as well as in _handle_character: this is the only
+            # way out of a modal prompt short of submitting it.
+            return EDITOR_CANCEL
         if key in (curses.KEY_BACKSPACE, 127, 8):
             return self._backspace()
         if key == curses.KEY_DC:
@@ -1078,7 +1086,12 @@ class OrchestratorTui:
         if character == "?":
             self.help_visible = True
             return True
-        if character == "\x1b":
+        # Both encodings, like Enter, Backspace, and Tab above and below: the
+        # same key reaches here as a string or as its code depending on how it
+        # was read. Escape was the only one matched one way, and the only one
+        # whose absence traps the operator — inside a prompt it is the sole way
+        # out short of submitting.
+        if character == "\x1b" or code == ESCAPE_CODE:
             return self._handle_escape()
         if character in ("q", "Q"):
             return self._handle_quit()

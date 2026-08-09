@@ -875,6 +875,61 @@ class PresentationTests(unittest.TestCase):
         self.assertEqual(elapsed_text(-5), "0s")
 
 
+class EscapeEncodingTests(unittest.TestCase):
+    """Escape is the way out; it must be recognised however it is read."""
+
+    def test_the_editor_cancels_on_either_encoding(self) -> None:
+        for key in ("\x1b", 27):
+            with self.subTest(key=key):
+                self.assertEqual(LineEditor("typed").handle(key), EDITOR_CANCEL)
+
+    def test_every_key_the_editor_knows_accepts_both_forms(self) -> None:
+        # The convention this restores: Enter and Backspace were already
+        # matched as codes and as characters; Escape was not.
+        for keys, outcome in ((("\n", 10, "\r", 13), EDITOR_SUBMIT), (("\x1b", 27), EDITOR_CANCEL)):
+            for key in keys:
+                with self.subTest(key=key):
+                    self.assertEqual(LineEditor("x").handle(key), outcome)
+
+    def test_a_modal_prompt_can_be_left_with_the_integer_form(self) -> None:
+        """Without this the prompt had no exit short of submitting it."""
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "ws"
+            workspace.mkdir()
+            application = OrchestratorTui(workspace, Path(directory) / "ctl", 3)
+
+            class Screen:
+                def getmaxyx(self) -> tuple[int, int]: return (24, 80)
+                def erase(self) -> None: pass
+                def clear(self) -> None: pass
+                def refresh(self) -> None: pass
+                def move(self, *args: object) -> None: pass
+                def chgat(self, *args: object, **kwargs: object) -> None: pass
+                def addstr(self, *args: object, **kwargs: object) -> None: pass
+
+            with (
+                mock.patch("adaptive_orchestrator.interfaces.tui._read_key", lambda screen: 27),
+                mock.patch.object(curses, "curs_set", lambda *_: None),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                self.assertIsNone(application._prompt(Screen(), "New task: "))
+
+    def test_the_dashboard_dispatch_takes_both_forms_too(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "ws"
+            workspace.mkdir()
+
+            class Screen:
+                def getmaxyx(self) -> tuple[int, int]: return (24, 80)
+
+            for key in ("\x1b", 27):
+                with self.subTest(key=key):
+                    application = OrchestratorTui(workspace, Path(directory) / "ctl", 3)
+                    application.view = VIEW_TASKS
+                    application._handle_key(Screen(), key)
+                    self.assertEqual(application.view, VIEW_DASHBOARD)
+
+
 class LoopResilienceTests(unittest.TestCase):
     """A terminal that errors mid-frame costs a frame, not the session."""
 
