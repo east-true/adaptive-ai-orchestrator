@@ -894,6 +894,55 @@ class PresentationTests(unittest.TestCase):
         self.assertEqual(elapsed_text(-5), "0s")
 
 
+class DashboardLayoutCacheTests(unittest.TestCase):
+    """Sizing the columns reads every row; the draw runs on the poll interval."""
+
+    def _application(self, rows: int) -> OrchestratorTui:
+        directory = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, directory, ignore_errors=True)
+        workspace = Path(directory) / "ws"
+        workspace.mkdir()
+        application = OrchestratorTui(workspace, Path(directory) / "ctl", 3)
+        application.rows = tuple(
+            _dashboard_row(task_id=f"task-{i}") for i in range(rows)
+        )
+        application._apply_filter()
+        return application
+
+    def test_the_layout_is_measured_once_for_a_visible_set(self) -> None:
+        application = self._application(50)
+        with mock.patch.object(tui_module, "_dashboard_layout", wraps=tui_module._dashboard_layout) as layout:
+            for _ in range(10):
+                application._dashboard_columns(120)
+
+        layout.assert_called_once()
+
+    def test_a_changed_filter_re_measures(self) -> None:
+        application = self._application(50)
+        application._dashboard_columns(120)
+        application.filter_text = "task-1"
+        application._apply_filter()
+
+        with mock.patch.object(tui_module, "_dashboard_layout", wraps=tui_module._dashboard_layout) as layout:
+            application._dashboard_columns(120)
+
+        layout.assert_called_once()
+
+    def test_a_changed_width_re_measures(self) -> None:
+        application = self._application(50)
+        first = application._dashboard_columns(120)
+        second = application._dashboard_columns(60)
+        self.assertNotEqual(first, second)
+        self.assertEqual(application._dashboard_columns(60), second)
+
+    def test_the_widths_are_what_the_uncached_function_gives(self) -> None:
+        application = self._application(20)
+        self.assertEqual(
+            application._dashboard_columns(120),
+            tui_module._dashboard_layout(120, application.visible_rows),
+        )
+
+
 class CursorVisibilityTests(unittest.TestCase):
     """vt100 and dumb refuse to hide the cursor; that must stay cosmetic."""
 

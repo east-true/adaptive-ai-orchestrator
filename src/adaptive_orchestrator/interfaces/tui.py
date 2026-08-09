@@ -927,6 +927,8 @@ class OrchestratorTui:
 
         self.rows: tuple[DashboardRow, ...] = ()
         self.visible_rows: tuple[DashboardRow, ...] = ()
+        self._layout: tuple[int, int, int, int, int, int] | None = None
+        self._layout_width = -1
         self.filter_text = ""
         self.view = VIEW_DASHBOARD
         self.help_visible = False
@@ -1058,6 +1060,9 @@ class OrchestratorTui:
 
     def _apply_filter(self) -> None:
         self.visible_rows = filter_rows(self.rows, self.filter_text)
+        # The only place the visible set changes, so the only place the column
+        # layout derived from it can go stale.
+        self._layout = None
         self.selected = min(self.selected, max(len(self.visible_rows) - 1, 0))
         current = self.current_row
         key = current.execution_id if current is not None else ""
@@ -1391,10 +1396,29 @@ class OrchestratorTui:
         _safe_addstr(screen, 0, 0, title, title_budget, curses.A_BOLD, ellipsis=False)
         _safe_addstr(screen, 0, max(width - display_width(meta) - 1, 0), meta, width, curses.A_DIM)
 
+    def _dashboard_columns(self, width: int) -> tuple[int, int, int, int, int, int]:
+        """Column widths, measured once per visible set rather than per frame.
+
+        `_dashboard_layout` reads every row to size the fixed columns, and the
+        draw runs on the poll interval — so a workspace with twenty thousand
+        recorded executions spent a third of a second per frame measuring rows
+        it was never going to show, and every keystroke lagged by that much.
+
+        The widths depend only on the terminal width and the visible set, and
+        both change rarely. Caching keeps the columns steady; sizing them from
+        the on-screen slice instead would be cheap too, but the widths would
+        then shift under the reader every time the list scrolled.
+        """
+
+        if self._layout is None or self._layout_width != width:
+            self._layout = _dashboard_layout(width, self.visible_rows)
+            self._layout_width = width
+        return self._layout
+
     def _draw_dashboard(self, screen: "curses.window", top: int, body_height: int, width: int) -> None:
         list_width = max(width, 1)
         exec_id_width, task_id_width, attempts_width, agent_width, verification_width, task_width = (
-            _dashboard_layout(width, self.visible_rows)
+            self._dashboard_columns(width)
         )
 
         def format_cell(value: str, columns: int, align_right: bool = False) -> str:
