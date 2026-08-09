@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import curses
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -225,6 +226,41 @@ def clamp_offset(offset: int, total: int, height: int) -> int:
     if height <= 0 or total <= 0:
         return 0
     return max(0, min(offset, max(total - height, 0)))
+
+
+#: Terminal escape sequences: CSI (colour, cursor moves) and OSC (title sets).
+_ESCAPE_SEQUENCE = re.compile(r"\x1b(?:\[[0-9;?]*[ -/]*[@-~]|\][^\x07\x1b]*(?:\x07|\x1b\\)|[@-Z\\-_])")
+
+#: How many columns a tab stands for once it can no longer move the cursor.
+TAB_COLUMNS = 4
+
+
+def displayable(text: str) -> str:
+    """Strip what would move the cursor instead of drawing.
+
+    The log view exists to show a coding agent's output, and that output
+    carries the things a terminal reacts to rather than prints. Passed
+    straight to ``addstr`` they corrupt the screen: a carriage return returns
+    the cursor to column 0 and overwrites the row (``"abcdefgh\\rXX|END"``
+    draws as ``"XX|ENDabcdefgh"``, which is what a progress bar produces every
+    time it updates); a tab jumps to the next tab stop while the width
+    accounting here counted it as one column, so a line believed to fit
+    overruns its pane; an escape sequence draws as a literal ``^[[31m`` and is
+    measured wrong besides.
+
+    ``LineEditor`` already filters its own input with ``isprintable()``, so
+    this is the same rule applied to the side that was missing it.
+    """
+
+    if not text:
+        return text
+    text = _ESCAPE_SEQUENCE.sub("", text)
+    text = text.expandtabs(TAB_COLUMNS)
+    if text.isprintable():
+        return text
+    # Space, not removal: a control character stood somewhere, and closing the
+    # gap would silently reflow the line it came from.
+    return "".join(character if character.isprintable() else " " for character in text)
 
 
 def character_width(character: str) -> int:
@@ -1628,7 +1664,9 @@ def _safe_addstr(
 ) -> None:
     if y < 0 or x < 0 or width <= 0:
         return
-    text = fit_to_width(value, width, ellipsis=ellipsis)
+    # Sanitised before the width maths, not after: a tab or an escape sequence
+    # measured as written is the reason a line overruns the pane it was cut for.
+    text = fit_to_width(displayable(value), width, ellipsis=ellipsis)
     if not text:
         return
     try:

@@ -29,11 +29,13 @@ from adaptive_orchestrator.interfaces.tui import (
     _cursor_window,
     _dashboard_layout,
     _execution_id_from,
+    _safe_addstr,
     build_task_command,
     clamp_offset,
     condense_path,
     dashboard_rows,
     display_width,
+    displayable,
     elapsed_text,
     filter_rows,
     fit_to_width,
@@ -558,6 +560,56 @@ class FakeTask:
             return False
         self.signals.append(force)
         return True
+
+
+class DisplayableTests(unittest.TestCase):
+    """Agent output carries what a terminal reacts to instead of printing."""
+
+    def test_a_carriage_return_no_longer_scrambles_the_row(self) -> None:
+        # Verified through real curses: "abcdefgh\rXX|END" drew as
+        # "XX|ENDabcdefgh" — a progress bar rewriting the line it shares.
+        self.assertEqual(displayable("abcdefgh\rXX"), "abcdefgh XX")
+
+    def test_a_tab_becomes_columns_the_width_maths_can_see(self) -> None:
+        cleaned = displayable("ab\tcd")
+        self.assertNotIn("\t", cleaned)
+        self.assertEqual(display_width(cleaned), len(cleaned))
+
+    def test_escape_sequences_are_removed_rather_than_drawn_literally(self) -> None:
+        for text, expected in (
+            ("a\x1b[31mbc", "abc"),
+            ("\x1b[0mplain\x1b[0m", "plain"),
+            ("\x1b]0;title\x07after", "after"),
+        ):
+            with self.subTest(text=text):
+                self.assertEqual(displayable(text), expected)
+
+    def test_other_control_characters_become_a_space_not_nothing(self) -> None:
+        # Removing them would silently reflow the line they came from.
+        for text in ("a\x07b", "a\x00b", "a\x1fb"):
+            with self.subTest(text=text):
+                self.assertEqual(displayable(text), "a b")
+
+    def test_ordinary_text_including_wide_characters_is_untouched(self) -> None:
+        for text in ("hello world", "한글 텍스트", "🚀 emoji", "path/to/file.py", "", "a-b_c.d"):
+            with self.subTest(text=text):
+                self.assertEqual(displayable(text), text)
+
+    def test_truncation_still_honours_the_pane_after_sanitising(self) -> None:
+        cleaned = displayable("x\ty" * 10)
+        self.assertLessEqual(display_width(fit_to_width(cleaned, 20)), 20)
+
+    def test_the_draw_helper_sanitises_before_measuring(self) -> None:
+        drawn: list[str] = []
+
+        class FakeScreen:
+            def addstr(self, y: int, x: int, text: str, attributes: int = 0) -> None:
+                drawn.append(text)
+
+        _safe_addstr(FakeScreen(), 0, 0, "ab\tcd\rEF", 40)
+        self.assertTrue(drawn)
+        self.assertNotIn("\t", drawn[0])
+        self.assertNotIn("\r", drawn[0])
 
 
 class BackgroundTaskExecutionIdTests(unittest.TestCase):
