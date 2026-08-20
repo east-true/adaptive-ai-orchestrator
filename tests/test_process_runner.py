@@ -1,3 +1,4 @@
+import json
 import os
 import signal
 import subprocess
@@ -19,6 +20,30 @@ from adaptive_orchestrator.execution.process_runner import SubprocessRunner
 
 
 class SubprocessRunnerTests(unittest.TestCase):
+    @unittest.skipUnless(os.name == "posix", "child environment probe uses POSIX Python")
+    def test_child_environment_overlay_is_private_and_can_remove_inherited_values(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            original_home = os.environ.get("HOME")
+            with patch.dict(os.environ, {"AAO_REMOVE_ME": "parent"}, clear=False):
+                result = SubprocessRunner().run_with_environment(
+                    (
+                        sys.executable,
+                        "-c",
+                        "import json, os; print(json.dumps({'home': os.environ.get('HOME'), 'removed': os.environ.get('AAO_REMOVE_ME')}))",
+                    ),
+                    Path(directory),
+                    5,
+                    environment={"HOME": str(Path(directory) / "isolated-home")},
+                    unset_environment=("AAO_REMOVE_ME",),
+                )
+
+            self.assertEqual(result.status, ExecutionStatus.COMPLETED)
+            self.assertEqual(
+                json.loads(result.stdout),
+                {"home": str(Path(directory) / "isolated-home"), "removed": None},
+            )
+            self.assertEqual(os.environ.get("HOME"), original_home)
+
     def test_windows_completed_outcome_uses_target_code_and_disarms_job(self) -> None:
         events: list[str] = []
 

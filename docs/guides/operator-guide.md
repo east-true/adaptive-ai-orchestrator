@@ -16,7 +16,7 @@ defaults, and the TUI for monitoring.
 | [Interactive shell](shell.md) | Set workspace and agent once, then issue short commands |
 | [Terminal UI](tui.md) | Watch several tasks at once with live output |
 | [How it behaves](how-it-works.md) | Understand routing, escalation, and the lifecycle record |
-| [Evaluation tooling](evaluation.md) | Prepare a paired comparison |
+| [Evaluation tooling](evaluation.md) | Prepare Phase 2a or Phase 2b paired comparisons |
 | [Limits and safety](limits-and-safety.md) | Know what it will not do, and what is not proven |
 
 For the design rationale behind these behaviours, see
@@ -54,7 +54,7 @@ The four root entry-point modules remain intentionally thin so existing
 - [Evidence-first adaptive-routing design](../adaptive-routing-v2.md)
 - Research review and evaluation protocol
 - [Phase 2a paired-smoke tooling](../paired-smoke-tooling.md)
-- Phase 2b pilot preregistration and candidate-ledger rules
+- Phase 2b readiness tooling plus private preregistration and candidate-ledger rules
 - Current research work log and resume point (Korean)
 - [Intra-vendor model-tier exploration](../intra-vendor-tier-routing.md) (not implemented)
 

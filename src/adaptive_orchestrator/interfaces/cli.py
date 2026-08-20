@@ -24,6 +24,15 @@ from adaptive_orchestrator.experiments.paired_experiment import (
     validate_paired_environment,
 )
 from adaptive_orchestrator.experiments.paired_runner import PairedSmokeRunner
+from adaptive_orchestrator.experiments.phase2b_pilot import (
+    Phase2bPilotError,
+    load_phase2b_manifest,
+    mark_phase2b_analysis_non_promotional,
+    plan_phase2b_workspaces,
+    prepare_phase2b_workspaces,
+    validate_phase2b_environment,
+)
+from adaptive_orchestrator.experiments.phase2b_runner import Phase2bPilotRunner
 from adaptive_orchestrator.infrastructure.child_environment import ensure_child_import_path
 from adaptive_orchestrator.infrastructure.configuration import (
     ProjectConfig,
@@ -318,7 +327,102 @@ def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser
         help="explicitly allow the remaining preregistered agent/evaluator attempts",
     )
 
+    phase2b = subparsers.add_parser(
+        "phase2b",
+        help="validate, plan, dry-run, execute, or resume the separately gated 60-task pilot",
+    )
+    phase2b_subparsers = phase2b.add_subparsers(dest="phase2b_command", required=True)
+
+    phase2b_validate = phase2b_subparsers.add_parser(
+        "validate", help="validate the Phase 2b manifest and every pinned environment input"
+    )
+    phase2b_validate.add_argument("manifest", type=Path)
+    _add_phase2b_environment_arguments(phase2b_validate)
+
+    phase2b_plan = phase2b_subparsers.add_parser(
+        "plan", help="project the deterministic 120-workspace plan without filesystem access"
+    )
+    phase2b_plan.add_argument("manifest", type=Path)
+    phase2b_plan.add_argument(
+        "--workspace-root",
+        type=Path,
+        required=True,
+        help="Directory under which the 120 deterministic attempt paths are projected.",
+    )
+
+    phase2b_dry_run = phase2b_subparsers.add_parser(
+        "dry-run", help="materialize and verify 120 checkouts without invoking either agent"
+    )
+    phase2b_dry_run.add_argument("manifest", type=Path)
+    _add_phase2b_environment_arguments(phase2b_dry_run)
+    phase2b_dry_run.add_argument(
+        "--workspace-root",
+        type=Path,
+        required=True,
+        help="New or empty directory that will hold 120 isolated checkouts.",
+    )
+    phase2b_dry_run.add_argument("--output", type=Path, required=True, help="Fresh JSON dry-run record required by run authorization.")
+
+    for command_name in ("run", "resume"):
+        command = phase2b_subparsers.add_parser(
+            command_name,
+            help=(
+                "execute a committed and separately authorized 120-attempt pilot"
+                if command_name == "run"
+                else "resume only the untouched suffix of an authorized pilot"
+            ),
+        )
+        command.add_argument("manifest", type=Path)
+        _add_phase2b_environment_arguments(command)
+        command.add_argument(
+            "--workspace-root", type=Path, required=True,
+            help="Existing 120-checkout tree created by the bound dry run.",
+        )
+        command.add_argument(
+            "--control-state-dir", type=Path, required=True,
+            help="Protected lifecycle state directory outside every agent workspace.",
+        )
+        command.add_argument(
+            "--dry-run-record", type=Path, required=True,
+            help="Agent-free dry-run JSON record bound by the authorization.",
+        )
+        command.add_argument(
+            "--authorization", type=Path, required=True,
+            help="Separate run-operator authorization for the committed manifest and dry run.",
+        )
+        command.add_argument(
+            "--confirm-agent-execution", action="store_true",
+            help="Explicitly allow the authorized 120 candidate-agent/evaluator attempts.",
+        )
+
+    phase2b_analyze = phase2b_subparsers.add_parser(
+        "analyze", help="project Phase 2b outcomes from protected lifecycle events"
+    )
+    phase2b_analyze.add_argument("manifest", type=Path)
+    phase2b_analyze.add_argument(
+        "--control-state-dir", type=Path, required=True,
+        help="Existing protected lifecycle state directory to project.",
+    )
+
     return parser
+
+
+def _add_phase2b_environment_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--repository-root",
+        action="append",
+        required=True,
+        metavar="REPOSITORY_ID=PATH",
+        help="Exact local Git root for one manifest repository. Repeat for every repository ID.",
+    )
+    parser.add_argument(
+        "--evaluator-root", type=Path, required=True,
+        help="Read-only protected evaluator root outside every source and agent workspace.",
+    )
+    parser.add_argument(
+        "--instruction-inventory", type=Path, required=True,
+        help="Pinned effective-instruction inventory whose SHA-256 is in the manifest.",
+    )
 
 
 def _add_agent_argument(parser: argparse.ArgumentParser, config: ProjectConfig) -> None:
@@ -1392,6 +1496,9 @@ def _run_command(argv: list[str] | None = None) -> int:
     if args.command == "paired":
         return _run_paired_command(args)
 
+    if args.command == "phase2b":
+        return _run_phase2b_command(args)
+
     workspace = args.workspace
 
     if args.command == "retry":
@@ -1698,6 +1805,129 @@ def _run_paired_command(args: argparse.Namespace) -> int:
         raise PairedExperimentError(f"Unsupported paired command: {args.paired_command}")
     except (EventLogError, OSError, PairedExperimentError, ReplayError, ValueError) as exc:
         print(f"Paired experiment failed: {exc}", file=sys.stderr)
+        return 1
+
+
+def _phase2b_repository_roots(values: Sequence[str]) -> dict[str, Path]:
+    roots: dict[str, Path] = {}
+    for value in values:
+        repository_id, separator, configured = value.partition("=")
+        if not separator or not repository_id.strip() or not configured.strip():
+            raise Phase2bPilotError(
+                "--repository-root must use the exact REPOSITORY_ID=PATH form."
+            )
+        repository_id = repository_id.strip()
+        if repository_id in roots:
+            raise Phase2bPilotError(
+                f"Duplicate --repository-root ID: {repository_id}"
+            )
+        roots[repository_id] = Path(configured).expanduser()
+    return roots
+
+
+def _run_phase2b_command(args: argparse.Namespace) -> int:
+    if args.phase2b_command == "analyze":
+        error = _require_existing_control_state_dir(args.control_state_dir)
+        if error is not None:
+            print(f"Error: {error}", file=sys.stderr)
+            return 2
+    try:
+        manifest_path = args.manifest.expanduser().resolve(strict=True)
+        manifest = load_phase2b_manifest(manifest_path)
+        if args.phase2b_command == "plan":
+            report = plan_phase2b_workspaces(manifest, args.workspace_root)
+            print(json.dumps(report, sort_keys=True, separators=(",", ":")))
+            return 0
+        if args.phase2b_command == "analyze":
+            state = replay_event_log(
+                args.control_state_dir.expanduser().resolve() / "events.jsonl"
+            )
+            observations = observations_from_routing_state(manifest.paired, state)
+            report = analyze_paired_observations(manifest.paired, observations)
+            mark_phase2b_analysis_non_promotional(report)
+            print(json.dumps(report, indent=2))
+            return 0
+
+        repository_roots = _phase2b_repository_roots(args.repository_root)
+        if args.phase2b_command == "validate":
+            environment = validate_phase2b_environment(
+                manifest,
+                manifest_path,
+                repository_roots,
+                args.evaluator_root,
+                args.instruction_inventory,
+            )
+            print(json.dumps({
+                "valid": True,
+                "schema_version": manifest.schema_version,
+                "experiment_id": manifest.experiment_id,
+                "task_count": len(manifest.tasks),
+                "execution_count": manifest.paired.maximum_executions,
+                "environment": environment,
+            }, indent=2))
+            return 0
+        if args.phase2b_command == "dry-run":
+            output = args.output.expanduser().resolve()
+            workspace_root = args.workspace_root.expanduser().resolve()
+            protected_roots = [
+                path.expanduser().resolve(strict=True)
+                for path in repository_roots.values()
+            ]
+            protected_roots.append(args.evaluator_root.expanduser().resolve(strict=True))
+            if any(
+                output == root or output.is_relative_to(root)
+                for root in (*protected_roots, workspace_root)
+            ):
+                raise Phase2bPilotError(
+                    "Phase 2b dry-run record must be outside source, evaluator, and agent workspace roots."
+                )
+            report = prepare_phase2b_workspaces(
+                manifest,
+                manifest_path,
+                repository_roots,
+                args.evaluator_root,
+                args.instruction_inventory,
+                args.workspace_root,
+            )
+            _write_report(output, json.dumps(report, indent=2) + "\n", False)
+            print(json.dumps({
+                "dry_run_record": str(output),
+                "schema_version": report["schema_version"],
+                "workspace_count": report["workspace_count"],
+                "agent_execution_started": False,
+            }, indent=2))
+            return 0
+        if args.phase2b_command in {"run", "resume"}:
+            runner = Phase2bPilotRunner(
+                manifest,
+                manifest_path,
+                repository_roots,
+                args.evaluator_root,
+                args.instruction_inventory,
+                args.workspace_root,
+                args.control_state_dir,
+                args.dry_run_record,
+                args.authorization,
+            )
+            report = (
+                runner.resume(confirm_agent_execution=args.confirm_agent_execution)
+                if args.phase2b_command == "resume"
+                else runner.run(confirm_agent_execution=args.confirm_agent_execution)
+            )
+            print(json.dumps(report, indent=2))
+            return 0
+        raise Phase2bPilotError(
+            f"Unsupported Phase 2b command: {args.phase2b_command}"
+        )
+    except (
+        EventLogError,
+        FileExistsError,
+        OSError,
+        Phase2bPilotError,
+        ReplayError,
+        ValueError,
+    ) as exc:
+        print(f"Phase 2b pilot failed: {exc}", file=sys.stderr)
         return 1
 
 

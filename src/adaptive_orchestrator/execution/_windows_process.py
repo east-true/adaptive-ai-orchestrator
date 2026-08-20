@@ -9,7 +9,7 @@ import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import BinaryIO, Sequence
+from typing import BinaryIO, Mapping, Sequence
 
 from adaptive_orchestrator.execution import _windows_gate as gate_protocol
 from adaptive_orchestrator.execution._windows_job import WindowsJob
@@ -126,7 +126,13 @@ class WindowsProcessLaunch:
         self._released = False
 
     @classmethod
-    def prepare(cls, command: Sequence[str], cwd: Path) -> WindowsProcessLaunch:
+    def prepare(
+        cls,
+        command: Sequence[str],
+        cwd: Path,
+        *,
+        environment: Mapping[str, str] | None = None,
+    ) -> WindowsProcessLaunch:
         argv = tuple(command)
         if not argv or not all(isinstance(argument, str) for argument in argv):
             raise OSError("command must be a non-empty sequence of strings")
@@ -163,6 +169,7 @@ class WindowsProcessLaunch:
                 bufsize=1,
                 creationflags=_CREATE_NEW_PROCESS_GROUP,
                 close_fds=True,
+                env=environment,
             )
             launch = cls(
                 process=process,

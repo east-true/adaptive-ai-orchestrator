@@ -18,7 +18,7 @@ default `run` output remains JSON for scripts.
 | Run work | `run`, `run-plan`, `plan generate` |
 | Read or repeat work | `show`, `report`, `retry` |
 | Maintain local knowledge and state | `memory`, `replay` |
-| Exercise the paired-evaluation tooling | `paired` |
+| Exercise evaluation tooling | `paired`, `phase2b` |
 
 Every command supports `--help`; the root help keeps these groups in the order
 an operator normally encounters them. The sections below cover the commands

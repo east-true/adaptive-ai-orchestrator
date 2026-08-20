@@ -41,6 +41,9 @@ PAIRED_RUN_SCHEMA = "paired-run-v1"
 class PairedSmokeRunner:
     """Execute a pre-registered paired manifest with an explicit safety gate."""
 
+    policy_name = "paired-smoke"
+    policy_version = "paired-smoke-v1"
+
     def __init__(
         self,
         manifest: PairedManifest,
@@ -304,8 +307,8 @@ class PairedSmokeRunner:
             for candidate in self.manifest.agents
         }
         selection_payload = {
-            "policy_name": "paired-smoke",
-            "policy_version": "paired-smoke-v1",
+            "policy_name": self.policy_name,
+            "policy_version": self.policy_version,
             "config_hash": config_hash,
             "selection_mode": "paired_eval",
             "cohort": "paired",
@@ -327,7 +330,7 @@ class PairedSmokeRunner:
             {agent.agent_id: agent},
             JsonlExecutionLogger(workspace / ".orchestrator" / "executions.jsonl"),
             workspace,
-            runner=self.process_runner_factory(),
+            runner=self._process_runner_for_attempt(agent_spec, workspace),
             lifecycle_recorder=recorder,
         )
         record = kernel.execute(
@@ -337,7 +340,7 @@ class PairedSmokeRunner:
             execution_id=assignment.execution_id,
             attempt_id=assignment.attempt_ids[agent.agent_id],
             task_id=task.task_id,
-            policy_version="paired-smoke-v1",
+            policy_version=self.policy_version,
             config_hash=config_hash,
             selection_mode="paired_eval",
             cohort="paired",
@@ -437,6 +440,20 @@ class PairedSmokeRunner:
                 f"Paired execution paused after evaluator status {quality_result.status.value} "
                 f"for {task.task_id}/{agent.agent_id}."
             )
+
+    def _process_runner_for_attempt(
+        self,
+        agent_spec: PairedAgentSpec,
+        workspace: Path,
+    ) -> ProcessRunner:
+        """Return the process runner for one attempt.
+
+        Phase-specific subclasses can bind a child-only environment while the
+        ordinary paired-smoke runner keeps its existing execution contract.
+        """
+
+        del agent_spec, workspace
+        return self.process_runner_factory()
 
     def manifest_task_evaluator(
         self,

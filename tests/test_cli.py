@@ -879,6 +879,70 @@ class PairedDispatchTests(unittest.TestCase):
         self.assertIn("Paired experiment failed", stderr.getvalue())
 
 
+class Phase2bDispatchTests(unittest.TestCase):
+    def test_phase2b_parser_exposes_separate_environment_and_execution_gates(self) -> None:
+        args = cli.build_parser().parse_args([
+            "phase2b", "run", "manifest.json",
+            "--repository-root", "repo-a=/sources/a",
+            "--repository-root", "repo-b=/sources/b",
+            "--evaluator-root", "/protected/evaluators",
+            "--instruction-inventory", "/protected/inventory.json",
+            "--workspace-root", "/isolated/workspaces",
+            "--control-state-dir", "/protected/control",
+            "--dry-run-record", "/protected/dry-run.json",
+            "--authorization", "/protected/authorization.json",
+            "--confirm-agent-execution",
+        ])
+
+        self.assertEqual(args.phase2b_command, "run")
+        self.assertEqual(
+            args.repository_root,
+            ["repo-a=/sources/a", "repo-b=/sources/b"],
+        )
+        self.assertTrue(args.confirm_agent_execution)
+
+    def test_phase2b_repository_root_mapping_rejects_malformed_and_duplicate_ids(self) -> None:
+        with self.assertRaisesRegex(cli.Phase2bPilotError, "REPOSITORY_ID=PATH"):
+            cli._phase2b_repository_roots(["repo-a"])
+        with self.assertRaisesRegex(cli.Phase2bPilotError, "Duplicate"):
+            cli._phase2b_repository_roots(["repo-a=/one", "repo-a=/two"])
+
+    def test_phase2b_plan_dispatch_is_pure(self) -> None:
+        manifest = SimpleNamespace()
+        report = {
+            "schema_version": "phase2b-pilot-workspace-plan-v1",
+            "workspaces": [],
+        }
+        stdout = io.StringIO()
+        with tempfile.TemporaryDirectory() as directory:
+            manifest_path = Path(directory) / "manifest.json"
+            manifest_path.write_text("{}\n", encoding="utf-8")
+            with (
+                patch.object(cli, "load_phase2b_manifest", return_value=manifest),
+                patch.object(cli, "plan_phase2b_workspaces", return_value=report) as plan,
+                contextlib.redirect_stdout(stdout),
+            ):
+                exit_code = cli.main([
+                    "phase2b", "plan", str(manifest_path),
+                    "--workspace-root", "/not-created",
+                ])
+
+            self.assertEqual(exit_code, 0)
+            plan.assert_called_once_with(manifest, Path("/not-created"))
+        self.assertEqual(json.loads(stdout.getvalue()), report)
+
+    def test_phase2b_missing_manifest_fails_without_traceback(self) -> None:
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            exit_code = cli.main([
+                "phase2b", "plan", "/missing/phase2b-manifest.json",
+                "--workspace-root", "/not-created",
+            ])
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("Phase 2b pilot failed", stderr.getvalue())
+
+
 class WorkflowConfigurationDispatchTests(unittest.TestCase):
     def test_unknown_model_variant_fails_cleanly_before_agent_execution(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -1387,7 +1451,7 @@ class WorkspaceRelativeDispatchTests(unittest.TestCase):
         self.assertLess(order.index("run"), order.index("show"))
         self.assertLess(order.index("run"), order.index("report"))
         self.assertLess(order.index("run"), order.index("retry"))
-        self.assertEqual(order[-1], "paired")
+        self.assertEqual(order[-2:], ["paired", "phase2b"])
 
     def test_unrecognized_invocation_falls_back_to_the_console_script_name(self) -> None:
         with patch.object(sys, "argv", ["/opt/some-test-runner"]):

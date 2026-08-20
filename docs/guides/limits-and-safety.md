@@ -35,6 +35,15 @@ Execution records may contain task prompts, context, CLI output, and workspace p
 - Paired tooling has executed and replayed both preregistered 4-task/8-execution
   Phase 2a smokes. Those runs validate the pipeline only: they do not rank agents,
   authorize the 60-task pilot, or provide confirmatory confidence intervals.
+- Phase 2b tooling validates a strict 60-task manifest, prepares 120 isolated
+  checkouts, and implements a separate run gate. It does not supply the task or
+  evaluator bodies, prove that a local CLI sandbox blocks every side channel,
+  or make an unapproved comparative run permissible.
+- Its empty-agent-home mode removes inherited user-home instruction discovery
+  by binding child-local HOME/Claude/Codex/XDG directories. It does not erase
+  unrelated inherited environment variables or create authentication material;
+  operators must audit the frozen environment without copying user instruction
+  files or credentials into those homes.
 
 ## CLI compatibility
 
@@ -47,12 +56,12 @@ compatibility.
 
 ## Project status and roadmap
 
-Phase 2b is still constructing and validating its candidate pool. No 60-task
-manifest has been frozen, no 120 candidate-agent executions are authorized, and
-no learned policy should be promoted from the current evidence. The next work is
-the existing low-cost solution-scope queue, followed by instruction-environment
-parity, candidate freeze, independent task/evaluator construction and review,
-and an agent-free full dry run.
+Phase 2b candidate screening can now satisfy the fixed selection quotas in the
+private research record, and the public runtime-readiness implementation is in
+place. That is still not a completed pilot: no role-separated 60-task manifest,
+protected evaluator package, independent validity review, or 120-execution
+authorization has been frozen. Those construction steps and the agent-free full
+dry run remain mandatory before any candidate-agent execution.
 
 Exact counts, completed screening ranks, unresolved validity seams, and the
 fixed resume order live in the current research work log.

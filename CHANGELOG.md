@@ -8,6 +8,16 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- A separate Phase 2b pilot semantic validator, deterministic 120-workspace
+  planner, agent-free exact-checkout dry run, protected-input revalidation,
+  pause/resume runner, and `phase2b` CLI. Execution requires a committed
+  manifest, a hash-bound dry-run record, approval by a declared run-operator
+  role, and an explicit command-line confirmation; no Phase 2b run is bundled
+  or authorized by the implementation.
+- Phase 2b can close its global-instruction confounder with a strict
+  instruction-inventory artifact and fresh per-attempt empty agent homes. The
+  child-only HOME/Claude/Codex/XDG overlay leaves the operator environment
+  untouched and fails closed on home reuse or an incapable process runner.
 - Public contribution, conduct, support, and issue-reporting guidance.
 - Installable console entry points and continuous-integration checks.
 - An interactive-shell startup wordmark with independently sourced shell and

@@ -143,7 +143,7 @@ names whichever form you used.
 | Local Claude Code/Codex CLI execution | Provider SDK or API-key management |
 | Configurable routing, verification, and one-step escalation | Parallel or collaborative agent swarms |
 | Append-only local telemetry, reports, and replay | A claim that current routing has learned agent skill |
-| Paired-evaluation tooling with protected-evaluator checks | A hardened sandbox or immutable remote ledger |
+| Phase 2a/2b paired-evaluation validation, planning, and dry-run tooling | A hardened sandbox or immutable remote ledger |
 
 **Single-agent-first is the default.** The workflow runs one selected agent, then
 may escalate to at most one more — after an execution or verification failure, or
@@ -162,6 +162,11 @@ This project is deliberately conservative about what it claims:
   `history` command's percentages come from whichever agent happened to be
   selected, so they are not a controlled comparison.
 - **The Phase 2b comparative pilot has not been authorized or run.**
+  The CLI can now validate its strict 60-task contract, project and materialize
+  120 isolated workspaces, enforce fresh per-attempt empty agent homes when that
+  instruction-resolution mode is selected, and enforce a separate committed-
+  manifest/run-authorization gate; those capabilities do not create the missing
+  task set or grant that authorization.
 
 Read the operator guide's [current limits](docs/guides/limits-and-safety.md#current-limits)
 before treating any routing output as evidence.
@@ -209,6 +214,7 @@ published here as a summary.
 **Evaluation tooling**
 
 - [Phase 2a paired-smoke tooling](docs/paired-smoke-tooling.md)
+- [Phase 2b readiness tooling](docs/guides/evaluation.md#prepare-the-phase-2b-pilot-without-authorizing-it)
 - [`experiments/`](experiments/README.md) — preregistered manifests, protected
   evaluator sources, recorded results
 - [Intra-vendor model-tier exploration](docs/intra-vendor-tier-routing.md) —

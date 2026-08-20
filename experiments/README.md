@@ -49,9 +49,14 @@ and resumed only the untouched five-attempt suffix after validating the first
 three finalized attempts. The result and scope audit are in
 `results/phase2a-smoke-v2.md`; this is pipeline evidence, not an agent ranking.
 
-Phase 2b does not reuse the smoke schema as a 60-task manifest. No Phase 2b
-task set or 120-agent execution is preregistered or authorized yet, and learned
-routing stays disabled until one is.
+Phase 2b does not reuse the smoke parser as a 60-task manifest. The public code
+now provides a distinct strict semantic validator, 120-workspace planner,
+agent-free checkout dry run, strict global-instruction inventory, optional
+fresh empty per-attempt agent homes, and separately authorized runner for
+`paired-pilot-manifest-v1`. No completed Phase 2b task set, protected evaluator
+package, dry-run record, or 120-agent authorization is shipped here, and learned
+routing stays disabled until the full private construction and public aggregate
+evidence gates are complete.
 
 ## Where the Phase 2b research record lives
 

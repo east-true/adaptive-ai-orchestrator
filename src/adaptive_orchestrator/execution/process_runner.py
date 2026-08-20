@@ -7,7 +7,7 @@ import threading
 from dataclasses import dataclass
 from pathlib import Path
 from time import perf_counter
-from typing import Callable, Protocol, Sequence
+from typing import Callable, Mapping, Protocol, Sequence
 
 from adaptive_orchestrator.core.domain import ExecutionStatus
 
@@ -115,6 +115,58 @@ class SubprocessRunner:
         return not any(reader.is_alive() for reader in readers)
 
     def run(self, command: Sequence[str], cwd: Path, timeout_seconds: float | None) -> ProcessResult:
+        return self._run(command, cwd, timeout_seconds, environment=None)
+
+    def run_with_environment(
+        self,
+        command: Sequence[str],
+        cwd: Path,
+        timeout_seconds: float | None,
+        *,
+        environment: Mapping[str, str],
+        unset_environment: Sequence[str] = (),
+    ) -> ProcessResult:
+        """Run with a child-only environment overlay without mutating ``os.environ``."""
+
+        valid_overrides = all(
+            isinstance(key, str)
+            and key
+            and "=" not in key
+            and isinstance(value, str)
+            for key, value in environment.items()
+        )
+        valid_removals = all(
+            isinstance(key, str) and key and "=" not in key
+            for key in unset_environment
+        )
+        if not valid_overrides or not valid_removals:
+            return ProcessResult(
+                tuple(command),
+                ExecutionStatus.SPAWN_ERROR,
+                "",
+                "invalid child environment configuration",
+                None,
+                0.0,
+            )
+        child_environment = dict(os.environ)
+        for key in unset_environment:
+            child_environment.pop(key, None)
+        child_environment.update(environment)
+        return self._run(
+            command,
+            cwd,
+            timeout_seconds,
+            environment=child_environment,
+        )
+
+    def _run(
+        self,
+        command: Sequence[str],
+        cwd: Path,
+        timeout_seconds: float | None,
+        *,
+        environment: Mapping[str, str] | None,
+    ) -> ProcessResult:
         started = perf_counter()
         command = tuple(command)
         windows_launch: _WindowsLaunch | None = None
@@ -126,7 +178,11 @@ class SubprocessRunner:
                 # and no PID needs to be reopened.
                 from adaptive_orchestrator.execution._windows_process import WindowsProcessLaunch
 
-                windows_launch = WindowsProcessLaunch.prepare(command, cwd)
+                windows_launch = WindowsProcessLaunch.prepare(
+                    command,
+                    cwd,
+                    environment=environment,
+                )
                 process = windows_launch.process
             else:
                 process = subprocess.Popen(
@@ -136,6 +192,7 @@ class SubprocessRunner:
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     bufsize=1,
+                    env=environment,
                     # A dedicated POSIX session makes timeout/interrupt cleanup
                     # local to this invocation without touching sibling shells.
                     start_new_session=os.name == "posix",

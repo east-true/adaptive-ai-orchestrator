@@ -106,12 +106,24 @@ the preregistered per-agent and overall wall-time limits.
 Phase 2a reports are pipeline diagnostics: sparse cells, missing confidence
 intervals, and absent target-workload weights prevent ranking or promotion.
 
-Phase 2b is currently a preregistered construction boundary, not a runtime
-feature. Its `paired-pilot-manifest-v1` JSON Schema generalizes repository and
-task provenance, native-language quotas, independent task/evaluator/reviewer
-roles, control evidence, missingness, and confirmatory holdout. The Phase 2a
-parser intentionally rejects that schema until a separate semantic validator,
-planner, runner, and agent-free 120-checkout dry run are implemented and reviewed.
+Phase 2b remains a preregistered construction boundary, but it now has separate
+runtime-readiness tooling. `experiments/phase2b_pilot.py` implements the strict
+`paired-pilot-manifest-v1` semantic validator, exact 60-task quota and role
+checks, deterministic 120-workspace projection, environment verification, and
+an agent-free 120-checkout dry run. Its instruction gate accepts only a strict
+semantic-equivalence record or a zero-file per-attempt home contract; the latter
+is enforced with child-only HOME/Claude/Codex/XDG paths under protected control
+state. `phase2b_runner.py` consumes only a committed
+manifest, a hash-bound dry-run record, a distinct authorization signed by a
+declared run-operator role, and a second explicit CLI confirmation. It rechecks
+the protected inputs and untouched checkout suffix before every attempt and
+retains the same missingness/pause semantics as the Phase 2a lifecycle.
+
+This code does not turn a construction queue into a benchmark. No 60-task
+manifest, protected evaluator set, validity review, dry-run evidence, or
+120-execution authorization is shipped here. The generic local CLI adapters are
+also not a hardened sandbox; their pinned permission modes and the external
+execution environment remain part of the preflight contract.
 
 ## Engineering memory
 
