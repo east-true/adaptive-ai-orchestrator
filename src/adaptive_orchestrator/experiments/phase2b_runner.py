@@ -4,6 +4,8 @@ import hashlib
 import json
 import os
 import re
+import shutil
+import stat
 from pathlib import Path
 from time import monotonic
 from typing import Callable, Mapping, Sequence
@@ -33,6 +35,8 @@ from adaptive_orchestrator.experiments.paired_runner import (
     _installed_cli_version,
 )
 from adaptive_orchestrator.experiments.phase2b_pilot import (
+    AUTHENTICATED_ISOLATED_AGENT_HOME_RESOLUTION,
+    ISOLATED_AGENT_CREDENTIAL_PATHS,
     ISOLATED_AGENT_HOME_ENVIRONMENT_VARIABLES,
     Phase2bPilotManifest,
     audit_committed_manifest,
@@ -120,6 +124,131 @@ class _IsolatedAgentHomeProcessRunner:
         )
 
 
+class _AuthenticatedIsolatedAgentHomeProcessRunner:
+    """Expose one configured credential and no user/project instruction files."""
+
+    def __init__(
+        self,
+        delegate: ProcessRunner,
+        home: Path,
+        *,
+        agent_base_id: str,
+        credential_home: Path,
+    ) -> None:
+        self._delegate = delegate
+        self._home = home
+        self._agent_base_id = agent_base_id
+        self._credential_home = credential_home
+        self._agent_invocation_consumed = False
+        self._home_owned = False
+
+    def run(
+        self,
+        command: Sequence[str],
+        cwd: Path,
+        timeout_seconds: float | None,
+    ) -> ProcessResult:
+        if self._agent_invocation_consumed:
+            return self._delegate.run(command, cwd, timeout_seconds)
+        self._agent_invocation_consumed = True
+
+        relative_credential = ISOLATED_AGENT_CREDENTIAL_PATHS.get(self._agent_base_id)
+        if relative_credential is None:
+            return self._spawn_error(command, "unsupported authenticated isolated agent base")
+        source = self._credential_home / relative_credential
+        try:
+            source_stat = source.stat(follow_symlinks=False)
+            if not stat.S_ISREG(source_stat.st_mode) or source.is_symlink():
+                raise OSError("configured credential is not a regular file")
+            if os.name == "posix" and stat.S_IMODE(source_stat.st_mode) & 0o077:
+                raise OSError("configured credential permissions are too broad")
+            self._home.parent.mkdir(parents=True, exist_ok=True)
+            if self._home.parent.is_symlink():
+                raise OSError("isolated agent-home parent is a symlink")
+            self._home.mkdir(mode=0o700, exist_ok=False)
+            self._home_owned = True
+            target = self._home / relative_credential
+            target.parent.mkdir(parents=True, mode=0o700)
+            target.symlink_to(source)
+            if sum(1 for path in self._home.rglob("*") if not path.is_dir()) != 1:
+                raise OSError("isolated agent home credential inventory drifted")
+            isolated_command = self._isolated_command(command)
+        except (OSError, ValueError) as exc:
+            self._clear_home()
+            return self._spawn_error(command, f"unable to create authenticated isolated agent home: {exc}")
+
+        try:
+            environment = self._environment()
+        except ValueError as exc:  # pragma: no cover - constant-owned invariant
+            self._clear_home()
+            return self._spawn_error(command, str(exc))
+        run_with_environment = getattr(self._delegate, "run_with_environment", None)
+        if not callable(run_with_environment):
+            self._clear_home()
+            return self._spawn_error(command, "process runner cannot enforce isolated agent homes")
+        try:
+            result = run_with_environment(
+                isolated_command,
+                cwd,
+                timeout_seconds,
+                environment=environment,
+                unset_environment=ISOLATED_AGENT_HOME_ENVIRONMENT_VARIABLES,
+            )
+        finally:
+            cleanup_error = self._clear_home()
+        if cleanup_error is not None:
+            return self._spawn_error(command, cleanup_error)
+        return result
+
+    def _isolated_command(self, command: Sequence[str]) -> tuple[str, ...]:
+        command = tuple(command)
+        if self._agent_base_id == "claude-code":
+            if not command or Path(command[0]).name != "claude":
+                raise ValueError("Claude command identity drifted")
+            return (command[0], "--safe-mode", *command[1:])
+        if len(command) < 2 or Path(command[0]).name != "codex" or command[1] != "exec":
+            raise ValueError("Codex command identity drifted")
+        return (
+            *command[:2],
+            "-c", "project_doc_max_bytes=0",
+            "-c", "project_doc_fallback_filenames=[]",
+            *command[2:],
+        )
+
+    def _environment(self) -> dict[str, str]:
+        home = str(self._home)
+        environment = {
+            "HOME": home,
+            "CLAUDE_CONFIG_DIR": str(self._home / ".claude"),
+            "CODEX_HOME": str(self._home / ".codex"),
+            "XDG_CACHE_HOME": str(self._home / ".cache"),
+            "XDG_CONFIG_HOME": str(self._home / ".config"),
+            "XDG_DATA_HOME": str(self._home / ".local" / "share"),
+        }
+        if tuple(sorted(environment)) != tuple(sorted(ISOLATED_AGENT_HOME_ENVIRONMENT_VARIABLES)):
+            raise ValueError("isolated agent-home environment contract drifted")
+        return environment
+
+    def _clear_home(self) -> str | None:
+        if not self._home_owned:
+            return None
+        if not self._home.exists() or not self._home.is_dir() or self._home.is_symlink():
+            return "authenticated isolated agent home changed during execution"
+        try:
+            for child in self._home.iterdir():
+                if child.is_symlink() or not child.is_dir():
+                    child.unlink(missing_ok=True)
+                else:
+                    shutil.rmtree(child)
+        except OSError:
+            return "unable to remove authenticated isolated agent-home contents"
+        return None
+
+    @staticmethod
+    def _spawn_error(command: Sequence[str], message: str) -> ProcessResult:
+        return ProcessResult(tuple(command), ExecutionStatus.SPAWN_ERROR, "", message, None, 0.0)
+
+
 class Phase2bExecutionError(PairedExecutionError):
     """A separately authorized Phase 2b execution cannot proceed safely."""
 
@@ -145,6 +274,7 @@ class Phase2bPilotRunner(PairedSmokeRunner):
         process_runner_factory: Callable[[], ProcessRunner] = SubprocessRunner,
         version_resolver: Callable[[PairedAgentSpec], str] | None = None,
         clock: Callable[[], float] = monotonic,
+        credential_home: Path | None = None,
     ) -> None:
         first_source = next(iter(repository_roots.values()))
         super().__init__(
@@ -163,6 +293,7 @@ class Phase2bPilotRunner(PairedSmokeRunner):
         self.instruction_inventory_path = instruction_inventory_path
         self.dry_run_record_path = dry_run_record_path
         self.authorization_path = authorization_path
+        self.credential_home = (credential_home or Path.home()).expanduser().resolve(strict=True)
 
     def run(self, *, confirm_agent_execution: bool = False) -> dict[str, object]:
         return self._execute_phase2b(
@@ -390,10 +521,11 @@ class Phase2bPilotRunner(PairedSmokeRunner):
         workspace: Path,
     ) -> ProcessRunner:
         delegate = super()._process_runner_for_attempt(agent_spec, workspace)
-        if (
-            self.phase2b_manifest.global_instruction_context["resolution"]
-            != "isolated-empty-agent-homes"
-        ):
+        resolution = self.phase2b_manifest.global_instruction_context["resolution"]
+        if resolution not in {
+            "isolated-empty-agent-homes",
+            AUTHENTICATED_ISOLATED_AGENT_HOME_RESOLUTION,
+        }:
             return delegate
         workspace_root = self.workspace_root.expanduser().resolve(strict=True)
         resolved_workspace = workspace.expanduser().resolve(strict=True)
@@ -409,6 +541,13 @@ class Phase2bPilotRunner(PairedSmokeRunner):
                 "Phase 2b control state root must not be a symlink."
             )
         home = control / "isolated-agent-homes" / relative
+        if resolution == AUTHENTICATED_ISOLATED_AGENT_HOME_RESOLUTION:
+            return _AuthenticatedIsolatedAgentHomeProcessRunner(
+                delegate,
+                home,
+                agent_base_id=agent_spec.base_id,
+                credential_home=self.credential_home,
+            )
         return _IsolatedAgentHomeProcessRunner(delegate, home)
 
     def _input_snapshot(self, environment: Mapping[str, object]) -> Mapping[str, object]:

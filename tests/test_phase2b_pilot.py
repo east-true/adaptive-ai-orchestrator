@@ -19,8 +19,10 @@ from adaptive_orchestrator.execution.verification import (
 from adaptive_orchestrator.core.domain import ExecutionStatus
 from adaptive_orchestrator.execution.process_runner import ProcessResult
 from adaptive_orchestrator.experiments.phase2b_pilot import (
+    AUTHENTICATED_ISOLATED_AGENT_HOME_RESOLUTION,
     CATEGORY_QUOTA,
     EMPTY_EFFECTIVE_INSTRUCTION_SHA256,
+    ISOLATED_AGENT_CREDENTIAL_PATHS,
     ISOLATED_AGENT_HOME_ENVIRONMENT_VARIABLES,
     LANGUAGE_QUOTA,
     Phase2bPilotError,
@@ -45,7 +47,11 @@ def instruction_inventory(
     claude_hash: str = "c" * 64,
     codex_hash: str = "d" * 64,
 ) -> dict[str, object]:
-    isolated = resolution == "isolated-empty-agent-homes"
+    isolated = resolution in {
+        "isolated-empty-agent-homes",
+        AUTHENTICATED_ISOLATED_AGENT_HOME_RESOLUTION,
+    }
+    authenticated = resolution == AUTHENTICATED_ISOLATED_AGENT_HOME_RESOLUTION
     return {
         "schema_version": "phase2b-global-instruction-inventory-v1",
         "resolution": resolution,
@@ -58,9 +64,23 @@ def instruction_inventory(
             {
                 "fresh_per_attempt": True,
                 "inherited_user_home": False,
-                "initial_file_count": 0,
+                "initial_file_count": 1 if authenticated else 0,
                 "environment_variables": list(
                     ISOLATED_AGENT_HOME_ENVIRONMENT_VARIABLES
+                ),
+                **(
+                    {
+                        "credential_binding": {
+                            "strategy": "read-write-symlink",
+                            "source_home_relative_paths_by_agent_base": (
+                                ISOLATED_AGENT_CREDENTIAL_PATHS
+                            ),
+                            "cleanup_after_agent_invocation": True,
+                            "credential_contents_recorded": False,
+                        }
+                    }
+                    if authenticated
+                    else {}
                 ),
             }
             if isolated
@@ -354,9 +374,12 @@ class RecordingProcessRunner:
 
 
 class EnvironmentRecordingProcessRunner(RecordingProcessRunner):
-    def __init__(self) -> None:
+    def __init__(self, *, write_agent_state: bool = False) -> None:
         super().__init__()
-        self.environments: list[tuple[dict[str, str], tuple[str, ...], tuple[str, ...]]] = []
+        self.write_agent_state = write_agent_state
+        self.environments: list[
+            tuple[dict[str, str], tuple[str, ...], tuple[tuple[str, bool, bool], ...]]
+        ] = []
 
     def run_with_environment(
         self,
@@ -368,9 +391,15 @@ class EnvironmentRecordingProcessRunner(RecordingProcessRunner):
         unset_environment=(),
     ):
         home = Path(environment["HOME"])
-        self.environments.append(
-            (dict(environment), tuple(unset_environment), tuple(home.iterdir()))
+        initial_entries = tuple(
+            (str(path.relative_to(home)), path.is_symlink(), path.is_dir())
+            for path in home.rglob("*")
         )
+        self.environments.append(
+            (dict(environment), tuple(unset_environment), initial_entries)
+        )
+        if self.write_agent_state:
+            (home / "session-state.json").write_text("ephemeral agent state\n")
         return self.run(command, cwd, timeout_seconds)
 
 
@@ -512,6 +541,130 @@ class Phase2bManifestTests(unittest.TestCase):
 
 
 class Phase2bDryRunTests(unittest.TestCase):
+    def test_attests_authenticated_instruction_isolation_and_cleans_credentials(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            fixture = build_phase2b_fixture(root)
+            raw = copy.deepcopy(fixture["raw"])
+            context = raw["environment"]["global_instruction_context"]
+            context["resolution"] = AUTHENTICATED_ISOLATED_AGENT_HOME_RESOLUTION
+            context["claude_effective_instruction_hash"] = EMPTY_EFFECTIVE_INSTRUCTION_SHA256
+            context["codex_effective_instruction_hash"] = EMPTY_EFFECTIVE_INSTRUCTION_SHA256
+            inventory = instruction_inventory(
+                resolution=AUTHENTICATED_ISOLATED_AGENT_HOME_RESOLUTION,
+                claude_hash=EMPTY_EFFECTIVE_INSTRUCTION_SHA256,
+                codex_hash=EMPTY_EFFECTIVE_INSTRUCTION_SHA256,
+            )
+            fixture["inventory"].write_text(json.dumps(inventory, indent=2) + "\n")
+            context["inventory_artifact_hash"] = hashlib.sha256(
+                fixture["inventory"].read_bytes()
+            ).hexdigest()
+            fixture["manifest_path"].write_text(json.dumps(raw, indent=2) + "\n")
+            manifest = phase2b_manifest_from_dict(raw)
+
+            credential_home = root / "credential-home"
+            for relative in ISOLATED_AGENT_CREDENTIAL_PATHS.values():
+                credential = credential_home / relative
+                credential.parent.mkdir(parents=True, exist_ok=True)
+                credential.write_text("credential fixture\n")
+                credential.chmod(0o600)
+
+            validate_phase2b_environment(
+                manifest,
+                fixture["manifest_path"],
+                {"repo-1": fixture["source"]},
+                fixture["evaluator_root"],
+                fixture["inventory"],
+            )
+            workspace_root = root / "workspaces"
+            delegate = EnvironmentRecordingProcessRunner(write_agent_state=True)
+            runner = Phase2bPilotRunner(
+                manifest,
+                fixture["manifest_path"],
+                {"repo-1": fixture["source"]},
+                fixture["evaluator_root"],
+                fixture["inventory"],
+                workspace_root,
+                root / "control",
+                root / "dry-run.json",
+                root / "authorization.json",
+                process_runner_factory=lambda: delegate,
+                version_resolver=lambda spec: spec.cli_version,
+                credential_home=credential_home,
+            )
+
+            claude_spec, codex_spec = manifest.agents
+            claude_workspace = workspace_root / "task-01" / claude_spec.agent_id
+            codex_workspace = workspace_root / "task-01" / codex_spec.agent_id
+            claude_workspace.mkdir(parents=True)
+            codex_workspace.mkdir(parents=True)
+            claude_bound = runner._process_runner_for_attempt(claude_spec, claude_workspace)
+            codex_bound = runner._process_runner_for_attempt(codex_spec, codex_workspace)
+            claude_result = claude_bound.run(
+                ("claude", "--print", "prompt"), claude_workspace, 1
+            )
+            codex_result = codex_bound.run(
+                ("codex", "exec", "--json", "prompt"), codex_workspace, 1
+            )
+
+            self.assertEqual(claude_result.status, ExecutionStatus.COMPLETED)
+            self.assertEqual(codex_result.status, ExecutionStatus.COMPLETED)
+            self.assertEqual(len(delegate.environments), 2)
+            for observed, removed, initial_entries in delegate.environments:
+                self.assertEqual(set(observed), set(ISOLATED_AGENT_HOME_ENVIRONMENT_VARIABLES))
+                self.assertEqual(set(removed), set(ISOLATED_AGENT_HOME_ENVIRONMENT_VARIABLES))
+                credential_links = [
+                    path for path in initial_entries if path[1]
+                ]
+                self.assertEqual(len(credential_links), 1)
+            self.assertEqual(delegate.calls[0][0][:2], ("claude", "--safe-mode"))
+            self.assertEqual(
+                delegate.calls[1][0][:6],
+                (
+                    "codex", "exec", "-c", "project_doc_max_bytes=0",
+                    "-c", "project_doc_fallback_filenames=[]",
+                ),
+            )
+            for observed, _, _ in delegate.environments:
+                self.assertEqual(tuple(Path(observed["HOME"]).iterdir()), ())
+            for relative in ISOLATED_AGENT_CREDENTIAL_PATHS.values():
+                self.assertEqual(
+                    (credential_home / relative).read_text(),
+                    "credential fixture\n",
+                )
+
+            consumed_home = Path(delegate.environments[0][0]["HOME"])
+            marker = consumed_home / "owned-marker"
+            marker.write_text("preserve pre-existing control evidence\n")
+            collision = runner._process_runner_for_attempt(
+                claude_spec, claude_workspace
+            ).run(("claude", "--print", "prompt"), claude_workspace, 1)
+            self.assertEqual(collision.status, ExecutionStatus.SPAWN_ERROR)
+            self.assertIn("authenticated isolated agent home", collision.stderr)
+            self.assertEqual(marker.read_text(), "preserve pre-existing control evidence\n")
+
+            broad_workspace = workspace_root / "task-02" / claude_spec.agent_id
+            broad_workspace.mkdir(parents=True)
+            claude_credential = credential_home / ISOLATED_AGENT_CREDENTIAL_PATHS["claude-code"]
+            if os.name == "posix":
+                claude_credential.chmod(0o644)
+                broad = runner._process_runner_for_attempt(
+                    claude_spec, broad_workspace
+                ).run(("claude", "--print", "prompt"), broad_workspace, 1)
+                self.assertEqual(broad.status, ExecutionStatus.SPAWN_ERROR)
+                self.assertIn("permissions are too broad", broad.stderr)
+                claude_credential.chmod(0o600)
+
+            drift_workspace = workspace_root / "task-03" / claude_spec.agent_id
+            drift_workspace.mkdir(parents=True)
+            drift = runner._process_runner_for_attempt(
+                claude_spec, drift_workspace
+            ).run(("unexpected-cli", "prompt"), drift_workspace, 1)
+            self.assertEqual(drift.status, ExecutionStatus.SPAWN_ERROR)
+            self.assertIn("command identity drifted", drift.stderr)
+            drift_home = root / "control" / "isolated-agent-homes" / "task-03" / claude_spec.agent_id
+            self.assertEqual(tuple(drift_home.iterdir()), ())
+
     def test_attests_and_enforces_fresh_empty_agent_homes(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

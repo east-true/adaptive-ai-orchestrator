@@ -45,6 +45,7 @@ PHASE2B_AUTHORIZATION_SCHEMA = "phase2b-pilot-run-authorization-v1"
 PHASE2B_INSTRUCTION_INVENTORY_SCHEMA = "phase2b-global-instruction-inventory-v1"
 STABLE_IDENTITY_RULE = "uuidv5-experiment-task-agent-v1"
 EMPTY_EFFECTIVE_INSTRUCTION_SHA256 = hashlib.sha256(b"").hexdigest()
+AUTHENTICATED_ISOLATED_AGENT_HOME_RESOLUTION = "authenticated-isolated-agent-homes"
 ISOLATED_AGENT_HOME_ENVIRONMENT_VARIABLES = (
     "CLAUDE_CONFIG_DIR",
     "CODEX_HOME",
@@ -53,6 +54,10 @@ ISOLATED_AGENT_HOME_ENVIRONMENT_VARIABLES = (
     "XDG_CONFIG_HOME",
     "XDG_DATA_HOME",
 )
+ISOLATED_AGENT_CREDENTIAL_PATHS = {
+    "claude-code": ".claude/.credentials.json",
+    "codex": ".codex/auth.json",
+}
 INFERENCE_SCOPE = (
     "variance-discordance-missingness-and-confirmatory-sizing-not-agent-ranking"
 )
@@ -458,23 +463,45 @@ def _validate_instruction_inventory(
         manifest_context["codex_project_doc_fallback_filenames"],
     )
 
-    if inventory["resolution"] == "isolated-empty-agent-homes":
+    if inventory["resolution"] in {
+        "isolated-empty-agent-homes",
+        AUTHENTICATED_ISOLATED_AGENT_HOME_RESOLUTION,
+    }:
         _const(inventory, "semantic_equivalence_review_completed", False)
         for key, _ in hash_pairs:
             _const(inventory, key, EMPTY_EFFECTIVE_INSTRUCTION_SHA256)
         contract = _object(inventory, "isolated_agent_home_contract")
-        _exact_keys(contract, {
+        contract_keys = {
             "fresh_per_attempt", "inherited_user_home", "initial_file_count",
             "environment_variables",
-        }, "isolated_agent_home_contract")
+        }
+        if inventory["resolution"] == AUTHENTICATED_ISOLATED_AGENT_HOME_RESOLUTION:
+            contract_keys.add("credential_binding")
+        _exact_keys(contract, contract_keys, "isolated_agent_home_contract")
         _const(contract, "fresh_per_attempt", True)
         _const(contract, "inherited_user_home", False)
-        _const(contract, "initial_file_count", 0)
         _const(
             contract,
             "environment_variables",
             list(ISOLATED_AGENT_HOME_ENVIRONMENT_VARIABLES),
         )
+        if inventory["resolution"] == AUTHENTICATED_ISOLATED_AGENT_HOME_RESOLUTION:
+            _const(contract, "initial_file_count", 1)
+            credential_binding = _object(contract, "credential_binding")
+            _exact_keys(credential_binding, {
+                "strategy", "source_home_relative_paths_by_agent_base",
+                "cleanup_after_agent_invocation", "credential_contents_recorded",
+            }, "credential_binding")
+            _const(credential_binding, "strategy", "read-write-symlink")
+            _const(
+                credential_binding,
+                "source_home_relative_paths_by_agent_base",
+                ISOLATED_AGENT_CREDENTIAL_PATHS,
+            )
+            _const(credential_binding, "cleanup_after_agent_invocation", True)
+            _const(credential_binding, "credential_contents_recorded", False)
+        else:
+            _const(contract, "initial_file_count", 0)
     else:
         _const(inventory, "semantic_equivalence_review_completed", True)
         _const(inventory, "isolated_agent_home_contract", None)
@@ -917,7 +944,8 @@ def _environment(raw: Mapping[str, Any]) -> Mapping[str, Any]:
         "verified_at",
     }, "global_instruction_context")
     if global_context.get("resolution") not in {
-        "semantically-equivalent", "isolated-empty-agent-homes"
+        "semantically-equivalent", "isolated-empty-agent-homes",
+        AUTHENTICATED_ISOLATED_AGENT_HOME_RESOLUTION,
     }:
         raise Phase2bPilotError("Global instruction context is unresolved.")
     for key in (
