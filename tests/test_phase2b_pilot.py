@@ -214,7 +214,7 @@ def build_phase2b_fixture(root: Path) -> dict[str, object]:
 
     raw = {
         "schema_version": "paired-pilot-manifest-v1",
-        "protocol_version": "phase2b-pilot-prereg-v1.1",
+        "protocol_version": "phase2b-pilot-prereg-v1.3",
         "study_phase": "phase2b-variance-pilot",
         "pilot_purpose": "pipeline-discordance-variance-missingness-and-confirmatory-sizing",
         "experiment_id": "phase2b-test-v1",

@@ -38,7 +38,7 @@ from adaptive_orchestrator.experiments.paired_experiment import (
 
 
 PHASE2B_MANIFEST_SCHEMA = "paired-pilot-manifest-v1"
-PHASE2B_PROTOCOL_VERSION = "phase2b-pilot-prereg-v1.1"
+PHASE2B_PROTOCOL_VERSION = "phase2b-pilot-prereg-v1.3"
 PHASE2B_PLAN_SCHEMA = "phase2b-pilot-workspace-plan-v1"
 PHASE2B_DRY_RUN_SCHEMA = "phase2b-pilot-agent-free-dry-run-v1"
 PHASE2B_AUTHORIZATION_SCHEMA = "phase2b-pilot-run-authorization-v1"
