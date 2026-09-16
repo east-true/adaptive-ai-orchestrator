@@ -6,9 +6,27 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
 from adaptive_orchestrator.execution.agents import ClaudeCodeAgent, CodexAgent
+from adaptive_orchestrator.core.domain import Capability, Task
 
 
 class ClaudeCodeAgentTests(unittest.TestCase):
+    def test_ordinary_prompt_bytes_remain_unchanged_without_provider_key(self) -> None:
+        task = Task(
+            task_id="task-1",
+            description="description",
+            objective="objective",
+            constraints=("first", "second"),
+            required_capabilities=(Capability.CODE_GENERATION,),
+            time_limit_seconds=5,
+            context={"pair_id": "pair-1"},
+        )
+        self.assertEqual(
+            ClaudeCodeAgent.build_prompt(task),
+            "Objective: objective\n\nDescription: description\n\n"
+            "Required capabilities: code_generation\nConstraints:\n"
+            "- first\n- second\nContext: {'pair_id': 'pair-1'}",
+        )
+
     def test_agent_id_derivation_and_explicit_name(self) -> None:
         self.assertEqual(ClaudeCodeAgent().agent_id, "claude-code")
         self.assertEqual(ClaudeCodeAgent(model="opus").agent_id, "claude-code:opus")

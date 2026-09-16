@@ -1199,8 +1199,17 @@ def _create_isolated_checkout(source: Path, target: Path, commit_hash: str) -> N
     target.mkdir(parents=True)
     try:
         _git(target, "init", "-q")
+        # Fetching from a local absolute path otherwise persists that host path
+        # in FETCH_HEAD, while checkout reflogs persist the invoking user's Git
+        # identity. Neither is experiment input, so prevent/remove both before
+        # an isolated workspace can become agent-visible.
+        _git(target, "config", "core.logAllRefUpdates", "false")
         _git(target, "fetch", "--quiet", "--depth", "1", "--no-tags", str(source), commit_hash)
         _git(target, "checkout", "--quiet", "--detach", "FETCH_HEAD")
+        (target / ".git" / "FETCH_HEAD").unlink(missing_ok=True)
+        logs = target / ".git" / "logs"
+        if logs.exists():
+            shutil.rmtree(logs)
         alternates = target / ".git" / "objects" / "info" / "alternates"
         if alternates.exists():
             raise PairedExperimentError(f"Isolated checkout unexpectedly shares Git objects: {target}")

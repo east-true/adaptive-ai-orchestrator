@@ -5,7 +5,7 @@ import os
 import socket
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Protocol
+from typing import Callable, Mapping, Protocol
 from uuid import uuid4
 
 from adaptive_orchestrator.core.domain import ExecutionRecord, ExecutionStatus, Task
@@ -42,6 +42,10 @@ class OrchestratorKernel:
         git_snapshot: GitSnapshot | None = None,
         include_git_diff: bool = False,
         lifecycle_recorder: LifecycleRecorder | None = None,
+        terminal_outcome_payload_provider: (
+            Callable[[], Mapping[str, object]] | None
+        ) = None,
+        terminal_outcome_payload_fallback: Mapping[str, object] | None = None,
     ) -> None:
         """Coordinate one agent registry over one workspace.
 
@@ -61,6 +65,14 @@ class OrchestratorKernel:
         self._git_snapshot = git_snapshot or GitSnapshot()
         self._include_git_diff = include_git_diff
         self._lifecycle = lifecycle_recorder or LifecycleRecorder(JsonlEventStore(self._workspace / ".orchestrator" / "events.jsonl"))
+        self._terminal_outcome_payload_provider = terminal_outcome_payload_provider
+        self._terminal_outcome_payload_fallback = (
+            self._validated_terminal_outcome_payload(
+                terminal_outcome_payload_fallback
+            )
+            if terminal_outcome_payload_fallback is not None
+            else None
+        )
 
     def execute(
         self,
@@ -232,22 +244,56 @@ class OrchestratorKernel:
             )
         except BaseException as exc:
             if not terminal_recorded:
+                try:
+                    self.record_lifecycle(
+                        LifecycleEventType.EXECUTION_TERMINAL,
+                        execution_id=execution_id,
+                        task_id=task_id,
+                        attempt_id=attempt_id,
+                        parent_attempt_id=parent_attempt_id,
+                        payload={
+                            "status": "interrupted",
+                            "error_type": type(exc).__name__,
+                        },
+                    )
+                except BaseException:
+                    # A durable recorder failure is unrecoverable here, but it
+                    # must never replace the original host interruption.
+                    pass
+            outcome_payload: dict[str, object] = {
+                "status": "interrupted",
+                "error_type": type(exc).__name__,
+            }
+            if self._terminal_outcome_payload_provider is not None:
+                try:
+                    additional = self._validated_terminal_outcome_payload(
+                        self._terminal_outcome_payload_provider()
+                    )
+                    outcome_payload.update(additional)
+                except BaseException as provider_exc:
+                    # Never mask the original interruption. Phase 2b's provider
+                    # supplies a prevalidated deterministic two-role fallback.
+                    if self._terminal_outcome_payload_fallback is not None:
+                        outcome_payload.update(
+                            self._terminal_outcome_payload_fallback
+                        )
+                    outcome_payload["terminal_outcome_payload_provider"] = {
+                        "status": "failed",
+                        "error_type": type(provider_exc).__name__,
+                    }
+            try:
                 self.record_lifecycle(
-                    LifecycleEventType.EXECUTION_TERMINAL,
+                    LifecycleEventType.OUTCOME_FINALIZED,
                     execution_id=execution_id,
                     task_id=task_id,
                     attempt_id=attempt_id,
                     parent_attempt_id=parent_attempt_id,
-                    payload={"status": "interrupted", "error_type": type(exc).__name__},
+                    payload=outcome_payload,
                 )
-            self.record_lifecycle(
-                LifecycleEventType.OUTCOME_FINALIZED,
-                execution_id=execution_id,
-                task_id=task_id,
-                attempt_id=attempt_id,
-                parent_attempt_id=parent_attempt_id,
-                payload={"status": "interrupted", "error_type": type(exc).__name__},
-            )
+            except BaseException:
+                # The original BaseException remains the terminal cause even
+                # when the recorder cannot durably append terminal evidence.
+                pass
             raise
         if log_execution:
             self._logger.write(record)
@@ -264,6 +310,23 @@ class OrchestratorKernel:
                 },
             )
         return record
+
+    @staticmethod
+    def _validated_terminal_outcome_payload(
+        value: Mapping[str, object],
+    ) -> dict[str, object]:
+        if not isinstance(value, Mapping) or set(value) != {
+            "resource_observation"
+        }:
+            raise ValueError(
+                "terminal outcome provider returned an invalid payload"
+            )
+        resource_observation = value["resource_observation"]
+        if not isinstance(resource_observation, Mapping):
+            raise ValueError(
+                "terminal outcome provider returned invalid resource evidence"
+            )
+        return {"resource_observation": dict(resource_observation)}
 
     def log(self, record: ExecutionRecord) -> None:
         self._logger.write(record)

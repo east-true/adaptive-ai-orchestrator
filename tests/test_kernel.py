@@ -11,6 +11,10 @@ from adaptive_orchestrator.execution.agents import ClaudeCodeAgent, CodexAgent
 from adaptive_orchestrator.core.domain import Capability, ExecutionStatus, Task
 from adaptive_orchestrator.orchestration.kernel import OrchestratorKernel
 from adaptive_orchestrator.infrastructure.logging import JsonlExecutionLogger
+from adaptive_orchestrator.infrastructure.events import (
+    JsonlEventStore,
+    LifecycleEventType,
+)
 from adaptive_orchestrator.execution.process_runner import ProcessResult
 
 
@@ -24,7 +28,109 @@ class FakeRunner:
         return self.result
 
 
+class InterruptingRunner:
+    def run(self, command, cwd, timeout_seconds):
+        raise KeyboardInterrupt()
+
+
+class TerminalFailingRecorder:
+    def __init__(self) -> None:
+        self.attempted: list[LifecycleEventType] = []
+
+    def record(self, event_type, **kwargs):
+        del kwargs
+        self.attempted.append(event_type)
+        if event_type in {
+            LifecycleEventType.EXECUTION_TERMINAL,
+            LifecycleEventType.OUTCOME_FINALIZED,
+        }:
+            raise RuntimeError("synthetic durable recorder failure")
+        return None
+
+
 class KernelTests(unittest.TestCase):
+    def test_terminal_recorder_failure_does_not_mask_original_interruption(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            recorder = TerminalFailingRecorder()
+            kernel = OrchestratorKernel(
+                {"codex": CodexAgent()},
+                JsonlExecutionLogger(workspace / "executions.jsonl"),
+                workspace,
+                InterruptingRunner(),
+                lifecycle_recorder=recorder,  # type: ignore[arg-type]
+            )
+
+            with self.assertRaises(KeyboardInterrupt):
+                kernel.execute(Task("Plan", "Plan"), "codex")
+
+        self.assertEqual(
+            recorder.attempted[-2:],
+            [
+                LifecycleEventType.EXECUTION_TERMINAL,
+                LifecycleEventType.OUTCOME_FINALIZED,
+            ],
+        )
+
+    def test_terminal_provider_errors_and_collisions_use_prevalidated_fallback(
+        self,
+    ) -> None:
+        fallback = {
+            "resource_observation": {
+                "resource_supervisor_invocations": [{"role": "fallback"}],
+            }
+        }
+
+        def raises():
+            raise RuntimeError("synthetic provider failure")
+
+        providers = (
+            raises,
+            lambda: {
+                "status": "must-not-overwrite",
+                "resource_observation": {},
+            },
+            lambda: {"resource_observation": []},
+        )
+        for provider in providers:
+            with self.subTest(provider=provider), tempfile.TemporaryDirectory() as directory:
+                workspace = Path(directory)
+                events = JsonlEventStore(
+                    workspace / ".orchestrator" / "events.jsonl"
+                )
+                kernel = OrchestratorKernel(
+                    {"codex": CodexAgent()},
+                    JsonlExecutionLogger(workspace / "executions.jsonl"),
+                    workspace,
+                    InterruptingRunner(),
+                    terminal_outcome_payload_provider=provider,
+                    terminal_outcome_payload_fallback=fallback,
+                )
+                with self.assertRaises(KeyboardInterrupt):
+                    kernel.execute(Task("Plan", "Plan"), "codex")
+                outcomes = [
+                    event
+                    for event in events.read()
+                    if event.event_type is LifecycleEventType.OUTCOME_FINALIZED
+                ]
+                self.assertEqual(len(outcomes), 1)
+                self.assertEqual(outcomes[0].payload["status"], "interrupted")
+                self.assertEqual(
+                    outcomes[0].payload["error_type"], "KeyboardInterrupt"
+                )
+                self.assertEqual(
+                    outcomes[0].payload["resource_observation"],
+                    fallback["resource_observation"],
+                )
+                self.assertEqual(
+                    outcomes[0].payload[
+                        "terminal_outcome_payload_provider"
+                    ]["status"],
+                    "failed",
+                )
+
     def test_codex_execution_is_logged(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory)

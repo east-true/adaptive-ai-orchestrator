@@ -7,7 +7,7 @@ import subprocess
 from dataclasses import asdict, replace
 from pathlib import Path
 from time import monotonic
-from typing import Callable
+from typing import Callable, Mapping
 
 from adaptive_orchestrator.core.domain import Capability, EvaluatorRole, EvaluatorSpec, EvaluatorStatus, ExecutionStatus, Task
 from adaptive_orchestrator.execution.agents import Agent, ClaudeCodeAgent, CodexAgent
@@ -279,14 +279,19 @@ class PairedSmokeRunner:
             task_id=task_spec.task_id,
             description=task_spec.description,
             objective=task_spec.objective,
-            constraints=task_spec.constraints,
+            constraints=self._task_constraints_for_attempt(task_spec),
             required_capabilities=tuple(Capability(item) for item in task_spec.required_capabilities),
             time_limit_seconds=min(agent_spec.time_limit_seconds, remaining_agent_seconds),
             context={
-                "paired_experiment_id": self.manifest.experiment_id,
-                "pair_id": assignment.pair_id,
-                "task_source": task_spec.source,
-                "instruction_language": task_spec.instruction_language,
+                **self._task_context_for_attempt(
+                    task_spec,
+                    {
+                        "paired_experiment_id": self.manifest.experiment_id,
+                        "pair_id": assignment.pair_id,
+                        "task_source": task_spec.source,
+                        "instruction_language": task_spec.instruction_language,
+                    },
+                )
             },
         )
         routing_context = {
@@ -326,12 +331,24 @@ class PairedSmokeRunner:
             "pair_order_index": assignment.order_index,
             "agent_order_position": assignment.agent_order.index(agent.agent_id),
         }
+        attempt_runner = self._process_runner_for_attempt(agent_spec, workspace)
+        (
+            terminal_payload_provider,
+            terminal_payload_fallback,
+        ) = self._terminal_outcome_payload_provider(attempt_runner)
+        terminal_fallback_invocations = (
+            _fallback_invocations_from_payload(terminal_payload_fallback)
+            if terminal_payload_fallback is not None
+            else None
+        )
         kernel = OrchestratorKernel(
             {agent.agent_id: agent},
             JsonlExecutionLogger(workspace / ".orchestrator" / "executions.jsonl"),
             workspace,
-            runner=self._process_runner_for_attempt(agent_spec, workspace),
+            runner=attempt_runner,
             lifecycle_recorder=recorder,
+            terminal_outcome_payload_provider=terminal_payload_provider,
+            terminal_outcome_payload_fallback=terminal_payload_fallback,
         )
         record = kernel.execute(
             task,
@@ -350,27 +367,82 @@ class PairedSmokeRunner:
             routing_context=routing_context,
             environment_epoch=self.manifest.environment_epoch,
         )
-        remaining_evaluator_seconds = deadline - self.clock()
-        if remaining_evaluator_seconds <= 0:
-            recorder.record(
-                LifecycleEventType.OUTCOME_FINALIZED,
-                execution_id=assignment.execution_id,
-                task_id=task.task_id,
-                attempt_id=assignment.attempt_ids[agent.agent_id],
-                payload={
-                    "execution_status": record.status.value,
-                    "evaluation_projection": {},
-                    "routing_evidence_eligible": False,
-                    "finalization_reason": "resource_budget_exhausted_before_evaluation",
-                },
-            )
-            raise PairedExecutionError("Paired wall-time budget exhausted before objective evaluation.")
-        evaluator = self.manifest_task_evaluator(
-            task_spec,
-            timeout_seconds=min(task_spec.evaluator.timeout_seconds, remaining_evaluator_seconds),
-        )
-        verifier = CommandVerifier(evaluator_specs=(evaluator,))
         try:
+            remaining_evaluator_seconds = deadline - self.clock()
+        except BaseException as exc:
+            try:
+                recorder.record(
+                    LifecycleEventType.OUTCOME_FINALIZED,
+                    execution_id=assignment.execution_id,
+                    task_id=task.task_id,
+                    attempt_id=assignment.attempt_ids[agent.agent_id],
+                    payload={
+                        "status": "evaluation_interrupted",
+                        "error_type": type(exc).__name__,
+                        "resource_observation": {
+                            "resource_supervisor_invocations": list(
+                                _resource_supervisor_observations_or_fallback(
+                                    attempt_runner,
+                                    missing_reason=(
+                                        "not-invoked-evaluator-budget-clock-"
+                                        "interrupted"
+                                    ),
+                                    fallback_invocations=(
+                                        terminal_fallback_invocations
+                                    ),
+                                )
+                            ),
+                        },
+                    },
+                )
+            except BaseException:
+                pass
+            raise
+        if remaining_evaluator_seconds <= 0:
+            budget_error = PairedExecutionError(
+                "Paired wall-time budget exhausted before objective evaluation."
+            )
+            try:
+                recorder.record(
+                    LifecycleEventType.OUTCOME_FINALIZED,
+                    execution_id=assignment.execution_id,
+                    task_id=task.task_id,
+                    attempt_id=assignment.attempt_ids[agent.agent_id],
+                    payload={
+                        "execution_status": record.status.value,
+                        "evaluation_projection": {},
+                        "routing_evidence_eligible": False,
+                        "finalization_reason": (
+                            "resource_budget_exhausted_before_evaluation"
+                        ),
+                        "resource_observation": {
+                            "resource_supervisor_invocations": list(
+                                _resource_supervisor_observations_or_fallback(
+                                    attempt_runner,
+                                    missing_reason=(
+                                        "not-invoked-resource-budget-exhausted-"
+                                        "before-evaluation"
+                                    ),
+                                    fallback_invocations=(
+                                        terminal_fallback_invocations
+                                    ),
+                                )
+                            ),
+                        },
+                    },
+                )
+            except BaseException:
+                pass
+            raise budget_error
+        try:
+            evaluator = self.manifest_task_evaluator(
+                task_spec,
+                timeout_seconds=min(
+                    task_spec.evaluator.timeout_seconds,
+                    remaining_evaluator_seconds,
+                ),
+            )
+            verifier = CommandVerifier(evaluator_specs=(evaluator,))
             verification, evaluations = verifier.verify_with_evaluations(
                 task,
                 record.status,
@@ -378,55 +450,129 @@ class PairedSmokeRunner:
                 kernel.runner,
             )
         except BaseException as exc:
-            recorder.record(
-                LifecycleEventType.OUTCOME_FINALIZED,
-                execution_id=assignment.execution_id,
-                task_id=task.task_id,
-                attempt_id=assignment.attempt_ids[agent.agent_id],
-                payload={"status": "evaluation_interrupted", "error_type": type(exc).__name__},
-            )
+            try:
+                recorder.record(
+                    LifecycleEventType.OUTCOME_FINALIZED,
+                    execution_id=assignment.execution_id,
+                    task_id=task.task_id,
+                    attempt_id=assignment.attempt_ids[agent.agent_id],
+                    payload={
+                        "status": "evaluation_interrupted",
+                        "error_type": type(exc).__name__,
+                        "resource_observation": {
+                            "resource_supervisor_invocations": list(
+                                _resource_supervisor_observations_or_fallback(
+                                    attempt_runner,
+                                    missing_reason=(
+                                        "not-invoked-evaluation-interrupted"
+                                    ),
+                                    fallback_invocations=(
+                                        terminal_fallback_invocations
+                                    ),
+                                )
+                            ),
+                        },
+                    },
+                )
+            except BaseException:
+                # Terminal evidence can be absent after a durable recorder
+                # failure, but that failure must not replace the evaluator's
+                # original KeyboardInterrupt/SystemExit/infrastructure error.
+                pass
             raise
 
-        finalized = replace(
-            record,
-            verification=verification,
-            evaluations=evaluations,
-            evaluation_projection=evaluation_projection(evaluations),
-            task_analysis={
-                "instruction_language": task_spec.instruction_language,
-                "task_category": task_spec.task_category,
-                "risk": task_spec.risk,
-            },
-            routing_context=routing_context,
-            context_schema="routing-context-v1",
-            environment_epoch=self.manifest.environment_epoch,
-        )
-        for result in evaluations:
-            recorder.record(
-                LifecycleEventType.EVALUATION_COMPLETED,
-                execution_id=assignment.execution_id,
-                task_id=task.task_id,
-                attempt_id=assignment.attempt_ids[agent.agent_id],
-                payload=asdict(result),
+        try:
+            finalized = replace(
+                record,
+                verification=verification,
+                evaluations=evaluations,
+                evaluation_projection=evaluation_projection(evaluations),
+                task_analysis={
+                    "instruction_language": task_spec.instruction_language,
+                    "task_category": task_spec.task_category,
+                    "risk": task_spec.risk,
+                },
+                routing_context=routing_context,
+                context_schema="routing-context-v1",
+                environment_epoch=self.manifest.environment_epoch,
             )
-        recorder.record(
-            LifecycleEventType.OUTCOME_FINALIZED,
-            execution_id=assignment.execution_id,
-            task_id=task.task_id,
-            attempt_id=assignment.attempt_ids[agent.agent_id],
-            payload={
+            for result in evaluations:
+                recorder.record(
+                    LifecycleEventType.EVALUATION_COMPLETED,
+                    execution_id=assignment.execution_id,
+                    task_id=task.task_id,
+                    attempt_id=assignment.attempt_ids[agent.agent_id],
+                    payload=asdict(result),
+                )
+            finalized_outcome_payload = {
                 "execution_status": finalized.status.value,
                 "verification": asdict(verification),
                 "evaluation_projection": finalized.evaluation_projection,
                 "routing_evidence_eligible": False,
                 "resource_observation": {
                     "agent_duration_ms": finalized.duration_ms,
-                    "evaluator_duration_ms": sum(result.duration_ms for result in evaluations),
-                    "experiment_elapsed_ms": elapsed_offset_ms + (self.clock() - run_started) * 1000,
-                    "metadata": asdict(finalized.metadata) if finalized.metadata is not None else {},
+                    "evaluator_duration_ms": sum(
+                        result.duration_ms for result in evaluations
+                    ),
+                    "experiment_elapsed_ms": (
+                        elapsed_offset_ms
+                        + (self.clock() - run_started) * 1000
+                    ),
+                    "metadata": (
+                        asdict(finalized.metadata)
+                        if finalized.metadata is not None
+                        else {}
+                    ),
+                    "resource_supervisor_invocations": list(
+                        _resource_supervisor_observations_or_fallback(
+                            attempt_runner,
+                            missing_reason=(
+                                "not-invoked-before-normal-finalization"
+                            ),
+                            fallback_invocations=terminal_fallback_invocations,
+                        )
+                    ),
                 },
-                "workspace_modified_files": list(finalized.workspace_modified_files),
-            },
+                "workspace_modified_files": list(
+                    finalized.workspace_modified_files
+                ),
+            }
+        except BaseException as exc:
+            try:
+                recorder.record(
+                    LifecycleEventType.OUTCOME_FINALIZED,
+                    execution_id=assignment.execution_id,
+                    task_id=task.task_id,
+                    attempt_id=assignment.attempt_ids[agent.agent_id],
+                    payload={
+                        "status": "evaluation_interrupted",
+                        "error_type": type(exc).__name__,
+                        "resource_observation": {
+                            "resource_supervisor_invocations": list(
+                                _resource_supervisor_observations_or_fallback(
+                                    attempt_runner,
+                                    missing_reason=(
+                                        "not-invoked-evaluation-finalization-"
+                                        "interrupted"
+                                    ),
+                                    fallback_invocations=(
+                                        terminal_fallback_invocations
+                                    ),
+                                )
+                            ),
+                        },
+                    },
+                )
+            except BaseException:
+                pass
+            raise
+
+        recorder.record(
+            LifecycleEventType.OUTCOME_FINALIZED,
+            execution_id=assignment.execution_id,
+            task_id=task.task_id,
+            attempt_id=assignment.attempt_ids[agent.agent_id],
+            payload=finalized_outcome_payload,
         )
         kernel.log(finalized)
         if record.status is not ExecutionStatus.COMPLETED:
@@ -441,6 +587,24 @@ class PairedSmokeRunner:
                 f"for {task.task_id}/{agent.agent_id}."
             )
 
+    def _task_constraints_for_attempt(
+        self,
+        task_spec: PairedTaskSpec,
+    ) -> tuple[str, ...]:
+        """Return the exact constraints sent to both arms for one paired task."""
+
+        return task_spec.constraints
+
+    def _task_context_for_attempt(
+        self,
+        task_spec: PairedTaskSpec,
+        base_context: Mapping[str, object],
+    ) -> Mapping[str, object]:
+        """Return prompt context while preserving generic paired prompt bytes."""
+
+        del task_spec
+        return dict(base_context)
+
     def _process_runner_for_attempt(
         self,
         agent_spec: PairedAgentSpec,
@@ -454,6 +618,55 @@ class PairedSmokeRunner:
 
         del agent_spec, workspace
         return self.process_runner_factory()
+
+    def _terminal_outcome_payload_provider(
+        self,
+        runner: ProcessRunner,
+    ) -> tuple[
+        Callable[[], Mapping[str, object]] | None,
+        Mapping[str, object] | None,
+    ]:
+        getter = getattr(runner, "resource_observations", None)
+        if not callable(getter):
+            return None, None
+
+        fallback_payload: Mapping[str, object] | None = None
+        fallback = getattr(
+            runner, "resource_observation_fallback_placeholders", None
+        )
+        if callable(fallback):
+            fallback_invocations = _validated_two_role_resource_observations(
+                fallback("resource-observation-rendering-failed")
+            )
+            fallback_payload = {
+                "resource_observation": {
+                    "resource_supervisor_invocations": list(
+                        fallback_invocations
+                    ),
+                }
+            }
+
+        def terminal_payload() -> Mapping[str, object]:
+            try:
+                invocations = _resource_supervisor_observations(
+                    runner,
+                    missing_reason="not-invoked-agent-interrupted",
+                )
+            except BaseException:
+                if fallback_payload is None:
+                    raise
+                return fallback_payload
+            if fallback_payload is not None:
+                invocations = _validated_two_role_resource_observations(
+                    invocations
+                )
+            return {
+                "resource_observation": {
+                    "resource_supervisor_invocations": list(invocations),
+                }
+            }
+
+        return terminal_payload, fallback_payload
 
     def manifest_task_evaluator(
         self,
@@ -483,6 +696,92 @@ class PairedSmokeRunner:
             evidence_scope="Pre-registered paired task-specific objective quality.",
             artifact_paths=artifact_paths,
         )
+
+
+def _resource_supervisor_observations(
+    runner: ProcessRunner,
+    *,
+    missing_reason: str,
+) -> tuple[Mapping[str, object], ...]:
+    finalizer = getattr(runner, "finalize_resource_observations", None)
+    if callable(finalizer):
+        finalizer(missing_reason)
+    getter = getattr(runner, "resource_observations", None)
+    if not callable(getter):
+        return ()
+    rendered = getter()
+    if not isinstance(rendered, (tuple, list)):
+        raise PairedExecutionError(
+            "Process runner returned malformed resource supervisor evidence."
+        )
+    observations: list[Mapping[str, object]] = []
+    for item in rendered:
+        if not isinstance(item, Mapping):
+            raise PairedExecutionError(
+                "Process runner returned malformed resource supervisor evidence."
+            )
+        observations.append(dict(item))
+    return tuple(observations)
+
+
+def _resource_supervisor_observations_or_fallback(
+    runner: ProcessRunner,
+    *,
+    missing_reason: str,
+    fallback_invocations: tuple[Mapping[str, object], Mapping[str, object]] | None,
+) -> tuple[Mapping[str, object], ...]:
+    """Render terminal evidence without masking the terminal condition."""
+
+    try:
+        rendered = _resource_supervisor_observations(
+            runner,
+            missing_reason=missing_reason,
+        )
+        if fallback_invocations is None:
+            return rendered
+        return _validated_two_role_resource_observations(rendered)
+    except BaseException:
+        if fallback_invocations is None:
+            return ()
+        return fallback_invocations
+
+
+def _fallback_invocations_from_payload(
+    payload: Mapping[str, object],
+) -> tuple[Mapping[str, object], Mapping[str, object]]:
+    resource = payload.get("resource_observation")
+    if not isinstance(resource, Mapping):
+        raise PairedExecutionError(
+            "Phase 2b terminal resource fallback is malformed."
+        )
+    return _validated_two_role_resource_observations(
+        resource.get("resource_supervisor_invocations")
+    )
+
+
+def _validated_two_role_resource_observations(
+    rendered: object,
+) -> tuple[Mapping[str, object], Mapping[str, object]]:
+    if not isinstance(rendered, (tuple, list)) or len(rendered) != 2:
+        raise PairedExecutionError(
+            "Phase 2b terminal resource evidence must contain exactly two roles."
+        )
+    observations = tuple(dict(item) for item in rendered if isinstance(item, Mapping))
+    if len(observations) != 2 or tuple(
+        item.get("invocation_name") for item in observations
+    ) != ("agent", "evaluator"):
+        raise PairedExecutionError(
+            "Phase 2b terminal resource evidence has invalid role ordering."
+        )
+    for item in observations:
+        policy_sha256 = item.get("invocation_policy_sha256")
+        if not isinstance(policy_sha256, str) or re.fullmatch(
+            r"[0-9a-f]{64}", policy_sha256
+        ) is None:
+            raise PairedExecutionError(
+                "Phase 2b terminal resource evidence has an invalid policy hash."
+            )
+    return observations
 
 
 def _agent_from_spec(spec: PairedAgentSpec) -> Agent:

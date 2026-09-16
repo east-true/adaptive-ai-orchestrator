@@ -891,6 +891,7 @@ class Phase2bDispatchTests(unittest.TestCase):
             "--control-state-dir", "/protected/control",
             "--dry-run-record", "/protected/dry-run.json",
             "--authorization", "/protected/authorization.json",
+            "--credential-home", "/protected/private-credentials",
             "--confirm-agent-execution",
         ])
 
@@ -900,6 +901,9 @@ class Phase2bDispatchTests(unittest.TestCase):
             ["repo-a=/sources/a", "repo-b=/sources/b"],
         )
         self.assertTrue(args.confirm_agent_execution)
+        self.assertEqual(
+            args.credential_home, Path("/protected/private-credentials")
+        )
 
     def test_phase2b_repository_root_mapping_rejects_malformed_and_duplicate_ids(self) -> None:
         with self.assertRaisesRegex(cli.Phase2bPilotError, "REPOSITORY_ID=PATH"):

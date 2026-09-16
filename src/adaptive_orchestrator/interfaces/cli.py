@@ -391,6 +391,13 @@ def build_parser(config: ProjectConfig | None = None) -> argparse.ArgumentParser
             help="Separate run-operator authorization for the committed manifest and dry run.",
         )
         command.add_argument(
+            "--credential-home", type=Path, required=True,
+            help=(
+                "Private 0700 per-run credential cache, seeded once and reused "
+                "serially for the full run; never use the active interactive home."
+            ),
+        )
+        command.add_argument(
             "--confirm-agent-execution", action="store_true",
             help="Explicitly allow the authorized 120 candidate-agent/evaluator attempts.",
         )
@@ -1908,6 +1915,7 @@ def _run_phase2b_command(args: argparse.Namespace) -> int:
                 args.control_state_dir,
                 args.dry_run_record,
                 args.authorization,
+                credential_home=args.credential_home,
             )
             report = (
                 runner.resume(confirm_agent_execution=args.confirm_agent_execution)
