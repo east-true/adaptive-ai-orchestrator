@@ -1765,11 +1765,29 @@ def _agents(values: Sequence[Any]) -> tuple[PairedAgentSpec, PairedAgentSpec]:
             "permission_mode", "time_limit_seconds",
         }, f"agents[{index}]")
         base_id = _enum(raw, "base_id", {"claude-code", "codex"})
+        model = _text(raw, "model")
+        if base_id == "claude-code" and not model.startswith("claude-"):
+            raise Phase2bPilotError(
+                "Claude Phase 2b agent requires a pinned full model ID."
+            )
+        if base_id == "codex" and not model.startswith("gpt-"):
+            raise Phase2bPilotError(
+                "Codex Phase 2b agent requires a pinned full model ID."
+            )
         reasoning = raw.get("reasoning_tier")
         if reasoning is not None and (not isinstance(reasoning, str) or not reasoning.strip()):
             raise Phase2bPilotError("reasoning_tier must be null or non-empty text.")
         if base_id == "codex" and reasoning is None:
             raise Phase2bPilotError("Codex Phase 2b agent requires a reasoning_tier.")
+        expected_agent_id = ":".join(
+            value
+            for value in (base_id, model, reasoning if base_id == "codex" else None)
+            if value is not None
+        )
+        if _safe_id(raw, "agent_id") != expected_agent_id:
+            raise Phase2bPilotError(
+                f"{base_id} Phase 2b agent_id must bind model and reasoning tier."
+            )
         permission_mode = _text(raw, "permission_mode")
         expected_permission_mode = (
             "acceptEdits" if base_id == "claude-code" else "workspace-write"
@@ -1780,9 +1798,9 @@ def _agents(values: Sequence[Any]) -> tuple[PairedAgentSpec, PairedAgentSpec]:
                 f"{expected_permission_mode!r}."
             )
         result.append(PairedAgentSpec(
-            agent_id=_safe_id(raw, "agent_id"),
+            agent_id=expected_agent_id,
             base_id=base_id,
-            model=_text(raw, "model"),
+            model=model,
             reasoning_tier=reasoning,
             cli_version=_text(raw, "cli_version"),
             permission_mode=permission_mode,

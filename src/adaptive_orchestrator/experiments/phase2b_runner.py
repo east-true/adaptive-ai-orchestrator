@@ -1233,7 +1233,10 @@ class _BubblewrapIsolatedAgentProcessRunner:
             return (
                 *runtime.command_prefix,
                 "--safe-mode",
+                "--restricted",
                 "--no-session-persistence",
+                "--permission-prompts",
+                "none",
                 "--disable-slash-commands",
                 "--no-chrome",
                 "--strict-mcp-config",

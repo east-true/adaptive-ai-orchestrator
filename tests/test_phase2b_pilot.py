@@ -433,18 +433,18 @@ def build_phase2b_fixture(root: Path) -> dict[str, object]:
             "production_mutation": "forbidden",
         },
         "agents": [{
-            "agent_id": "claude-code:opus",
+            "agent_id": "claude-code:claude-opus-5",
             "base_id": "claude-code",
-            "model": "opus",
+            "model": "claude-opus-5",
             "reasoning_tier": None,
             "cli_version": "2.1.236",
             "permission_mode": "acceptEdits",
             "time_limit_seconds": 300,
         }, {
-            "agent_id": "codex:gpt-5.6:high",
+            "agent_id": "codex:gpt-5.6-sol:medium",
             "base_id": "codex",
-            "model": "gpt-5.6",
-            "reasoning_tier": "high",
+            "model": "gpt-5.6-sol",
+            "reasoning_tier": "medium",
             "cli_version": "0.144.5",
             "permission_mode": "workspace-write",
             "time_limit_seconds": 300,
@@ -776,6 +776,21 @@ class Phase2bManifestTests(unittest.TestCase):
             unsafe_permission["agents"][1]["permission_mode"] = "danger-full-access"
             with self.assertRaisesRegex(Phase2bPilotError, "workspace-write"):
                 phase2b_manifest_from_dict(unsafe_permission)
+
+            floating_claude_model = copy.deepcopy(raw)
+            floating_claude_model["agents"][0]["model"] = "opus"
+            with self.assertRaisesRegex(Phase2bPilotError, "pinned full model ID"):
+                phase2b_manifest_from_dict(floating_claude_model)
+
+            floating_codex_model = copy.deepcopy(raw)
+            floating_codex_model["agents"][1]["model"] = "codex-current"
+            with self.assertRaisesRegex(Phase2bPilotError, "pinned full model ID"):
+                phase2b_manifest_from_dict(floating_codex_model)
+
+            unbound_agent_id = copy.deepcopy(raw)
+            unbound_agent_id["agents"][0]["agent_id"] = "claude-code:other"
+            with self.assertRaisesRegex(Phase2bPilotError, "must bind model"):
+                phase2b_manifest_from_dict(unbound_agent_id)
 
             isolation_policy_drift = copy.deepcopy(raw)
             isolation_policy_drift["environment"]["agent_execution_isolation"][
@@ -3173,7 +3188,12 @@ class Phase2bDryRunTests(unittest.TestCase):
             claude_agent = claude_bwrap[claude_bwrap.index("--") + 1:]
             codex_agent = codex_bwrap[codex_bwrap.index("--") + 1:]
             self.assertIn("--safe-mode", claude_agent)
+            self.assertIn("--restricted", claude_agent)
             self.assertIn("--no-session-persistence", claude_agent)
+            self.assertEqual(
+                claude_agent[claude_agent.index("--permission-prompts") + 1],
+                "none",
+            )
             self.assertIn("--strict-mcp-config", claude_agent)
             self.assertEqual(
                 json.loads(claude_agent[claude_agent.index("--mcp-config") + 1]),
