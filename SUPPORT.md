@@ -3,7 +3,7 @@
 This is a pre-release research and engineering project without a guaranteed
 support SLA.
 
-- Search existing [GitHub Issues](https://github.com/east-true/adaptive-ai-orchestrator/issues)
+- Search existing [GitHub Issues](https://github.com/jiind/adaptive-ai-orchestrator/issues)
   before opening a new one.
 - Use the matching bug, feature-request, or question form for public,
   non-sensitive requests.

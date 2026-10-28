@@ -5,7 +5,7 @@ type: software
 authors:
   - family-names: "Lee"
     given-names: "DongJin"
-repository-code: "https://github.com/east-true/adaptive-ai-orchestrator"
-url: "https://github.com/east-true/adaptive-ai-orchestrator"
+repository-code: "https://github.com/jiind/adaptive-ai-orchestrator"
+url: "https://github.com/jiind/adaptive-ai-orchestrator"
 license: Apache-2.0
 version: 0.1.0
