@@ -9,7 +9,7 @@ fixes; older commits and experimental artifacts are not supported releases.
 
 Do not open a public issue for a suspected vulnerability, an accidentally
 exposed credential, or a bypass of an execution boundary. Submit the report
-through [GitHub private vulnerability reporting](https://github.com/east-true/adaptive-ai-orchestrator/security/advisories/new).
+through [GitHub private vulnerability reporting](https://github.com/jiind/adaptive-ai-orchestrator/security/advisories/new).
 
 Include, when available:
 

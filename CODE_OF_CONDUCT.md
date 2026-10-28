@@ -50,7 +50,7 @@ an individual is officially representing the community in public spaces.
 ## Enforcement
 
 Report abusive, harassing, or otherwise unacceptable behavior privately through
-the repository's [private reporting form](https://github.com/east-true/adaptive-ai-orchestrator/security/advisories/new).
+the repository's [private reporting form](https://github.com/jiind/adaptive-ai-orchestrator/security/advisories/new).
 Prefix the report title with `[Code of Conduct]`. Although GitHub labels this a
 security-advisory form, the repository also uses it as its private conduct
 reporting channel so reports do not expose affected people publicly.

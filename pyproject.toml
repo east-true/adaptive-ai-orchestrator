@@ -26,11 +26,11 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/east-true/adaptive-ai-orchestrator"
-Repository = "https://github.com/east-true/adaptive-ai-orchestrator.git"
-Issues = "https://github.com/east-true/adaptive-ai-orchestrator/issues"
-Changelog = "https://github.com/east-true/adaptive-ai-orchestrator/blob/main/CHANGELOG.md"
-Security = "https://github.com/east-true/adaptive-ai-orchestrator/blob/main/SECURITY.md"
+Homepage = "https://github.com/jiind/adaptive-ai-orchestrator"
+Repository = "https://github.com/jiind/adaptive-ai-orchestrator.git"
+Issues = "https://github.com/jiind/adaptive-ai-orchestrator/issues"
+Changelog = "https://github.com/jiind/adaptive-ai-orchestrator/blob/main/CHANGELOG.md"
+Security = "https://github.com/jiind/adaptive-ai-orchestrator/blob/main/SECURITY.md"
 
 [project.scripts]
 adaptive-ai-orchestrator = "adaptive_orchestrator.interfaces.cli:main"
